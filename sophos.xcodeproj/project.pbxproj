@@ -8,7 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		31B08D8F1CAAE4A600DD6BF8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D8E1CAAE4A600DD6BF8 /* main.cpp */; };
+		31B08D991CAAE90300DD6BF8 /* sophos_proto.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D971CAAE58100DD6BF8 /* sophos_proto.proto */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXBuildRule section */
+		31B08D981CAAE7A400DD6BF8 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			filePatterns = "*.proto";
+			fileType = pattern.proxy;
+			isEditable = 1;
+			outputFiles = (
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).pb.cc",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).pb.hh",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).grpc.pb.cc",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).grpc.pb.hh",
+			);
+			script = "cd ${INPUT_FILE_DIR}\n/usr/local/bin/protoc --proto_path=${INPUT_FILE_DIR} ${INPUT_FILE_PATH} --cpp_out=${DERIVED_FILE_DIR}\n/usr/local/bin/protoc --proto_path=${INPUT_FILE_DIR} ${INPUT_FILE_PATH} --grpc_out=${DERIVED_FILE_DIR} --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`";
+		};
+/* End PBXBuildRule section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		31B08D891CAAE4A600DD6BF8 /* CopyFiles */ = {
@@ -25,6 +43,7 @@
 /* Begin PBXFileReference section */
 		31B08D8B1CAAE4A600DD6BF8 /* sophos */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sophos; sourceTree = BUILT_PRODUCTS_DIR; };
 		31B08D8E1CAAE4A600DD6BF8 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		31B08D971CAAE58100DD6BF8 /* sophos_proto.proto */ = {isa = PBXFileReference; lastKnownFileType = text; path = sophos_proto.proto; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,8 +77,17 @@
 		31B08D8D1CAAE4A600DD6BF8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				31B08D961CAAE58100DD6BF8 /* protos */,
 			);
 			path = src;
+			sourceTree = "<group>";
+		};
+		31B08D961CAAE58100DD6BF8 /* protos */ = {
+			isa = PBXGroup;
+			children = (
+				31B08D971CAAE58100DD6BF8 /* sophos_proto.proto */,
+			);
+			path = protos;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -74,6 +102,7 @@
 				31B08D891CAAE4A600DD6BF8 /* CopyFiles */,
 			);
 			buildRules = (
+				31B08D981CAAE7A400DD6BF8 /* PBXBuildRule */,
 			);
 			dependencies = (
 			);
@@ -119,6 +148,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				31B08D8F1CAAE4A600DD6BF8 /* main.cpp in Sources */,
+				31B08D991CAAE90300DD6BF8 /* sophos_proto.proto in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,9 +191,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lgrpc++_unsecure",
+					"-lgrpc",
+					"-lprotobuf",
+					"-lpthread",
+					"-ldl",
+				);
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -198,8 +237,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = (
+					"-lgrpc++_unsecure",
+					"-lgrpc",
+					"-lprotobuf",
+					"-lpthread",
+					"-ldl",
+				);
 				SDKROOT = macosx;
 			};
 			name = Release;

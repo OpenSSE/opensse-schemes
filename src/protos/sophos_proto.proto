@@ -1,0 +1,20 @@
+
+syntax = "proto3";
+
+package sophos;
+
+service Sophos {
+// Sends multiple greetings
+rpc search (SearchRequest) returns (stream SearchReply) {}
+}
+
+message SearchRequest
+{
+    bytes search_token = 1;
+    fixed32 add_count = 2;
+}
+
+message SearchReply
+{
+    uint64 result = 1;
+}

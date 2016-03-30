@@ -23,6 +23,9 @@
 
 #include "sophos.grpc.pb.h"
 
+namespace sse {
+namespace sophos {
+
 class SophosClientRunner {
 public:
     SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path)
@@ -74,10 +77,13 @@ public:
     std::unique_ptr<sophos::Sophos::Stub> stub_;
 };
 
+} // namespace sophos
+} // namespace sse
+
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
     std::string save_path = "save.dat";
-    SophosClientRunner client(
+    sse::sophos::SophosClientRunner client(
                            grpc::CreateChannel("localhost:4242",
                                                grpc::InsecureChannelCredentials()),
                            save_path);

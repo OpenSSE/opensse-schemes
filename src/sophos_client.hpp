@@ -6,9 +6,10 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#ifndef sophos_client_hpp
-#define sophos_client_hpp
+#pragma once
 
-#include <stdio.h>
+namespace sse {
+namespace sophos {
 
-#endif /* sophos_client_hpp */
+} // namespace sophos
+} // namespace sse

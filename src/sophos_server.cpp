@@ -16,6 +16,9 @@
 
 #include "sophos.grpc.pb.h"
 
+namespace sse {
+    namespace sophos {
+
 
 class SophosImpl final : public sophos::Sophos::Service {
 public:
@@ -67,10 +70,12 @@ void run_sophos_server(const std::string& db_path) {
     server->Wait();
 }
 
+} // namespace sophos
+} // namespace sse
 
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
-    run_sophos_server("test_path.dat");
+    sse::sophos::run_sophos_server("test_path.dat");
     
     return 0;
 }

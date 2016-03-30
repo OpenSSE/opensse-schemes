@@ -3,7 +3,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package sophos;
+package sse.sophos;
 
 service Sophos {
 

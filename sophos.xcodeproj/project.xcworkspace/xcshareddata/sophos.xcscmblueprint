@@ -8,7 +8,7 @@
     "DE9EB9563ADA592DEB6382DFD948787FF66BD8DE" : 0,
     "F72A53151217E24B3E45CD5E93053396F4208F32" : 0
   },
-  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "710C7DE1-11F1-4CB5-BC83-8ED7C378D96C",
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "0397E734-BE2F-46A4-8D64-E68C496B5321",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
     "DF386E1AD5AF45736639F3BDF4C2DC55F1ABF4AE" : "sophos\/third_party\/ssdmap\/",
     "DE9EB9563ADA592DEB6382DFD948787FF66BD8DE" : "sophos\/",
@@ -19,7 +19,7 @@
   "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "sophos.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/gitlab.com\/sse\/sophos.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "gitlab.com:sse\/sophos.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "DE9EB9563ADA592DEB6382DFD948787FF66BD8DE"
     },

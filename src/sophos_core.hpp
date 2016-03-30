@@ -13,18 +13,19 @@
 
 #include <ssdmap/bucket_map.hpp>
 #include <sse/crypto/tdp.hpp>
+#include <sse/crypto/prf.hpp>
 
 namespace sse {
 namespace sophos {
         
 
-constexpr size_t kSearchTokenSize = 384;
+constexpr size_t kSearchTokenSize = noexcept(crypto::Tdp::message_size());
 constexpr size_t kUpdateTokenSize = 16;
 
 typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
 typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
 typedef uint64_t index_type;
-
+    
 struct TokenHasher
 {
 public:
@@ -34,6 +35,7 @@ public:
 struct SearchRequest
 {
     search_token_type   token;
+    std::string         derivation_key;
     uint32_t            add_count;
 };
 
@@ -63,7 +65,7 @@ public:
     
     SophosServer(const std::string& db_path, const std::string& tdp_pk);
     
-    std::list<index_type> search(const SearchRequest& req) const;
+    std::list<index_type> search(const SearchRequest& req);
     void update(const UpdateRequest& req);
     
 private:

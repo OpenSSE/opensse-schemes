@@ -8,11 +8,42 @@
 
 /* Begin PBXBuildFile section */
 		31B08D8F1CAAE4A600DD6BF8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D8E1CAAE4A600DD6BF8 /* main.cpp */; };
-		31B08D991CAAE90300DD6BF8 /* sophos_proto.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D971CAAE58100DD6BF8 /* sophos_proto.proto */; };
+		6C9CBEC41CABBFCC003B0185 /* sophos.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D971CAAE58100DD6BF8 /* sophos.proto */; };
+		6C9CBECF1CABC007003B0185 /* sophos.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D971CAAE58100DD6BF8 /* sophos.proto */; };
+		6C9CBED71CABC38B003B0185 /* sophos_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C9CBEBE1CABBEBA003B0185 /* sophos_server.cpp */; settings = {ASSET_TAGS = (); }; };
+		6C9CBEDA1CABC6B0003B0185 /* sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C9CBEBB1CABBEAD003B0185 /* sophos_client.cpp */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
 		31B08D981CAAE7A400DD6BF8 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			filePatterns = "*.proto";
+			fileType = pattern.proxy;
+			isEditable = 1;
+			outputFiles = (
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).pb.cc",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).pb.hh",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).grpc.pb.cc",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).grpc.pb.hh",
+			);
+			script = "cd ${INPUT_FILE_DIR}\n/usr/local/bin/protoc --proto_path=${INPUT_FILE_DIR} ${INPUT_FILE_PATH} --cpp_out=${DERIVED_FILE_DIR}\n/usr/local/bin/protoc --proto_path=${INPUT_FILE_DIR} ${INPUT_FILE_PATH} --grpc_out=${DERIVED_FILE_DIR} --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`";
+		};
+		6C9CBEC71CABBFCC003B0185 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			filePatterns = "*.proto";
+			fileType = pattern.proxy;
+			isEditable = 1;
+			outputFiles = (
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).pb.cc",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).pb.hh",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).grpc.pb.cc",
+				"$(DERIVED_FILE_DIR)/$(INPUT_FILE_BASE).grpc.pb.hh",
+			);
+			script = "cd ${INPUT_FILE_DIR}\n/usr/local/bin/protoc --proto_path=${INPUT_FILE_DIR} ${INPUT_FILE_PATH} --cpp_out=${DERIVED_FILE_DIR}\n/usr/local/bin/protoc --proto_path=${INPUT_FILE_DIR} ${INPUT_FILE_PATH} --grpc_out=${DERIVED_FILE_DIR} --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`";
+		};
+		6C9CBED21CABC007003B0185 /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
 			compilerSpec = com.apple.compilers.proxy.script;
 			filePatterns = "*.proto";
@@ -38,16 +69,54 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		6C9CBEC61CABBFCC003B0185 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		6C9CBED11CABC007003B0185 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		31B08D8B1CAAE4A600DD6BF8 /* sophos */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sophos; sourceTree = BUILT_PRODUCTS_DIR; };
 		31B08D8E1CAAE4A600DD6BF8 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		31B08D971CAAE58100DD6BF8 /* sophos_proto.proto */ = {isa = PBXFileReference; lastKnownFileType = text; path = sophos_proto.proto; sourceTree = "<group>"; };
+		31B08D971CAAE58100DD6BF8 /* sophos.proto */ = {isa = PBXFileReference; lastKnownFileType = text; path = sophos.proto; sourceTree = "<group>"; };
+		6C9CBEBB1CABBEAD003B0185 /* sophos_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_client.cpp; sourceTree = "<group>"; };
+		6C9CBEBC1CABBEAD003B0185 /* sophos_client.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sophos_client.hpp; sourceTree = "<group>"; };
+		6C9CBEBE1CABBEBA003B0185 /* sophos_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_server.cpp; sourceTree = "<group>"; };
+		6C9CBEBF1CABBEBA003B0185 /* sophos_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sophos_server.hpp; sourceTree = "<group>"; };
+		6C9CBECB1CABBFCC003B0185 /* sophos_server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sophos_server; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C9CBED61CABC007003B0185 /* sophos_client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sophos_client; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		31B08D881CAAE4A600DD6BF8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6C9CBEC51CABBFCC003B0185 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6C9CBED01CABC007003B0185 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -70,6 +139,8 @@
 			isa = PBXGroup;
 			children = (
 				31B08D8B1CAAE4A600DD6BF8 /* sophos */,
+				6C9CBECB1CABBFCC003B0185 /* sophos_server */,
+				6C9CBED61CABC007003B0185 /* sophos_client */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -78,6 +149,10 @@
 			isa = PBXGroup;
 			children = (
 				31B08D961CAAE58100DD6BF8 /* protos */,
+				6C9CBEBB1CABBEAD003B0185 /* sophos_client.cpp */,
+				6C9CBEBC1CABBEAD003B0185 /* sophos_client.hpp */,
+				6C9CBEBE1CABBEBA003B0185 /* sophos_server.cpp */,
+				6C9CBEBF1CABBEBA003B0185 /* sophos_server.hpp */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -85,7 +160,7 @@
 		31B08D961CAAE58100DD6BF8 /* protos */ = {
 			isa = PBXGroup;
 			children = (
-				31B08D971CAAE58100DD6BF8 /* sophos_proto.proto */,
+				31B08D971CAAE58100DD6BF8 /* sophos.proto */,
 			);
 			path = protos;
 			sourceTree = "<group>";
@@ -109,6 +184,42 @@
 			name = sophos;
 			productName = sophos;
 			productReference = 31B08D8B1CAAE4A600DD6BF8 /* sophos */;
+			productType = "com.apple.product-type.tool";
+		};
+		6C9CBEC11CABBFCC003B0185 /* sophos_server */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6C9CBEC81CABBFCC003B0185 /* Build configuration list for PBXNativeTarget "sophos_server" */;
+			buildPhases = (
+				6C9CBEC21CABBFCC003B0185 /* Sources */,
+				6C9CBEC51CABBFCC003B0185 /* Frameworks */,
+				6C9CBEC61CABBFCC003B0185 /* CopyFiles */,
+			);
+			buildRules = (
+				6C9CBEC71CABBFCC003B0185 /* PBXBuildRule */,
+			);
+			dependencies = (
+			);
+			name = sophos_server;
+			productName = sophos;
+			productReference = 6C9CBECB1CABBFCC003B0185 /* sophos_server */;
+			productType = "com.apple.product-type.tool";
+		};
+		6C9CBECC1CABC007003B0185 /* sophos_client */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6C9CBED31CABC007003B0185 /* Build configuration list for PBXNativeTarget "sophos_client" */;
+			buildPhases = (
+				6C9CBECD1CABC007003B0185 /* Sources */,
+				6C9CBED01CABC007003B0185 /* Frameworks */,
+				6C9CBED11CABC007003B0185 /* CopyFiles */,
+			);
+			buildRules = (
+				6C9CBED21CABC007003B0185 /* PBXBuildRule */,
+			);
+			dependencies = (
+			);
+			name = sophos_client;
+			productName = sophos;
+			productReference = 6C9CBED61CABC007003B0185 /* sophos_client */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -138,6 +249,8 @@
 			projectRoot = "";
 			targets = (
 				31B08D8A1CAAE4A600DD6BF8 /* sophos */,
+				6C9CBEC11CABBFCC003B0185 /* sophos_server */,
+				6C9CBECC1CABC007003B0185 /* sophos_client */,
 			);
 		};
 /* End PBXProject section */
@@ -148,7 +261,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				31B08D8F1CAAE4A600DD6BF8 /* main.cpp in Sources */,
-				31B08D991CAAE90300DD6BF8 /* sophos_proto.proto in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6C9CBEC21CABBFCC003B0185 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6C9CBED71CABC38B003B0185 /* sophos_server.cpp in Sources */,
+				6C9CBEC41CABBFCC003B0185 /* sophos.proto in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6C9CBECD1CABC007003B0185 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6C9CBEDA1CABC6B0003B0185 /* sophos_client.cpp in Sources */,
+				6C9CBECF1CABC007003B0185 /* sophos.proto in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +396,34 @@
 			};
 			name = Release;
 		};
+		6C9CBEC91CABBFCC003B0185 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6C9CBECA1CABBFCC003B0185 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		6C9CBED41CABC007003B0185 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6C9CBED51CABC007003B0185 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -285,6 +443,25 @@
 				31B08D941CAAE4A600DD6BF8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6C9CBEC81CABBFCC003B0185 /* Build configuration list for PBXNativeTarget "sophos_server" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6C9CBEC91CABBFCC003B0185 /* Debug */,
+				6C9CBECA1CABBFCC003B0185 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6C9CBED31CABC007003B0185 /* Build configuration list for PBXNativeTarget "sophos_client" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6C9CBED41CABC007003B0185 /* Debug */,
+				6C9CBED51CABC007003B0185 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

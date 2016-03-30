@@ -1,11 +1,18 @@
 
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package sophos;
 
 service Sophos {
-// Sends multiple greetings
+
+// Search
 rpc search (SearchRequest) returns (stream SearchReply) {}
+
+// Update
+rpc update (UpdateRequest) returns (google.protobuf.Empty) {}
+
 }
 
 message SearchRequest
@@ -17,4 +24,10 @@ message SearchRequest
 message SearchReply
 {
     uint64 result = 1;
+}
+
+message UpdateRequest
+{
+    bytes update_token = 1;
+    uint64 index = 2;
 }

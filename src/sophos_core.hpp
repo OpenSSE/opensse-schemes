@@ -20,9 +20,11 @@ namespace sophos {
         
 
 constexpr size_t kSearchTokenSize = noexcept(crypto::Tdp::message_size());
+constexpr size_t kDerivationKeySize = 16;
 constexpr size_t kUpdateTokenSize = 16;
 
-typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
+//typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
+typedef std::string search_token_type;
 typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
 typedef uint64_t index_type;
     
@@ -49,13 +51,15 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    SophosClient(const std::string& init_path);
+    SophosClient();
 
     SearchRequest   search_request(const std::string &keyword) const;
     UpdateRequest   update_request(const std::string &keyword, const index_type index);
     
 private:
-    
+    crypto::Prf<kDerivationKeySize> k_prf_;
+    std::map< std::string, std::pair<search_token_type, uint32_t> > token_map_;
+    sse::crypto::TdpInverse inverse_tdp_;
 };
 
 class SophosServer {

@@ -1,0 +1,3 @@
+[submodule "third_party/crypto"]
+	path = third_party/crypto
+	url = https://gitlab.com/sse/crypto.git

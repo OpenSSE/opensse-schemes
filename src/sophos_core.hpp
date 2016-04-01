@@ -19,12 +19,12 @@ namespace sse {
 namespace sophos {
         
 
-constexpr size_t kSearchTokenSize = noexcept(crypto::Tdp::message_size());
+constexpr size_t kSearchTokenSize = crypto::Tdp::kMessageSize;
 constexpr size_t kDerivationKeySize = 16;
 constexpr size_t kUpdateTokenSize = 16;
 
-//typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
-typedef std::string search_token_type;
+typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
+//typedef std::string search_token_type;
 typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
 typedef uint64_t index_type;
     

@@ -15,7 +15,8 @@ using namespace std;
 
 int main(int argc, const char * argv[]) {
     // insert code here...
-
+    std::cout << kSearchTokenSize << std::endl;
+    
     SophosClient client("client.sav");
 
     SophosServer server("server.dat", client.public_key());

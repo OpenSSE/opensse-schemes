@@ -63,30 +63,36 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
 
     UpdateRequest req;
     search_token_type st;
-
+    
     // to get and modify the search pair, it might be more efficient
     // to directly use at() and see if an exception is raised
     found = token_map_.get(keyword, search_pair);
-
+//    search_pair = token_map_.at(keyword);
+//    found = true;
+        
     if (!found) {
-        st = inverse_tdp_.sample();
+        st = inverse_tdp_.sample_array();
         token_map_.add(keyword, std::make_pair(st, 1));
     }else{
         st = inverse_tdp_.invert(search_pair.first);
         
+            std::cout << "ST0 " << st[0] << std::endl;
+
         token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);
     }
     
-//    std::cout << st[0] << std::endl;
+    std::cout << "New ST0 "<< st[0] << std::endl;
 //    std::cout << token_map_.at(keyword).first[0] << std::endl;
     
     std::string deriv_key = k_prf_.prf_string(keyword);
-
+    std::cout << "Derived key: " << std::hex << deriv_key << std::endl;
+    
     auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
     
+    std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
     
-    req.token = derivation_prf.prf(st + '0');
-    req.index = xor_mask(index, derivation_prf.prf(st + '1'));
+    req.token = derivation_prf.prf(st_string + '0');
+    req.index = xor_mask(index, derivation_prf.prf(st_string + '1'));
     
     std::cout << "Update token: " << std::hex << req.token[0] << std::endl;
 
@@ -104,18 +110,19 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     std::list<index_type> results;
     
     search_token_type st = req.token;
-    
+
     auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
     
     for (size_t i = 0; i < req.add_count; i++) {
+        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
         index_type r;
-        update_token_type ut = derivation_prf.prf(st + '0');
+        update_token_type ut = derivation_prf.prf(st_string + '0');
         std::cout << "Derived token: " << std::hex << ut[0] << std::endl;
 
         bool found = edb_.get(ut,r);
         
         if (found) {
-            r = xor_mask(r, derivation_prf.prf(st + '1'));
+            r = xor_mask(r, derivation_prf.prf(st_string + '1'));
             results.push_back(r);
         }else{
             std::cerr << "We were supposed to find something!" << std::endl;

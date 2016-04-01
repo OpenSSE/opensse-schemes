@@ -86,6 +86,7 @@ DerivedData
 *.perspectivev3
 !default.perspectivev3
 xcuserdata
+xcshareddata
 
 ## Other
 *.xccheckout

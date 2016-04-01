@@ -51,14 +51,14 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    SophosClient();
+    SophosClient(const std::string& save_path);
 
     SearchRequest   search_request(const std::string &keyword) const;
     UpdateRequest   update_request(const std::string &keyword, const index_type index);
     
 private:
     crypto::Prf<kDerivationKeySize> k_prf_;
-    std::map< std::string, std::pair<search_token_type, uint32_t> > token_map_;
+    ssdmap::bucket_map< std::string, std::pair<search_token_type, uint32_t> > token_map_;
     sse::crypto::TdpInverse inverse_tdp_;
 };
 

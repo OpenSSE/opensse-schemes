@@ -27,43 +27,49 @@ size_t TokenHasher::operator()(const update_token_type& ut) const
     return 0;
 }
 
-SophosClient::SophosClient() :
-k_prf_(), token_map_(), inverse_tdp_()
+SophosClient::SophosClient(const std::string& save_path) :
+k_prf_(), token_map_(save_path, 1000), inverse_tdp_()
 {
     
 }
 
 SearchRequest   SophosClient::search_request(const std::string &keyword) const
 {
-    auto it = token_map_.find(keyword);
-    
+    std::pair<search_token_type, uint32_t> search_pair;
+    bool found;
     SearchRequest req;
     req.add_count = 0;
+
+    found = token_map_.get(keyword, search_pair);
     
-    if (it != token_map_.end()) {
-        req.token = it->second.first;
+    if(found)
+    {
+        req.token = search_pair.first;
         req.derivation_key = k_prf_.prf_string(keyword);
-        req.add_count = it->second.second;
+        req.add_count = search_pair.second;
     }
     return req;
 }
     
 UpdateRequest   SophosClient::update_request(const std::string &keyword, const index_type index)
 {
-    auto it = token_map_.find(keyword);
+    std::pair<search_token_type, uint32_t> search_pair;
+    bool found;
 
     UpdateRequest req;
     search_token_type st;
-    
-    if (it == token_map_.end()) { // the keyword does not already exist in the database
+
+    // to get and modify the search pair, it might be more efficient
+    // to directly use at() and see if an exception is raised
+    found = token_map_.get(keyword, search_pair);
+
+    if (!found) {
         st = inverse_tdp_.sample();
-        
-        token_map_.insert(std::make_pair(keyword, std::make_pair(st, 1)));
+        token_map_.add(keyword, std::make_pair(st, 1));
     }else{
-        st = it->second.first;
+        st = search_pair.first;
         
-        it->second.first = inverse_tdp_.invert(it->second.first);
-        it->second.second++;
+        token_map_.at(keyword) = std::make_pair(inverse_tdp_.invert(st), search_pair.second+1);
     }
     
     std::string deriv_key = k_prf_.prf_string(keyword);

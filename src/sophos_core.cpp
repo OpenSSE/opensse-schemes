@@ -32,6 +32,11 @@ k_prf_(), token_map_(save_path, 1000), inverse_tdp_()
 {
     
 }
+const std::string SophosClient::public_key() const
+{
+    return inverse_tdp_.public_key();
+}
+
 
 SearchRequest   SophosClient::search_request(const std::string &keyword) const
 {
@@ -67,10 +72,13 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
         st = inverse_tdp_.sample();
         token_map_.add(keyword, std::make_pair(st, 1));
     }else{
-        st = search_pair.first;
+        st = inverse_tdp_.invert(search_pair.first);
         
-        token_map_.at(keyword) = std::make_pair(inverse_tdp_.invert(st), search_pair.second+1);
+        token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);
     }
+    
+//    std::cout << st[0] << std::endl;
+//    std::cout << token_map_.at(keyword).first[0] << std::endl;
     
     std::string deriv_key = k_prf_.prf_string(keyword);
 
@@ -80,6 +88,8 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
     req.token = derivation_prf.prf(st + '0');
     req.index = xor_mask(index, derivation_prf.prf(st + '1'));
     
+    std::cout << "Update token: " << std::hex << req.token[0] << std::endl;
+
     return req;
 }
 
@@ -100,7 +110,8 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     for (size_t i = 0; i < req.add_count; i++) {
         index_type r;
         update_token_type ut = derivation_prf.prf(st + '0');
-        
+        std::cout << "Derived token: " << std::hex << ut[0] << std::endl;
+
         bool found = edb_.get(ut,r);
         
         if (found) {
@@ -109,6 +120,8 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
         }else{
             std::cerr << "We were supposed to find something!" << std::endl;
         }
+        
+        st = public_tdp_.eval(st);
     }
     
     return results;

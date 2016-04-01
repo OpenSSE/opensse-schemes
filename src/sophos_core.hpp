@@ -53,6 +53,8 @@ class SophosClient {
 public:
     SophosClient(const std::string& save_path);
 
+    const std::string public_key() const;
+    
     SearchRequest   search_request(const std::string &keyword) const;
     UpdateRequest   update_request(const std::string &keyword, const index_type index);
     

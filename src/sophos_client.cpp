@@ -16,66 +16,60 @@
 #include <thread>
 
 #include <grpc/grpc.h>
-#include <grpc++/channel.h>
 #include <grpc++/client_context.h>
 #include <grpc++/create_channel.h>
 #include <grpc++/security/credentials.h>
 
-#include "sophos.grpc.pb.h"
-
 namespace sse {
 namespace sophos {
 
-class SophosClientRunner {
-public:
-    SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path)
-    : stub_(sophos::Sophos::NewStub(channel)) {
 
-    }
-    
-    void search(const std::string& keyword)
-    {
-        grpc::ClientContext context;
-        sophos::SearchRequest request;
-        sophos::SearchReply reply;
-        
-        request.set_search_token(keyword);
-        request.set_add_count(32);
-        
-        
-        std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, request) );
-        while (reader->Read(&reply)) {
-            std::cout << "New result: "
-            << reply.result() << std::endl;
-        }
-        grpc::Status status = reader->Finish();
-        if (status.ok()) {
-            std::cout << "Search succeeded." << std::endl;
-        } else {
-            std::cout << "Search failed." << std::endl;
-        }
-    }
-    
-    void update(const std::string& keyword, uint64_t index)
-    {
-        grpc::ClientContext context;
-        sophos::UpdateRequest request;
-        google::protobuf::Empty e;
-        
-        request.set_update_token(keyword);
-        request.set_index(index);
-        
-        grpc::Status status = stub_->update(&context, request, &e);
-        
-        if (status.ok()) {
-            std::cout << "Update succeeded." << std::endl;
-        } else {
-            std::cout << "Update failed." << std::endl;
-        }
+SophosClientRunner::SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path)
+: stub_(sophos::Sophos::NewStub(channel)) {
 
+}
+
+void SophosClientRunner::search(const std::string& keyword)
+{
+    grpc::ClientContext context;
+    sophos::SearchRequestMessage request;
+    sophos::SearchReply reply;
+    
+    request.set_search_token(keyword);
+    request.set_add_count(32);
+    
+    
+    std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, request) );
+    while (reader->Read(&reply)) {
+        std::cout << "New result: "
+        << reply.result() << std::endl;
     }
-    std::unique_ptr<sophos::Sophos::Stub> stub_;
-};
+    grpc::Status status = reader->Finish();
+    if (status.ok()) {
+        std::cout << "Search succeeded." << std::endl;
+    } else {
+        std::cout << "Search failed." << std::endl;
+    }
+}
+
+void SophosClientRunner::update(const std::string& keyword, uint64_t index)
+{
+    grpc::ClientContext context;
+    sophos::UpdateRequestMessage request;
+    google::protobuf::Empty e;
+    
+    request.set_update_token(keyword);
+    request.set_index(index);
+    
+    grpc::Status status = stub_->update(&context, request, &e);
+    
+    if (status.ok()) {
+        std::cout << "Update succeeded." << std::endl;
+    } else {
+        std::cout << "Update failed." << std::endl;
+    }
+
+}
 
 } // namespace sophos
 } // namespace sse

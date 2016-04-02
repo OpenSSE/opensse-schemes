@@ -7,15 +7,24 @@ package sse.sophos;
 
 service Sophos {
 
+// Setup
+rpc setup (SetupMessage) returns (google.protobuf.Empty) {}
+
 // Search
-rpc search (SearchRequest) returns (stream SearchReply) {}
+rpc search (SearchRequestMessage) returns (stream SearchReply) {}
 
 // Update
-rpc update (UpdateRequest) returns (google.protobuf.Empty) {}
+rpc update (UpdateRequestMessage) returns (google.protobuf.Empty) {}
 
 }
 
-message SearchRequest
+message SetupMessage
+{
+    uint64 setup_size = 1;
+    bytes public_key = 2;
+}
+
+message SearchRequestMessage
 {
     bytes search_token = 1;
     fixed32 add_count = 2;
@@ -26,7 +35,7 @@ message SearchReply
     uint64 result = 1;
 }
 
-message UpdateRequest
+message UpdateRequestMessage
 {
     bytes update_token = 1;
     uint64 index = 2;

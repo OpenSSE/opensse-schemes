@@ -27,16 +27,33 @@ size_t TokenHasher::operator()(const update_token_type& ut) const
     return 0;
 }
 
-SophosClient::SophosClient(const std::string& save_path) :
-k_prf_(), token_map_(save_path, 1000), inverse_tdp_()
+SophosClient::SophosClient(const std::string& token_map_path, const size_t tm_setup_size) :
+k_prf_(), token_map_(token_map_path, tm_setup_size), inverse_tdp_()
 {
     
 }
+    
+SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key) :
+k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), token_map_(token_map_path)
+{
+    
+}
+    
 const std::string SophosClient::public_key() const
 {
     return inverse_tdp_.public_key();
 }
 
+const std::string SophosClient::private_key() const
+{
+    return inverse_tdp_.private_key();
+}
+    
+const std::string SophosClient::master_derivation_key() const
+{
+    return std::string(k_prf_.key().begin(), k_prf_.key().end());
+}
+    
 
 SearchRequest   SophosClient::search_request(const std::string &keyword) const
 {
@@ -100,9 +117,20 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
 }
 
 SophosServer::SophosServer(const std::string& db_path, const std::string& tdp_pk) :
-edb_(db_path, 1000), public_tdp_(tdp_pk)
+edb_(db_path), public_tdp_(tdp_pk)
 {
     
+}
+
+SophosServer::SophosServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk) :
+edb_(db_path, tm_setup_size), public_tdp_(tdp_pk)
+{
+    
+}
+
+const std::string SophosServer::public_key() const
+{
+    return public_tdp_.public_key();
 }
 
 std::list<index_type> SophosServer::search(const SearchRequest& req)

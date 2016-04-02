@@ -51,10 +51,14 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    SophosClient(const std::string& save_path);
-
+    SophosClient(const std::string& token_map_path, const size_t tm_setup_size);
+    SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key);
+    
+    const std::string private_key() const;
     const std::string public_key() const;
     
+    const std::string master_derivation_key() const;
+
     SearchRequest   search_request(const std::string &keyword) const;
     UpdateRequest   update_request(const std::string &keyword, const index_type index);
     
@@ -70,7 +74,10 @@ public:
     
     
     SophosServer(const std::string& db_path, const std::string& tdp_pk);
+    SophosServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk);
     
+    const std::string public_key() const;
+
     std::list<index_type> search(const SearchRequest& req);
     void update(const UpdateRequest& req);
     

@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 #include "sophos_core.hpp"
 
@@ -25,6 +26,14 @@ int main(int argc, const char * argv[]) {
     ifstream client_master_key_in(client_master_key_path.c_str());
     ifstream server_pk_in(server_pk_path.c_str());
     
+    unique_ptr<SophosClient> client;
+    unique_ptr<SophosServer> server;
+    
+    SearchRequest s_req;
+    UpdateRequest u_req;
+    std::list<index_type> res;
+    string key;
+
     if((client_sk_in.good() != client_master_key_in.good()) || (client_sk_in.good() != server_pk_in.good()))
     {
         client_sk_in.close();
@@ -44,94 +53,81 @@ int main(int argc, const char * argv[]) {
         client_master_key_buf << client_master_key_in.rdbuf();
         server_pk_buf << server_pk_in.rdbuf();
 
-        SophosClient client("client.sav", client_sk_buf.str(), client_master_key_buf.str());
+        client.reset(new  SophosClient("client.sav", client_sk_buf.str(), client_master_key_buf.str()));
         
-        SophosServer server("server.dat", server_pk_buf.str());
-
+        server.reset(new SophosServer("server.dat", server_pk_buf.str()));
+        
         SearchRequest s_req;
         std::list<index_type> res;
         string key;
-
-        key = "toto";
-        s_req = client.search_request(key);
-        res = server.search(s_req);
-        
-        cout << "Search " << key << ". Results: [";
-        for(index_type i : res){
-            cout << i << ", ";
-        }
-        cout << "]" << endl;
 
     }else{
         cout << "Create new client-server instances" << endl;
         
-        SophosClient client("client.sav",1000);
+        client.reset(new SophosClient("client.sav",1000));
 
-        SophosServer server("server.dat", 1000, client.public_key());
+        server.reset(new SophosServer("server.dat", 1000, client->public_key()));
         
         // write keys to files
         ofstream client_sk_out(client_sk_path.c_str());
-        client_sk_out << client.private_key();
+        client_sk_out << client->private_key();
         client_sk_out.close();
         
         ofstream client_master_key_out(client_master_key_path.c_str());
-        client_master_key_out << client.master_derivation_key();
+        client_master_key_out << client->master_derivation_key();
         client_master_key_out.close();
 
         ofstream server_pk_out(server_pk_path.c_str());
-        server_pk_out << server.public_key();
+        server_pk_out << server->public_key();
         server_pk_out.close();
 
+        u_req = client->update_request("toto", 0);
+        server->update(u_req);
         
+        u_req = client->update_request("titi", 0);
+        server->update(u_req);
         
-        SearchRequest s_req;
-        UpdateRequest u_req;
-        std::list<index_type> res;
-        string key;
-
-        u_req = client.update_request("toto", 0);
-        server.update(u_req);
-
-    //    u_req = client.update_request("titi", 0);
-    //    server.update(u_req);
+        u_req = client->update_request("toto", 1);
+        server->update(u_req);
         
-        u_req = client.update_request("toto", 1);
-        server.update(u_req);
+        u_req = client->update_request("tata", 0);
+        server->update(u_req);
         
-    //    u_req = client.update_request("tata", 0);
-    //    server.update(u_req);
-
-        key = "toto";
-        s_req = client.search_request(key);
-        res = server.search(s_req);
-        
-        cout << "Search " << key << ". Results: [";
-        for(index_type i : res){
-            cout << i << ", ";
-        }
-        cout << "]" << endl;
-
-    //    key = "titi";
-    //    s_req = client.search_request(key);
-    //    res = server.search(s_req);
-    //    
-    //    cout << "Search " << key << ". Results: [";
-    //    for(index_type i : res){
-    //        cout << i << ", ";
-    //    }
-    //    cout << "]" << endl;
-    //
-    //    key = "tata";
-    //    s_req = client.search_request(key);
-    //    res = server.search(s_req);
-    //    
-    //    cout << "Search " << key << ". Results: [";
-    //    for(index_type i : res){
-    //        cout << i << ", ";
-    //    }
-    //    cout << "]" << endl;
 
     }
+    
+
+    
+    key = "toto";
+    s_req = client->search_request(key);
+    res = server->search(s_req);
+
+    cout << "Search " << key << ". Results: [";
+    for(index_type i : res){
+        cout << i << ", ";
+    }
+    cout << "]" << endl;
+
+    key = "titi";
+    s_req = client->search_request(key);
+    res = server->search(s_req);
+    
+    cout << "Search " << key << ". Results: [";
+    for(index_type i : res){
+        cout << i << ", ";
+    }
+    cout << "]" << endl;
+
+    key = "tata";
+    s_req = client->search_request(key);
+    res = server->search(s_req);
+    
+    cout << "Search " << key << ". Results: [";
+    for(index_type i : res){
+        cout << i << ", ";
+    }
+    cout << "]" << endl;
+
     
     client_sk_in.close();
     client_master_key_in.close();

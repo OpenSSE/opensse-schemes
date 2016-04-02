@@ -8,6 +8,8 @@
 
 #include "utils.hpp"
 
+#include <sys/stat.h>
+
 uint64_t xor_mask(const uint64_t in, const std::array<uint8_t, 16>& mask)
 {
     // Defined for LITTLE ENDIAN arch
@@ -19,4 +21,46 @@ uint64_t xor_mask(const uint64_t in, const std::array<uint8_t, 16>& mask)
                 ^ (((uint64_t)mask[5]) << 16)
                 ^ (((uint64_t)mask[6]) << 8)
                 ^ (mask[7]);
+}
+
+
+bool is_file(const std::string& path)
+{
+    struct stat sb;
+    
+    if (stat(path.c_str(), &sb) == 0 && S_ISREG(sb.st_mode))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool is_directory(const std::string& path)
+{
+    struct stat sb;
+    
+    if (stat(path.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool exists(const std::string& path)
+{
+    struct stat sb;
+    
+    if (stat(path.c_str(), &sb) == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool create_directory(const std::string& path, mode_t mode)
+{
+    if (mkdir(path.data(),mode) != 0) {
+        return false;
+    }
+    return true;
 }

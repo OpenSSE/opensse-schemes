@@ -18,15 +18,22 @@
 namespace sse {
 namespace sophos {
 
-    class SophosClientRunner {
-    public:
-        SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path);
-        
-        void search(const std::string& keyword);
-        void update(const std::string& keyword, uint64_t index);
+class SophosClientRunner {
+public:
+    SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path, size_t setup_size = 1e5, size_t n_keywords = 1e4);
+    
+    void search(const std::string& keyword) const;
+    void update(const std::string& keyword, uint64_t index);
 
-    private:
-        std::unique_ptr<sophos::Sophos::Stub> stub_;
-    };
+private:
+    bool send_setup(const size_t setup_size) const;
+    
+    std::unique_ptr<sophos::Sophos::Stub> stub_;
+    std::unique_ptr<SophosClient> client_;
+};
+
+SearchRequestMessage request_to_message(const SearchRequest& req);
+UpdateRequestMessage request_to_message(const UpdateRequest& req);
+
 } // namespace sophos
 } // namespace sse

@@ -27,7 +27,8 @@ message SetupMessage
 message SearchRequestMessage
 {
     bytes search_token = 1;
-    fixed32 add_count = 2;
+    bytes derivation_key = 2;
+    fixed32 add_count = 3;
 }
 
 message SearchReply

@@ -73,24 +73,27 @@ bld = Builder(action = run_test)
 env.Append(BUILDERS = {'Test' :  bld})
 
 
-def filtered_glob(env, pattern, omit=[],
-  ondisk=True, source=False, strings=False):
-    return filter(
-      lambda f: os.path.basename(f.path) not in omit,
-      env.Glob(pattern))
-
-env.AddMethod(filtered_glob, "FilteredGlob");
+crypto_lib_target = env.Command(config['cryto_lib_dir'], "", "cd third_party/crypto && scons lib")
+ssdmap_target = env.Command(config['ssdmap_lib_dir'], "", "cd third_party/ssdmap && scons lib")
+env.Alias('deps', [crypto_lib_target, ssdmap_target])
 
 objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 # protos = SConscript('src/protos/build.scons', exports='env', duplicate=0)
 # Depends(objects, protos)
 
+env.Depends(objects,[crypto_lib_target, ssdmap_target])
+
+# clean_crypto = env.Command("clean_crypto", "", "cd third_party/crypto && scons -c lib")
+# clean_ssdmap = env.Command("clean_ssdmap", "", "cd third_party/ssdmap && scons -c lib")
+# env.Alias('clean_deps', [clean_crypto, clean_ssdmap])
 
 Clean(objects, 'build')
 
 debug_prog = env.Program('debug',['main.cpp'] + objects, CPPPATH = ['src'] + env.get('CPPPATH', []))
 client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
 server = env.Program('server',['server_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+
+env.Default([debug_prog, client, server])
 
 # check_env = env.Clone()
 #

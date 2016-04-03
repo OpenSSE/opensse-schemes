@@ -14,5 +14,7 @@ int main(int argc, char** argv) {
 
     sse::sophos::run_sophos_server("0.0.0.0:4242", "test.ssdb");
     
+    std::cout << "Done" << std::endl;
+    
     return 0;
 }

@@ -76,10 +76,18 @@ SophosClientRunner::SophosClientRunner(std::shared_ptr<grpc::Channel> channel, c
         
         // write keys to files
         std::ofstream sk_out(sk_path.c_str());
+        if (!sk_out.is_open()) {
+            throw std::runtime_error(sk_path + ": unable to write the secret key");
+        }
+        
         sk_out << client_->private_key();
         sk_out.close();
         
         std::ofstream master_key_out(master_key_path.c_str());
+        if (!master_key_out.is_open()) {
+            throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
+        }
+        
         master_key_out << client_->master_derivation_key();
         master_key_out.close();
 

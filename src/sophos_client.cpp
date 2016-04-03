@@ -27,9 +27,12 @@ namespace sse {
 namespace sophos {
 
 
-SophosClientRunner::SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path, size_t setup_size, size_t n_keywords)
-: stub_(sophos::Sophos::NewStub(channel)) {
-
+SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size, size_t n_keywords)
+{
+    std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
+                                                               grpc::InsecureChannelCredentials()));
+    stub_ = std::move(sophos::Sophos::NewStub(channel));
+                    
     std::string sk_path = path + "/tdp_sk.key";
     std::string master_key_path = path + "/derivation_master.key";
     std::string token_map_path = path + "/tokens.dat";
@@ -187,22 +190,3 @@ UpdateRequestMessage request_to_message(const UpdateRequest& req)
 
 } // namespace sophos
 } // namespace sse
-
-int main(int argc, char** argv) {
-    // Expect only arg: --db_path=path/to/route_guide_db.json.
-    std::string save_path = "test.csdb";
-    sse::sophos::SophosClientRunner client(
-                           grpc::CreateChannel("localhost:4242",
-                                               grpc::InsecureChannelCredentials()),
-                           save_path);
-    
-    std::cout << "-------------- Search --------------" << std::endl;
-    client.search("toto");
-    std::cout << "-------------- Search --------------" << std::endl;
-    client.search("coucou");
-    
-    std::cout << "-------------- Update --------------" << std::endl;
-    client.update("kiki", 45);
-    
-    return 0;
-}

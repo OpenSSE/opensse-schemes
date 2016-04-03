@@ -47,5 +47,6 @@ namespace sophos {
     SearchRequest message_to_request(const SearchRequestMessage* mes);
     UpdateRequest message_to_request(const UpdateRequestMessage* mes);
 
+    void run_sophos_server(const std::string &address, const std::string& server_db_path);
 } // namespace sophos
 } // namespace sse

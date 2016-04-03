@@ -182,9 +182,9 @@ UpdateRequest message_to_request(const UpdateRequestMessage* mes)
     return req;
 }
        
-void run_sophos_server() {
-    std::string server_address("0.0.0.0:4242");
-    SophosImpl service("test.ssdb");
+void run_sophos_server(const std::string &address, const std::string& server_db_path) {
+    std::string server_address(address);
+    SophosImpl service(server_db_path);
     
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
@@ -196,10 +196,3 @@ void run_sophos_server() {
 
 } // namespace sophos
 } // namespace sse
-
-int main(int argc, char** argv) {
-    // Expect only arg: --db_path=path/to/route_guide_db.json.
-    sse::sophos::run_sophos_server();
-    
-    return 0;
-}

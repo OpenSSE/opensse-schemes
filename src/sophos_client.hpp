@@ -20,7 +20,7 @@ namespace sophos {
 
 class SophosClientRunner {
 public:
-    SophosClientRunner(std::shared_ptr<grpc::Channel> channel, const std::string& path, size_t setup_size = 1e5, size_t n_keywords = 1e4);
+    SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, size_t n_keywords = 1e4);
     
     void search(const std::string& keyword) const;
     void update(const std::string& keyword, uint64_t index);

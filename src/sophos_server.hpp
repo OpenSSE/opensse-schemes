@@ -12,6 +12,9 @@
 
 #include "sophos.grpc.pb.h"
 
+#include <string>
+#include <memory>
+
 #include <grpc++/server_context.h>
 
 namespace sse {
@@ -19,7 +22,7 @@ namespace sophos {
 
     class SophosImpl final : public sophos::Sophos::Service {
     public:
-        explicit SophosImpl();
+        explicit SophosImpl(const std::string& path);
         
         grpc::Status setup(grpc::ServerContext* context,
                            const sophos::SetupMessage* request,
@@ -32,6 +35,17 @@ namespace sophos {
         grpc::Status update(grpc::ServerContext* context,
                             const sophos::UpdateRequestMessage* request,
                             google::protobuf::Empty* e) override;
+        
+    private:
+        static const std::string pk_file;
+        static const std::string pairs_map_file;
+
+        std::unique_ptr<SophosServer> server_;
+        std::string storage_path_;
     };
+    
+    SearchRequest message_to_request(const SearchRequestMessage* mes);
+    UpdateRequest message_to_request(const UpdateRequestMessage* mes);
+
 } // namespace sophos
 } // namespace sse

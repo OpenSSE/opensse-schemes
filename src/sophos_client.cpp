@@ -106,11 +106,12 @@ bool SophosClientRunner::send_setup(const size_t setup_size) const
     if (status.ok()) {
         std::cout << "Setup succeeded." << std::endl;
     } else {
-        std::cout << "Setup failed." << std::endl;
+        std::cout << "Setup failed: " << std::endl;
+        std::cout << status.error_message() << std::endl;
         return false;
     }
 
-    return false;
+    return true;
 }
     
 void SophosClientRunner::search(const std::string& keyword) const
@@ -130,7 +131,8 @@ void SophosClientRunner::search(const std::string& keyword) const
     if (status.ok()) {
         std::cout << "Search succeeded." << std::endl;
     } else {
-        std::cout << "Search failed." << std::endl;
+        std::cout << "Search failed:" << std::endl;
+        std::cout << status.error_message() << std::endl;
     }
 }
 
@@ -147,7 +149,8 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
     if (status.ok()) {
         std::cout << "Update succeeded." << std::endl;
     } else {
-        std::cout << "Update failed." << std::endl;
+        std::cout << "Update failed:" << std::endl;
+        std::cout << status.error_message() << std::endl;
     }
 
 }

@@ -63,10 +63,14 @@ Temporary Items
 .sconsign.dblite
 config.log
 .sconf_temp
+*.pyc
+
 library/
 build/
 debug
 check
+client
+server
 
 # Xcode
 #

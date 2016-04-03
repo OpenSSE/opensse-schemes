@@ -34,7 +34,7 @@ k_prf_(), token_map_(token_map_path, tm_setup_size), inverse_tdp_()
 }
     
 SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key) :
-k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), token_map_(token_map_path)
+k_prf_(derivation_master_key), token_map_(token_map_path), inverse_tdp_(tdp_private_key)
 {
     
 }

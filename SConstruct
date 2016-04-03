@@ -81,7 +81,7 @@ def filtered_glob(env, pattern, omit=[],
 
 env.AddMethod(filtered_glob, "FilteredGlob");
 
-objects = SConscript('src/build.scons', exports='env', variant_dir='build', duplicate=1)
+objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 # protos = SConscript('src/protos/build.scons', exports='env', duplicate=0)
 # Depends(objects, protos)
 
@@ -89,8 +89,8 @@ objects = SConscript('src/build.scons', exports='env', variant_dir='build', dupl
 Clean(objects, 'build')
 
 debug_prog = env.Program('debug',['main.cpp'] + objects, CPPPATH = ['src'] + env.get('CPPPATH', []))
-
-Default(debug_prog)
+client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+server = env.Program('server',['server_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
 
 # check_env = env.Clone()
 #

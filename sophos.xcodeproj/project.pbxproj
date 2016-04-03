@@ -193,6 +193,7 @@
 /* Begin PBXFileReference section */
 		315A5A531CB15D920026DBB3 /* client_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client_main.cpp; sourceTree = "<group>"; };
 		315A5A5C1CB15DEF0026DBB3 /* server_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server_main.cpp; sourceTree = "<group>"; };
+		315A5A5E1CB189F70026DBB3 /* SConstruct */ = {isa = PBXFileReference; lastKnownFileType = text; path = SConstruct; sourceTree = "<group>"; };
 		31B08D8B1CAAE4A600DD6BF8 /* sophos */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sophos; sourceTree = BUILT_PRODUCTS_DIR; };
 		31B08D8E1CAAE4A600DD6BF8 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		31B08D971CAAE58100DD6BF8 /* sophos.proto */ = {isa = PBXFileReference; lastKnownFileType = text; path = sophos.proto; sourceTree = "<group>"; };
@@ -244,6 +245,7 @@
 		31B08D821CAAE4A600DD6BF8 = {
 			isa = PBXGroup;
 			children = (
+				315A5A5E1CB189F70026DBB3 /* SConstruct */,
 				31B08D8E1CAAE4A600DD6BF8 /* main.cpp */,
 				315A5A531CB15D920026DBB3 /* client_main.cpp */,
 				315A5A5C1CB15DEF0026DBB3 /* server_main.cpp */,
@@ -579,6 +581,7 @@
 					"-ldl",
 				);
 				SDKROOT = macosx;
+				WARNING_CFLAGS = "-Wall ";
 			};
 			name = Debug;
 		};
@@ -624,6 +627,7 @@
 					"-ldl",
 				);
 				SDKROOT = macosx;
+				WARNING_CFLAGS = "-Wall ";
 			};
 			name = Release;
 		};

@@ -94,15 +94,20 @@ env.Depends(objects,[crypto_lib_target, ssdmap_target, db_parser_target])
 
 Clean(objects, 'build')
 
-debug_prog = env.Program('debug',['main.cpp'] + objects, CPPPATH = ['src'] + env.get('CPPPATH', []))
+outter_env = env.Clone()
+outter_env.Append(CPPPATH = ['build'])
+
+
+debug_prog = outter_env.Program('debug',['main.cpp'] + objects)
 
 # client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
 
-env_client = env.Clone()
+env_client = outter_env.Clone()
 env_client.Append(LIBS = ['sse_dbparser'])
-client = env_client.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
 
-server = env.Program('server',['server_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+client = env_client.Program('client',['client_main.cpp'] + objects)
+
+server = outter_env.Program('server',['server_main.cpp'] + objects)
 
 env.Default([debug_prog, client, server])
 

@@ -24,6 +24,10 @@ config['cryto_lib'] = config['cryto_lib_dir']  + "/lib"
 config['ssdmap_lib_dir'] = root_dir + "/third_party/ssdmap/library"
 config['ssdmap_include'] = config['ssdmap_lib_dir']  + "/include"
 config['ssdmap_lib'] = config['ssdmap_lib_dir']  + "/lib"
+
+config['db-parser_lib_dir'] = root_dir + "/third_party/db-parser/library"
+config['db-parser_include'] = config['db-parser_lib_dir']  + "/include"
+config['db-parser_lib'] = config['db-parser_lib_dir']  + "/lib"
 #
 # config['dbparser_lib_dir'] = config['sse_root_dir'] + "/db-parser/library"
 # config['dbparser_include'] = config['dbparser_lib_dir']  + "/include"
@@ -38,9 +42,9 @@ config['ssdmap_lib'] = config['ssdmap_lib_dir']  + "/lib"
 
 env.Append(CCFLAGS = ['-fPIC','-Wall', '-march=native'])
 env.Append(CXXFLAGS = ['-std=c++11'])
-env.Append(CPPPATH = [config['cryto_include'], config['ssdmap_include']])
-env.Append(LIBPATH = [config['cryto_lib'], config['ssdmap_lib']])
-env.Append(RPATH = [config['cryto_lib'], config['ssdmap_lib']])
+env.Append(CPPPATH = [config['cryto_include'], config['ssdmap_include'], config['db-parser_include']])
+env.Append(LIBPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
+env.Append(RPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
 
 env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl'])
 
@@ -75,13 +79,14 @@ env.Append(BUILDERS = {'Test' :  bld})
 
 crypto_lib_target = env.Command(config['cryto_lib_dir'], "", "cd third_party/crypto && scons lib")
 ssdmap_target = env.Command(config['ssdmap_lib_dir'], "", "cd third_party/ssdmap && scons lib")
-env.Alias('deps', [crypto_lib_target, ssdmap_target])
+db_parser_target = env.Command(config['db-parser_lib_dir'], "", "cd third_party/db-parser && scons lib")
+env.Alias('deps', [crypto_lib_target, ssdmap_target, db_parser_target])
 
 objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 # protos = SConscript('src/protos/build.scons', exports='env', duplicate=0)
 # Depends(objects, protos)
 
-env.Depends(objects,[crypto_lib_target, ssdmap_target])
+env.Depends(objects,[crypto_lib_target, ssdmap_target, db_parser_target])
 
 # clean_crypto = env.Command("clean_crypto", "", "cd third_party/crypto && scons -c lib")
 # clean_ssdmap = env.Command("clean_ssdmap", "", "cd third_party/ssdmap && scons -c lib")
@@ -90,7 +95,13 @@ env.Depends(objects,[crypto_lib_target, ssdmap_target])
 Clean(objects, 'build')
 
 debug_prog = env.Program('debug',['main.cpp'] + objects, CPPPATH = ['src'] + env.get('CPPPATH', []))
-client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+
+# client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+
+env_client = env.Clone()
+env_client.Append(LIBS = ['sse_dbparser'])
+client = env_client.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+
 server = env.Program('server',['server_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
 
 env.Default([debug_prog, client, server])

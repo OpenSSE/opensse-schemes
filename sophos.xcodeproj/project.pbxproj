@@ -74,6 +74,27 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
+		315EC2751CB2D660009511D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 315EC2701CB2D660009511D5 /* db-parser.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 16A3E4D21C17202C00383B85;
+			remoteInfo = native_test;
+		};
+		315EC2771CB2D660009511D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 315EC2701CB2D660009511D5 /* db-parser.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 163E9E661C17446D00E63E9E;
+			remoteInfo = libparser;
+		};
+		315EC2821CB2D837009511D5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 315EC2701CB2D660009511D5 /* db-parser.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 163E9E651C17446D00E63E9E;
+			remoteInfo = libparser;
+		};
 		6C9CBF041CAC097D003B0185 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6C9CBEFE1CAC097D003B0185 /* ssdmap.xcodeproj */;
@@ -194,6 +215,7 @@
 		315A5A531CB15D920026DBB3 /* client_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client_main.cpp; sourceTree = "<group>"; };
 		315A5A5C1CB15DEF0026DBB3 /* server_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server_main.cpp; sourceTree = "<group>"; };
 		315A5A5E1CB189F70026DBB3 /* SConstruct */ = {isa = PBXFileReference; lastKnownFileType = text; path = SConstruct; sourceTree = "<group>"; };
+		315EC2701CB2D660009511D5 /* db-parser.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "db-parser.xcodeproj"; path = "third_party/db-parser/db-parser.xcodeproj"; sourceTree = "<group>"; };
 		31B08D8B1CAAE4A600DD6BF8 /* sophos */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sophos; sourceTree = BUILT_PRODUCTS_DIR; };
 		31B08D8E1CAAE4A600DD6BF8 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		31B08D971CAAE58100DD6BF8 /* sophos.proto */ = {isa = PBXFileReference; lastKnownFileType = text; path = sophos.proto; sourceTree = "<group>"; };
@@ -242,6 +264,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		315EC2711CB2D660009511D5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				315EC2761CB2D660009511D5 /* native_test */,
+				315EC2781CB2D660009511D5 /* liblibparser.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		31B08D821CAAE4A600DD6BF8 = {
 			isa = PBXGroup;
 			children = (
@@ -253,6 +284,7 @@
 				31B08D8C1CAAE4A600DD6BF8 /* Products */,
 				6C9CBF1F1CAC0C33003B0185 /* libsse_crypto.xcodeproj */,
 				6C9CBEFE1CAC097D003B0185 /* ssdmap.xcodeproj */,
+				315EC2701CB2D660009511D5 /* db-parser.xcodeproj */,
 			);
 			sourceTree = "<group>";
 		};
@@ -365,6 +397,7 @@
 				6C9CBED21CABC007003B0185 /* PBXBuildRule */,
 			);
 			dependencies = (
+				315EC2831CB2D837009511D5 /* PBXTargetDependency */,
 				6C9CBF381CAC0FCF003B0185 /* PBXTargetDependency */,
 				6C9CBF3A1CAC0FCF003B0185 /* PBXTargetDependency */,
 			);
@@ -399,6 +432,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = 315EC2711CB2D660009511D5 /* Products */;
+					ProjectRef = 315EC2701CB2D660009511D5 /* db-parser.xcodeproj */;
+				},
+				{
 					ProductGroup = 6C9CBF201CAC0C33003B0185 /* Products */;
 					ProjectRef = 6C9CBF1F1CAC0C33003B0185 /* libsse_crypto.xcodeproj */;
 				},
@@ -417,6 +454,20 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		315EC2761CB2D660009511D5 /* native_test */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = native_test;
+			remoteRef = 315EC2751CB2D660009511D5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		315EC2781CB2D660009511D5 /* liblibparser.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = liblibparser.a;
+			remoteRef = 315EC2771CB2D660009511D5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		6C9CBF051CAC097D003B0185 /* ssdmap */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
@@ -499,6 +550,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		315EC2831CB2D837009511D5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = libparser;
+			targetProxy = 315EC2821CB2D837009511D5 /* PBXContainerItemProxy */;
+		};
 		6C9CBF0B1CAC09A6003B0185 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = libssdmap;

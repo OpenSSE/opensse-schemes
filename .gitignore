@@ -71,6 +71,8 @@ debug
 check
 client
 server
+test.csdb
+test.ssdb
 
 # Xcode
 #

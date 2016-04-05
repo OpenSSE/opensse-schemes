@@ -9,6 +9,8 @@
 #include "utils.hpp"
 
 #include <sys/stat.h>
+#include <iostream>
+#include <iomanip>
 
 uint64_t xor_mask(const uint64_t in, const std::array<uint8_t, 16>& mask)
 {
@@ -63,4 +65,16 @@ bool create_directory(const std::string& path, mode_t mode)
         return false;
     }
     return true;
+}
+
+void print_hex(std::ostream& out, const std::string &s)
+{
+//    for (unsigned char c : s) {
+//        out << std::hex << std::setw(2) << std::setfill('0') << (uint)c;
+//    }
+    for(unsigned char c : s)
+    {
+        out << std::hex << std::setw(2) << std::setfill('0') << (uint) c;
+    }
+
 }

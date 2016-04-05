@@ -140,6 +140,8 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
         writer->Write(reply);
     }
     
+    std::cout << "End Search" << std::endl;
+    
     return grpc::Status::OK;
 }
 

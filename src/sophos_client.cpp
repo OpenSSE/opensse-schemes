@@ -135,6 +135,8 @@ const SophosClient& SophosClientRunner::client() const
     
 void SophosClientRunner::search(const std::string& keyword) const
 {
+    std::cout << "Search " << keyword << std::endl;
+    
     grpc::ClientContext context;
     sophos::SearchRequestMessage message;
     sophos::SearchReply reply;

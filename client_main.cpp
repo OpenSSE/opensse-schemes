@@ -8,28 +8,51 @@
 
 #include "sophos_client.hpp"
 #include "logger.hpp"
+#include "thread_pool.hpp"
 
 #include <sse/dbparser/DBParserJSON.h>
 
 #include <stdio.h>
 
+//void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::string& path)
+//{
+//    sse::dbparser::DBParserJSON parser(path.c_str());
+//    
+//    auto add_pair_callback = [&runner](const string& keyword, const unsigned &doc)
+//    {
+////        std::cout << "Update: " << keyword << ", " << std::dec << doc << std::endl;
+//        runner.update(keyword, doc);
+//    };
+//    
+//    parser.addCallbackPair(add_pair_callback);
+//    parser.parse();
+//}
+
 void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::string& path)
 {
     sse::dbparser::DBParserJSON parser(path.c_str());
+    ThreadPool pool(1);
     
-    auto add_pair_callback = [&runner](const string& keyword, const unsigned &doc)
+    auto add_list_callback = [&runner,&pool](const string kw, const list<unsigned> docs)
     {
-//        std::cout << "Update: " << keyword << ", " << std::dec << doc << std::endl;
-        runner.update(keyword, doc);
+        //        std::cout << "Update: " << keyword << ", " << std::dec << doc << std::endl;
+      
+        auto work = [&runner](const string& keyword, const list<unsigned> &documents)
+        {
+            for (unsigned doc : documents) {
+                runner.update(keyword, doc);
+            }
+        };
+        pool.enqueue(work,kw,docs);
     };
     
-    parser.addCallbackPair(add_pair_callback);
+    parser.addCallbackList(add_list_callback);
     parser.parse();
 }
 
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
-    sse::logger::set_severity(sse::logger::DBG);
+    sse::logger::set_severity(sse::logger::INFO);
     
     std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
     sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path, 1e6, 1e5);
@@ -44,7 +67,7 @@ int main(int argc, char** argv) {
     if(client_runner.client().keyword_count() == 0)
     {
         // The database is empty, do some updates
-        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
+        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_1000.json");
 //        load_inverted_index(client_runner, "/Users/raphaelbost/Code/sse/sophos/inverted_index_test.json");
 //        client_runner.update("dynamit", 0);
 //        client_runner.update("dallacasa", 0);

@@ -26,7 +26,7 @@ void exit_handler(int signal)
 
 int main(int argc, char** argv) {
 
-    sse::logger::set_severity(sse::logger::DBG);
+    sse::logger::set_severity(sse::logger::INFO);
 
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);

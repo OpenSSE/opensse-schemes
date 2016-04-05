@@ -146,7 +146,7 @@ void SophosClientRunner::search(const std::string& keyword) const
     std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, message) );
     while (reader->Read(&reply)) {
         std::cout << "New result: "
-        << reply.result() << std::endl;
+        << std::dec << reply.result() << std::endl;
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {

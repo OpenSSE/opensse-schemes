@@ -24,7 +24,7 @@ size_t TokenHasher::operator()(const update_token_type& ut) const
         }
         h = ut[i] + h;
     }
-    return 0;
+    return h;
 }
 
 SophosClient::SophosClient(const std::string& token_map_path, const size_t tm_setup_size) :

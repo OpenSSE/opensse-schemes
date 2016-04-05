@@ -160,7 +160,8 @@ grpc::Status SophosImpl::update(grpc::ServerContext* context,
                     const sophos::UpdateRequestMessage* mes,
                     google::protobuf::Empty* e)
 {
-
+    std::unique_lock<std::mutex> lock(update_mtx_);
+    
     if (!server_) {
         // problem, the server is already set up
         return grpc::Status(grpc::FAILED_PRECONDITION, "The server is not set up");

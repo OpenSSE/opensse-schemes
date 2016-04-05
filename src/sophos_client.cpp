@@ -29,6 +29,7 @@ namespace sophos {
 
 
 SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size, size_t n_keywords)
+    : update_launched_count_(0), update_completed_count_(0)
 {
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                grpc::InsecureChannelCredentials()));
@@ -102,6 +103,16 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
             throw std::runtime_error("Unsuccessful server setup");
         }
     }
+    
+    // start the thread that will look for completed updates
+    update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
+}
+
+SophosClientRunner::~SophosClientRunner()
+{
+//    update_cq_.Shutdown();
+    wait_updates_completion();
+//    update_completion_thread_->join();
 }
 
 bool SophosClientRunner::send_setup(const size_t setup_size) const
@@ -125,6 +136,7 @@ bool SophosClientRunner::send_setup(const size_t setup_size) const
 
     return true;
 }
+    
     
 const SophosClient& SophosClientRunner::client() const
 {
@@ -160,6 +172,7 @@ void SophosClientRunner::search(const std::string& keyword) const
 
 void SophosClientRunner::update(const std::string& keyword, uint64_t index)
 {
+    std::unique_lock<std::mutex> lock(update_mtx_);
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
     google::protobuf::Empty e;
@@ -176,7 +189,64 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
     }
 
 }
+
+void SophosClientRunner::async_update(const std::string& keyword, uint64_t index)
+{
+    std::unique_lock<std::mutex> lock(update_mtx_);
+    grpc::ClientContext context;
+    sophos::UpdateRequestMessage message;
+    google::protobuf::Empty e;
     
+    message = request_to_message(client_->update_request(keyword, index));
+    
+    std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
+                                                                stub_->Asyncupdate(&context, message, &update_cq_));
+
+    update_launched_count_++;
+    rpc->Finish(&e, NULL, new size_t(update_launched_count_));
+
+//    if (status.ok()) {
+//        logger::log(logger::TRACE) << "Update succeeded." << std::endl;
+//    } else {
+//        logger::log(logger::ERROR) << "Update failed:" << std::endl;
+//        logger::log(logger::ERROR) << status.error_message() << std::endl;
+//    }
+    
+}
+
+void SophosClientRunner::wait_updates_completion()
+{
+    std::unique_lock<std::mutex> lock(update_completion_mtx_);
+    update_completion_cv_.wait(lock, [this]{ return update_launched_count_ == update_completed_count_; });
+}
+
+void SophosClientRunner::update_completion_loop()
+{
+    size_t* tag;
+    bool ok = false;
+
+    for (; ; ok = false) {
+        bool r = update_cq_.Next((void**)&tag, &ok);
+        if (!r) {
+            logger::log(logger::TRACE) << "Close asynchronous update loop" << std::endl;
+            return;
+        }
+
+        logger::log(logger::TRACE) << "Asynchronous update " << std::dec << *tag << " succeeded." << std::endl;
+        delete tag;
+        
+        
+        {
+            std::lock_guard<std::mutex> lock(update_completion_mtx_);
+            update_completed_count_++;
+            
+            if (update_launched_count_ == update_completed_count_) {
+                update_completion_cv_.notify_all();
+            }
+        }
+    }
+}
+
 SearchRequestMessage request_to_message(const SearchRequest& req)
 {
     SearchRequestMessage mes;

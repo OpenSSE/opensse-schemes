@@ -14,6 +14,7 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 
 #include <grpc++/server.h>
 #include <grpc++/server_context.h>
@@ -43,6 +44,8 @@ namespace sophos {
 
         std::unique_ptr<SophosServer> server_;
         std::string storage_path_;
+        
+        std::mutex update_mtx_;
     };
     
     SearchRequest message_to_request(const SearchRequestMessage* mes);

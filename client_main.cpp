@@ -31,7 +31,7 @@
 void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::string& path)
 {
     sse::dbparser::DBParserJSON parser(path.c_str());
-    ThreadPool pool(1);
+    ThreadPool pool(4);
     
     auto add_list_callback = [&runner,&pool](const string kw, const list<unsigned> docs)
     {
@@ -40,7 +40,7 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
         auto work = [&runner](const string& keyword, const list<unsigned> &documents)
         {
             for (unsigned doc : documents) {
-                runner.update(keyword, doc);
+                runner.async_update(keyword, doc);
             }
         };
         pool.enqueue(work,kw,docs);
@@ -48,11 +48,13 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
     
     parser.addCallbackList(add_list_callback);
     parser.parse();
+    
+    runner.wait_updates_completion();
 }
 
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
-    sse::logger::set_severity(sse::logger::INFO);
+    sse::logger::set_severity(sse::logger::TRACE);
     
     std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
     sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path, 1e6, 1e5);
@@ -67,7 +69,7 @@ int main(int argc, char** argv) {
     if(client_runner.client().keyword_count() == 0)
     {
         // The database is empty, do some updates
-        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_1000.json");
+        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10.json");
 //        load_inverted_index(client_runner, "/Users/raphaelbost/Code/sse/sophos/inverted_index_test.json");
 //        client_runner.update("dynamit", 0);
 //        client_runner.update("dallacasa", 0);

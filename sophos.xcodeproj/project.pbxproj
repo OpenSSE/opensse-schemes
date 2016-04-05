@@ -26,6 +26,7 @@
 		6C9CBF321CAC0FC0003B0185 /* libsse_crypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF2C1CAC0C33003B0185 /* libsse_crypto.dylib */; };
 		6C9CBF3B1CAC0FD6003B0185 /* libssdmap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF091CAC097D003B0185 /* libssdmap.dylib */; };
 		6C9CBF3C1CAC0FD6003B0185 /* libsse_crypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF2C1CAC0C33003B0185 /* libsse_crypto.dylib */; };
+		6CF416021CB3F02200C448D4 /* libparser.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 315EC2781CB2D660009511D5 /* libparser.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -256,6 +257,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6CF416021CB3F02200C448D4 /* libparser.dylib in Frameworks */,
 				6C9CBF3B1CAC0FD6003B0185 /* libssdmap.dylib in Frameworks */,
 				6C9CBF3C1CAC0FD6003B0185 /* libsse_crypto.dylib in Frameworks */,
 			);
@@ -268,7 +270,7 @@
 			isa = PBXGroup;
 			children = (
 				315EC2761CB2D660009511D5 /* native_test */,
-				315EC2781CB2D660009511D5 /* liblibparser.a */,
+				315EC2781CB2D660009511D5 /* libparser.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -461,10 +463,10 @@
 			remoteRef = 315EC2751CB2D660009511D5 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		315EC2781CB2D660009511D5 /* liblibparser.a */ = {
+		315EC2781CB2D660009511D5 /* libparser.dylib */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			path = liblibparser.a;
+			path = libparser.dylib;
 			remoteRef = 315EC2771CB2D660009511D5 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};

@@ -15,6 +15,7 @@
 #include <string>
 #include <memory>
 
+#include <grpc++/server.h>
 #include <grpc++/server_context.h>
 
 namespace sse {
@@ -47,6 +48,6 @@ namespace sophos {
     SearchRequest message_to_request(const SearchRequestMessage* mes);
     UpdateRequest message_to_request(const UpdateRequestMessage* mes);
 
-    void run_sophos_server(const std::string &address, const std::string& server_db_path);
+    void run_sophos_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr);
 } // namespace sophos
 } // namespace sse

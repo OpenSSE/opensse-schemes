@@ -182,7 +182,7 @@ UpdateRequest message_to_request(const UpdateRequestMessage* mes)
     return req;
 }
        
-void run_sophos_server(const std::string &address, const std::string& server_db_path) {
+void run_sophos_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr) {
     std::string server_address(address);
     SophosImpl service(server_db_path);
     
@@ -191,6 +191,9 @@ void run_sophos_server(const std::string &address, const std::string& server_db_
     builder.RegisterService(&service);
     std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
     std::cout << "Server listening on " << server_address << std::endl;
+    
+    *server_ptr = server.get();
+
     server->Wait();
 }
 

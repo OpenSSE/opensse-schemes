@@ -9,10 +9,26 @@
 #include "sophos_server.hpp"
 
 #include <stdio.h>
+#include <csignal>
+
+grpc::Server *server_ptr__ = NULL;
+
+void exit_handler(int signal)
+{
+    std::cout << "\nExiting ... " << server_ptr__ << std::endl;
+    
+    if (server_ptr__) {
+        server_ptr__->Shutdown();
+    }
+};
+
 
 int main(int argc, char** argv) {
 
-    sse::sophos::run_sophos_server("0.0.0.0:4242", "test.ssdb");
+    std::signal(SIGTERM, exit_handler);
+    std::signal(SIGINT, exit_handler);
+    
+    sse::sophos::run_sophos_server("0.0.0.0:4242", "test.ssdb", &server_ptr__);
     
     std::cout << "Done" << std::endl;
     

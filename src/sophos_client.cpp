@@ -125,6 +125,14 @@ bool SophosClientRunner::send_setup(const size_t setup_size) const
     return true;
 }
     
+const SophosClient& SophosClientRunner::client() const
+{
+    if (!client_) {
+        throw std::logic_error("Invalid state");
+    }
+    return *client_;
+}
+    
 void SophosClientRunner::search(const std::string& keyword) const
 {
     grpc::ClientContext context;

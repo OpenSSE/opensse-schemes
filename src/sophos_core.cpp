@@ -38,6 +38,11 @@ k_prf_(derivation_master_key), token_map_(token_map_path), inverse_tdp_(tdp_priv
 {
     
 }
+
+size_t SophosClient::keyword_count() const
+{
+    return token_map_.size();
+}
     
 const std::string SophosClient::public_key() const
 {

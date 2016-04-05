@@ -54,6 +54,8 @@ public:
     SophosClient(const std::string& token_map_path, const size_t tm_setup_size);
     SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key);
     
+    size_t keyword_count() const;
+    
     const std::string private_key() const;
     const std::string public_key() const;
     

@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
 
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);
+    std::signal(SIGQUIT, exit_handler);
     
     sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
     

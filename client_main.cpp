@@ -7,6 +7,7 @@
 //
 
 #include "sophos_client.hpp"
+#include "logger.hpp"
 
 #include <sse/dbparser/DBParserJSON.h>
 
@@ -18,7 +19,7 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
     
     auto add_pair_callback = [&runner](const string& keyword, const unsigned &doc)
     {
-        std::cout << "Update: " << keyword << ", " << std::dec << doc << std::endl;
+//        std::cout << "Update: " << keyword << ", " << std::dec << doc << std::endl;
         runner.update(keyword, doc);
     };
     
@@ -28,8 +29,10 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
 
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
-    std::string save_path = "/Users/raphaelbost/Code/sse/sophos/test.csdb";
-    sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path);
+    sse::logger::set_severity(sse::logger::DBG);
+    
+    std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
+    sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path, 1e6, 1e5);
     
     std::vector<std::string> all_args;
     if (argc > 1) {
@@ -41,7 +44,8 @@ int main(int argc, char** argv) {
     if(client_runner.client().keyword_count() == 0)
     {
         // The database is empty, do some updates
-        load_inverted_index(client_runner, "/Users/raphaelbost/Code/sse/sophos/inverted_index_test.json");
+        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
+//        load_inverted_index(client_runner, "/Users/raphaelbost/Code/sse/sophos/inverted_index_test.json");
 //        client_runner.update("dynamit", 0);
 //        client_runner.update("dallacasa", 0);
 //        client_runner.update("dallacasa", 2);

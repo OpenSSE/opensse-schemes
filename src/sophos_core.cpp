@@ -9,6 +9,7 @@
 #include "sophos_core.hpp"
 
 #include "utils.hpp"
+#include "logger.hpp"
 
 #include <iostream>
 
@@ -89,35 +90,24 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
     // to get and modify the search pair, it might be more efficient
     // to directly use at() and see if an exception is raised
     found = token_map_.get(keyword, search_pair);
-//    search_pair = token_map_.at(keyword);
-//    found = true;
-    
+
     if (!found) {
         st = inverse_tdp_.sample_array();
         token_map_.add(keyword, std::make_pair(st, 1));
 
-        std::cout << "ST0 ";
-        print_hex(std::cout, st);
-        std::cout << std::endl;
+        logger::log(logger::DBG) << "ST0 " << logger::hex_string(st) << std::endl;
     }else{
         st = inverse_tdp_.invert(search_pair.first);
         
-        std::cout << "New ST ";
-        print_hex(std::cout, st);
-        std::cout << std::endl;
+        logger::log(logger::DBG) << "New ST " << logger::hex_string(st) << std::endl;
 
         token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);
     }
     
-//    std::cout << "New ST ";
-//    print_hex(std::cout, st);
-//    std::cout << std::endl;
-//    std::cout << token_map_.at(keyword).first[0] << std::endl;
     
     std::string deriv_key = k_prf_.prf_string(keyword);
-    std::cout << "Derived key: ";
-    print_hex(std::cout, deriv_key);
-    std::cout << std::endl;
+
+    logger::log(logger::DBG) << "Derivation key: " << logger::hex_string(deriv_key) << std::endl;
 
     
     auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
@@ -127,10 +117,7 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
     req.token = derivation_prf.prf(st_string + '0');
     req.index = xor_mask(index, derivation_prf.prf(st_string + '1'));
     
-    std::cout << "Update token: (" ;
-    print_hex(std::cout, req.token);
-    std::cout << ", " << std::hex << req.index << ")" << std::endl;
-
+    logger::log(logger::DBG) << "Update token: (" << logger::hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
 
     return req;
 }
@@ -158,30 +145,28 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     
     search_token_type st = req.token;
 
+    logger::log(logger::DBG) << "Search token: " << logger::hex_string(req.token) << std::endl;
+
     auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
     
-    std::cout << "Derivation key: ";
-    print_hex(std::cout, req.derivation_key);
-    std::cout << std::endl;
+    logger::log(logger::DBG) << "Derivation key: " << logger::hex_string(req.derivation_key) << std::endl;
 
     for (size_t i = 0; i < req.add_count; i++) {
         std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
         index_type r;
         update_token_type ut = derivation_prf.prf(st_string + '0');
 
-        std::cout << "Derived token: ";
-        print_hex(std::cout, ut);
-        std::cout << std::endl;
+        logger::log(logger::DBG) << "Derived token: " << logger::hex_string(ut) << std::endl;
 
         bool found = edb_.get(ut,r);
         
         if (found) {
-            std::cout << "Found: " << std::hex << r << std::endl;
+            logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
             
             r = xor_mask(r, derivation_prf.prf(st_string + '1'));
             results.push_back(r);
         }else{
-            std::cerr << "We were supposed to find something!" << std::endl;
+            logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
         }
         
         st = public_tdp_.eval(st);
@@ -192,9 +177,7 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
 
 void SophosServer::update(const UpdateRequest& req)
 {
-    std::cout << "Update token: (" ;
-    print_hex(std::cout, req.token);
-    std::cout << ", " << std::hex << req.index << ")" << std::endl;
+    logger::log(logger::DBG) << "Update: (" << logger::hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
 
     edb_.add(req.token, req.index);
 }

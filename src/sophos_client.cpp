@@ -9,6 +9,7 @@
 #include "sophos_client.hpp"
 
 #include "utils.hpp"
+#include "logger.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -115,10 +116,10 @@ bool SophosClientRunner::send_setup(const size_t setup_size) const
     grpc::Status status = stub_->setup(&context, message, &e);
 
     if (status.ok()) {
-        std::cout << "Setup succeeded." << std::endl;
+        logger::log(logger::TRACE) << "Setup succeeded." << std::endl;
     } else {
-        std::cout << "Setup failed: " << std::endl;
-        std::cout << status.error_message() << std::endl;
+        logger::log(logger::ERROR) << "Setup failed: " << std::endl;
+        logger::log(logger::ERROR) << status.error_message() << std::endl;
         return false;
     }
 
@@ -135,7 +136,7 @@ const SophosClient& SophosClientRunner::client() const
     
 void SophosClientRunner::search(const std::string& keyword) const
 {
-    std::cout << "Search " << keyword << std::endl;
+    logger::log(logger::TRACE) << "Search " << keyword << std::endl;
     
     grpc::ClientContext context;
     sophos::SearchRequestMessage message;
@@ -145,15 +146,15 @@ void SophosClientRunner::search(const std::string& keyword) const
     
     std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, message) );
     while (reader->Read(&reply)) {
-        std::cout << "New result: "
+        logger::log(logger::TRACE) << "New result: "
         << std::dec << reply.result() << std::endl;
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {
-        std::cout << "Search succeeded." << std::endl;
+        logger::log(logger::TRACE) << "Search succeeded." << std::endl;
     } else {
-        std::cout << "Search failed:" << std::endl;
-        std::cout << status.error_message() << std::endl;
+        logger::log(logger::ERROR) << "Search failed:" << std::endl;
+        logger::log(logger::ERROR) << status.error_message() << std::endl;
     }
 }
 
@@ -168,10 +169,10 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
     grpc::Status status = stub_->update(&context, message, &e);
     
     if (status.ok()) {
-        std::cout << "Update succeeded." << std::endl;
+        logger::log(logger::TRACE) << "Update succeeded." << std::endl;
     } else {
-        std::cout << "Update failed:" << std::endl;
-        std::cout << status.error_message() << std::endl;
+        logger::log(logger::ERROR) << "Update failed:" << std::endl;
+        logger::log(logger::ERROR) << status.error_message() << std::endl;
     }
 
 }

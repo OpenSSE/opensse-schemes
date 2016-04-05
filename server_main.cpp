@@ -7,6 +7,7 @@
 //
 
 #include "sophos_server.hpp"
+#include "logger.hpp"
 
 #include <stdio.h>
 #include <csignal>
@@ -25,11 +26,13 @@ void exit_handler(int signal)
 
 int main(int argc, char** argv) {
 
+    sse::logger::set_severity(sse::logger::DBG);
+
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);
     std::signal(SIGQUIT, exit_handler);
     
-    sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
+    sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/rbost/Code/sse/sophos/test.ssdb", &server_ptr__);
     
     std::cout << "Done" << std::endl;
     

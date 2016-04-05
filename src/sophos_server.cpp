@@ -9,6 +9,7 @@
 #include "sophos_server.hpp"
 
 #include "utils.hpp"
+#include "logger.hpp"
 
 #include <fstream>
 
@@ -62,11 +63,11 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
                     google::protobuf::Empty* e)
 {
     
-    std::cout << "Setup!" << std::endl;
+    logger::log(logger::TRACE) << "Setup!" << std::endl;
     
     if (server_) {
         // problem, the server is already set up
-        std::cerr << "Info: server received a setup message but is already set up" << std::endl;
+        logger::log(logger::ERROR) << "Info: server received a setup message but is already set up" << std::endl;
 
         return grpc::Status(grpc::FAILED_PRECONDITION, "The server was already set up");
     }
@@ -75,13 +76,13 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
     
     if (exists(storage_path_))
     {
-        std::cerr << "Error: Unable to create the server's content directory" << std::endl;
+        logger::log(logger::ERROR) << "Error: Unable to create the server's content directory" << std::endl;
 
         return grpc::Status(grpc::ALREADY_EXISTS, "Unable to create the server's content directory");
     }
     
     if (!create_directory(storage_path_, (mode_t)0700)) {
-        std::cerr << "Error: Unable to create the server's content directory" << std::endl;
+        logger::log(logger::ERROR) << "Error: Unable to create the server's content directory" << std::endl;
 
         return grpc::Status(grpc::PERMISSION_DENIED, "Unable to create the server's content directory");
     }
@@ -94,7 +95,7 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
     try {
         server_.reset(new SophosServer(pairs_map_path, message->setup_size(), message->public_key()));
     } catch (std::exception &e) {
-        std::cerr << "Error when setting up the server's core" << std::endl;
+        logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
         
         server_.reset();
         return grpc::Status(grpc::FAILED_PRECONDITION, "Unable to create the server's core. Error in libssdmap");
@@ -107,14 +108,14 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
     if (!pk_out.is_open()) {
         // error
         
-        std::cerr << "Error when writing the public key" << std::endl;
+        logger::log(logger::ERROR) << "Error when writing the public key" << std::endl;
 
         return grpc::Status(grpc::PERMISSION_DENIED, "Unable to write the public key to disk");
     }
     pk_out << message->public_key();
     pk_out.close();
 
-    std::cout << "Successful setup" << std::endl;
+    logger::log(logger::TRACE) << "Successful setup" << std::endl;
 
     return grpc::Status::OK;
 }
@@ -128,10 +129,14 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
         return grpc::Status(grpc::FAILED_PRECONDITION, "The server is not set up");
     }
 
-    std::cout << "Search!" << std::endl;
+    logger::log(logger::TRACE) << "Searching ...";
 
-    
+    auto begin = std::chrono::high_resolution_clock::now();
     auto res_list = server_->search(message_to_request(mes));
+    auto end = std::chrono::high_resolution_clock::now();
+    
+    std::chrono::duration<double, std::milli> time_ms = end - begin;
+    
     
     for (auto& i : res_list) {
         sophos::SearchReply reply;
@@ -140,7 +145,13 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
         writer->Write(reply);
     }
     
-    std::cout << "End Search" << std::endl;
+    logger::log(logger::TRACE) << " done" << std::endl;
+    
+    if (res_list.size()>0) {
+        std::cout << "Search took " << time_ms.count()/res_list.size() << " ms per retrieved pair" << std::endl;
+    }else{
+        std::cout << "Search without match took " << time_ms.count() << " ms" << std::endl;
+    }
     
     return grpc::Status::OK;
 }
@@ -155,10 +166,12 @@ grpc::Status SophosImpl::update(grpc::ServerContext* context,
         return grpc::Status(grpc::FAILED_PRECONDITION, "The server is not set up");
     }
 
-    std::cout << "Update!" << std::endl;
+    logger::log(logger::TRACE) << "Updating ..." << std::endl;
 
     server_->update(message_to_request(mes));
-    
+ 
+    logger::log(logger::TRACE) << " done" << std::endl;
+
     return grpc::Status::OK;
 }
 
@@ -192,7 +205,7 @@ void run_sophos_server(const std::string &address, const std::string& server_db_
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
+    logger::log(logger::INFO) << "Server listening on " << server_address << std::endl;
     
     *server_ptr = server.get();
 

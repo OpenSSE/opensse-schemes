@@ -65,6 +65,7 @@ if int(debug):
 else:
 	env.Append(CCFLAGS = ['-O2'])
 
+env.Append(CPPDEFINES = ['BENCHMARK'])
 
 def run_test(target, source, env):
     app = str(source[0].abspath)

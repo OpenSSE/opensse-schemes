@@ -42,7 +42,8 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
     sse::logger::set_severity(sse::logger::INFO);
-
+    sse::logger::set_benchmark_file("benchmark_client.out");
+    
     sse::crypto::init_crypto_lib();
     
     std::string save_path = "/Users/raphaelbost/Code/sse/sophos/test.csdb";

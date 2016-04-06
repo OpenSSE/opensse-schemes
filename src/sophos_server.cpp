@@ -120,6 +120,10 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+#define PRINT_BENCH_SEARCH(t,c) \
+        "SEARCH: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair, " + std::to_string((c)) + " pairs" : \
+                                    std::to_string((t)) + " ms, no pair found" )
+        
 grpc::Status SophosImpl::search(grpc::ServerContext* context,
                     const sophos::SearchRequestMessage* mes,
                     grpc::ServerWriter<sophos::SearchReply>* writer)
@@ -130,12 +134,9 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
     }
 
     logger::log(logger::TRACE) << "Searching ...";
-
-    auto begin = std::chrono::high_resolution_clock::now();
-    auto res_list = server_->search(message_to_request(mes));
-    auto end = std::chrono::high_resolution_clock::now();
+    std::list<uint64_t> res_list;
     
-    std::chrono::duration<double, std::milli> time_ms = end - begin;
+    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH)
     
     
     for (auto& i : res_list) {
@@ -147,11 +148,6 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
     
     logger::log(logger::TRACE) << " done" << std::endl;
     
-    if (res_list.size()>0) {
-        std::cout << "Search took " << time_ms.count()/res_list.size() << " ms per retrieved pair" << std::endl;
-    }else{
-        std::cout << "Search without match took " << time_ms.count() << " ms" << std::endl;
-    }
     
     return grpc::Status::OK;
 }

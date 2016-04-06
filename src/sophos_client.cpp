@@ -112,7 +112,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
 
 SophosClientRunner::~SophosClientRunner()
 {
-//    update_cq_.Shutdown();
+    update_cq_.Shutdown();
     wait_updates_completion();
 //    update_completion_thread_->join();
 }

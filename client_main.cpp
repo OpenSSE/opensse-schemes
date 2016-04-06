@@ -24,8 +24,6 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
     
     auto add_list_callback = [&runner,&pool,&counter](const string kw, const list<unsigned> docs)
     {
-        //        std::cout << "Update: " << keyword << ", " << std::dec << doc << std::endl;
-        
         auto work = [&runner,&counter](const string& keyword, const list<unsigned> &documents)
         {
             for (unsigned doc : documents) {
@@ -34,7 +32,7 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
             counter++;
 
             if ((counter % 100) == 0) {
-                std::cout << "\rLoading progress: " << counter << std::flush;
+                sse::logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::flush;
             }
         };
         pool.enqueue(work,kw,docs);
@@ -45,15 +43,12 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
     parser.parse();
     
     pool.join();
-    std::cout << std::endl;
+    sse::logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::endl;
     
     runner.wait_updates_completion();
-
-    sse::logger::log(sse::logger::INFO) << "Update completed" << std::endl;
 }
 
 int main(int argc, char** argv) {
-    // Expect only arg: --db_path=path/to/route_guide_db.json.
     sse::logger::set_severity(sse::logger::INFO);
     sse::logger::set_benchmark_file("benchmark_client.out");
     
@@ -61,38 +56,68 @@ int main(int argc, char** argv) {
     
     std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
 //    std::string save_path = "/Users/raphaelbost/Code/sse/sophos/test.csdb";
+    
     sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path, 1e6, 1e5);
     
-    std::vector<std::string> all_args;
-    if (argc > 1) {
-        all_args.assign(argv+1, argv+argc);
-    }else{
-        all_args.push_back("tripolitan");
-    }
+    opterr = 0;
+    int c;
+
+    std::list<std::string> input_files;
+    std::list<std::string> keywords;
+
     
-    if(client_runner.client().keyword_count() == 0)
+    while ((c = getopt (argc, argv, "i:d")) != -1)
+        switch (c)
     {
-        // The database is empty, do some updates
-        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_1000.json");
-//        load_inverted_index(client_runner, "/Users/raphaelbost/Documents/inverted_index_1000.json");
-//        load_inverted_index(client_runner, "/Users/raphaelbost/Code/sse/sophos/inverted_index_test.json");
-//        client_runner.update("dynamit", 0);
-//        client_runner.update("dallacasa", 0);
-//        client_runner.update("dallacasa", 2);
+        case 'i':
+            input_files.push_back(std::string(optarg));
+            break;
+        case 'd': // load a default file, only for debugging
+            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_1000.json");
+//            input_files.push_back("/Users/raphaelbost/Documents/inverted_index_1000.json");
+            break;
+        case '?':
+            if (optopt == 'i')
+                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint (optopt))
+                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            else
+                fprintf (stderr,
+                         "Unknown option character `\\x%x'.\n",
+                         optopt);
+            return 1;
+        default:
+            exit(0);
     }
     
-    for (std::string &kw : all_args) {
+    for (int index = optind; index < argc; index++)
+    {
+        keywords.push_back(std::string(argv[index]));
+    }
+
+
+    for (std::string &path : input_files) {
+        sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
+        load_inverted_index(client_runner, path);
+        sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
+    }
+    
+    for (std::string &kw : keywords) {
         std::cout << "-------------- Search --------------" << std::endl;
         auto res = client_runner.search(kw);
+        
+        bool first = true;
         sse::logger::log(sse::logger::INFO) << "{";
         for (auto i : res) {
-            sse::logger::log(sse::logger::INFO) << i << ", ";
+            if (!first) {
+                sse::logger::log(sse::logger::INFO) << ", ";
+            }
+            
+            first = false;
+            sse::logger::log(sse::logger::INFO) << i;
         }
         sse::logger::log(sse::logger::INFO) << "}" << std::endl;
     }
-//    std::cout << "-------------- Search --------------" << std::endl;
-//    client_runner.search("dallacasa");
-    
     sse::crypto::cleanup_crypto_lib();
 
     

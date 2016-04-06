@@ -180,7 +180,6 @@ std::list<uint64_t> SophosClientRunner::search(const std::string& keyword) const
 
 void SophosClientRunner::update(const std::string& keyword, uint64_t index)
 {
-//    std::unique_lock<std::mutex> lock(update_mtx_);
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
     google::protobuf::Empty e;
@@ -200,7 +199,6 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
 
 void SophosClientRunner::async_update(const std::string& keyword, uint64_t index)
 {
-//    std::unique_lock<std::mutex> lock(update_mtx_);
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
 //    google::protobuf::Empty *e = new google::protobuf::Empty();

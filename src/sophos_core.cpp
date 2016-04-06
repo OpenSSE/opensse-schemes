@@ -97,10 +97,8 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
 
         logger::log(logger::DBG) << "ST0 " << logger::hex_string(st) << std::endl;
     }else{
-            std::lock_guard<std::mutex> lock(update_mtx_);
-
         st = inverse_tdp_.invert(search_pair.first);
-        
+
         logger::log(logger::DBG) << "New ST " << logger::hex_string(st) << std::endl;
 
         token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);

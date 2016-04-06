@@ -8,6 +8,8 @@
 
 #include "sophos_client.hpp"
 
+#include "sophos_net_types.hpp"
+
 #include "utils.hpp"
 #include "logger.hpp"
 
@@ -146,7 +148,7 @@ const SophosClient& SophosClientRunner::client() const
     return *client_;
 }
     
-void SophosClientRunner::search(const std::string& keyword) const
+std::list<uint64_t> SophosClientRunner::search(const std::string& keyword) const
 {
     logger::log(logger::TRACE) << "Search " << keyword << std::endl;
     
@@ -157,9 +159,13 @@ void SophosClientRunner::search(const std::string& keyword) const
     message = request_to_message(client_->search_request(keyword));
     
     std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, message) );
+    std::list<uint64_t> results;
+    
+    
     while (reader->Read(&reply)) {
         logger::log(logger::TRACE) << "New result: "
         << std::dec << reply.result() << std::endl;
+        results.push_back(reply.result());
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {
@@ -168,11 +174,13 @@ void SophosClientRunner::search(const std::string& keyword) const
         logger::log(logger::ERROR) << "Search failed:" << std::endl;
         logger::log(logger::ERROR) << status.error_message() << std::endl;
     }
+    
+    return results;
 }
 
 void SophosClientRunner::update(const std::string& keyword, uint64_t index)
 {
-    std::unique_lock<std::mutex> lock(update_mtx_);
+//    std::unique_lock<std::mutex> lock(update_mtx_);
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
     google::protobuf::Empty e;
@@ -192,18 +200,24 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
 
 void SophosClientRunner::async_update(const std::string& keyword, uint64_t index)
 {
-    std::unique_lock<std::mutex> lock(update_mtx_);
+//    std::unique_lock<std::mutex> lock(update_mtx_);
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
-    google::protobuf::Empty e;
+//    google::protobuf::Empty *e = new google::protobuf::Empty();
+//    grpc::Status *status = new grpc::Status();
+
+    update_tag_type *tag = new update_tag_type();
     
     message = request_to_message(client_->update_request(keyword, index));
     
     std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
                                                                 stub_->Asyncupdate(&context, message, &update_cq_));
 
-    update_launched_count_++;
-    rpc->Finish(&e, NULL, new size_t(update_launched_count_));
+    tag->reply.reset(new google::protobuf::Empty());
+    tag->status.reset(new grpc::Status());
+    tag->index.reset(new size_t(update_launched_count_++));
+    
+    rpc->Finish(tag->reply.get(), tag->status.get(), tag);
 
 //    if (status.ok()) {
 //        logger::log(logger::TRACE) << "Update succeeded." << std::endl;
@@ -222,7 +236,7 @@ void SophosClientRunner::wait_updates_completion()
 
 void SophosClientRunner::update_completion_loop()
 {
-    size_t* tag;
+    update_tag_type* tag;
     bool ok = false;
 
     for (; ; ok = false) {
@@ -232,7 +246,7 @@ void SophosClientRunner::update_completion_loop()
             return;
         }
 
-        logger::log(logger::TRACE) << "Asynchronous update " << std::dec << *tag << " succeeded." << std::endl;
+        logger::log(logger::TRACE) << "Asynchronous update " << std::dec << *(tag->index) << " succeeded." << std::endl;
         delete tag;
         
         

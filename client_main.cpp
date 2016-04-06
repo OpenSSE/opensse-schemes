@@ -31,7 +31,7 @@
 void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::string& path)
 {
     sse::dbparser::DBParserJSON parser(path.c_str());
-    ThreadPool pool(4);
+    ThreadPool pool(8);
     
     auto add_list_callback = [&runner,&pool](const string kw, const list<unsigned> docs)
     {
@@ -54,7 +54,7 @@ void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::str
 
 int main(int argc, char** argv) {
     // Expect only arg: --db_path=path/to/route_guide_db.json.
-    sse::logger::set_severity(sse::logger::TRACE);
+    sse::logger::set_severity(sse::logger::INFO);
     
     std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
     sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path, 1e6, 1e5);
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     if(client_runner.client().keyword_count() == 0)
     {
         // The database is empty, do some updates
-        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10.json");
+        load_inverted_index(client_runner, "/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_1000.json");
 //        load_inverted_index(client_runner, "/Users/raphaelbost/Code/sse/sophos/inverted_index_test.json");
 //        client_runner.update("dynamit", 0);
 //        client_runner.update("dallacasa", 0);
@@ -78,7 +78,12 @@ int main(int argc, char** argv) {
     
     for (std::string &kw : all_args) {
         std::cout << "-------------- Search --------------" << std::endl;
-        client_runner.search(kw);
+        auto res = client_runner.search(kw);
+        sse::logger::log(sse::logger::INFO) << "{";
+        for (auto i : res) {
+            sse::logger::log(sse::logger::INFO) << i << ", ";
+        }
+        sse::logger::log(sse::logger::INFO) << "}" << std::endl;
     }
 //    std::cout << "-------------- Search --------------" << std::endl;
 //    client_runner.search("dallacasa");

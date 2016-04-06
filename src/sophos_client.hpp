@@ -30,7 +30,7 @@ public:
     
     const SophosClient& client() const;
     
-    void search(const std::string& keyword) const;
+    std::list<uint64_t> search(const std::string& keyword) const;
     void update(const std::string& keyword, uint64_t index);
     void async_update(const std::string& keyword, uint64_t index);
 

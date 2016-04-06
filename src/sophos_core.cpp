@@ -89,19 +89,28 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
     
     // to get and modify the search pair, it might be more efficient
     // to directly use at() and see if an exception is raised
-    found = token_map_.get(keyword, search_pair);
-
+    {
+        std::lock_guard<std::mutex> lock(token_map_mtx_);
+        found = token_map_.get(keyword, search_pair);
+    }
+    
     if (!found) {
         st = inverse_tdp_.sample_array();
-        token_map_.add(keyword, std::make_pair(st, 1));
-
+        
+        {
+            std::lock_guard<std::mutex> lock(token_map_mtx_);
+            token_map_.add(keyword, std::make_pair(st, 1));
+        }
         logger::log(logger::DBG) << "ST0 " << logger::hex_string(st) << std::endl;
     }else{
         st = inverse_tdp_.invert(search_pair.first);
 
         logger::log(logger::DBG) << "New ST " << logger::hex_string(st) << std::endl;
 
-        token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);
+        {
+            std::lock_guard<std::mutex> lock(token_map_mtx_);
+            token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);
+        }
     }
     
     

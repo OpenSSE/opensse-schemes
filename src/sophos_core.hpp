@@ -68,7 +68,9 @@ private:
     crypto::Prf<kDerivationKeySize> k_prf_;
     ssdmap::bucket_map< std::string, std::pair<search_token_type, uint32_t> > token_map_;
     sse::crypto::TdpInverse inverse_tdp_;
+    
     std::mutex update_mtx_;
+    std::mutex token_map_mtx_;
 };
 
 class SophosServer {

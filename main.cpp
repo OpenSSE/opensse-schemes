@@ -11,12 +11,13 @@
 #include <memory>
 
 #include "sophos_core.hpp"
+#include "utils.hpp"
 
 using namespace sse::sophos;
 using namespace std;
 
-int main(int argc, const char * argv[]) {
-    
+void test_client_server()
+{
     string client_sk_path = "tdp_sk.key";
     string client_master_key_path = "derivation_master.key";
     string server_pk_path = "tdp_pk.key";
@@ -53,7 +54,7 @@ int main(int argc, const char * argv[]) {
         client_master_key_buf << client_master_key_in.rdbuf();
         server_pk_buf << server_pk_in.rdbuf();
 
-        client.reset(new  SophosClient("client.sav", client_sk_buf.str(), client_master_key_buf.str()));
+        client.reset(new  SophosClient("client.sav", "client.csv", client_sk_buf.str(), client_master_key_buf.str()));
         
         server.reset(new SophosServer("server.dat", server_pk_buf.str()));
         
@@ -64,7 +65,7 @@ int main(int argc, const char * argv[]) {
     }else{
         cout << "Create new client-server instances" << endl;
         
-        client.reset(new SophosClient("client.sav",1000));
+        client.reset(new SophosClient("client.sav", "client.csv", 1000));
 
         server.reset(new SophosServer("server.dat", 1000, client->public_key()));
         
@@ -132,6 +133,44 @@ int main(int argc, const char * argv[]) {
     client_sk_in.close();
     client_master_key_in.close();
     server_pk_in.close();
+
+}
+
+void test_kw_indexer()
+{
+    
+    map<string, uint32_t> m, n;
+    
+    m["toto"] = 0;
+    m["titi"] = 1;
+    m["tata"] = 2;
+    m["tutu"] = 34;
+    
+    ofstream out("test.csv");
+    
+    write_keyword_map(out, m);
+    
+    out.close();
+    
+    ifstream in("test.csv");
+    
+    bool ret = parse_keyword_map(in, n);
+    
+    if (ret) {
+        cout << "Success" << endl;
+    }else{
+        cout << "Failed" << endl;
+    }
+    
+    for (auto p : n) {
+        cout << p.first << "| , |" << p.second << endl;
+    }
+    
+}
+
+int main(int argc, const char * argv[]) {
+
+    test_client_server();
     
     return 0;
 }

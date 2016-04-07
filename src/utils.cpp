@@ -78,3 +78,8 @@ void print_hex(std::ostream& out, const std::string &s)
     }
 
 }
+
+void append_keyword_map(std::ostream& out, const std::string &kw, uint32_t index)
+{
+    out << kw << "       " << std::hex << index << "\n";
+}

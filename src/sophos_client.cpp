@@ -40,6 +40,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     std::string sk_path = path + "/tdp_sk.key";
     std::string master_key_path = path + "/derivation_master.key";
     std::string token_map_path = path + "/tokens.dat";
+    std::string keyword_index_path = path + "/keywords.csv";
     
     if (is_directory(path)) {
         // try to initialize everything from this directory
@@ -56,6 +57,10 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
             // error, the token map data is not there
             throw std::runtime_error("Missing token data");
         }
+        if (!is_file(keyword_index_path)) {
+            // error, the derivation key file is not there
+            throw std::runtime_error("Missing keyword indices");
+        }
         
         std::ifstream sk_in(sk_path.c_str());
         std::ifstream master_key_in(master_key_path.c_str());
@@ -64,7 +69,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
         sk_buf << sk_in.rdbuf();
         master_key_buf << master_key_in.rdbuf();
         
-        client_.reset(new  SophosClient(token_map_path, sk_buf.str(), master_key_buf.str()));
+        client_.reset(new  SophosClient(token_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str()));
 
         
     }else if (exists(path)){
@@ -79,7 +84,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
             throw std::runtime_error(path + ": unable to create directory");
         }
         
-        client_.reset(new SophosClient(token_map_path,n_keywords));
+        client_.reset(new SophosClient(token_map_path, keyword_index_path, n_keywords));
         
         // write keys to files
         std::ofstream sk_out(sk_path.c_str());

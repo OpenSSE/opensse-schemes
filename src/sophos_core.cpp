@@ -28,16 +28,50 @@ size_t TokenHasher::operator()(const update_token_type& ut) const
     return h;
 }
 
-SophosClient::SophosClient(const std::string& token_map_path, const size_t tm_setup_size) :
-k_prf_(), token_map_(token_map_path, tm_setup_size), inverse_tdp_()
+SophosClient::SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size) :
+    k_prf_(), token_map_(token_map_path, tm_setup_size), inverse_tdp_()
 {
-    
+    load_keyword_indices(keyword_indexer_path);
+
+    keyword_indexer_stream_.open(keyword_indexer_path, std::ios_base::app | std::ios_base::out);
+    if (!keyword_indexer_stream_.is_open()) {
+        keyword_indexer_stream_.close();
+        throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
+    }
 }
     
-SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key) :
+SophosClient::SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key) :
 k_prf_(derivation_master_key), token_map_(token_map_path), inverse_tdp_(tdp_private_key)
 {
+    load_keyword_indices(keyword_indexer_path);
+   
+    keyword_indexer_stream_.open(keyword_indexer_path, std::ios_base::app | std::ios_base::out);
+    if (!keyword_indexer_stream_.is_open()) {
+        keyword_indexer_stream_.close();
+        throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
+    }
+}
+
+SophosClient::~SophosClient()
+{
+    keyword_indexer_stream_.close();
+}
+
+void SophosClient::load_keyword_indices(const std::string &path)
+{
+    std::ifstream keyword_indices_in(path);
     
+    if(keyword_indices_in)
+    {
+        bool ret = parse_keyword_map(keyword_indices_in, keyword_indices_);
+        
+        if (!ret) {
+            logger::log(logger::WARNING) << "Error when parsing the keyword indices" << std::endl;
+        }
+    }
+    keyword_indices_in.close();
+    
+    keyword_counter_ = keyword_indices_.size();
 }
 
 size_t SophosClient::keyword_count() const
@@ -68,13 +102,19 @@ SearchRequest   SophosClient::search_request(const std::string &keyword) const
     SearchRequest req;
     req.add_count = 0;
 
-    found = token_map_.get(keyword, search_pair);
-    
-    if(found)
-    {
-        req.token = search_pair.first;
-        req.derivation_key = k_prf_.prf_string(keyword);
-        req.add_count = search_pair.second;
+    auto it = keyword_indices_.find(keyword);
+
+    if (it != keyword_indices_.end()) {
+        found = token_map_.get(it->second, search_pair);
+        
+        if(!found)
+        {
+            logger::log(logger::ERROR) << "No matching token found for keyword " << keyword << " (index " << it->second << ")" << std::endl;
+        }else{
+            req.token = search_pair.first;
+            req.derivation_key = k_prf_.prf_string(keyword);
+            req.add_count = search_pair.second;
+        }
     }
     return req;
 }
@@ -83,15 +123,33 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
 {
     std::pair<search_token_type, uint32_t> search_pair;
     bool found;
-
+    std::map<std::string, uint32_t>::iterator it;
+    
     UpdateRequest req;
     search_token_type st;
+    
+    std::unique_lock<std::mutex> kw_index_lock(kw_index_mtx_, std::defer_lock);
+
+    kw_index_lock.lock();
+    it = keyword_indices_.find(keyword);
+    kw_index_lock.unlock();
+    
+    if (it == keyword_indices_.end()) {
+        // we have to insert the keyword
+        uint32_t c = keyword_counter_++;
+        kw_index_lock.lock();
+        it = keyword_indices_.insert(std::make_pair(keyword, c)).first;
+        append_keyword_map(keyword_indexer_stream_, keyword, c);
+        kw_index_lock.unlock();
+    }
+    
+    uint32_t kw_index = it->second;
     
     // to get and modify the search pair, it might be more efficient
     // to directly use at() and see if an exception is raised
     {
         std::lock_guard<std::mutex> lock(token_map_mtx_);
-        found = token_map_.get(keyword, search_pair);
+        found = token_map_.get(kw_index, search_pair);
     }
     
     if (!found) {
@@ -99,7 +157,7 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
         
         {
             std::lock_guard<std::mutex> lock(token_map_mtx_);
-            token_map_.add(keyword, std::make_pair(st, 1));
+            token_map_.add(kw_index, std::make_pair(st, 1));
         }
         logger::log(logger::DBG) << "ST0 " << logger::hex_string(st) << std::endl;
     }else{
@@ -109,7 +167,7 @@ UpdateRequest   SophosClient::update_request(const std::string &keyword, const i
 
         {
             std::lock_guard<std::mutex> lock(token_map_mtx_);
-            token_map_.at(keyword) = std::make_pair(st, search_pair.second+1);
+            token_map_.at(kw_index) = std::make_pair(st, search_pair.second+1);
         }
     }
     

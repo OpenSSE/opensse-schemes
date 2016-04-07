@@ -10,6 +10,7 @@
 
 #include <string>
 #include <array>
+#include <fstream>
 
 #include <ssdmap/bucket_map.hpp>
 #include <sse/crypto/tdp.hpp>
@@ -51,8 +52,9 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    SophosClient(const std::string& token_map_path, const size_t tm_setup_size);
-    SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key);
+    SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size);
+    SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key);
+    ~SophosClient();
     
     size_t keyword_count() const;
     
@@ -65,12 +67,19 @@ public:
     UpdateRequest   update_request(const std::string &keyword, const index_type index);
     
 private:
+    void load_keyword_indices(const std::string &path);
+    
     crypto::Prf<kDerivationKeySize> k_prf_;
-    ssdmap::bucket_map< std::string, std::pair<search_token_type, uint32_t> > token_map_;
+    ssdmap::bucket_map< uint32_t, std::pair<search_token_type, uint32_t> > token_map_;
+    std::map<std::string, uint32_t> keyword_indices_;
+    
+    std::ofstream keyword_indexer_stream_;
+    
     sse::crypto::TdpInverse inverse_tdp_;
     
-    std::mutex update_mtx_;
+    std::mutex kw_index_mtx_;
     std::mutex token_map_mtx_;
+    std::atomic_uint keyword_counter_;
 };
 
 class SophosServer {

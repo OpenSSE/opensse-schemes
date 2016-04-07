@@ -54,26 +54,25 @@ int main(int argc, char** argv) {
     
     sse::crypto::init_crypto_lib();
     
-    std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
-//    std::string save_path = "/Users/raphaelbost/Code/sse/sophos/test.csdb";
-    
-    sse::sophos::SophosClientRunner client_runner("localhost:4242", save_path, 1e6, 1e5);
-    
     opterr = 0;
     int c;
 
     std::list<std::string> input_files;
     std::list<std::string> keywords;
+    std::string client_db;
 
     
-    while ((c = getopt (argc, argv, "i:d")) != -1)
+    while ((c = getopt (argc, argv, "i:b:d")) != -1)
         switch (c)
     {
         case 'i':
             input_files.push_back(std::string(optarg));
             break;
+        case 'b':
+            client_db = std::string(optarg);
+            break;
         case 'd': // load a default file, only for debugging
-            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_1000.json");
+            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
 //            input_files.push_back("/Users/raphaelbost/Documents/inverted_index_1000.json");
             break;
         case '?':
@@ -87,13 +86,27 @@ int main(int argc, char** argv) {
                          optopt);
             return 1;
         default:
-            exit(0);
+            exit(-1);
     }
+    
     
     for (int index = optind; index < argc; index++)
     {
-        keywords.push_back(std::string(argv[index]));
+          keywords.push_back(std::string(argv[index]));
     }
+
+    if (client_db.size()==0) {
+        sse::logger::log(sse::logger::ERROR) << "Client database not specified" << std::endl;
+        sse::logger::log(sse::logger::ERROR) << "Using \'test.csdb\' by default" << std::endl;
+        client_db = "test.csdb";
+    }else{
+        sse::logger::log(sse::logger::INFO) << "Running client with database " << client_db << std::endl;
+    }
+    
+//    std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
+//    //    std::string save_path = "/Users/raphaelbost/Code/sse/sophos/test.csdb";
+    
+    sse::sophos::SophosClientRunner client_runner("localhost:4242", client_db, 1e6, 1e5);
 
 
     for (std::string &path : input_files) {

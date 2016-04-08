@@ -14,13 +14,22 @@
 #include <sse/dbparser/rapidjson/rapidjson.h>
 #include <sse/dbparser/rapidjson/writer.h>
 #include <sse/dbparser/rapidjson/filewritestream.h>
+#include <sse/dbparser/rapidjson/filereadstream.h>
 #include <sse/dbparser/rapidjson/ostreamwrapper.h>
+#include <sse/dbparser/rapidjson/document.h>
 
 #include <iostream>
+#include <algorithm>
 
 namespace sse {
 namespace sophos {
 
+#define DERIVATION_KEY "derivation"
+#define TDP_KEY "tdp_pk"
+#define TOKEN_KEY "tokens"
+#define TOKEN_MAP_SIZE_KEY "map_size"
+
+    
 size_t TokenHasher::operator()(const update_token_type& ut) const
 {
     size_t h = 0;
@@ -56,6 +65,19 @@ k_prf_(derivation_master_key), token_map_(token_map_path), inverse_tdp_(tdp_priv
         throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
     }
 }
+
+SophosClient::SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const size_t tm_setup_size) :
+k_prf_(derivation_master_key), token_map_(token_map_path,tm_setup_size), inverse_tdp_(tdp_private_key)
+{
+    load_keyword_indices(keyword_indexer_path);
+    
+    keyword_indexer_stream_.open(keyword_indexer_path, std::ios_base::app | std::ios_base::out);
+    if (!keyword_indexer_stream_.is_open()) {
+        keyword_indexer_stream_.close();
+        throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
+    }
+}
+    
 
 SophosClient::~SophosClient()
 {
@@ -246,15 +268,19 @@ std::ostream& SophosClient::db_to_json(std::ostream& out) const
     writer.StartObject();
     
     // write the derivation key
-    writer.Key("derivation");
+    writer.Key(DERIVATION_KEY);
     writer.String(master_derivation_key().c_str());
     
     // write the private key
-    writer.Key("tdp_pk");
+    writer.Key(TDP_KEY);
     writer.String(private_key().c_str());
-    
+
     // write the token array
-    writer.Key("tokens");
+    writer.Key(TOKEN_MAP_SIZE_KEY);
+    writer.Uint64(token_map_.bucket_space());
+
+    // write the token array
+    writer.Key(TOKEN_KEY);
     writer.StartObject();
     
     for (const auto& kw_pair : keyword_indices_) {
@@ -276,6 +302,203 @@ std::ostream& SophosClient::db_to_json(std::ostream& out) const
     
     return out;
 }
+    
+class SophosClient::JSONHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, JSONHandler>
+{
+public:
+    JSONHandler(const std::string& token_map_path, const std::string& keyword_indexer_path)
+    : state_(kExpectStart), token_map_path_(token_map_path), keyword_indexer_path_(keyword_indexer_path)
+    {
+    }
+    
+    bool StartObject() {
+        switch (state_) {
+            case kExpectStart:
+                state_ = kExpectStart;
+                return true;
+            case kExpectTokenValuesStart:
+                state_ = kExpectTokenKey;
+                return true;
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse object start" << std::endl;
+
+                return false;
+        }
+    }
+    
+    bool EndObject(rapidjson::SizeType) {
+        
+        switch (state_) {
+            case kExpectEnd:
+                return true;
+            case kExpectTokenKey:
+                state_ = kExpectEnd;
+                return true;
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse object end" << std::endl;
+                
+                return false;
+        }
+    }
+
+    bool Key(const char* str, rapidjson::SizeType length, bool) {
+        std::string key(str, length);
+        switch (state_) {
+            case kExpectParameterKey:
+                
+                if (key == DERIVATION_KEY) {
+                    state_ = kExpectDerivationKeyValue;
+                }else if (key == TDP_KEY) {
+                    state_ = kExpectTDPKeyValue;
+                }else if (key == TOKEN_MAP_SIZE_KEY) {
+                    state_ = kExpectTokenMapSizeValue;
+                }else if (key == TOKEN_KEY) {
+                    // we have to check that we parsed all the parameters
+                    if( bucket_map_size_ == 0 || derivation_key_.size() == 0 || tdp_key_.size() == 0 )
+                    {
+                        logger::log(logger::ERROR) << "Parsing error. At least one parameter is missing" << std::endl;
+                        return false;
+                    }
+                    
+                    // construct the client from the parameters
+                    client_ = new SophosClient(token_map_path_, keyword_indexer_path_, tdp_key_, derivation_key_);
+                    state_ = kExpectTokenValuesStart;
+                }else{
+                    logger::log(logger::ERROR) << "Parsing error. Invalid key " << key  << std::endl;
+
+                    return false;
+                }
+                
+                return true;
+            case kExpectKeyword:
+                current_keyword_ = key;
+                return true;
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse key " << key  << std::endl;
+
+                return false;
+        }
+    }
+
+    bool StartArray() {
+        switch(state_) {
+            case kExpectStartList:
+                state_ = kExpectTokenKey;
+                return true;
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse array start" << std::endl;
+
+                return false;
+                
+        }
+    }
+    
+    bool EndArray(rapidjson::SizeType elementCount) {
+        switch(state_){
+            case kExpectEndList:
+            {
+                state_ = kExpectKeyword;
+                
+                // add a keyword with the parsed token and count
+                uint32_t index = client_->get_keyword_index(current_keyword_);
+                client_->token_map_.add(index, std::make_pair(current_st_, current_count_));
+                
+                return true;
+            }
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse array end" << std::endl;
+                return false;
+        }
+    }
+
+    bool String(const Ch* str, rapidjson::SizeType length, bool copy) {
+        std::string in(str, length);
+        switch(state_){
+            case kExpectDerivationKeyValue:
+                derivation_key_ = in;
+                return true;
+            case kExpectTDPKeyValue:
+                tdp_key_ = in;
+                return true;
+            case kExpectTokenKey:
+                std::copy(in.begin(), in.end(), current_st_.begin());
+                return true;
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse string " << in << std::endl;
+                return false;
+        }
+    }
+    bool Uint(unsigned i) {
+        switch (state_) {
+            case kExpectTokenMapSizeValue:
+                bucket_map_size_ = i;
+                return true;
+            case kExpectTokenCount:
+                current_count_ = i;
+                return true;
+            default:
+                logger::log(logger::ERROR) << "Parsing error. Invalid state to parse int " << i << std::endl;
+                return false;
+        }
+    }
+    
+    bool Default() {
+        logger::log(logger::ERROR) << "Parsing error. Unsupported input " << std::endl;
+        return false;
+    } // All other events are invalid.
+
+    SophosClient* client()
+    {
+        return client_;
+    }
+    
+private:
+    enum State {
+        kExpectStart,
+        kExpectParameterKey,
+        kExpectDerivationKeyValue,
+        kExpectTDPKeyValue,
+        kExpectTokenMapSizeValue,
+        kExpectTokenValuesStart,
+        kExpectKeyword,
+        kExpectTokenKey,
+        kExpectTokenCount,
+        kExpectStartList,
+        kExpectEndList,
+        kExpectEnd
+    } state_;
+
+    SophosClient* client_;
+    
+    const std::string& token_map_path_;
+    const std::string& keyword_indexer_path_;
+    
+    size_t bucket_map_size_;
+    std::string derivation_key_;
+    std::string tdp_key_;
+    
+    std::string current_keyword_;
+    search_token_type current_st_;
+    uint32_t current_count_;
+};
+    
+std::unique_ptr<SophosClient> SophosClient::construct_from_json(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& json_path)
+{
+    FILE* fp = fopen(json_path.c_str(), "r");
+    char readBuffer[65536];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    
+    JSONHandler handler(token_map_path, keyword_indexer_path);
+    rapidjson::Reader reader;
+    
+    reader.Parse(is, handler);
+    
+    fclose(fp);
+    
+    return std::unique_ptr<SophosClient>(handler.client());
+}
+    
+
 
 SophosServer::SophosServer(const std::string& db_path, const std::string& tdp_pk) :
 edb_(db_path), public_tdp_(tdp_pk)

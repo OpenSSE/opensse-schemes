@@ -52,8 +52,11 @@ struct UpdateRequest
     
 class SophosClient {
 public:
+    static std::unique_ptr<SophosClient> construct_from_json(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& json_path);
+    
     SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size);
     SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key);
+    SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const size_t tm_setup_size);
     ~SophosClient();
     
     size_t keyword_count() const;
@@ -70,6 +73,9 @@ public:
     std::ostream& db_to_json(std::ostream& out) const;
     
 private:
+    class JSONHandler;
+    friend JSONHandler;
+    
     void load_keyword_indices(const std::string &path);
     
     int64_t find_keyword_index(const std::string &kw) const;

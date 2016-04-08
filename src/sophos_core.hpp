@@ -72,6 +72,11 @@ public:
 private:
     void load_keyword_indices(const std::string &path);
     
+    int64_t find_keyword_index(const std::string &kw) const;
+    uint32_t get_keyword_index(const std::string &kw);
+    uint32_t get_keyword_index(const std::string &kw, bool& is_new);
+    uint32_t new_keyword_index(const std::string &kw);
+
     crypto::Prf<kDerivationKeySize> k_prf_;
     ssdmap::bucket_map< uint32_t, std::pair<search_token_type, uint32_t> > token_map_;
     std::map<std::string, uint32_t> keyword_indices_;

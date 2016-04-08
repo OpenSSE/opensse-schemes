@@ -11,6 +11,11 @@
 #include "utils.hpp"
 #include "logger.hpp"
 
+#include <sse/dbparser/rapidjson/rapidjson.h>
+#include <sse/dbparser/rapidjson/writer.h>
+#include <sse/dbparser/rapidjson/filewritestream.h>
+#include <sse/dbparser/rapidjson/ostreamwrapper.h>
+
 #include <iostream>
 
 namespace sse {
@@ -119,6 +124,31 @@ SearchRequest   SophosClient::search_request(const std::string &keyword) const
     return req;
 }
     
+std::ostream& SophosClient::db_to_json(std::ostream& out) const
+{
+    rapidjson::OStreamWrapper ow(out);
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer(ow);
+    
+    writer.StartObject();
+    
+    for (const auto& kw_pair : keyword_indices_) {
+        writer.Key(kw_pair.first.c_str());
+        writer.StartArray();
+        
+        auto token = token_map_.at(kw_pair.second);
+        
+        writer.String((const char*)token.first.data(),token.first.size());
+        writer.Uint(token.second);
+        
+        writer.EndArray();
+    }
+    
+    writer.EndObject();
+
+    
+    return out;
+}
+
 UpdateRequest   SophosClient::update_request(const std::string &keyword, const index_type index)
 {
     std::pair<search_token_type, uint32_t> search_pair;

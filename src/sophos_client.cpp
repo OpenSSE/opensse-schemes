@@ -263,6 +263,26 @@ void SophosClientRunner::update_completion_loop()
         }
     }
 }
+    
+bool SophosClientRunner::output_db(const std::string& out_path)
+{
+    std::ofstream os(out_path);
+
+    if (!os.is_open()) {
+        os.close();
+        
+        logger::log(logger::ERROR) << "Unable to create output file " << out_path << std::endl;
+
+        return false;
+    }
+
+    client_->db_to_json(os);
+    
+    os.close();
+    
+    return true;
+}
+
 
 SearchRequestMessage request_to_message(const SearchRequest& req)
 {

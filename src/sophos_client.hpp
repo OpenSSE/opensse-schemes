@@ -35,6 +35,8 @@ public:
     void async_update(const std::string& keyword, uint64_t index);
 
     void wait_updates_completion();
+    
+    bool output_db(const std::string& out_path);
 private:
     void update_completion_loop();
     

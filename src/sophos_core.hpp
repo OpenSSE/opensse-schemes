@@ -66,6 +66,9 @@ public:
     SearchRequest   search_request(const std::string &keyword) const;
     UpdateRequest   update_request(const std::string &keyword, const index_type index);
     
+    
+    std::ostream& db_to_json(std::ostream& out) const;
+    
 private:
     void load_keyword_indices(const std::string &path);
     

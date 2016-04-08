@@ -60,9 +60,9 @@ int main(int argc, char** argv) {
     std::list<std::string> input_files;
     std::list<std::string> keywords;
     std::string client_db;
+    std::string output_path;
 
-    
-    while ((c = getopt (argc, argv, "i:b:d")) != -1)
+    while ((c = getopt (argc, argv, "i:b:o:d")) != -1)
         switch (c)
     {
         case 'i':
@@ -71,9 +71,12 @@ int main(int argc, char** argv) {
         case 'b':
             client_db = std::string(optarg);
             break;
+        case 'o':
+            output_path = std::string(optarg);
+            break;
         case 'd': // load a default file, only for debugging
-            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
-//            input_files.push_back("/Users/raphaelbost/Documents/inverted_index_1000.json");
+//            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
+            input_files.push_back("/Users/raphaelbost/Documents/inverted_index_1000.json");
             break;
         case '?':
             if (optopt == 'i')
@@ -131,6 +134,12 @@ int main(int argc, char** argv) {
         }
         sse::logger::log(sse::logger::INFO) << "}" << std::endl;
     }
+    
+    
+    if (output_path.size()>0) {
+        client_runner.output_db(output_path);
+    }
+    
     sse::crypto::cleanup_crypto_lib();
 
     

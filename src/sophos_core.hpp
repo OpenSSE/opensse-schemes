@@ -108,6 +108,7 @@ public:
 
     std::list<index_type> search(const SearchRequest& req);
     std::list<index_type> search_parallel(const SearchRequest& req);
+    std::list<index_type> search_parallel_light(const SearchRequest& req, uint8_t access_threads);
     void update(const UpdateRequest& req);
     
 private:

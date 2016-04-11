@@ -657,6 +657,108 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
     return results;
 }
 
+    std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& req, uint8_t access_threads)
+    {
+        std::list<index_type> results;
+        std::mutex res_mutex;
+        std::unique_lock<std::mutex> res_lock(res_mutex, std::defer_lock);
+        
+        search_token_type st = req.token;
+        
+        logger::log(logger::DBG) << "Search token: " << logger::hex_string(req.token) << std::endl;
+        
+        auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+        
+        logger::log(logger::DBG) << "Derivation key: " << logger::hex_string(req.derivation_key) << std::endl;
+        
+        ThreadPool access_pool(access_threads);
+        
+        std::atomic_uint c(0);
+        
+        auto access_job = [&derivation_prf, this, &results, &res_lock, &res_mutex, &c](const std::string& st_string)
+        {
+            update_token_type token = derivation_prf.prf(st_string + '0');
+
+            index_type r;
+            
+            logger::log(logger::DBG) << "Derived token: " << logger::hex_string(token) << std::endl;
+            
+            bool found = edb_.get(token,r);
+            
+            if (found) {
+                logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                
+                //            r = xor_mask(r, derivation_prf.prf(st_string + '1'));
+                //            results.push_back(r);
+                
+            }else{
+                logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
+            }
+            
+            index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+            
+            res_lock.lock();
+            results.push_back(v);
+            res_lock.unlock();
+            
+        };
+        
+        
+        
+        // the rsa job launched with input index,max computes all the RSA tokens of order i + kN up to max
+        auto rsa_job = [this, &st, &access_job, &access_pool, &c](const uint8_t index, const size_t max, const uint8_t N)
+        {
+            search_token_type local_st = st;
+            if (index != 0) {
+                local_st = public_tdp_.eval(local_st, index);
+            }
+            
+            if (index < max) {
+                // this is a valid search token, we have to derive it and do a lookup
+                std::string st_string(reinterpret_cast<char*>(local_st.data()), local_st.size());
+                access_pool.enqueue(access_job, st_string);
+                c++;
+            }
+            
+            for (size_t i = index+N; i < max; i+=N) {
+                local_st = public_tdp_.eval(local_st, N);
+                
+                std::string st_string(reinterpret_cast<char*>(local_st.data()), local_st.size());
+                access_pool.enqueue(access_job, st_string);
+                c++;
+
+            }
+        };
+        
+        std::vector<std::thread> rsa_threads;
+        
+        unsigned n_threads = std::thread::hardware_concurrency()-access_threads;
+        
+        //    std::cout << "Running RSA on " << n_threads << " threads" << std::endl;
+        
+        for (uint8_t t = 0; t < n_threads; t++) {
+            rsa_threads.push_back(std::thread(rsa_job, t, req.add_count, n_threads));
+        }
+        
+        for (uint8_t t = 0; t < n_threads; t++) {
+            rsa_threads[t].join();
+        }
+        
+        //    for (size_t i = 0; i < req.add_count; i++) {
+        //        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
+        //        prf_pool.enqueue(derive_job, st_string);
+        //        
+        //        st = public_tdp_.eval(st);
+        //    }
+        
+        access_pool.join();
+        
+        std::cout << "results.size() = " << results.size() << std::endl;
+        std::cout << "c = " << c << std::endl;
+        
+        return results;
+    }
+
 void SophosServer::update(const UpdateRequest& req)
 {
     logger::log(logger::DBG) << "Update: (" << logger::hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;

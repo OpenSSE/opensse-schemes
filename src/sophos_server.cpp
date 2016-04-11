@@ -144,11 +144,12 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
     logger::log(logger::TRACE) << "Searching ...";
     std::list<uint64_t> res_list;
     
-    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH)
+//    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH)
 //    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR)
-    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
+//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
     BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
-    BENCHMARK_SIMPLE("",{;})
+//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
+    BENCHMARK_SIMPLE("\n\n",{;})
     
     for (auto& i : res_list) {
         sophos::SearchReply reply;

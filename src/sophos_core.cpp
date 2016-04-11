@@ -661,7 +661,6 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
     {
         std::list<index_type> results;
         std::mutex res_mutex;
-        std::unique_lock<std::mutex> res_lock(res_mutex, std::defer_lock);
         
         search_token_type st = req.token;
         
@@ -675,7 +674,7 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
         
         std::atomic_uint c(0);
         
-        auto access_job = [&derivation_prf, this, &results, &res_lock, &res_mutex, &c](const std::string& st_string)
+        auto access_job = [&derivation_prf, this, &results, &res_mutex](const std::string& st_string)
         {
             update_token_type token = derivation_prf.prf(st_string + '0');
 
@@ -687,26 +686,23 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
             
             if (found) {
                 logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
-                
-                //            r = xor_mask(r, derivation_prf.prf(st_string + '1'));
-                //            results.push_back(r);
-                
+
             }else{
                 logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
             }
             
             index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
             
-            res_lock.lock();
+            res_mutex.lock();
             results.push_back(v);
-            res_lock.unlock();
+            res_mutex.unlock();
             
         };
         
         
         
         // the rsa job launched with input index,max computes all the RSA tokens of order i + kN up to max
-        auto rsa_job = [this, &st, &access_job, &access_pool, &c](const uint8_t index, const size_t max, const uint8_t N)
+        auto rsa_job = [this, &st, &access_job, &access_pool](const uint8_t index, const size_t max, const uint8_t N)
         {
             search_token_type local_st = st;
             if (index != 0) {
@@ -717,7 +713,6 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
                 // this is a valid search token, we have to derive it and do a lookup
                 std::string st_string(reinterpret_cast<char*>(local_st.data()), local_st.size());
                 access_pool.enqueue(access_job, st_string);
-                c++;
             }
             
             for (size_t i = index+N; i < max; i+=N) {
@@ -725,7 +720,6 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
                 
                 std::string st_string(reinterpret_cast<char*>(local_st.data()), local_st.size());
                 access_pool.enqueue(access_job, st_string);
-                c++;
 
             }
         };
@@ -752,9 +746,6 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
         //    }
         
         access_pool.join();
-        
-        std::cout << "results.size() = " << results.size() << std::endl;
-        std::cout << "c = " << c << std::endl;
         
         return results;
     }

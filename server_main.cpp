@@ -9,6 +9,8 @@
 #include "sophos_server.hpp"
 #include "logger.hpp"
 
+#include <sse/crypto/utils.hpp>
+
 #include <stdio.h>
 #include <csignal>
 
@@ -32,6 +34,8 @@ int main(int argc, char** argv) {
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);
     std::signal(SIGQUIT, exit_handler);
+
+    sse::crypto::init_crypto_lib();
 
     opterr = 0;
     int c;
@@ -68,6 +72,8 @@ int main(int argc, char** argv) {
     sse::sophos::run_sophos_server("0.0.0.0:4242", server_db, &server_ptr__);
 //    sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
     
+    sse::crypto::cleanup_crypto_lib();
+
     sse::logger::log(sse::logger::INFO) << "Done" << std::endl;
     
     return 0;

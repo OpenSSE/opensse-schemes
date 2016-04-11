@@ -607,12 +607,48 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
         
     };
 
-    for (size_t i = 0; i < req.add_count; i++) {
-        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
-        prf_pool.enqueue(derive_job, st_string);
+    // the rsa job launched with input index,max computes all the RSA tokens of order i + kN up to max
+    auto rsa_job = [this, &st, &derive_job, &prf_pool](const uint8_t index, const size_t max, const uint8_t N)
+    {
+        search_token_type local_st = st;
+        if (index != 0) {
+            local_st = public_tdp_.eval(local_st, index);
+        }
         
-        st = public_tdp_.eval(st);
+        if (index < max) {
+            // this is a valid search token, we have to derive it and do a lookup
+            std::string st_string(reinterpret_cast<char*>(local_st.data()), local_st.size());
+            prf_pool.enqueue(derive_job, st_string);
+        }
+        
+        for (size_t i = index+N; i < max; i+=N) {
+            local_st = public_tdp_.eval(local_st, N);
+            
+            std::string st_string(reinterpret_cast<char*>(local_st.data()), local_st.size());
+            prf_pool.enqueue(derive_job, st_string);
+        }
+    };
+    
+    std::vector<std::thread> rsa_threads;
+    
+    unsigned n_threads = std::thread::hardware_concurrency()-3;
+    
+//    std::cout << "Running RSA on " << n_threads << " threads" << std::endl;
+    
+    for (uint8_t t = 0; t < n_threads; t++) {
+        rsa_threads.push_back(std::thread(rsa_job, t, req.add_count, n_threads));
     }
+ 
+    for (uint8_t t = 0; t < n_threads; t++) {
+        rsa_threads[t].join();
+    }
+
+//    for (size_t i = 0; i < req.add_count; i++) {
+//        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
+//        prf_pool.enqueue(derive_job, st_string);
+//        
+//        st = public_tdp_.eval(st);
+//    }
     
     prf_pool.join();
     token_map_pool.join();

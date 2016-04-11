@@ -10,6 +10,7 @@
 
 #include "utils.hpp"
 #include "logger.hpp"
+#include "thread_pool.hpp"
 
 #include <sse/dbparser/rapidjson/rapidjson.h>
 #include <sse/dbparser/rapidjson/writer.h>
@@ -549,6 +550,73 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
         
         st = public_tdp_.eval(st);
     }
+    
+    return results;
+}
+
+std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
+{
+    std::list<index_type> results;
+    
+    search_token_type st = req.token;
+    
+    logger::log(logger::DBG) << "Search token: " << logger::hex_string(req.token) << std::endl;
+    
+    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+    
+    logger::log(logger::DBG) << "Derivation key: " << logger::hex_string(req.derivation_key) << std::endl;
+
+    ThreadPool prf_pool(1);
+    ThreadPool token_map_pool(1);
+    ThreadPool decrypt_pool(1);
+
+    auto decrypt_job = [&derivation_prf, &results](const index_type r, const std::string& st_string)
+    {
+        index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+        results.push_back(v);
+    };
+
+    auto lookup_job = [&derivation_prf, &decrypt_pool, &decrypt_job, this](const std::string& st_string, const update_token_type& token)
+    {
+        index_type r;
+        
+        logger::log(logger::DBG) << "Derived token: " << logger::hex_string(token) << std::endl;
+        
+        bool found = edb_.get(token,r);
+        
+        if (found) {
+            logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+            
+//            r = xor_mask(r, derivation_prf.prf(st_string + '1'));
+//            results.push_back(r);
+            
+            decrypt_pool.enqueue(decrypt_job, r, st_string);
+
+        }else{
+            logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
+        }
+
+    };
+
+    
+    auto derive_job = [&derivation_prf,&token_map_pool,&lookup_job](const std::string& input_string)
+    {
+        update_token_type ut = derivation_prf.prf(input_string + '0');
+        
+        token_map_pool.enqueue(lookup_job, input_string, ut);
+        
+    };
+
+    for (size_t i = 0; i < req.add_count; i++) {
+        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
+        prf_pool.enqueue(derive_job, st_string);
+        
+        st = public_tdp_.eval(st);
+    }
+    
+    prf_pool.join();
+    token_map_pool.join();
+    
     
     return results;
 }

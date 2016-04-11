@@ -107,6 +107,7 @@ public:
     const std::string public_key() const;
 
     std::list<index_type> search(const SearchRequest& req);
+    std::list<index_type> search_parallel(const SearchRequest& req);
     void update(const UpdateRequest& req);
     
 private:

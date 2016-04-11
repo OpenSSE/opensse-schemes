@@ -113,7 +113,7 @@ public:
 private:
     ssdmap::bucket_map<update_token_type, index_type, TokenHasher> edb_;
     
-    sse::crypto::Tdp public_tdp_;
+    sse::crypto::TdpMultPool public_tdp_;
 };
 
 } // namespace sophos

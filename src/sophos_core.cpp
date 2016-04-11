@@ -502,13 +502,13 @@ std::unique_ptr<SophosClient> SophosClient::construct_from_json(const std::strin
 
 
 SophosServer::SophosServer(const std::string& db_path, const std::string& tdp_pk) :
-edb_(db_path), public_tdp_(tdp_pk)
+edb_(db_path), public_tdp_(tdp_pk, std::thread::hardware_concurrency())
 {
     
 }
 
 SophosServer::SophosServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk) :
-edb_(db_path, tm_setup_size), public_tdp_(tdp_pk)
+edb_(db_path, tm_setup_size), public_tdp_(tdp_pk, std::thread::hardware_concurrency())
 {
     
 }

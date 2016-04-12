@@ -71,6 +71,7 @@ public:
     
     
     std::ostream& db_to_json(std::ostream& out) const;
+    std::ostream& print_stats(std::ostream& out) const;
     
 private:
     class JSONHandler;
@@ -111,6 +112,7 @@ public:
     std::list<index_type> search_parallel_light(const SearchRequest& req, uint8_t access_threads);
     void update(const UpdateRequest& req);
     
+    std::ostream& print_stats(std::ostream& out) const;
 private:
     ssdmap::bucket_map<update_token_type, index_type, TokenHasher> edb_;
     

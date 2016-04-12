@@ -38,6 +38,8 @@ namespace sophos {
                             const sophos::UpdateRequestMessage* request,
                             google::protobuf::Empty* e) override;
         
+        std::ostream& print_stats(std::ostream& out) const;
+
     private:
         static const std::string pk_file;
         static const std::string pairs_map_file;

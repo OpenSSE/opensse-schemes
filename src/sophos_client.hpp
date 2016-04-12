@@ -38,6 +38,8 @@ public:
     void wait_updates_completion();
     
     bool output_db(const std::string& out_path);
+    std::ostream& print_stats(std::ostream& out) const;
+
 private:
     void update_completion_loop();
     

@@ -332,6 +332,10 @@ bool SophosClientRunner::output_db(const std::string& out_path)
     return true;
 }
 
+std::ostream& SophosClientRunner::print_stats(std::ostream& out) const
+{
+    return client_->print_stats(out);
+}
 
 SearchRequestMessage request_to_message(const SearchRequest& req)
 {

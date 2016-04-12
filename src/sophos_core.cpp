@@ -304,6 +304,15 @@ std::ostream& SophosClient::db_to_json(std::ostream& out) const
     return out;
 }
     
+std::ostream& SophosClient::print_stats(std::ostream& out) const
+{
+    out << "Number of keywords: " << token_map_.size() << std::endl;
+    out << "Load: " << token_map_.load() << std::endl;
+    out << "Overflow bucket size: " << token_map_.overflow_size() << std::endl;
+    
+    return out;
+}
+
 class SophosClient::JSONHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, JSONHandler>
 {
 public:
@@ -755,6 +764,15 @@ void SophosServer::update(const UpdateRequest& req)
     logger::log(logger::DBG) << "Update: (" << logger::hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
 
     edb_.add(req.token, req.index);
+}
+
+std::ostream& SophosServer::print_stats(std::ostream& out) const
+{
+    out << "Number of tokens: " << edb_.size() << std::endl;
+    out << "Load: " << edb_.load() << std::endl;
+    out << "Overflow bucket size: " << edb_.overflow_size() << std::endl;
+    
+    return out;
 }
 
 } // namespace sophos

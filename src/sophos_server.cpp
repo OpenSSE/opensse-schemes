@@ -184,6 +184,10 @@ grpc::Status SophosImpl::update(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+std::ostream& SophosImpl::print_stats(std::ostream& out) const
+{
+    return server_->print_stats(out);
+}
 
 SearchRequest message_to_request(const SearchRequestMessage* mes)
 {
@@ -217,7 +221,9 @@ void run_sophos_server(const std::string &address, const std::string& server_db_
     logger::log(logger::INFO) << "Server listening on " << server_address << std::endl;
     
     *server_ptr = server.get();
-
+    
+    service.print_stats(std::cout);
+    
     server->Wait();
 }
 

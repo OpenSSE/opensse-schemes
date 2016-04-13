@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "sophos_core.hpp"
+#include "large_storage_sophos_client.hpp"
 #include "utils.hpp"
 
 using namespace sse::sophos;
@@ -54,7 +55,7 @@ void test_client_server()
         client_master_key_buf << client_master_key_in.rdbuf();
         server_pk_buf << server_pk_in.rdbuf();
 
-        client.reset(new  SophosClient("client.sav", "client.csv", client_sk_buf.str(), client_master_key_buf.str()));
+        client.reset(new  LargeStorageSophosClient("client.sav", "client.csv", client_sk_buf.str(), client_master_key_buf.str()));
         
         server.reset(new SophosServer("server.dat", server_pk_buf.str()));
         
@@ -65,7 +66,7 @@ void test_client_server()
     }else{
         cout << "Create new client-server instances" << endl;
         
-        client.reset(new SophosClient("client.sav", "client.csv", 1000));
+        client.reset(new LargeStorageSophosClient("client.sav", "client.csv", 1000));
 
         server.reset(new SophosServer("server.dat", 1000, client->public_key()));
         

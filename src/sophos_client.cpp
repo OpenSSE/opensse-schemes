@@ -9,6 +9,7 @@
 #include "sophos_client.hpp"
 
 #include "sophos_net_types.hpp"
+#include "large_storage_sophos_client.hpp"
 
 #include "utils.hpp"
 #include "logger.hpp"
@@ -69,7 +70,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
         sk_buf << sk_in.rdbuf();
         master_key_buf << master_key_in.rdbuf();
         
-        client_.reset(new  SophosClient(token_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str()));
+        client_.reset(new  LargeStorageSophosClient(token_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str()));
 
         
     }else if (exists(path)){
@@ -84,7 +85,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
             throw std::runtime_error(path + ": unable to create directory");
         }
         
-        client_.reset(new SophosClient(token_map_path, keyword_index_path, n_keywords));
+        client_.reset(new LargeStorageSophosClient(token_map_path, keyword_index_path, n_keywords));
         
         // write keys to files
         std::ofstream sk_out(sk_path.c_str());
@@ -138,7 +139,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
                 throw std::runtime_error(db_path + ": unable to create directory");
             }
             
-            client_ = std::move(SophosClient::construct_from_json(token_map_path, keyword_index_path, json_path));
+            client_ = std::move(LargeStorageSophosClient::construct_from_json(token_map_path, keyword_index_path, json_path));
             
             // write keys to files
             std::ofstream sk_out(sk_path.c_str());

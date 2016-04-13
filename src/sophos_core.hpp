@@ -52,49 +52,32 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    static std::unique_ptr<SophosClient> construct_from_json(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& json_path);
     
-    SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size);
-    SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key);
-    SophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const size_t tm_setup_size);
-    ~SophosClient();
     
-    size_t keyword_count() const;
+    SophosClient();
+    SophosClient(const std::string& tdp_private_key, const std::string& derivation_master_key);
+    virtual ~SophosClient();
+    
+    virtual size_t keyword_count() const = 0;
     
     const std::string private_key() const;
     const std::string public_key() const;
     
     const std::string master_derivation_key() const;
 
-    SearchRequest   search_request(const std::string &keyword) const;
-    UpdateRequest   update_request(const std::string &keyword, const index_type index);
+    virtual SearchRequest   search_request(const std::string &keyword) const = 0;
+    virtual UpdateRequest   update_request(const std::string &keyword, const index_type index) = 0;
     
-    
-    std::ostream& db_to_json(std::ostream& out) const;
-    std::ostream& print_stats(std::ostream& out) const;
-    
+    virtual std::ostream& db_to_json(std::ostream& out) const = 0;
+    virtual std::ostream& print_stats(std::ostream& out) const = 0;
+
+    const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
+    const sse::crypto::TdpInverse& inverse_tdp() const;
+
 private:
-    class JSONHandler;
-    friend JSONHandler;
-    
-    void load_keyword_indices(const std::string &path);
-    
-    int64_t find_keyword_index(const std::string &kw) const;
-    uint32_t get_keyword_index(const std::string &kw);
-    uint32_t get_keyword_index(const std::string &kw, bool& is_new);
-    uint32_t new_keyword_index(const std::string &kw);
 
     crypto::Prf<kDerivationKeySize> k_prf_;
-    ssdmap::bucket_map< uint32_t, std::pair<search_token_type, uint32_t> > token_map_;
-    std::map<std::string, uint32_t> keyword_indices_;
-    
-    std::ofstream keyword_indexer_stream_;
-    
     sse::crypto::TdpInverse inverse_tdp_;
-    
-    std::mutex kw_index_mtx_;
-    std::mutex token_map_mtx_;
-    std::atomic_uint keyword_counter_;
 };
 
 class SophosServer {

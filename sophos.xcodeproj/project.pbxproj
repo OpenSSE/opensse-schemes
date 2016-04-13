@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		314FE9A91CBED0EE0088352B /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 314FE9A71CBED0EE0088352B /* medium_storage_sophos_client.cpp */; };
+		314FE9AA1CBED0EE0088352B /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 314FE9A71CBED0EE0088352B /* medium_storage_sophos_client.cpp */; };
+		314FE9AB1CBED0EE0088352B /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 314FE9A71CBED0EE0088352B /* medium_storage_sophos_client.cpp */; };
 		315A5A5B1CB15D9F0026DBB3 /* client_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315A5A531CB15D920026DBB3 /* client_main.cpp */; };
 		315A5A5D1CB15DEF0026DBB3 /* server_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315A5A5C1CB15DEF0026DBB3 /* server_main.cpp */; };
 		315EB12B1CB42C7C00EB5D9F /* logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315EB1291CB42C7C00EB5D9F /* logger.cpp */; };
@@ -30,9 +33,9 @@
 		6C9CBF3B1CAC0FD6003B0185 /* libssdmap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF091CAC097D003B0185 /* libssdmap.dylib */; };
 		6C9CBF3C1CAC0FD6003B0185 /* libsse_crypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF2C1CAC0C33003B0185 /* libsse_crypto.dylib */; };
 		6CF416021CB3F02200C448D4 /* libparser.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 315EC2781CB2D660009511D5 /* libparser.dylib */; };
-		6CF813AE1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */; settings = {ASSET_TAGS = (); }; };
-		6CF813AF1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */; settings = {ASSET_TAGS = (); }; };
-		6CF813B01CBE8CF500DF57A9 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */; settings = {ASSET_TAGS = (); }; };
+		6CF813AE1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */; };
+		6CF813AF1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */; };
+		6CF813B01CBE8CF500DF57A9 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -219,6 +222,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		314FE9A71CBED0EE0088352B /* medium_storage_sophos_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = medium_storage_sophos_client.cpp; sourceTree = "<group>"; };
+		314FE9A81CBED0EE0088352B /* medium_storage_sophos_client.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = medium_storage_sophos_client.hpp; sourceTree = "<group>"; };
 		315A5A531CB15D920026DBB3 /* client_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client_main.cpp; sourceTree = "<group>"; };
 		315A5A5C1CB15DEF0026DBB3 /* server_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server_main.cpp; sourceTree = "<group>"; };
 		315A5A5E1CB189F70026DBB3 /* SConstruct */ = {isa = PBXFileReference; lastKnownFileType = text; path = SConstruct; sourceTree = "<group>"; };
@@ -325,6 +330,8 @@
 				6C9CBF0D1CAC0B32003B0185 /* sophos_core.hpp */,
 				6CF813AC1CBE8CF500DF57A9 /* large_storage_sophos_client.cpp */,
 				6CF813AD1CBE8CF500DF57A9 /* large_storage_sophos_client.hpp */,
+				314FE9A71CBED0EE0088352B /* medium_storage_sophos_client.cpp */,
+				314FE9A81CBED0EE0088352B /* medium_storage_sophos_client.hpp */,
 				315EB1451CB48B7900EB5D9F /* sophos_net_types.hpp */,
 				6C9CBEBB1CABBEAD003B0185 /* sophos_client.cpp */,
 				6C9CBEBC1CABBEAD003B0185 /* sophos_client.hpp */,
@@ -541,6 +548,7 @@
 				31B1E80A1CAC86A900643154 /* utils.cpp in Sources */,
 				6C9CBF0E1CAC0B32003B0185 /* sophos_core.cpp in Sources */,
 				31B08D8F1CAAE4A600DD6BF8 /* main.cpp in Sources */,
+				314FE9A91CBED0EE0088352B /* medium_storage_sophos_client.cpp in Sources */,
 				315EB12B1CB42C7C00EB5D9F /* logger.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -555,6 +563,7 @@
 				6C9CBEC41CABBFCC003B0185 /* sophos.proto in Sources */,
 				315EB1331CB432E100EB5D9F /* logger.cpp in Sources */,
 				315A5A5D1CB15DEF0026DBB3 /* server_main.cpp in Sources */,
+				314FE9AA1CBED0EE0088352B /* medium_storage_sophos_client.cpp in Sources */,
 				31B1E80B1CAC86A900643154 /* utils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -569,6 +578,7 @@
 				6C9CBECF1CABC007003B0185 /* sophos.proto in Sources */,
 				315EB1341CB432E200EB5D9F /* logger.cpp in Sources */,
 				31B1E80C1CAC86A900643154 /* utils.cpp in Sources */,
+				314FE9AB1CBED0EE0088352B /* medium_storage_sophos_client.cpp in Sources */,
 				315A5A5B1CB15D9F0026DBB3 /* client_main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

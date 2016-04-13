@@ -186,7 +186,10 @@ grpc::Status SophosImpl::update(grpc::ServerContext* context,
 
 std::ostream& SophosImpl::print_stats(std::ostream& out) const
 {
-    return server_->print_stats(out);
+    if (server_) {
+        return server_->print_stats(out);
+    }
+    return out;
 }
 
 SearchRequest message_to_request(const SearchRequestMessage* mes)

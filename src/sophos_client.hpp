@@ -26,7 +26,7 @@ namespace sophos {
 class SophosClientRunner {
 public:
     SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, size_t n_keywords = 1e4);
-    SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
+//    SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
     ~SophosClientRunner();
     
     const SophosClient& client() const;
@@ -42,6 +42,9 @@ public:
 
 private:
     void update_completion_loop();
+    
+    void load_client(const std::string& path);
+    void setup_client(const std::string& path, size_t setup_size, size_t n_keywords);
     
     bool send_setup(const size_t setup_size) const;
     

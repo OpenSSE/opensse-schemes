@@ -10,6 +10,7 @@
 
 #include "sophos_net_types.hpp"
 #include "large_storage_sophos_client.hpp"
+#include "medium_storage_sophos_client.hpp"
 
 #include "utils.hpp"
 #include "logger.hpp"
@@ -38,40 +39,10 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
                                                                grpc::InsecureChannelCredentials()));
     stub_ = std::move(sophos::Sophos::NewStub(channel));
                     
-    std::string sk_path = path + "/tdp_sk.key";
-    std::string master_key_path = path + "/derivation_master.key";
-    std::string token_map_path = path + "/tokens.dat";
-    std::string keyword_index_path = path + "/keywords.csv";
-    
     if (is_directory(path)) {
         // try to initialize everything from this directory
-        
-        if (!is_file(sk_path)) {
-            // error, the secret key file is not there
-            throw std::runtime_error("Missing secret key file");
-        }
-        if (!is_file(master_key_path)) {
-            // error, the derivation key file is not there
-            throw std::runtime_error("Missing master derivation key file");
-        }
-        if (!is_directory(token_map_path)) {
-            // error, the token map data is not there
-            throw std::runtime_error("Missing token data");
-        }
-        if (!is_file(keyword_index_path)) {
-            // error, the derivation key file is not there
-            throw std::runtime_error("Missing keyword indices");
-        }
-        
-        std::ifstream sk_in(sk_path.c_str());
-        std::ifstream master_key_in(master_key_path.c_str());
-        std::stringstream sk_buf, master_key_buf;
-        
-        sk_buf << sk_in.rdbuf();
-        master_key_buf << master_key_in.rdbuf();
-        
-        client_.reset(new  LargeStorageSophosClient(token_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str()));
 
+        load_client(path);
         
     }else if (exists(path)){
         // there should be nothing else than a directory at path, but we found something  ...
@@ -79,13 +50,128 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     }else{
         // initialize a brand new Sophos client
         
+        setup_client(path, setup_size, n_keywords);
+    }
+    
+    // start the thread that will look for completed updates
+    update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
+}
+
+//    SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
+//    : update_launched_count_(0), update_completed_count_(0)
+//    {
+//        std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
+//                                                                   grpc::InsecureChannelCredentials()));
+//        stub_ = std::move(sophos::Sophos::NewStub(channel));
+//        
+//        std::string sk_path = db_path + "/tdp_sk.key";
+//        std::string master_key_path = db_path + "/derivation_master.key";
+//        std::string token_map_path = db_path + "/tokens.dat";
+//        std::string keyword_index_path = db_path + "/keywords.csv";
+//        
+//        if (exists(db_path)){
+//            throw std::runtime_error("File or directory already exists at " + db_path);
+//        }else{
+//            // initialize a brand new Sophos client
+//            
+//            // start by creating a new directory
+//            
+//            if (!create_directory(db_path, (mode_t)0700)) {
+//                throw std::runtime_error(db_path + ": unable to create directory");
+//            }
+//            
+//            client_ = std::move(LargeStorageSophosClient::construct_from_json(token_map_path, keyword_index_path, json_path));
+//            
+//            // write keys to files
+//            std::ofstream sk_out(sk_path.c_str());
+//            if (!sk_out.is_open()) {
+//                throw std::runtime_error(sk_path + ": unable to write the secret key");
+//            }
+//            
+//            sk_out << client_->private_key();
+//            sk_out.close();
+//            
+//            std::ofstream master_key_out(master_key_path.c_str());
+//            if (!master_key_out.is_open()) {
+//                throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
+//            }
+//            
+//            master_key_out << client_->master_derivation_key();
+//            master_key_out.close();
+//            
+//        }
+//        
+//        // start the thread that will look for completed updates
+//        update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
+//    }
+    
+
+SophosClientRunner::~SophosClientRunner()
+{
+    update_cq_.Shutdown();
+    wait_updates_completion();
+//    update_completion_thread_->join();
+}
+    
+    
+void SophosClientRunner::load_client(const std::string& path)
+{
+    // try to initialize everything from this directory
+    std::string sk_path = path + "/tdp_sk.key";
+    std::string master_key_path = path + "/derivation_master.key";
+    std::string rsa_prg_key_path = path + "/rsa_prg.key";
+    std::string token_map_path = path + "/tokens.dat";
+    std::string keyword_index_path = path + "/keywords.csv";
+    
+
+    if (!is_file(sk_path)) {
+        // error, the secret key file is not there
+        throw std::runtime_error("Missing secret key file");
+    }
+    if (!is_file(master_key_path)) {
+        // error, the derivation key file is not there
+        throw std::runtime_error("Missing master derivation key file");
+    }
+    if (!is_file(rsa_prg_key_path)) {
+        // error, the rsa prg key file is not there
+        throw std::runtime_error("Missing rsa prg key file");
+    }
+    if (!is_directory(token_map_path)) {
+        // error, the token map data is not there
+        throw std::runtime_error("Missing token data");
+    }
+    if (!is_file(keyword_index_path)) {
+        // error, the derivation key file is not there
+        throw std::runtime_error("Missing keyword indices");
+    }
+    
+    std::ifstream sk_in(sk_path.c_str());
+    std::ifstream master_key_in(master_key_path.c_str());
+    std::ifstream rsa_prg_key_in(rsa_prg_key_path.c_str());
+    std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
+    
+    sk_buf << sk_in.rdbuf();
+    master_key_buf << master_key_in.rdbuf();
+    rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
+    
+    client_.reset(new  MediumStorageSophosClient(token_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str(), rsa_prg_key_buf.str()));
+}
+
+    void SophosClientRunner::setup_client(const std::string& path, size_t setup_size, size_t n_keywords)
+    {
+        std::string sk_path = path + "/tdp_sk.key";
+        std::string master_key_path = path + "/derivation_master.key";
+        std::string rsa_prg_key_path = path + "/rsa_prg.key";
+        std::string token_map_path = path + "/tokens.dat";
+        std::string keyword_index_path = path + "/keywords.csv";
+
         // start by creating a new directory
         
         if (!create_directory(path, (mode_t)0700)) {
             throw std::runtime_error(path + ": unable to create directory");
         }
         
-        client_.reset(new LargeStorageSophosClient(token_map_path, keyword_index_path, n_keywords));
+        client_.reset(new MediumStorageSophosClient(token_map_path, keyword_index_path, n_keywords));
         
         // write keys to files
         std::ofstream sk_out(sk_path.c_str());
@@ -103,6 +189,14 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
         
         master_key_out << client_->master_derivation_key();
         master_key_out.close();
+        
+        std::ofstream rsa_prg_key_out(rsa_prg_key_path.c_str());
+        if (!rsa_prg_key_out.is_open()) {
+            throw std::runtime_error(rsa_prg_key_path + ": unable to write the rsa prg key");
+        }
+        
+        rsa_prg_key_out << dynamic_cast<MediumStorageSophosClient*>(client_.get())->rsa_prg_key();
+        rsa_prg_key_out.close();
 
         // send a setup message to the server
         bool success = send_setup(setup_size);
@@ -110,67 +204,8 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
         if (!success) {
             throw std::runtime_error("Unsuccessful server setup");
         }
-    }
-    
-    // start the thread that will look for completed updates
-    update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
-}
 
-    SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
-    : update_launched_count_(0), update_completed_count_(0)
-    {
-        std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
-                                                                   grpc::InsecureChannelCredentials()));
-        stub_ = std::move(sophos::Sophos::NewStub(channel));
-        
-        std::string sk_path = db_path + "/tdp_sk.key";
-        std::string master_key_path = db_path + "/derivation_master.key";
-        std::string token_map_path = db_path + "/tokens.dat";
-        std::string keyword_index_path = db_path + "/keywords.csv";
-        
-        if (exists(db_path)){
-            throw std::runtime_error("File or directory already exists at " + db_path);
-        }else{
-            // initialize a brand new Sophos client
-            
-            // start by creating a new directory
-            
-            if (!create_directory(db_path, (mode_t)0700)) {
-                throw std::runtime_error(db_path + ": unable to create directory");
-            }
-            
-            client_ = std::move(LargeStorageSophosClient::construct_from_json(token_map_path, keyword_index_path, json_path));
-            
-            // write keys to files
-            std::ofstream sk_out(sk_path.c_str());
-            if (!sk_out.is_open()) {
-                throw std::runtime_error(sk_path + ": unable to write the secret key");
-            }
-            
-            sk_out << client_->private_key();
-            sk_out.close();
-            
-            std::ofstream master_key_out(master_key_path.c_str());
-            if (!master_key_out.is_open()) {
-                throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
-            }
-            
-            master_key_out << client_->master_derivation_key();
-            master_key_out.close();
-            
-        }
-        
-        // start the thread that will look for completed updates
-        update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
     }
-    
-
-SophosClientRunner::~SophosClientRunner()
-{
-    update_cq_.Shutdown();
-    wait_updates_completion();
-//    update_completion_thread_->join();
-}
 
 bool SophosClientRunner::send_setup(const size_t setup_size) const
 {

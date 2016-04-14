@@ -13,6 +13,7 @@
 
 #include <sse/dbparser/rapidjson/rapidjson.h>
 #include <sse/dbparser/rapidjson/writer.h>
+#include <sse/dbparser/rapidjson/prettywriter.h>
 #include <sse/dbparser/rapidjson/filewritestream.h>
 #include <sse/dbparser/rapidjson/filereadstream.h>
 #include <sse/dbparser/rapidjson/ostreamwrapper.h>
@@ -21,6 +22,7 @@
 
 #define DERIVATION_KEY "derivation"
 #define TDP_KEY "tdp_pk"
+#define RSA_PRG_KEY "rsa_prg"
 #define TOKEN_KEY "tokens"
 #define TOKEN_MAP_SIZE_KEY "map_size"
 
@@ -161,6 +163,14 @@ namespace sse {
             return counter_map_.size();
         }
         
+        void MediumStorageSophosClient::add_keyword_index(const std::string &kw, const uint32_t index)
+        {
+            // CAUTION: NOT THREAD SAFE !!!
+            keyword_indices_.insert(std::make_pair(kw, index));
+            append_keyword_map(keyword_indexer_stream_, kw, index);
+            
+        }
+        
         int64_t MediumStorageSophosClient::find_keyword_index(const std::string &kw) const
         {
             auto it = keyword_indices_.find(kw);
@@ -205,8 +215,7 @@ namespace sse {
         {
             // CAUTION: NOT THREAD SAFE !!!
             uint32_t c = keyword_counter_++;
-            keyword_indices_.insert(std::make_pair(kw, c));
-            append_keyword_map(keyword_indexer_stream_, kw, c);
+            add_keyword_index(kw, c);
             
             return c;
         }
@@ -337,21 +346,25 @@ namespace sse {
         std::ostream& MediumStorageSophosClient::db_to_json(std::ostream& out) const
         {
             rapidjson::OStreamWrapper ow(out);
-            rapidjson::Writer<rapidjson::OStreamWrapper> writer(ow);
+            rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(ow);
             
             writer.StartObject();
             
             // write the derivation key
             writer.Key(DERIVATION_KEY);
-            writer.String(master_derivation_key().c_str());
+            writer.String(master_derivation_key().c_str(), (unsigned int) master_derivation_key().length());
             
             // write the private key
             writer.Key(TDP_KEY);
-            writer.String(private_key().c_str());
-            
+            writer.String(private_key().c_str(), (unsigned int) private_key().length());
+
+            // write the RSA PRG key
+            writer.Key(RSA_PRG_KEY);
+            writer.String(rsa_prg_key().c_str(), (unsigned int) rsa_prg_key().length());
+
             // write the token array
             writer.Key(TOKEN_MAP_SIZE_KEY);
-            writer.Uint64(counter_map_.bucket_space());
+            writer.Uint64(keyword_count());
             
             // write the token array
             writer.Key(TOKEN_KEY);
@@ -360,10 +373,12 @@ namespace sse {
             for (const auto& kw_pair : keyword_indices_) {
                 writer.Key(kw_pair.first.c_str());
                 writer.StartArray();
-                
+
+                writer.Uint(kw_pair.second);
+
                 uint32_t kw_counter = counter_map_.at(kw_pair.second);
                 
-                writer.Uint(kw_counter);
+                writer.Uint64(kw_counter);
                 
                 writer.EndArray();
             }
@@ -385,22 +400,22 @@ namespace sse {
             return out;
         }
 
-        /*
+        
         class MediumStorageSophosClient::JSONHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, JSONHandler>
         {
         public:
-            JSONHandler(const std::string& token_map_path, const std::string& keyword_indexer_path)
-            : state_(kExpectStart), token_map_path_(token_map_path), keyword_indexer_path_(keyword_indexer_path)
+            JSONHandler(const std::string& counter_map_path, const std::string& keyword_indexer_path)
+            : state_(kExpectStart), counter_map_path_(counter_map_path), keyword_indexer_path_(keyword_indexer_path)
             {
             }
             
             bool StartObject() {
                 switch (state_) {
                     case kExpectStart:
-                        state_ = kExpectStart;
+                        state_ = kExpectParameterKey;
                         return true;
                     case kExpectTokenValuesStart:
-                        state_ = kExpectTokenKey;
+                        state_ = kExpectKeyword;
                         return true;
                     default:
                         logger::log(logger::ERROR) << "Parsing error. Invalid state to parse object start" << std::endl;
@@ -414,7 +429,7 @@ namespace sse {
                 switch (state_) {
                     case kExpectEnd:
                         return true;
-                    case kExpectTokenKey:
+                    case kExpectKeyword:
                         state_ = kExpectEnd;
                         return true;
                     default:
@@ -433,18 +448,20 @@ namespace sse {
                             state_ = kExpectDerivationKeyValue;
                         }else if (key == TDP_KEY) {
                             state_ = kExpectTDPKeyValue;
+                        }else if(key == RSA_PRG_KEY) {
+                            state_ = kExpectRSAPRGKeyValue;
                         }else if (key == TOKEN_MAP_SIZE_KEY) {
                             state_ = kExpectTokenMapSizeValue;
                         }else if (key == TOKEN_KEY) {
                             // we have to check that we parsed all the parameters
-                            if( bucket_map_size_ == 0 || derivation_key_.size() == 0 || tdp_key_.size() == 0 )
+                            if( bucket_map_size_ == 0 || derivation_key_.size() == 0 || tdp_key_.size() == 0 || rsa_prg_key_.size() == 0 )
                             {
                                 logger::log(logger::ERROR) << "Parsing error. At least one parameter is missing" << std::endl;
                                 return false;
                             }
                             
                             // construct the client from the parameters
-                            client_ = new MediumStorageSophosClient(token_map_path_, keyword_indexer_path_, tdp_key_, derivation_key_);
+                            client_ = new MediumStorageSophosClient(counter_map_path_, keyword_indexer_path_, tdp_key_, derivation_key_, rsa_prg_key_, bucket_map_size_);
                             state_ = kExpectTokenValuesStart;
                         }else{
                             logger::log(logger::ERROR) << "Parsing error. Invalid key " << key  << std::endl;
@@ -455,6 +472,7 @@ namespace sse {
                         return true;
                     case kExpectKeyword:
                         current_keyword_ = key;
+                        state_ = kExpectStartList;
                         return true;
                     default:
                         logger::log(logger::ERROR) << "Parsing error. Invalid state to parse key " << key  << std::endl;
@@ -466,7 +484,7 @@ namespace sse {
             bool StartArray() {
                 switch(state_) {
                     case kExpectStartList:
-                        state_ = kExpectTokenKey;
+                        state_ = kExpectKeywordIndex;
                         return true;
                     default:
                         logger::log(logger::ERROR) << "Parsing error. Invalid state to parse array start" << std::endl;
@@ -483,8 +501,8 @@ namespace sse {
                         state_ = kExpectKeyword;
                         
                         // add a keyword with the parsed token and count
-                        uint32_t index = client_->get_keyword_index(current_keyword_);
-                        client_->token_map_.add(index, std::make_pair(current_st_, current_count_));
+                        client_->add_keyword_index(current_keyword_, current_index_);
+                        client_->counter_map_.add(current_index_, current_count_);
                         
                         return true;
                     }
@@ -499,12 +517,15 @@ namespace sse {
                 switch(state_){
                     case kExpectDerivationKeyValue:
                         derivation_key_ = in;
+                        state_ = kExpectParameterKey;
                         return true;
                     case kExpectTDPKeyValue:
                         tdp_key_ = in;
-                        return true;
-                    case kExpectTokenKey:
-                        std::copy(in.begin(), in.end(), current_st_.begin());
+                        state_ = kExpectParameterKey;
+                       return true;
+                    case kExpectRSAPRGKeyValue:
+                        rsa_prg_key_ = in;
+                        state_ = kExpectParameterKey;
                         return true;
                     default:
                         logger::log(logger::ERROR) << "Parsing error. Invalid state to parse string " << in << std::endl;
@@ -515,9 +536,15 @@ namespace sse {
                 switch (state_) {
                     case kExpectTokenMapSizeValue:
                         bucket_map_size_ = i;
+                        state_ = kExpectParameterKey;
+                       return true;
+                    case kExpectKeywordIndex:
+                        current_index_ = i;
+                        state_ = kExpectKeywordCount;
                         return true;
-                    case kExpectTokenCount:
+                    case kExpectKeywordCount:
                         current_count_ = i;
+                        state_ = kExpectEndList;
                         return true;
                     default:
                         logger::log(logger::ERROR) << "Parsing error. Invalid state to parse int " << i << std::endl;
@@ -541,11 +568,12 @@ namespace sse {
                 kExpectParameterKey,
                 kExpectDerivationKeyValue,
                 kExpectTDPKeyValue,
+                kExpectRSAPRGKeyValue,
                 kExpectTokenMapSizeValue,
                 kExpectTokenValuesStart,
                 kExpectKeyword,
-                kExpectTokenKey,
-                kExpectTokenCount,
+                kExpectKeywordIndex,
+                kExpectKeywordCount,
                 kExpectStartList,
                 kExpectEndList,
                 kExpectEnd
@@ -553,34 +581,51 @@ namespace sse {
             
             MediumStorageSophosClient* client_;
             
-            const std::string& token_map_path_;
+            const std::string& counter_map_path_;
             const std::string& keyword_indexer_path_;
             
             size_t bucket_map_size_;
             std::string derivation_key_;
             std::string tdp_key_;
+            std::string rsa_prg_key_;
             
             std::string current_keyword_;
-            search_token_type current_st_;
+            uint32_t current_index_;
             uint32_t current_count_;
         };
-        */
-        std::unique_ptr<SophosClient> MediumStorageSophosClient::construct_from_json(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& json_path)
-        {
-            return std::unique_ptr<MediumStorageSophosClient>();
+
+        std::unique_ptr<SophosClient> MediumStorageSophosClient::construct_from_json(const std::string& dir_path, const std::string& json_path)
+        {            
+            FILE* fp = fopen(json_path.c_str(), "r");
+            char readBuffer[65536];
+            rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
             
-//            FILE* fp = fopen(json_path.c_str(), "r");
-//            char readBuffer[65536];
-//            rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
-//            
-//            JSONHandler handler(token_map_path, keyword_indexer_path);
-//            rapidjson::Reader reader;
-//            
-//            reader.Parse(is, handler);
-//            
-//            fclose(fp);
-//            
-//            return std::unique_ptr<MediumStorageSophosClient>(handler.client());
+            if (!is_directory(dir_path)) {
+                throw std::runtime_error(dir_path + ": not a directory");
+            }
+            
+            std::string counter_map_path = dir_path + "/" + counter_map_file__;
+            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
+
+            JSONHandler handler(counter_map_path, keyword_index_path);
+            rapidjson::Reader reader;
+            
+            MediumStorageSophosClient *client_ptr = NULL;
+            
+            bool success = reader.Parse(is, handler);
+            fclose(fp);
+
+            if(!success)
+            {
+                throw std::runtime_error("Failed to parse JSON at path " + json_path);
+            }else{
+                client_ptr = handler.client();
+                client_ptr->write_keys(dir_path);
+            }
+            
+            
+            
+            return std::unique_ptr<MediumStorageSophosClient>(client_ptr);
         }
         
         

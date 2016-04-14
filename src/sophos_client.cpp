@@ -70,53 +70,30 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
 }
 
-//    SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
-//    : update_launched_count_(0), update_completed_count_(0)
-//    {
-//        std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
-//                                                                   grpc::InsecureChannelCredentials()));
-//        stub_ = std::move(sophos::Sophos::NewStub(channel));
-//        
-//        std::string sk_path = db_path + "/tdp_sk.key";
-//        std::string master_key_path = db_path + "/derivation_master.key";
-//        std::string token_map_path = db_path + "/tokens.dat";
-//        std::string keyword_index_path = db_path + "/keywords.csv";
-//        
-//        if (exists(db_path)){
-//            throw std::runtime_error("File or directory already exists at " + db_path);
-//        }else{
-//            // initialize a brand new Sophos client
-//            
-//            // start by creating a new directory
-//            
-//            if (!create_directory(db_path, (mode_t)0700)) {
-//                throw std::runtime_error(db_path + ": unable to create directory");
-//            }
-//            
-//            client_ = std::move(LargeStorageSophosClient::construct_from_json(token_map_path, keyword_index_path, json_path));
-//            
-//            // write keys to files
-//            std::ofstream sk_out(sk_path.c_str());
-//            if (!sk_out.is_open()) {
-//                throw std::runtime_error(sk_path + ": unable to write the secret key");
-//            }
-//            
-//            sk_out << client_->private_key();
-//            sk_out.close();
-//            
-//            std::ofstream master_key_out(master_key_path.c_str());
-//            if (!master_key_out.is_open()) {
-//                throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
-//            }
-//            
-//            master_key_out << client_->master_derivation_key();
-//            master_key_out.close();
-//            
-//        }
-//        
-//        // start the thread that will look for completed updates
-//        update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
-//    }
+    SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
+    : update_launched_count_(0), update_completed_count_(0)
+    {
+        std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
+                                                                   grpc::InsecureChannelCredentials()));
+        stub_ = std::move(sophos::Sophos::NewStub(channel));
+        
+        if (exists(db_path)){
+            throw std::runtime_error("File or directory already exists at " + db_path);
+        }else{
+            // initialize a brand new Sophos client
+            
+            // start by creating a new directory
+            
+            if (!create_directory(db_path, (mode_t)0700)) {
+                throw std::runtime_error(db_path + ": unable to create directory");
+            }
+            
+            client_ = MediumStorageSophosClient::construct_from_json(db_path, json_path);
+        }
+        
+        // start the thread that will look for completed updates
+        update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
+    }
     
 
 SophosClientRunner::~SophosClientRunner()

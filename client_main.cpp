@@ -59,14 +59,15 @@ int main(int argc, char** argv) {
 
     std::list<std::string> input_files;
     std::list<std::string> keywords;
+    std::string json_file;
     std::string client_db;
     std::string output_path;
     bool print_stats = false;
     
-    while ((c = getopt (argc, argv, "i:b:o:dp")) != -1)
+    while ((c = getopt (argc, argv, "l:b:o:i:dp")) != -1)
         switch (c)
     {
-        case 'i':
+        case 'l':
             input_files.push_back(std::string(optarg));
             break;
         case 'b':
@@ -74,6 +75,9 @@ int main(int argc, char** argv) {
             break;
         case 'o':
             output_path = std::string(optarg);
+            break;
+        case 'i':
+            json_file = std::string(optarg);
             break;
         case 'd': // load a default file, only for debugging
 //            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
@@ -83,7 +87,7 @@ int main(int argc, char** argv) {
             print_stats = true;
             break;
         case '?':
-            if (optopt == 'i')
+            if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i')
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -110,21 +114,23 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << client_db << std::endl;
     }
     
-//    std::string save_path = "/Users/rbost/Code/sse/sophos/test.csdb";
-//    //    std::string save_path = "/Users/raphaelbost/Code/sse/sophos/test.csdb";
+    std::unique_ptr<sse::sophos::SophosClientRunner> client_runner;
     
-    sse::sophos::SophosClientRunner client_runner("localhost:4242", client_db, 1e6, 1e5);
-
+    if (json_file.size() > 0) {
+        client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, json_file) );
+    }else{
+         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, 1e6, 1e5) );
+    }
 
     for (std::string &path : input_files) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
-        load_inverted_index(client_runner, path);
+        load_inverted_index(*client_runner, path);
         sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
     }
     
     for (std::string &kw : keywords) {
         std::cout << "-------------- Search --------------" << std::endl;
-        auto res = client_runner.search(kw);
+        auto res = client_runner->search(kw);
         
         bool first = true;
         sse::logger::log(sse::logger::INFO) << "{";
@@ -141,13 +147,16 @@ int main(int argc, char** argv) {
     
     
     if (output_path.size()>0) {
-        client_runner.output_db(output_path);
+        client_runner->output_db(output_path);
     }
     
     if (print_stats)
     {
-        client_runner.print_stats(std::cout);
+        client_runner->print_stats(std::cout);
     }
+    
+    client_runner.reset();
+    
     sse::crypto::cleanup_crypto_lib();
 
     

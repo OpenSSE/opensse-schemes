@@ -19,7 +19,7 @@ namespace sse {
             static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
 
             
-            static std::unique_ptr<SophosClient> construct_from_json(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& json_path);
+            static std::unique_ptr<SophosClient> construct_from_json(const std::string& dir_path, const std::string& json_path);
             
             MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size);
             MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key);
@@ -48,6 +48,7 @@ namespace sse {
             
             void load_keyword_indices(const std::string &path);
             
+            void add_keyword_index(const std::string &kw, const uint32_t index);
             int64_t find_keyword_index(const std::string &kw) const;
             uint32_t get_keyword_index(const std::string &kw);
             uint32_t get_keyword_index(const std::string &kw, bool& is_new);

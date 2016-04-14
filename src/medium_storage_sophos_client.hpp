@@ -15,6 +15,10 @@ namespace sse {
         
         class MediumStorageSophosClient : public SophosClient {
         public:
+            static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
+            static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
+
+            
             static std::unique_ptr<SophosClient> construct_from_json(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& json_path);
             
             MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size);
@@ -29,10 +33,16 @@ namespace sse {
             
             std::string rsa_prg_key() const;
             
+            void write_keys(const std::string& dir_path) const;
+            
             std::ostream& db_to_json(std::ostream& out) const;
             std::ostream& print_stats(std::ostream& out) const;
             
         private:
+            static const std::string rsa_prg_key_file__;
+            static const std::string counter_map_file__;
+            static const std::string keyword_counter_file__;
+
             class JSONHandler;
             friend JSONHandler;
             

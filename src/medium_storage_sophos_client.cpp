@@ -29,8 +29,74 @@ namespace sse {
     namespace sophos {
         
         
+        const std::string MediumStorageSophosClient::rsa_prg_key_file__ = "rsa_prg.key";
+        const std::string MediumStorageSophosClient::counter_map_file__ = "counters.dat";
+        const std::string MediumStorageSophosClient::keyword_counter_file__ = "keywords.csv";
+
+        std::unique_ptr<SophosClient> MediumStorageSophosClient::construct_from_directory(const std::string& dir_path)
+        {
+            // try to initialize everything from this directory
+            if (!is_directory(dir_path)) {
+                throw std::runtime_error(dir_path + ": not a directory");
+            }
+            
+            std::string sk_path = dir_path + "/" + tdp_sk_file__;
+            std::string master_key_path = dir_path + "/" + derivation_key_file__;
+            std::string counter_map_path = dir_path + "/" + counter_map_file__;
+            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
+            std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
+            
+            if (!is_file(sk_path)) {
+                // error, the secret key file is not there
+                throw std::runtime_error("Missing secret key file");
+            }
+            if (!is_file(master_key_path)) {
+                // error, the derivation key file is not there
+                throw std::runtime_error("Missing master derivation key file");
+            }
+            if (!is_file(rsa_prg_key_path)) {
+                // error, the rsa prg key file is not there
+                throw std::runtime_error("Missing rsa prg key file");
+            }
+            if (!is_directory(counter_map_path)) {
+                // error, the token map data is not there
+                throw std::runtime_error("Missing token data");
+            }
+            if (!is_file(keyword_index_path)) {
+                // error, the derivation key file is not there
+                throw std::runtime_error("Missing keyword indices");
+            }
+            
+            std::ifstream sk_in(sk_path.c_str());
+            std::ifstream master_key_in(master_key_path.c_str());
+            std::ifstream rsa_prg_key_in(rsa_prg_key_path.c_str());
+            std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
+            
+            sk_buf << sk_in.rdbuf();
+            master_key_buf << master_key_in.rdbuf();
+            rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
+            
+            return std::unique_ptr<SophosClient>(new  MediumStorageSophosClient(counter_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str(), rsa_prg_key_buf.str()));
+        }
         
         
+        std::unique_ptr<SophosClient> MediumStorageSophosClient::init_in_directory(const std::string& dir_path, uint32_t n_keywords)
+        {
+            // try to initialize everything in this directory
+            if (!is_directory(dir_path)) {
+                throw std::runtime_error(dir_path + ": not a directory");
+            }
+            
+            std::string counter_map_path = dir_path + "/" + counter_map_file__;
+            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
+
+            auto c_ptr =  std::unique_ptr<SophosClient>(new MediumStorageSophosClient(counter_map_path, keyword_index_path, n_keywords));
+            
+            c_ptr->write_keys(dir_path);
+
+            return c_ptr;
+        }
+
         MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size) :
         SophosClient(), rsa_prg_(), counter_map_(token_map_path, tm_setup_size)
         {
@@ -250,6 +316,22 @@ namespace sse {
         std::string MediumStorageSophosClient::rsa_prg_key() const
         {
             return std::string(rsa_prg_.key().begin(), rsa_prg_.key().end());
+        }
+
+        void MediumStorageSophosClient::write_keys(const std::string& dir_path) const
+        {
+            SophosClient::write_keys(dir_path);
+
+            std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
+
+            std::ofstream rsa_prg_key_out(rsa_prg_key_path.c_str());
+            if (!rsa_prg_key_out.is_open()) {
+                throw std::runtime_error(rsa_prg_key_path + ": unable to write the rsa prg key");
+            }
+            
+            rsa_prg_key_out << rsa_prg_key();
+            rsa_prg_key_out.close();
+            
         }
 
         std::ostream& MediumStorageSophosClient::db_to_json(std::ostream& out) const

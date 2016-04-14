@@ -28,9 +28,66 @@
 namespace sse {
     namespace sophos {
 
+        const std::string LargeStorageSophosClient::token_map_file__ = "tokens.dat";
+        const std::string LargeStorageSophosClient::keyword_counter_file__ = "keywords.csv";
         
         
-        
+        std::unique_ptr<SophosClient> LargeStorageSophosClient::construct_from_directory(const std::string& dir_path)
+        {
+            if (!is_directory(dir_path)) {
+                throw std::runtime_error(dir_path + ": not a directory");
+            }
+            
+            std::string sk_path = dir_path + "/" + tdp_sk_file__;
+            std::string master_key_path = dir_path + "/" + derivation_key_file__;
+            std::string token_map_path = dir_path + "/" + token_map_file__;
+            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
+            
+            
+            if (!is_file(sk_path)) {
+                // error, the secret key file is not there
+                throw std::runtime_error("Missing secret key file");
+            }
+            if (!is_file(master_key_path)) {
+                // error, the derivation key file is not there
+                throw std::runtime_error("Missing master derivation key file");
+            }
+            if (!is_directory(token_map_path)) {
+                // error, the token map data is not there
+                throw std::runtime_error("Missing token data");
+            }
+            if (!is_file(keyword_index_path)) {
+                // error, the derivation key file is not there
+                throw std::runtime_error("Missing keyword indices");
+            }
+            
+            std::ifstream sk_in(sk_path.c_str());
+            std::ifstream master_key_in(master_key_path.c_str());
+            std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
+            
+            sk_buf << sk_in.rdbuf();
+            master_key_buf << master_key_in.rdbuf();
+            
+            return std::unique_ptr<SophosClient>(new  LargeStorageSophosClient(token_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str()));
+        }
+
+        std::unique_ptr<SophosClient> LargeStorageSophosClient::init_in_directory(const std::string& dir_path, uint32_t n_keywords)
+        {
+            // try to initialize everything in this directory
+            if (!is_directory(dir_path)) {
+                throw std::runtime_error(dir_path + ": not a directory");
+            }
+            
+            std::string token_map_path = dir_path + "/" + token_map_file__;
+            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
+            
+            auto c_ptr =  std::unique_ptr<SophosClient>(new LargeStorageSophosClient(token_map_path, keyword_index_path, n_keywords));
+            
+            c_ptr->write_keys(dir_path);
+            
+            return c_ptr;
+        }
+
         LargeStorageSophosClient::LargeStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size) :
         SophosClient(), token_map_(token_map_path, tm_setup_size)
         {

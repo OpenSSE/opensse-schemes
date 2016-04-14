@@ -52,8 +52,6 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    
-    
     SophosClient();
     SophosClient(const std::string& tdp_private_key, const std::string& derivation_master_key);
     virtual ~SophosClient();
@@ -62,9 +60,10 @@ public:
     
     const std::string private_key() const;
     const std::string public_key() const;
-    
     const std::string master_derivation_key() const;
 
+    virtual void write_keys(const std::string& dir_path) const;
+    
     virtual SearchRequest   search_request(const std::string &keyword) const = 0;
     virtual UpdateRequest   update_request(const std::string &keyword, const index_type index) = 0;
     
@@ -74,8 +73,10 @@ public:
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
     const sse::crypto::TdpInverse& inverse_tdp() const;
 
-private:
+    static const std::string tdp_sk_file__;
+    static const std::string derivation_key_file__;
 
+private:
     crypto::Prf<kDerivationKeySize> k_prf_;
     sse::crypto::TdpInverse inverse_tdp_;
 };

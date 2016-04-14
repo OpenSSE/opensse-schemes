@@ -18,6 +18,9 @@
 namespace sse {
 namespace sophos {
     
+    const std::string SophosClient::tdp_sk_file__ = "tdp_sk.key";
+    const std::string SophosClient::derivation_key_file__ = "derivation_master.key";
+
 size_t TokenHasher::operator()(const update_token_type& ut) const
 {
     size_t h = 0;
@@ -38,6 +41,11 @@ SophosClient::SophosClient() :
 SophosClient::SophosClient(const std::string& tdp_private_key, const std::string& derivation_master_key) :
 k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key)
 {
+}
+
+SophosClient::~SophosClient()
+{
+    
 }
 
 const std::string SophosClient::public_key() const
@@ -64,9 +72,31 @@ const sse::crypto::TdpInverse& SophosClient::inverse_tdp() const
     return inverse_tdp_;
 }
     
-SophosClient::~SophosClient()
+void SophosClient::write_keys(const std::string& dir_path) const
 {
+    if (!is_directory(dir_path)) {
+        throw std::runtime_error(dir_path + ": not a directory");
+    }
     
+    std::string sk_path = dir_path + "/" + tdp_sk_file__;
+    std::string master_key_path = dir_path + "/" + derivation_key_file__;
+
+    std::ofstream sk_out(sk_path.c_str());
+    if (!sk_out.is_open()) {
+        throw std::runtime_error(sk_path + ": unable to write the secret key");
+    }
+    
+    sk_out << private_key();
+    sk_out.close();
+    
+    std::ofstream master_key_out(master_key_path.c_str());
+    if (!master_key_out.is_open()) {
+        throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
+    }
+    
+    master_key_out << master_derivation_key();
+    master_key_out.close();
+
 }
     
 SophosServer::SophosServer(const std::string& db_path, const std::string& tdp_pk) :

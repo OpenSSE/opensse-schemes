@@ -33,13 +33,25 @@ namespace sophos {
         grpc::Status search(grpc::ServerContext* context,
                             const sophos::SearchRequestMessage* request,
                             grpc::ServerWriter<sophos::SearchReply>* writer) override;
-
+        
+        grpc::Status sync_search(grpc::ServerContext* context,
+                            const sophos::SearchRequestMessage* request,
+                            grpc::ServerWriter<sophos::SearchReply>* writer);
+        
+        grpc::Status async_search(grpc::ServerContext* context,
+                                  const sophos::SearchRequestMessage* request,
+                                  grpc::ServerWriter<sophos::SearchReply>* writer);
+        
         grpc::Status update(grpc::ServerContext* context,
                             const sophos::UpdateRequestMessage* request,
                             google::protobuf::Empty* e) override;
         
         std::ostream& print_stats(std::ostream& out) const;
 
+        bool search_asynchronously() const;
+        void set_search_asynchronously(bool flag);
+        
+        
     private:
         static const std::string pk_file;
         static const std::string pairs_map_file;
@@ -48,6 +60,8 @@ namespace sophos {
         std::string storage_path_;
         
         std::mutex update_mtx_;
+        
+        bool async_search_;
     };
     
     SearchRequest message_to_request(const SearchRequestMessage* mes);

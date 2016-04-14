@@ -12,6 +12,7 @@
 #include "logger.hpp"
 
 #include <fstream>
+#include <atomic>
 
 #include <grpc/grpc.h>
 #include <grpc++/server.h>
@@ -27,7 +28,7 @@ namespace sse {
         const std::string SophosImpl::pairs_map_file = "pairs.dat";
 
 SophosImpl::SophosImpl(const std::string& path) :
-storage_path_(path)
+storage_path_(path), async_search_(true)
 {
     if (is_directory(storage_path_)) {
         // try to initialize everything from this directory
@@ -131,10 +132,21 @@ std::to_string((t)) + " ms, no pair found" )
 #define PRINT_BENCH_SEARCH_LPAR(t,c) \
 "PARALLEL (LIGHT) SEARCH: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair, " + std::to_string((c)) + " pairs" : \
 std::to_string((t)) + " ms, no pair found" )
-        
+
 grpc::Status SophosImpl::search(grpc::ServerContext* context,
-                    const sophos::SearchRequestMessage* mes,
-                    grpc::ServerWriter<sophos::SearchReply>* writer)
+                                const sophos::SearchRequestMessage* mes,
+                                grpc::ServerWriter<sophos::SearchReply>* writer)
+{
+    if(async_search_){
+        return async_search(context, mes, writer);
+    }else{
+        return sync_search(context, mes, writer);
+    }
+}
+
+grpc::Status SophosImpl::sync_search(grpc::ServerContext* context,
+                                     const sophos::SearchRequestMessage* mes,
+                                     grpc::ServerWriter<sophos::SearchReply>* writer)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -164,6 +176,39 @@ grpc::Status SophosImpl::search(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+
+grpc::Status SophosImpl::async_search(grpc::ServerContext* context,
+                                      const sophos::SearchRequestMessage* mes,
+                                      grpc::ServerWriter<sophos::SearchReply>* writer)
+{
+    if (!server_) {
+        // problem, the server is already set up
+        return grpc::Status(grpc::FAILED_PRECONDITION, "The server is not set up");
+    }
+    
+    logger::log(logger::TRACE) << "Searching ...";
+
+    std::atomic_uint res_size(0);
+    
+    auto post_callback = [&writer, &res_size](index_type i)
+    {
+        sophos::SearchReply reply;
+        reply.set_result((uint64_t) i);
+        
+        writer->Write(reply);
+        res_size++;
+    };
+
+    BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),2, post_callback ,1)),res_size, PRINT_BENCH_SEARCH_LPAR)
+    
+    
+    logger::log(logger::TRACE) << " done" << std::endl;
+    
+    
+    return grpc::Status::OK;
+}
+        
+
 grpc::Status SophosImpl::update(grpc::ServerContext* context,
                     const sophos::UpdateRequestMessage* mes,
                     google::protobuf::Empty* e)
@@ -192,6 +237,16 @@ std::ostream& SophosImpl::print_stats(std::ostream& out) const
     return out;
 }
 
+bool SophosImpl::search_asynchronously() const
+{
+    return async_search_;
+}
+
+void SophosImpl::set_search_asynchronously(bool flag)
+{
+    async_search_ = flag;
+}
+        
 SearchRequest message_to_request(const SearchRequestMessage* mes)
 {
     SearchRequest req;

@@ -94,6 +94,8 @@ public:
     std::list<index_type> search(const SearchRequest& req);
     std::list<index_type> search_parallel(const SearchRequest& req);
     std::list<index_type> search_parallel_light(const SearchRequest& req, uint8_t access_threads);
+    void search_parallel_light_callback(const SearchRequest& req, uint8_t access_threads, std::function<void(index_type)> post_callback, uint8_t post_threads);
+
     void update(const UpdateRequest& req);
     
     std::ostream& print_stats(std::ostream& out) const;

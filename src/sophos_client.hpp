@@ -37,6 +37,8 @@ public:
 
     void wait_updates_completion();
     
+    bool load_inverted_index(const std::string& path);
+
     bool output_db(const std::string& out_path);
     std::ostream& print_stats(std::ostream& out) const;
 

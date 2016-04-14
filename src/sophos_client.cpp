@@ -12,8 +12,11 @@
 #include "large_storage_sophos_client.hpp"
 #include "medium_storage_sophos_client.hpp"
 
+#include "thread_pool.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
+
+#include <sse/dbparser/DBParserJSON.h>
 
 #include <chrono>
 #include <iostream>
@@ -246,6 +249,48 @@ void SophosClientRunner::update_completion_loop()
     }
 }
     
+bool SophosClientRunner::load_inverted_index(const std::string& path)
+{
+    try {
+        
+        dbparser::DBParserJSON parser(path.c_str());
+        ThreadPool pool(std::thread::hardware_concurrency());
+        
+        std::atomic_size_t counter(0);
+        
+        auto add_list_callback = [this,&pool,&counter](const string kw, const list<unsigned> docs)
+        {
+            auto work = [this,&counter](const string& keyword, const list<unsigned> &documents)
+            {
+                for (unsigned doc : documents) {
+                    this->async_update(keyword, doc);
+                }
+                counter++;
+                
+                if ((counter % 100) == 0) {
+                    logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::flush;
+                }
+            };
+            pool.enqueue(work,kw,docs);
+            
+        };
+        
+        parser.addCallbackList(add_list_callback);
+        parser.parse();
+        
+        pool.join();
+        logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::endl;
+        
+        wait_updates_completion();
+        
+        return true;
+    } catch (std::exception& e) {
+        logger::log(logger::ERROR) << "\nFailed to load file " << path << " : " << e.what() << std::endl;
+        return false;
+    }
+    return false;
+}
+
 bool SophosClientRunner::output_db(const std::string& out_path)
 {
     std::ofstream os(out_path);

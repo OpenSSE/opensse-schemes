@@ -46,7 +46,7 @@ env.Append(CPPPATH = [config['cryto_include'], config['ssdmap_include'], config[
 env.Append(LIBPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
 env.Append(RPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
 
-env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl'])
+env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl', 'sse_dbparser'])
 
 #Workaround for OS X
 if env['PLATFORM'] == 'darwin':
@@ -103,10 +103,10 @@ debug_prog = outter_env.Program('debug',['main.cpp'] + objects)
 
 # client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
 
-env_client = outter_env.Clone()
-env_client.Append(LIBS = ['sse_dbparser'])
+# env_client = outter_env.Clone()
+# env_client.Append(LIBS = ['sse_dbparser'])
 
-client = env_client.Program('client',['client_main.cpp'] + objects)
+client = outter_env.Program('client',['client_main.cpp'] + objects)
 
 server = outter_env.Program('server',['server_main.cpp'] + objects)
 

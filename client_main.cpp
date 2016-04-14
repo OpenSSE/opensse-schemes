@@ -8,45 +8,10 @@
 
 #include "sophos_client.hpp"
 #include "logger.hpp"
-#include "thread_pool.hpp"
 
-#include <sse/dbparser/DBParserJSON.h>
 #include <sse/crypto/utils.hpp>
 
 #include <stdio.h>
-
-void load_inverted_index(sse::sophos::SophosClientRunner &runner, const std::string& path)
-{
-    sse::dbparser::DBParserJSON parser(path.c_str());
-    ThreadPool pool(8);
-    
-    std::atomic_size_t counter(0);
-    
-    auto add_list_callback = [&runner,&pool,&counter](const string kw, const list<unsigned> docs)
-    {
-        auto work = [&runner,&counter](const string& keyword, const list<unsigned> &documents)
-        {
-            for (unsigned doc : documents) {
-                runner.async_update(keyword, doc);
-            }
-            counter++;
-
-            if ((counter % 100) == 0) {
-                sse::logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::flush;
-            }
-        };
-        pool.enqueue(work,kw,docs);
-        
-    };
-    
-    parser.addCallbackList(add_list_callback);
-    parser.parse();
-    
-    pool.join();
-    sse::logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::endl;
-    
-    runner.wait_updates_completion();
-}
 
 int main(int argc, char** argv) {
     sse::logger::set_severity(sse::logger::INFO);
@@ -124,7 +89,7 @@ int main(int argc, char** argv) {
 
     for (std::string &path : input_files) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
-        load_inverted_index(*client_runner, path);
+        client_runner->load_inverted_index(path);
         sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
     }
     

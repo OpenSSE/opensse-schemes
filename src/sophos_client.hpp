@@ -54,6 +54,7 @@ private:
     std::thread* update_completion_thread_;
     std::mutex update_completion_mtx_;
     std::condition_variable update_completion_cv_;
+    bool stop_update_completion_thread_;
 
     std::mutex update_mtx_;
 };

@@ -252,7 +252,6 @@ namespace sse {
         
         UpdateRequest   MediumStorageSophosClient::update_request(const std::string &keyword, const index_type index)
         {
-//            std::pair<search_token_type, uint32_t> search_pair;
             bool found = false, is_new_index = true;
             
             UpdateRequest req;
@@ -275,7 +274,7 @@ namespace sse {
                     std::lock_guard<std::mutex> lock(token_map_mtx_);
                     counter_map_.add(kw_index, 0);
                 }
-                logger::log(logger::DBG) << "ST0 " << logger::hex_string(st) << std::endl;
+                logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
                 
             }else{
                 // retrieve the counter
@@ -295,7 +294,7 @@ namespace sse {
                     // RSA_SK^{-kw_counter-1}(st) to get the kw_counter+1 search token
                     st = inverse_tdp().invert_mult(st, kw_counter+1);
                     
-                    logger::log(logger::DBG) << "New ST " << logger::hex_string(st) << std::endl;
+                    logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
                     
                     {
                         std::lock_guard<std::mutex> lock(token_map_mtx_);
@@ -307,7 +306,7 @@ namespace sse {
             
             std::string deriv_key = derivation_prf().prf_string(keyword);
             
-            logger::log(logger::DBG) << "Derivation key: " << logger::hex_string(deriv_key) << std::endl;
+            logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;
             
             
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
@@ -317,7 +316,7 @@ namespace sse {
             req.token = derivation_prf.prf(st_string + '0');
             req.index = xor_mask(index, derivation_prf.prf(st_string + '1'));
             
-            logger::log(logger::DBG) << "Update token: (" << logger::hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+            logger::log(logger::DBG) << "Update token: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
             
             return req;
         }

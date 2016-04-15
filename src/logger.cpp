@@ -45,15 +45,6 @@ namespace sse {
             return true;
         }
         
-        std::string hex_string(const std::string& in){
-            std::ostringstream out;
-            for(unsigned char c : in)
-            {
-                out << std::hex << std::setw(2) << std::setfill('0') << (uint) c;
-            }
-            return out.str();
-        }
-
         std::ostream& log(LoggerSeverity s){
             if (s >= severity__) {
                 return std::cout;

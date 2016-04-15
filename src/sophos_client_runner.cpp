@@ -190,8 +190,6 @@ void SophosClientRunner::async_update(const std::string& keyword, uint64_t index
 {
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
-//    google::protobuf::Empty *e = new google::protobuf::Empty();
-//    grpc::Status *status = new grpc::Status();
 
     update_tag_type *tag = new update_tag_type();
     
@@ -204,15 +202,7 @@ void SophosClientRunner::async_update(const std::string& keyword, uint64_t index
     tag->status.reset(new grpc::Status());
     tag->index.reset(new size_t(update_launched_count_++));
     
-    rpc->Finish(tag->reply.get(), tag->status.get(), tag);
-
-//    if (status.ok()) {
-//        logger::log(logger::TRACE) << "Update succeeded." << std::endl;
-//    } else {
-//        logger::log(logger::ERROR) << "Update failed:" << std::endl;
-//        logger::log(logger::ERROR) << status.error_message() << std::endl;
-//    }
-    
+    rpc->Finish(tag->reply.get(), tag->status.get(), tag);    
 }
 
 void SophosClientRunner::wait_updates_completion()

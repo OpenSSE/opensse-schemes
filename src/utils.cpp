@@ -67,16 +67,23 @@ bool create_directory(const std::string& path, mode_t mode)
     return true;
 }
 
-void print_hex(std::ostream& out, const std::string &s)
+std::string hex_string(const std::string& in){
+    std::ostringstream out;
+    for(unsigned char c : in)
+    {
+        out << std::hex << std::setw(2) << std::setfill('0') << (uint) c;
+    }
+    return out.str();
+}
+
+std::ostream& print_hex(std::ostream& out, const std::string &s)
 {
-//    for (unsigned char c : s) {
-//        out << std::hex << std::setw(2) << std::setfill('0') << (uint)c;
-//    }
     for(unsigned char c : s)
     {
         out << std::hex << std::setw(2) << std::setfill('0') << (uint) c;
     }
-
+    
+    return out;
 }
 
 void append_keyword_map(std::ostream& out, const std::string &kw, uint32_t index)

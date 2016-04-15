@@ -6,7 +6,7 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "sophos_server.hpp"
+#include "sophos_server_runner.hpp"
 
 #include "utils.hpp"
 #include "logger.hpp"

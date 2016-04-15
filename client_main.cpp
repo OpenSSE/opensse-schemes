@@ -6,7 +6,7 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "sophos_client.hpp"
+#include "sophos_client_runner.hpp"
 #include "logger.hpp"
 
 #include <sse/crypto/utils.hpp>

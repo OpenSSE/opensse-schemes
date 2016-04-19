@@ -152,6 +152,39 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     return results;
 }
 
+    void SophosServer::search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback)
+    {
+        search_token_type st = req.token;
+        
+        logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
+        
+        auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+        
+        logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
+        
+        for (size_t i = 0; i < req.add_count; i++) {
+            std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
+            index_type r;
+            update_token_type ut = derivation_prf.prf(st_string + '0');
+            
+            logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl;
+            
+            bool found = edb_.get(ut,r);
+            
+            if (found) {
+                logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                
+                r = xor_mask(r, derivation_prf.prf(st_string + '1'));
+                post_callback(r);
+            }else{
+                logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
+            }
+            
+            st = public_tdp_.eval(st);
+        }
+    }
+    
+
 std::list<index_type> SophosServer::search_parallel(const SearchRequest& req)
 {
     std::list<index_type> results;
@@ -325,7 +358,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
     return results;
 }
 
-void SophosServer::search_parallel_light_callback(const SearchRequest& req, uint8_t access_threads, std::function<void(index_type)> post_callback, uint8_t post_threads)
+void SophosServer::search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count)
 {
     search_token_type st = req.token;
     
@@ -335,8 +368,8 @@ void SophosServer::search_parallel_light_callback(const SearchRequest& req, uint
     
     logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
     
-    ThreadPool access_pool(access_threads);
-    ThreadPool post_pool(post_threads);
+    ThreadPool access_pool(access_thread_count);
+    ThreadPool post_pool(post_thread_count);
     
     auto access_job = [&derivation_prf, this, &post_pool, &post_callback](const search_token_type st, size_t i)
     {
@@ -387,13 +420,13 @@ void SophosServer::search_parallel_light_callback(const SearchRequest& req, uint
     
     std::vector<std::thread> rsa_threads;
     
-    unsigned n_threads = std::thread::hardware_concurrency()-access_threads;
+//    unsigned n_threads = std::thread::hardware_concurrency()-access_threads;
     
-    for (uint8_t t = 0; t < n_threads; t++) {
-        rsa_threads.push_back(std::thread(rsa_job, t, req.add_count, n_threads));
+    for (uint8_t t = 0; t < rsa_thread_count; t++) {
+        rsa_threads.push_back(std::thread(rsa_job, t, req.add_count, rsa_thread_count));
     }
     
-    for (uint8_t t = 0; t < n_threads; t++) {
+    for (uint8_t t = 0; t < rsa_thread_count; t++) {
         rsa_threads[t].join();
     }
     

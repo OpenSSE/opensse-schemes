@@ -313,7 +313,7 @@ void SophosClientRunner::search_benchmark(size_t n_bench) const
     std::uniform_int_distribution<> dis(0, (int)(kw_indices.size())-1);
     
     for (size_t i = 0; i < n_bench; i++) {
-        logger::log(logger::INFO) << "\rBenchmark " << i;
+        logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
 
         auto it = kw_indices.begin();
         std::advance( it, dis(gen) );

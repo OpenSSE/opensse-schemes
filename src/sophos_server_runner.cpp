@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include <atomic>
+#include <thread>
 
 #include <grpc/grpc.h>
 #include <grpc++/server.h>
@@ -199,7 +200,11 @@ grpc::Status SophosImpl::async_search(grpc::ServerContext* context,
         res_size++;
     };
 
-    BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),2, post_callback ,1)),res_size, PRINT_BENCH_SEARCH_LPAR)
+    if (mes->add_count() >= 2) { // run the search algorithm in parallel only if there are more than 2 results
+        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency()-2, 3,1)),res_size, PRINT_BENCH_SEARCH_LPAR)
+    }else{
+        BENCHMARK_Q((server_->search_callback(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_LPAR)
+    }
     
     
     logger::log(logger::TRACE) << " done" << std::endl;

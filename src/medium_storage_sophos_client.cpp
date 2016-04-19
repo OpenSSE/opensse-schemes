@@ -249,7 +249,7 @@ namespace sse {
                     
                     
                     req.derivation_key = derivation_prf().prf_string(keyword);
-                    req.add_count = kw_counter;
+                    req.add_count = kw_counter+1;
                 }
             }
             return req;

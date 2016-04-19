@@ -220,6 +220,12 @@ namespace sse {
             return c;
         }
         
+        const std::map<std::string, uint32_t> MediumStorageSophosClient::keyword_indices() const
+        {
+            return keyword_indices_;
+        }
+
+        
         SearchRequest   MediumStorageSophosClient::search_request(const std::string &keyword) const
         {
             uint32_t kw_counter;

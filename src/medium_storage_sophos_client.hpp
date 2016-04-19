@@ -27,6 +27,7 @@ namespace sse {
             ~MediumStorageSophosClient();
             
             size_t keyword_count() const;
+            const std::map<std::string, uint32_t> keyword_indices() const;
             
             SearchRequest   search_request(const std::string &keyword) const;
             UpdateRequest   update_request(const std::string &keyword, const index_type index);
@@ -65,6 +66,5 @@ namespace sse {
             std::mutex token_map_mtx_;
             std::atomic_uint keyword_counter_;
         };
-        
     }
 }

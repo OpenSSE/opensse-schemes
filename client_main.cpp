@@ -28,8 +28,9 @@ int main(int argc, char** argv) {
     std::string client_db;
     std::string output_path;
     bool print_stats = false;
+    uint32_t bench_count = 0;
     
-    while ((c = getopt (argc, argv, "l:b:o:i:dp")) != -1)
+    while ((c = getopt (argc, argv, "l:b:o:i:t:dp")) != -1)
         switch (c)
     {
         case 'l':
@@ -44,6 +45,9 @@ int main(int argc, char** argv) {
         case 'i':
             json_file = std::string(optarg);
             break;
+        case 't':
+            bench_count = atoi(optarg);
+            break;
         case 'd': // load a default file, only for debugging
 //            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
             input_files.push_back("/Users/raphaelbost/Documents/inverted_index_1000.json");
@@ -52,7 +56,7 @@ int main(int argc, char** argv) {
             print_stats = true;
             break;
         case '?':
-            if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i')
+            if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i' || optopt == 't')
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -110,6 +114,10 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "}" << std::endl;
     }
     
+    if (bench_count > 0) {
+        std::cout << "-------------- Search Benchmarks --------------" << std::endl;
+        client_runner->search_benchmark(bench_count);
+    }
     
     if (output_path.size()>0) {
         client_runner->output_db(output_path);

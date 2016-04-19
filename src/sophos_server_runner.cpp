@@ -268,7 +268,7 @@ UpdateRequest message_to_request(const UpdateRequestMessage* mes)
     return req;
 }
        
-void run_sophos_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr) {
+void run_sophos_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search) {
     std::string server_address(address);
     SophosImpl service(server_db_path);
     
@@ -281,6 +281,7 @@ void run_sophos_server(const std::string &address, const std::string& server_db_
     *server_ptr = server.get();
     
     service.print_stats(std::cout);
+    service.set_search_asynchronously(async_search);
     
     server->Wait();
 }

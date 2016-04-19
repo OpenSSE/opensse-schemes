@@ -40,13 +40,19 @@ int main(int argc, char** argv) {
     opterr = 0;
     int c;
 
+    bool async_search = true;
+    
     std::string server_db;
-    while ((c = getopt (argc, argv, "b:")) != -1)
+    while ((c = getopt (argc, argv, "b:s")) != -1)
         switch (c)
     {
         case 'b':
             server_db = std::string(optarg);
             break;
+        case 's':
+            async_search = false;
+            break;
+
         case '?':
             if (optopt == 'i')
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -61,6 +67,12 @@ int main(int argc, char** argv) {
             exit(-1);
     }
     
+    if (async_search) {
+        sse::logger::log(sse::logger::INFO) << "Asynchronous searches" << std::endl;
+    }else{
+        sse::logger::log(sse::logger::INFO) << "Synchronous searches" << std::endl;
+    }
+    
     if (server_db.size()==0) {
         sse::logger::log(sse::logger::ERROR) << "Server database not specified" << std::endl;
         sse::logger::log(sse::logger::ERROR) << "Using \'test.ssdb\' by default" << std::endl;
@@ -69,7 +81,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-    sse::sophos::run_sophos_server("0.0.0.0:4242", server_db, &server_ptr__);
+    sse::sophos::run_sophos_server("0.0.0.0:4242", server_db, &server_ptr__, async_search);
 //    sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
     
     sse::crypto::cleanup_crypto_lib();

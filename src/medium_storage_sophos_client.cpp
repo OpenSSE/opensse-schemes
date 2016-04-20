@@ -46,7 +46,6 @@ namespace sse {
         
         const std::string MediumStorageSophosClient::rsa_prg_key_file__ = "rsa_prg.key";
         const std::string MediumStorageSophosClient::counter_map_file__ = "counters.dat";
-        const std::string MediumStorageSophosClient::keyword_counter_file__ = "keywords.csv";
 
         std::unique_ptr<SophosClient> MediumStorageSophosClient::construct_from_directory(const std::string& dir_path)
         {
@@ -58,7 +57,6 @@ namespace sse {
             std::string sk_path = dir_path + "/" + tdp_sk_file__;
             std::string master_key_path = dir_path + "/" + derivation_key_file__;
             std::string counter_map_path = dir_path + "/" + counter_map_file__;
-            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
             std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
             
             if (!is_file(sk_path)) {
@@ -77,10 +75,6 @@ namespace sse {
                 // error, the token map data is not there
                 throw std::runtime_error("Missing token data");
             }
-//            if (!is_file(keyword_index_path)) {
-//                // error, the derivation key file is not there
-//                throw std::runtime_error("Missing keyword indices");
-//            }
             
             std::ifstream sk_in(sk_path.c_str());
             std::ifstream master_key_in(master_key_path.c_str());
@@ -91,7 +85,7 @@ namespace sse {
             master_key_buf << master_key_in.rdbuf();
             rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
             
-            return std::unique_ptr<SophosClient>(new  MediumStorageSophosClient(counter_map_path, keyword_index_path, sk_buf.str(), master_key_buf.str(), rsa_prg_key_buf.str()));
+            return std::unique_ptr<SophosClient>(new  MediumStorageSophosClient(counter_map_path, sk_buf.str(), master_key_buf.str(), rsa_prg_key_buf.str()));
         }
         
         
@@ -103,97 +97,38 @@ namespace sse {
             }
             
             std::string counter_map_path = dir_path + "/" + counter_map_file__;
-            std::string keyword_index_path = dir_path + "/" + keyword_counter_file__;
-
-            auto c_ptr =  std::unique_ptr<SophosClient>(new MediumStorageSophosClient(counter_map_path, keyword_index_path, n_keywords));
+            
+            auto c_ptr =  std::unique_ptr<SophosClient>(new MediumStorageSophosClient(counter_map_path, n_keywords));
             
             c_ptr->write_keys(dir_path);
 
             return c_ptr;
         }
 
-        MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size) :
+        MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const size_t tm_setup_size) :
         SophosClient(), rsa_prg_(), counter_map_(token_map_path, tm_setup_size)
         {
-//            load_keyword_indices(keyword_indexer_path);
-            
-//            keyword_indexer_stream_.open(keyword_indexer_path, std::ios_base::app | std::ios_base::out);
-//            if (!keyword_indexer_stream_.is_open()) {
-//                keyword_indexer_stream_.close();
-//                throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
-//            }
         }
         
-        MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key) :
+        MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key) :
         SophosClient(tdp_private_key, derivation_master_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
         {
-//            load_keyword_indices(keyword_indexer_path);
-//            
-//            keyword_indexer_stream_.open(keyword_indexer_path, std::ios_base::app | std::ios_base::out);
-//            if (!keyword_indexer_stream_.is_open()) {
-//                keyword_indexer_stream_.close();
-//                throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
-//            }
         }
         
-        MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size) :
+        MediumStorageSophosClient::MediumStorageSophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size) :
         SophosClient(tdp_private_key, derivation_master_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path,tm_setup_size)
         {
-//            load_keyword_indices(keyword_indexer_path);
-//            
-//            keyword_indexer_stream_.open(keyword_indexer_path, std::ios_base::app | std::ios_base::out);
-//            if (!keyword_indexer_stream_.is_open()) {
-//                keyword_indexer_stream_.close();
-//                throw std::runtime_error("Could not open keyword index file " + keyword_indexer_path);
-//            }
         }
         
         
         MediumStorageSophosClient::~MediumStorageSophosClient()
         {
-//            keyword_indexer_stream_.close();
         }
-        
-//        void MediumStorageSophosClient::load_keyword_indices(const std::string &path)
-//        {
-//            std::ifstream keyword_indices_in(path);
-//            
-//            if(keyword_indices_in)
-//            {
-//                bool ret = parse_keyword_map(keyword_indices_in, keyword_indices_);
-//                
-//                if (!ret) {
-//                    logger::log(logger::WARNING) << "Error when parsing the keyword indices" << std::endl;
-//                }
-//            }
-//            keyword_indices_in.close();
-//            
-//            keyword_counter_ = (uint32_t)keyword_indices_.size();
-//        }
         
         size_t MediumStorageSophosClient::keyword_count() const
         {
             return counter_map_.size();
         }
-        
-//        void MediumStorageSophosClient::add_keyword_index(const std::string &kw, const uint32_t index)
-//        {
-//            // CAUTION: NOT THREAD SAFE !!!
-//            keyword_indices_.insert(std::make_pair(kw, index));
-//            append_keyword_map(keyword_indexer_stream_, kw, index);
-//            
-//        }
-        
-//        int64_t MediumStorageSophosClient::find_keyword_index(const std::string &kw) const
-//        {
-//            auto it = keyword_indices_.find(kw);
-//            
-//            if (it == keyword_indices_.end()) {
-//                return -1;
-//            }
-//            
-//            return it->second;
-//        }
         
         MediumStorageSophosClient::keyword_index_type MediumStorageSophosClient::get_keyword_index(const std::string &kw) const
         {
@@ -205,43 +140,6 @@ namespace sse {
             return ret;
         }
         
-//        uint32_t MediumStorageSophosClient::get_keyword_index(const std::string &kw, bool& is_new)
-//        {
-//            std::unique_lock<std::mutex> kw_index_lock(kw_index_mtx_, std::defer_lock);
-//            
-//            kw_index_lock.lock();
-//            auto it = keyword_indices_.find(kw);
-//            kw_index_lock.unlock();
-//            
-//            if (it == keyword_indices_.end()) {
-//                is_new = true;
-//                // we have to insert the keyword
-//                kw_index_lock.lock();
-//                uint32_t c = new_keyword_index(kw);
-//                kw_index_lock.unlock();
-//                
-//                return c;
-//            }
-//            
-//            is_new = false;
-//            return it->second;
-//        }
-//        
-//        uint32_t MediumStorageSophosClient::new_keyword_index(const std::string &kw)
-//        {
-//            // CAUTION: NOT THREAD SAFE !!!
-//            uint32_t c = keyword_counter_++;
-//            add_keyword_index(kw, c);
-//            
-//            return c;
-//        }
-        
-//        const std::map<std::string, uint32_t> MediumStorageSophosClient::keyword_indices() const
-//        {
-//            return keyword_indices_;
-//        }
-
-        
         SearchRequest   MediumStorageSophosClient::search_request(const std::string &keyword) const
         {
             uint32_t kw_counter;
@@ -252,22 +150,21 @@ namespace sse {
             keyword_index_type kw_index = get_keyword_index(keyword);
             std::string seed(kw_index.begin(),kw_index.end());
 
-//            if (kw_index != -1) {
-                found = counter_map_.get(kw_index, kw_counter);
+            found = counter_map_.get(kw_index, kw_counter);
+            
+            if(!found)
+            {
+                logger::log(logger::INFO) << "No matching counter found for keyword " << keyword << " (index " << seed << ")" << std::endl;
+            }else{
+                // Now derive the original search token from the kw_index (as seed)
+                req.token = inverse_tdp().generate_array(rsa_prg_, seed);
+                req.token = inverse_tdp().invert_mult(req.token, kw_counter);
                 
-                if(!found)
-                {
-                    logger::log(logger::INFO) << "No matching counter found for keyword " << keyword << " (index " << seed << ")" << std::endl;
-                }else{
-                    // Now derive the original search token from the kw_index (as seed)
-                    req.token = inverse_tdp().generate_array(rsa_prg_, seed);
-                    req.token = inverse_tdp().invert_mult(req.token, kw_counter);
-                    
-                    
-                    req.derivation_key = derivation_prf().prf_string(keyword);
-                    req.add_count = kw_counter+1;
-                }
-//            }
+                
+                req.derivation_key = derivation_prf().prf_string(keyword);
+                req.add_count = kw_counter+1;
+            }
+
             return req;
         }
         
@@ -284,57 +181,39 @@ namespace sse {
             std::string seed(kw_index.begin(),kw_index.end());
 
             
-            // if new_index is set to true, we will have to insert a new token in the token map
-            // otherwise, search the existing token and update it
             
-//            if (is_new_index) {
-//                // derive the original token from the prg and kw_index
-//
-//                st = inverse_tdp().generate_array(rsa_prg_, seed);
-//                
-//                {
-//                    std::lock_guard<std::mutex> lock(token_map_mtx_);
-//                    counter_map_.add(kw_index, 0);
-//                }
-//                logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
+            // retrieve the counter
+            uint32_t kw_counter;
+            {
+                std::lock_guard<std::mutex> lock(token_map_mtx_);
+                found = counter_map_.get(kw_index, kw_counter);
+            }
             
-//            }else{
-                // retrieve the counter
-                uint32_t kw_counter;
+            if (!found) {
+                // derive the original token from the prg and kw_index
+                st = inverse_tdp().generate_array(rsa_prg_, seed);
+                
                 {
                     std::lock_guard<std::mutex> lock(token_map_mtx_);
-                    found = counter_map_.get(kw_index, kw_counter);
+                    counter_map_.add(kw_index, 0);
                 }
+                keyword_counter_++;
+                logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
+
+            }else{
+                // derive the original token from the prg and kw_index
+                st = inverse_tdp().generate_array(rsa_prg_, seed);
+
+                // RSA_SK^{-kw_counter-1}(st) to get the kw_counter+1 search token
+                st = inverse_tdp().invert_mult(st, kw_counter+1);
                 
-                if (!found) {
-                    // ERROR
-//                    logger::log(logger::ERROR) << "No matching counter found for keyword " << keyword << " (index " << seed << ")" << std::endl;
-                    
-                    // derive the original token from the prg and kw_index
-                    st = inverse_tdp().generate_array(rsa_prg_, seed);
-                    
-                    {
-                        std::lock_guard<std::mutex> lock(token_map_mtx_);
-                        counter_map_.add(kw_index, 0);
-                    }
-                    keyword_counter_++;
-                    logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
-
-                }else{
-                    // derive the original token from the prg and kw_index
-                    st = inverse_tdp().generate_array(rsa_prg_, seed);
-
-                    // RSA_SK^{-kw_counter-1}(st) to get the kw_counter+1 search token
-                    st = inverse_tdp().invert_mult(st, kw_counter+1);
-                    
-                    logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
-                    
-                    {
-                        std::lock_guard<std::mutex> lock(token_map_mtx_);
-                        counter_map_.at(kw_index) = kw_counter+1;
-                    }
+                logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+                
+                {
+                    std::lock_guard<std::mutex> lock(token_map_mtx_);
+                    counter_map_.at(kw_index) = kw_counter+1;
                 }
-//            }
+            }
             
             
             std::string deriv_key = derivation_prf().prf_string(keyword);

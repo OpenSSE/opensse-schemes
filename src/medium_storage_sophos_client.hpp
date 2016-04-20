@@ -26,9 +26,9 @@ namespace sse {
             
             static std::unique_ptr<SophosClient> construct_from_json(const std::string& dir_path, const std::string& json_path);
             
-            MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const size_t tm_setup_size);
-            MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key);
-            MediumStorageSophosClient(const std::string& token_map_path, const std::string& keyword_indexer_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size);
+            MediumStorageSophosClient(const std::string& token_map_path, const size_t tm_setup_size);
+            MediumStorageSophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key);
+            MediumStorageSophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size);
             ~MediumStorageSophosClient();
             
             size_t keyword_count() const;
@@ -53,7 +53,6 @@ namespace sse {
         private:
             static const std::string rsa_prg_key_file__;
             static const std::string counter_map_file__;
-            static const std::string keyword_counter_file__;
 
 //            class JSONHandler;
 //            friend JSONHandler;

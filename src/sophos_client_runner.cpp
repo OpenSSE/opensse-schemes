@@ -307,21 +307,21 @@ std::ostream& SophosClientRunner::print_stats(std::ostream& out) const
 
 void SophosClientRunner::search_benchmark(size_t n_bench) const
 {
-    auto& kw_indices = dynamic_cast<MediumStorageSophosClient*>(client_.get())->keyword_indices();
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, (int)(kw_indices.size())-1);
-    
-    for (size_t i = 0; i < n_bench; i++) {
-        logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
-
-        auto it = kw_indices.begin();
-        std::advance( it, dis(gen) );
-        
-        search(it->first);
-    }
-    logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
-
+//    auto& kw_indices = dynamic_cast<MediumStorageSophosClient*>(client_.get())->keyword_indices();
+//    std::random_device rd;
+//    std::mt19937 gen(rd());
+//    std::uniform_int_distribution<> dis(0, (int)(kw_indices.size())-1);
+//    
+//    for (size_t i = 0; i < n_bench; i++) {
+//        logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
+//
+//        auto it = kw_indices.begin();
+//        std::advance( it, dis(gen) );
+//        
+//        search(it->first);
+//    }
+//    logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
+//
 }
     
 SearchRequestMessage request_to_message(const SearchRequest& req)

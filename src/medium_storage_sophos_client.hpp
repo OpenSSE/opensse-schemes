@@ -10,11 +10,16 @@
 
 #include "sophos_core.hpp"
 
+#include <array>
+
 namespace sse {
     namespace sophos {
         
         class MediumStorageSophosClient : public SophosClient {
         public:
+            static constexpr size_t kKeywordIndexSize = 16;
+            typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
+            
             static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
             static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
 
@@ -27,7 +32,7 @@ namespace sse {
             ~MediumStorageSophosClient();
             
             size_t keyword_count() const;
-            const std::map<std::string, uint32_t> keyword_indices() const;
+//            const std::map<std::string, uint32_t> keyword_indices() const;
             
             SearchRequest   search_request(const std::string &keyword) const;
             UpdateRequest   update_request(const std::string &keyword, const index_type index);
@@ -39,30 +44,36 @@ namespace sse {
             std::ostream& db_to_json(std::ostream& out) const;
             std::ostream& print_stats(std::ostream& out) const;
             
+            struct IndexHasher
+            {
+            public:
+                size_t operator()(const keyword_index_type& ind) const;
+            };
+
         private:
             static const std::string rsa_prg_key_file__;
             static const std::string counter_map_file__;
             static const std::string keyword_counter_file__;
 
-            class JSONHandler;
-            friend JSONHandler;
+//            class JSONHandler;
+//            friend JSONHandler;
             
-            void load_keyword_indices(const std::string &path);
+//            void load_keyword_indices(const std::string &path);
             
-            void add_keyword_index(const std::string &kw, const uint32_t index);
-            int64_t find_keyword_index(const std::string &kw) const;
-            uint32_t get_keyword_index(const std::string &kw);
-            uint32_t get_keyword_index(const std::string &kw, bool& is_new);
-            uint32_t new_keyword_index(const std::string &kw);
+//            void add_keyword_index(const std::string &kw, const uint32_t index);
+//            int64_t find_keyword_index(const std::string &kw) const;
+            keyword_index_type get_keyword_index(const std::string &kw) const;
+//            uint32_t get_keyword_index(const std::string &kw, bool& is_new);
+//            uint32_t new_keyword_index(const std::string &kw);
             
             crypto::Prf<crypto::Tdp::kRSAPrgSize> rsa_prg_;
             
-            ssdmap::bucket_map< uint32_t, uint32_t > counter_map_;
-            std::map<std::string, uint32_t> keyword_indices_;
+            ssdmap::bucket_map< keyword_index_type, uint32_t, IndexHasher> counter_map_;
+//            std::map<std::string, uint32_t> keyword_indices_;
             
-            std::ofstream keyword_indexer_stream_;
+//            std::ofstream keyword_indexer_stream_;
             
-            std::mutex kw_index_mtx_;
+//            std::mutex kw_index_mtx_;
             std::mutex token_map_mtx_;
             std::atomic_uint keyword_counter_;
         };

@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
     if (json_file.size() > 0) {
         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, json_file) );
     }else{
-         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, 1e6, 1e5) );
+         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, 1e4, 600) );
     }
 
     for (std::string &path : input_files) {

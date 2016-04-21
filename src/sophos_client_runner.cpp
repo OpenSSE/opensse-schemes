@@ -305,23 +305,42 @@ std::ostream& SophosClientRunner::print_stats(std::ostream& out) const
     return client_->print_stats(out);
 }
 
+void SophosClientRunner::random_search() const
+{
+    logger::log(logger::TRACE) << "Random Search " << std::endl;
+    
+    grpc::ClientContext context;
+    sophos::SearchRequestMessage message;
+    sophos::SearchReply reply;
+    
+    message = request_to_message(dynamic_cast<MediumStorageSophosClient*>(client_.get())->random_search_request());
+    
+    std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, message) );
+    std::list<uint64_t> results;
+    
+    
+    while (reader->Read(&reply)) {
+        logger::log(logger::TRACE) << "New result: "
+        << std::dec << reply.result() << std::endl;
+        results.push_back(reply.result());
+    }
+    grpc::Status status = reader->Finish();
+    if (status.ok()) {
+        logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+    } else {
+        logger::log(logger::ERROR) << "Search failed:" << std::endl;
+        logger::log(logger::ERROR) << status.error_message() << std::endl;
+    }
+
+}
+
 void SophosClientRunner::search_benchmark(size_t n_bench) const
 {
-//    auto& kw_indices = dynamic_cast<MediumStorageSophosClient*>(client_.get())->keyword_indices();
-//    std::random_device rd;
-//    std::mt19937 gen(rd());
-//    std::uniform_int_distribution<> dis(0, (int)(kw_indices.size())-1);
-//    
-//    for (size_t i = 0; i < n_bench; i++) {
-//        logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
-//
-//        auto it = kw_indices.begin();
-//        std::advance( it, dis(gen) );
-//        
-//        search(it->first);
-//    }
-//    logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
-//
+    for (size_t i = 0; i < n_bench; i++) {
+        logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
+        random_search();
+    }
+    logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
 }
     
 SearchRequestMessage request_to_message(const SearchRequest& req)

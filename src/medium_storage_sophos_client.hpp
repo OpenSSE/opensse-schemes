@@ -32,10 +32,12 @@ namespace sse {
             ~MediumStorageSophosClient();
             
             size_t keyword_count() const;
-//            const std::map<std::string, uint32_t> keyword_indices() const;
             
             SearchRequest   search_request(const std::string &keyword) const;
             UpdateRequest   update_request(const std::string &keyword, const index_type index);
+            
+            SearchRequest   random_search_request() const;
+
             
             std::string rsa_prg_key() const;
             

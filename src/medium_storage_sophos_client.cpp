@@ -149,7 +149,7 @@ namespace sse {
             
             keyword_index_type kw_index = get_keyword_index(keyword);
             std::string seed(kw_index.begin(),kw_index.end());
-
+            
             found = counter_map_.get(kw_index, kw_counter);
             
             if(!found)
@@ -161,10 +161,38 @@ namespace sse {
                 req.token = inverse_tdp().invert_mult(req.token, kw_counter);
                 
                 
-                req.derivation_key = derivation_prf().prf_string(keyword);
+                //            req.derivation_key = derivation_prf().prf_string(keyword);
+                req.derivation_key = derivation_prf().prf_string(seed);
                 req.add_count = kw_counter+1;
             }
-
+            
+            return req;
+        }
+        
+        
+        SearchRequest   MediumStorageSophosClient::random_search_request() const
+        {
+            
+            uint32_t kw_counter;
+            SearchRequest req;
+            req.add_count = 0;
+            
+            auto rnd_elt = counter_map_.random_element();
+            
+            keyword_index_type kw_index = rnd_elt.first;
+            std::string seed(kw_index.begin(),kw_index.end());
+            
+            kw_counter = rnd_elt.second;
+            
+             // Now derive the original search token from the kw_index (as seed)
+            req.token = inverse_tdp().generate_array(rsa_prg_, seed);
+            req.token = inverse_tdp().invert_mult(req.token, kw_counter);
+            
+            
+//            req.derivation_key = derivation_prf().prf_string(keyword);
+            req.derivation_key = derivation_prf().prf_string(seed);
+            req.add_count = kw_counter+1;
+            
             return req;
         }
         
@@ -216,8 +244,9 @@ namespace sse {
             }
             
             
-            std::string deriv_key = derivation_prf().prf_string(keyword);
-            
+//            std::string deriv_key = derivation_prf().prf_string(keyword);
+            std::string deriv_key = derivation_prf().prf_string(seed);
+
             logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;
             
             

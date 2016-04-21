@@ -31,7 +31,7 @@ public:
     
     const SophosClient& client() const;
     
-    std::list<uint64_t> search(const std::string& keyword) const;
+    std::list<uint64_t> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const;
     void update(const std::string& keyword, uint64_t index);
     void async_update(const std::string& keyword, uint64_t index);
 

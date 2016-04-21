@@ -99,18 +99,27 @@ int main(int argc, char** argv) {
     
     for (std::string &kw : keywords) {
         std::cout << "-------------- Search --------------" << std::endl;
-        auto res = client_runner->search(kw);
         
+        std::mutex logger_mtx;
         bool first = true;
-        sse::logger::log(sse::logger::INFO) << "{";
-        for (auto i : res) {
+        
+        auto print_callback = [&logger_mtx, &first](uint64_t res)
+        {
+            logger_mtx.lock();
+            
             if (!first) {
                 sse::logger::log(sse::logger::INFO) << ", ";
             }
-            
             first = false;
-            sse::logger::log(sse::logger::INFO) << i;
-        }
+            sse::logger::log(sse::logger::INFO) << res;
+
+            logger_mtx.unlock();
+        };
+        
+        sse::logger::log(sse::logger::INFO) << "{";
+
+        auto res = client_runner->search(kw, print_callback);
+        
         sse::logger::log(sse::logger::INFO) << "}" << std::endl;
     }
     

@@ -137,7 +137,7 @@ const SophosClient& SophosClientRunner::client() const
     return *client_;
 }
     
-std::list<uint64_t> SophosClientRunner::search(const std::string& keyword) const
+std::list<uint64_t> SophosClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
 {
     logger::log(logger::TRACE) << "Search " << keyword << std::endl;
     
@@ -155,6 +155,10 @@ std::list<uint64_t> SophosClientRunner::search(const std::string& keyword) const
         logger::log(logger::TRACE) << "New result: "
         << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
+        
+        if (receive_callback != NULL) {
+            receive_callback(reply.result());
+        }
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {

@@ -56,8 +56,8 @@ namespace sse {
             static const std::string rsa_prg_key_file__;
             static const std::string counter_map_file__;
 
-//            class JSONHandler;
-//            friend JSONHandler;
+            class JSONHandler;
+            friend JSONHandler;
             
 //            void load_keyword_indices(const std::string &path);
             

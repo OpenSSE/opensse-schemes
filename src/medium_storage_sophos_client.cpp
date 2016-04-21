@@ -154,14 +154,13 @@ namespace sse {
             
             if(!found)
             {
-                logger::log(logger::INFO) << "No matching counter found for keyword " << keyword << " (index " << seed << ")" << std::endl;
+                logger::log(logger::INFO) << "No matching counter found for keyword " << keyword << " (index " << hex_string(seed) << ")" << std::endl;
             }else{
                 // Now derive the original search token from the kw_index (as seed)
                 req.token = inverse_tdp().generate_array(rsa_prg_, seed);
                 req.token = inverse_tdp().invert_mult(req.token, kw_counter);
                 
                 
-                //            req.derivation_key = derivation_prf().prf_string(keyword);
                 req.derivation_key = derivation_prf().prf_string(seed);
                 req.add_count = kw_counter+1;
             }
@@ -189,7 +188,6 @@ namespace sse {
             req.token = inverse_tdp().invert_mult(req.token, kw_counter);
             
             
-//            req.derivation_key = derivation_prf().prf_string(keyword);
             req.derivation_key = derivation_prf().prf_string(seed);
             req.add_count = kw_counter+1;
             
@@ -243,8 +241,6 @@ namespace sse {
                 }
             }
             
-            
-//            std::string deriv_key = derivation_prf().prf_string(keyword);
             std::string deriv_key = derivation_prf().prf_string(seed);
 
             logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;

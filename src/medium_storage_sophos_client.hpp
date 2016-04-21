@@ -59,22 +59,11 @@ namespace sse {
             class JSONHandler;
             friend JSONHandler;
             
-//            void load_keyword_indices(const std::string &path);
-            
-//            void add_keyword_index(const std::string &kw, const uint32_t index);
-//            int64_t find_keyword_index(const std::string &kw) const;
             keyword_index_type get_keyword_index(const std::string &kw) const;
-//            uint32_t get_keyword_index(const std::string &kw, bool& is_new);
-//            uint32_t new_keyword_index(const std::string &kw);
             
             crypto::Prf<crypto::Tdp::kRSAPrgSize> rsa_prg_;
             
             ssdmap::bucket_map< keyword_index_type, uint32_t, IndexHasher> counter_map_;
-//            std::map<std::string, uint32_t> keyword_indices_;
-            
-//            std::ofstream keyword_indexer_stream_;
-            
-//            std::mutex kw_index_mtx_;
             std::mutex token_map_mtx_;
             std::atomic_uint keyword_counter_;
         };

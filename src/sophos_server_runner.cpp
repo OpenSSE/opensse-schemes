@@ -160,7 +160,7 @@ grpc::Status SophosImpl::sync_search(grpc::ServerContext* context,
 //    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH)
 //    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR)
 //    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
-    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
+    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
 //    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
 //    BENCHMARK_SIMPLE("\n\n",{;})
     
@@ -191,17 +191,23 @@ grpc::Status SophosImpl::async_search(grpc::ServerContext* context,
 
     std::atomic_uint res_size(0);
     
-    auto post_callback = [&writer, &res_size](index_type i)
+    std::mutex writer_lock;
+    
+    auto post_callback = [&writer, &res_size, &writer_lock](index_type i)
     {
         sophos::SearchReply reply;
         reply.set_result((uint64_t) i);
         
+        writer_lock.lock();
         writer->Write(reply);
+        writer_lock.unlock();
+
         res_size++;
     };
 
     if (mes->add_count() >= 2) { // run the search algorithm in parallel only if there are more than 2 results
-        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency()-2, 3,1)),res_size, PRINT_BENCH_SEARCH_LPAR)
+//        BENCHMARK_Q((server_->search_parallel_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency()-2, 3,1)),res_size, PRINT_BENCH_SEARCH_LPAR)
+        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_LPAR)
     }else{
         BENCHMARK_Q((server_->search_callback(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_LPAR)
     }

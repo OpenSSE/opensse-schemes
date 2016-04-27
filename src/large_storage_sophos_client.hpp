@@ -10,6 +10,10 @@
 
 #include "sophos_core.hpp"
 
+#include <mutex>
+#include <atomic>
+#include <memory>
+
 namespace sse {
 namespace sophos {
 

@@ -11,6 +11,7 @@
 #include <string>
 #include <array>
 #include <fstream>
+#include <functional>
 
 #include <ssdmap/bucket_map.hpp>
 #include <sse/crypto/tdp.hpp>

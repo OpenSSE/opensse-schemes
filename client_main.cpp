@@ -12,6 +12,9 @@
 #include <sse/crypto/utils.hpp>
 
 #include <stdio.h>
+#include <mutex>
+
+#include <unistd.h>
 
 int main(int argc, char** argv) {
     sse::logger::set_severity(sse::logger::INFO);

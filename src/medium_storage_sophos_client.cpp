@@ -323,9 +323,9 @@ namespace sse {
         
         std::ostream& MediumStorageSophosClient::print_stats(std::ostream& out) const
         {
-            out << "Number of keywords: " << counter_map_.size() << std::endl;
-            out << "Load: " << counter_map_.load() << std::endl;
-            out << "Overflow bucket size: " << counter_map_.overflow_size() << std::endl;
+            out << "Number of keywords: " << counter_map_.size();
+            out << "; Load: " << counter_map_.load();
+            out << "; Overflow bucket size: " << counter_map_.overflow_size() << std::endl;
             
             return out;
         }

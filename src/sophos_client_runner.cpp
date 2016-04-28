@@ -152,8 +152,8 @@ std::list<uint64_t> SophosClientRunner::search(const std::string& keyword, std::
     
     
     while (reader->Read(&reply)) {
-        logger::log(logger::TRACE) << "New result: "
-        << std::dec << reply.result() << std::endl;
+//        logger::log(logger::TRACE) << "New result received: "
+//        << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
         
         if (receive_callback != NULL) {

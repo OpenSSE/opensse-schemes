@@ -291,7 +291,7 @@ void run_sophos_server(const std::string &address, const std::string& server_db_
     
     *server_ptr = server.get();
     
-    service.print_stats(std::cout);
+    service.print_stats(sse::logger::log(sse::logger::INFO));
     service.set_search_asynchronously(async_search);
     
     server->Wait();

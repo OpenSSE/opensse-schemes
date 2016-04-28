@@ -32,6 +32,7 @@ namespace sse {
         bool set_benchmark_file(const std::string& path);
         std::ostream& log_benchmark();
         
+        std::string severity_string(LoggerSeverity s);
     }
 }
 

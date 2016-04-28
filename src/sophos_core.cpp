@@ -515,9 +515,9 @@ void SophosServer::update(const UpdateRequest& req)
 
 std::ostream& SophosServer::print_stats(std::ostream& out) const
 {
-    out << "Number of tokens: " << edb_.size() << std::endl;
-    out << "Load: " << edb_.load() << std::endl;
-    out << "Overflow bucket size: " << edb_.overflow_size() << std::endl;
+    out << "Number of tokens: " << edb_.size();
+    out << "; Load: " << edb_.load();
+    out << "; Overflow bucket size: " << edb_.overflow_size() << std::endl;
     
     return out;
 }

@@ -335,9 +335,9 @@ namespace sse {
         
         std::ostream& LargeStorageSophosClient::print_stats(std::ostream& out) const
         {
-            out << "Number of keywords: " << token_map_.size() << std::endl;
-            out << "Load: " << token_map_.load() << std::endl;
-            out << "Overflow bucket size: " << token_map_.overflow_size() << std::endl;
+            out << "Number of keywords: " << token_map_.size();
+            out << "; Load: " << token_map_.load();
+            out << "; Overflow bucket size: " << token_map_.overflow_size() << std::endl;
             
             return out;
         }

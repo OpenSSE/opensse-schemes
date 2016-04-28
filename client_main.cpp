@@ -84,8 +84,8 @@ int main(int argc, char** argv) {
     }
 
     if (client_db.size()==0) {
-        sse::logger::log(sse::logger::ERROR) << "Client database not specified" << std::endl;
-        sse::logger::log(sse::logger::ERROR) << "Using \'test.csdb\' by default" << std::endl;
+        sse::logger::log(sse::logger::WARNING) << "Client database not specified" << std::endl;
+        sse::logger::log(sse::logger::WARNING) << "Using \'test.csdb\' by default" << std::endl;
         client_db = "test.csdb";
     }else{
         sse::logger::log(sse::logger::INFO) << "Running client with database " << client_db << std::endl;
@@ -114,26 +114,27 @@ int main(int argc, char** argv) {
         std::cout << "-------------- Search --------------" << std::endl;
         
         std::mutex logger_mtx;
+        std::ostream& log_stream = sse::logger::log(sse::logger::INFO);
         bool first = true;
         
-        auto print_callback = [&logger_mtx, &first](uint64_t res)
+        auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res)
         {
             logger_mtx.lock();
             
             if (!first) {
-                sse::logger::log(sse::logger::INFO) << ", ";
+                log_stream << ", ";
             }
             first = false;
-            sse::logger::log(sse::logger::INFO) << res;
+            log_stream << res;
 
             logger_mtx.unlock();
         };
         
-        sse::logger::log(sse::logger::INFO) << "{";
+        log_stream << "Search results: \n{";
 
         auto res = client_runner->search(kw, print_callback);
         
-        sse::logger::log(sse::logger::INFO) << "}" << std::endl;
+        log_stream << "}" << std::endl;
     }
     
     if (bench_count > 0) {
@@ -147,7 +148,7 @@ int main(int argc, char** argv) {
     
     if (print_stats)
     {
-        client_runner->print_stats(std::cout);
+        client_runner->print_stats(sse::logger::log(sse::logger::INFO));
     }
     
     client_runner.reset();

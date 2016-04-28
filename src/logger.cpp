@@ -47,7 +47,7 @@ namespace sse {
         
         std::ostream& log(LoggerSeverity s){
             if (s >= severity__) {
-                return std::cout;
+                return (std::cout << severity_string(s));
             }else{
                 return null_stream__;
             }
@@ -60,5 +60,39 @@ namespace sse {
                 return std::cout;
             }
         }
+        
+        std::string severity_string(LoggerSeverity s)
+        {
+            switch (s) {
+                case DBG:
+                    return "[DEBUG] - ";
+                    break;
+                    
+                case TRACE:
+                    return "[TRACE] - ";
+                    break;
+                    
+                case INFO:
+                    return "[INFO] - ";
+                    break;
+                    
+                case WARNING:
+                    return "[WARNING] - ";
+                    break;
+                    
+                case ERROR:
+                    return "[ERROR] - ";
+                    break;
+                    
+                case CRITICAL:
+                    return "[CRITICAL] - ";
+                    break;
+                    
+                default:
+                    return "[??] - ";
+                    break;
+            }
+        }
+
     }
 }

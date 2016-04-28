@@ -8,6 +8,7 @@
 
 #include "sophos_client_runner.hpp"
 #include "logger.hpp"
+#include "src/aux/db_generator.hpp"
 
 #include <sse/crypto/utils.hpp>
 
@@ -32,8 +33,9 @@ int main(int argc, char** argv) {
     std::string output_path;
     bool print_stats = false;
     uint32_t bench_count = 0;
+    uint32_t rnd_entries_count = 0;
     
-    while ((c = getopt (argc, argv, "l:b:o:i:t:dp")) != -1)
+    while ((c = getopt (argc, argv, "l:b:o:i:t:dpr:")) != -1)
         switch (c)
     {
         case 'l':
@@ -58,8 +60,11 @@ int main(int argc, char** argv) {
         case 'p':
             print_stats = true;
             break;
+        case 'r':
+            rnd_entries_count = atol(optarg);
+            break;
         case '?':
-            if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i' || optopt == 't')
+            if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i' || optopt == 't' || optopt == 'r')
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -98,6 +103,11 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
         client_runner->load_inverted_index(path);
         sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
+    }
+    
+    if (rnd_entries_count > 0) {
+        sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
+        gen_db(*client_runner, rnd_entries_count);
     }
     
     for (std::string &kw : keywords) {

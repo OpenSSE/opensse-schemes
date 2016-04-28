@@ -7,6 +7,7 @@
 //
 
 #include "db_generator.hpp"
+#include "logger.hpp"
 
 #include <sse/crypto/fpe.hpp>
 
@@ -54,6 +55,7 @@ namespace sse {
                     
                     if((i+1)%10 == 0)
                     {
+                        logger::log(logger::TRACE) << "Random DB generation: completed keyword: " << kw << std::endl;
                         counter_10_1++;
                     }
                 }
@@ -63,7 +65,7 @@ namespace sse {
 
                     if((i+1)%100 == 0)
                     {
-                        std::cout << "Completed keyword: " << kw << std::endl;
+                        logger::log(logger::TRACE) << "Random DB generation: completed keyword: " << kw << std::endl;
                         counter_10_2++;
                     }
                 }
@@ -73,7 +75,7 @@ namespace sse {
 
                     if((i+1)%((size_t)(1e3)) == 0)
                     {
-                        std::cout << "Completed keyword: " << kw << std::endl;
+                        logger::log(logger::TRACE) << "Random DB generation: completed keyword: " << kw << std::endl;
                         counter_10_3++;
                     }
                 }
@@ -83,7 +85,7 @@ namespace sse {
                     
                     if((i+1)%((size_t)(1e4)) == 0)
                     {
-                        std::cout << "Completed keyword: " << kw << std::endl;
+                        logger::log(logger::TRACE) << "Random DB generation: completed keyword: " << kw << std::endl;
                         counter_10_4++;
                     }
                 }
@@ -93,11 +95,14 @@ namespace sse {
                     
                     if((i+1)%((size_t)(1e5)) == 0)
                     {
-                        std::cout << "Completed keyword: " << kw << std::endl;
+                        logger::log(logger::TRACE) << "Random DB generation: completed keyword: " << kw << std::endl;
                         counter_10_5++;
                     }
                 }
             }
+            
+            std::string log = "Random DB generation: thread " + std::to_string(thread_id) + " completed: (" + std::to_string(counter_10_1) + ", " + std::to_string(counter_10_2) + ", "+ std::to_string(counter_10_3) + ", "+ std::to_string(counter_10_4) + ", "+ std::to_string(counter_10_5) + ")";
+            logger::log(logger::INFO) << log << std::endl;
         }
         
         

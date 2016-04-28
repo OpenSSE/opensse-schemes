@@ -61,7 +61,8 @@ int main(int argc, char** argv) {
             print_stats = true;
             break;
         case 'r':
-            rnd_entries_count = atol(optarg);
+            rnd_entries_count = (uint32_t)std::stod(std::string(optarg),nullptr);
+            //atol(optarg);
             break;
         case '?':
             if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i' || optopt == 't' || optopt == 'r')

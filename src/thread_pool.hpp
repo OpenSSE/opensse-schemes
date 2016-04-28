@@ -31,6 +31,7 @@
 #include <future>
 #include <functional>
 #include <stdexcept>
+#include <iostream>
 
 class ThreadPool {
 public:
@@ -47,6 +48,8 @@ private:
     // the task queue
     std::queue< std::function<void()> > tasks;
     
+    size_t max_tasks_size_;
+    
     // synchronization
     std::mutex queue_mutex;
     std::condition_variable condition;
@@ -55,7 +58,7 @@ private:
 
 // the constructor just launches some amount of workers
 inline ThreadPool::ThreadPool(size_t threads)
-:   stop(false)
+:   stop(false), max_tasks_size_(0)
 {
     for(size_t i = 0;i<threads;++i)
         workers.emplace_back(
@@ -71,6 +74,8 @@ inline ThreadPool::ThreadPool(size_t threads)
                                                               [this]{ return this->stop || !this->tasks.empty(); });
                                          if(this->stop && this->tasks.empty())
                                              return;
+                                         
+                                         max_tasks_size_ = std::max(max_tasks_size_, tasks.size());
                                          task = std::move(this->tasks.front());
                                          this->tasks.pop();
                                      }
@@ -110,6 +115,7 @@ inline void ThreadPool::join()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
+//        std::cout << "Current queue size: " << tasks.size() << std::endl;
         stop = true;
     }
     condition.notify_all();
@@ -119,6 +125,8 @@ inline void ThreadPool::join()
             worker.join();
         }
     }
+    
+//    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
 }
 
 // the destructor joins all threads
@@ -126,6 +134,7 @@ inline ThreadPool::~ThreadPool()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
+//        std::cout << "Current queue size: " << tasks.size() << std::endl;
         stop = true;
     }
     condition.notify_all();
@@ -135,6 +144,8 @@ inline ThreadPool::~ThreadPool()
             worker.join();
         }
     }
+    
+//    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
 }
 
 #endif

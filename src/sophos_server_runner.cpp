@@ -126,13 +126,32 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
         "SEARCH: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair, " + std::to_string((c)) + " pairs" : \
                                     std::to_string((t)) + " ms, no pair found" )
         
-#define PRINT_BENCH_SEARCH_PAR(t,c) \
-"PARALLEL SEARCH: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair, " + std::to_string((c)) + " pairs" : \
-std::to_string((t)) + " ms, no pair found" )
+//#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
+//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (with RPC), " + std::to_string((c)) + " pairs" : \
+//std::to_string((t)) + " ms, no pair found" )
+//
+//#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
+//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC), " + std::to_string((c)) + " pairs" : \
+//std::to_string((t)) + " ms, no pair found" )
+//
+        
+//#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
+//"Search (with PRC): " + std::to_string((c)) + " " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair" : \
+//std::to_string((t)) + " ms, no pair found" )
+//        
+//#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
+//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC), " + std::to_string((c)) + " pairs" : \
+//std::to_string((t)) + " ms, no pair found" )
 
-#define PRINT_BENCH_SEARCH_LPAR(t,c) \
-"PARALLEL (LIGHT) SEARCH: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair, " + std::to_string((c)) + " pairs" : \
-std::to_string((t)) + " ms, no pair found" )
+#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
+std::to_string((c)) + " \t\t " + (((c) != 0) ?  std::to_string((t)/(c)) : \
+std::to_string((t)) )
+        
+#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
+std::to_string((c)) + " \t\t " + (((c) != 0) ?  std::to_string((t)/(c)) : \
+std::to_string((t)) )
+
+
 
 grpc::Status SophosImpl::search(grpc::ServerContext* context,
                                 const sophos::SearchRequestMessage* mes,
@@ -157,11 +176,11 @@ grpc::Status SophosImpl::sync_search(grpc::ServerContext* context,
     logger::log(logger::TRACE) << "Searching ...";
     std::list<uint64_t> res_list;
     
-//    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH)
-//    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR)
-//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
-    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
-//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_LPAR)
+//    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
 //    BENCHMARK_SIMPLE("\n\n",{;})
     
     for (auto& i : res_list) {
@@ -207,9 +226,9 @@ grpc::Status SophosImpl::async_search(grpc::ServerContext* context,
 
     if (mes->add_count() >= 2) { // run the search algorithm in parallel only if there are more than 2 results
 //        BENCHMARK_Q((server_->search_parallel_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency()-2, 3,1)),res_size, PRINT_BENCH_SEARCH_LPAR)
-        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_LPAR)
+        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
     }else{
-        BENCHMARK_Q((server_->search_callback(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_LPAR)
+        BENCHMARK_Q((server_->search_callback(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
     }
     
     

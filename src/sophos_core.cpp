@@ -358,6 +358,84 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, ui
     return results;
 }
 
+std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& req, uint8_t thread_count)
+{
+    search_token_type st = req.token;
+    std::list<index_type> results;
+    std::mutex res_mutex;
+
+    logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
+    
+    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+    
+    logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
+    
+    
+    auto derive_access = [&derivation_prf, this, &results, &res_mutex](const search_token_type st, size_t i)
+    {
+        std::string st_string(reinterpret_cast<const char*>(st.data()), st.size());
+        update_token_type token = derivation_prf.prf(st_string + '0');
+        
+        index_type r;
+        
+        logger::log(logger::DBG) << "Derived token: " << hex_string(token) << std::endl;
+        
+        bool found = edb_.get(token,r);
+        
+        if (found) {
+            logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+            
+            index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+            
+            res_mutex.lock();
+            results.push_back(v);
+            res_mutex.unlock();
+            
+        }else{
+            logger::log(logger::ERROR) << "We were supposed to find a value mapped to key " << hex_string(token);
+            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << st_string << ")" << std::endl;
+        }
+        
+    };
+    
+    
+    
+    // the rsa job launched with input index,max computes all the RSA tokens of order i + kN up to max
+    auto job = [this, &st, &derivation_prf, &derive_access](const uint8_t index, const size_t max, const uint8_t N)
+    {
+        search_token_type local_st = st;
+        if (index != 0) {
+            local_st = public_tdp_.eval(local_st, index);
+        }
+        
+        if (index < max) {
+            // this is a valid search token, we have to derive it and do a lookup
+            
+            derive_access(local_st, index);
+        }
+        
+        for (size_t i = index+N; i < max; i+=N) {
+            local_st = public_tdp_.eval(local_st, N);
+            
+            derive_access(local_st, index);
+        }
+    };
+    
+    std::vector<std::thread> rsa_threads;
+    
+    //    unsigned n_threads = std::thread::hardware_concurrency()-access_threads;
+    
+    for (uint8_t t = 0; t < thread_count; t++) {
+        rsa_threads.push_back(std::thread(job, t, req.add_count, thread_count));
+    }
+    
+    for (uint8_t t = 0; t < thread_count; t++) {
+        rsa_threads[t].join();
+    }
+    
+    return results;
+}
+
 void SophosServer::search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count)
 {
     search_token_type st = req.token;

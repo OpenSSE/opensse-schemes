@@ -23,7 +23,8 @@ namespace sse {
         const std::string kKeyword1PercentBase     = "1";
         const std::string kKeyword10PercentBase    = "10";
 
-        const std::string kKeyword10GroupBase    = "Group-10^";
+        const std::string kKeywordGroupBase      = "Group-";
+        const std::string kKeyword10GroupBase    = kKeywordGroupBase + "10^";
 
         constexpr uint32_t max_10_counter = ~0;
         
@@ -32,7 +33,7 @@ namespace sse {
             size_t counter = thread_id;
             std::string id_string = std::to_string(thread_id);
             
-            uint32_t counter_10_1 = 0, counter_10_2 = 0, counter_10_3 = 0, counter_10_4 = 0, counter_10_5 = 0;
+            uint32_t counter_10_1 = 0, counter_20 = 0, counter_30 = 0, counter_60 = 0, counter_10_2 = 0, counter_10_3 = 0, counter_10_4 = 0, counter_10_5 = 0;
             
             for (size_t i = 0; counter < N_entries; counter += step, i++) {
                 size_t ind = rnd_perm->encrypt_64(counter);
@@ -69,9 +70,9 @@ namespace sse {
                 keyword_1   = kKeyword1PercentBase     + "_" + std::to_string(ind_1)    + "_3";
                 keyword_10  = kKeyword10PercentBase    + "_" + std::to_string(ind_10)   + "_3";
                 
-                client->async_update(keyword_01, ind);
-                client->async_update(keyword_1, ind);
-                client->async_update(keyword_10, ind);
+//                client->async_update(keyword_01, ind);
+//                client->async_update(keyword_1, ind);
+//                client->async_update(keyword_10, ind);
 
                 if (counter_10_1 < max_10_counter) {
                     std::string kw = kKeyword10GroupBase  + "1_" + id_string + "_" + std::to_string(counter_10_1);
@@ -81,6 +82,36 @@ namespace sse {
                     {
                         logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
                         counter_10_1++;
+                    }
+                }
+                if (counter_20 < max_10_counter) {
+                    std::string kw = kKeywordGroupBase  + "20_" + id_string + "_" + std::to_string(counter_20);
+                    client->async_update(kw, ind);
+                    
+                    if((i+1)%20 == 0)
+                    {
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        counter_20++;
+                    }
+                }
+                if (counter_30 < max_10_counter) {
+                    std::string kw = kKeywordGroupBase  + "30_" + id_string + "_" + std::to_string(counter_30);
+                    client->async_update(kw, ind);
+                    
+                    if((i+1)%30 == 0)
+                    {
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        counter_30++;
+                    }
+                }
+                if (counter_60 < max_10_counter) {
+                    std::string kw = kKeywordGroupBase  + "60_" + id_string + "_" + std::to_string(counter_60);
+                    client->async_update(kw, ind);
+                    
+                    if((i+1)%60 == 0)
+                    {
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        counter_60++;
                     }
                 }
                 if (counter_10_2 < max_10_counter) {

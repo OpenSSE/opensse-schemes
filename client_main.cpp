@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     if (json_file.size() > 0) {
         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, json_file) );
     }else{
-         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, 1e4, 600) );
+         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, 14e7, 2e6) );
     }
 
     for (std::string &path : input_files) {
@@ -120,15 +120,15 @@ int main(int argc, char** argv) {
         
         auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res)
         {
-            logger_mtx.lock();
-            
-            if (!first) {
-                log_stream << ", ";
-            }
-            first = false;
-            log_stream << res;
-
-            logger_mtx.unlock();
+//            logger_mtx.lock();
+//            
+//            if (!first) {
+//                log_stream << ", ";
+//            }
+//            first = false;
+//            log_stream << res;
+//
+//            logger_mtx.unlock();
         };
         
         log_stream << "Search results: \n{";

@@ -262,6 +262,29 @@ grpc::Status SophosImpl::update(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
+        grpc::Status SophosImpl::bulk_update(grpc::ServerContext* context,
+                                        grpc::ServerReader<sophos::UpdateRequestMessage>* reader, google::protobuf::Empty* e)
+        {
+            if (!server_) {
+                // problem, the server is already set up
+                return grpc::Status(grpc::FAILED_PRECONDITION, "The server is not set up");
+            }
+            
+            logger::log(logger::TRACE) << "Updating (bulk)..." << std::endl;
+
+            sophos::UpdateRequestMessage mes;
+            
+            while (reader->Read(&mes)) {
+                server_->update(message_to_request(&mes));
+            }
+            
+            logger::log(logger::TRACE) << "Updating (bulk)... done" << std::endl;
+
+            
+            return grpc::Status::OK;
+        }
+        
+
 std::ostream& SophosImpl::print_stats(std::ostream& out) const
 {
     if (server_) {

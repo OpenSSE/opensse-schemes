@@ -15,6 +15,7 @@ rpc search (SearchRequestMessage) returns (stream SearchReply) {}
 
 // Update
 rpc update (UpdateRequestMessage) returns (google.protobuf.Empty) {}
+rpc bulk_update (stream UpdateRequestMessage) returns (google.protobuf.Empty) {}
 
 }
 

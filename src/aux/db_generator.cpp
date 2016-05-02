@@ -35,6 +35,9 @@ namespace sse {
             
             uint32_t counter_10_1 = 0, counter_20 = 0, counter_30 = 0, counter_60 = 0, counter_10_2 = 0, counter_10_3 = 0, counter_10_4 = 0, counter_10_5 = 0;
             
+            std::string keyword_01, keyword_1, keyword_10;
+            std::string kw_10_1, kw_10_2, kw_10_3, kw_10_4, kw_10_5, kw_20, kw_30, kw_60;
+            
             for (size_t i = 0; counter < N_entries; counter += step, i++) {
                 size_t ind = rnd_perm->encrypt_64(counter);
                 
@@ -42,9 +45,9 @@ namespace sse {
                 uint32_t ind_1  = ind_01 % 100;
                 uint32_t ind_10 = ind_1 % 10;
                 
-                std::string keyword_01  = kKeyword01PercentBase    + "_" + std::to_string(ind_01)   + "_1";
-                std::string keyword_1   = kKeyword1PercentBase     + "_" + std::to_string(ind_1)    + "_1";
-                std::string keyword_10  = kKeyword10PercentBase    + "_" + std::to_string(ind_10)   + "_1";
+                keyword_01  = kKeyword01PercentBase    + "_" + std::to_string(ind_01)   + "_1";
+                keyword_1   = kKeyword1PercentBase     + "_" + std::to_string(ind_1)    + "_1";
+                keyword_10  = kKeyword10PercentBase    + "_" + std::to_string(ind_10)   + "_1";
                 
                 client->async_update(keyword_01, ind);
                 client->async_update(keyword_1, ind);
@@ -74,83 +77,76 @@ namespace sse {
 //                client->async_update(keyword_1, ind);
 //                client->async_update(keyword_10, ind);
 
+                
                 if (counter_10_1 < max_10_counter) {
-                    std::string kw = kKeyword10GroupBase  + "1_" + id_string + "_" + std::to_string(counter_10_1);
-                    client->async_update(kw, ind);
+                    kw_10_1 = kKeyword10GroupBase  + "1_" + id_string + "_" + std::to_string(counter_10_1);
                     
                     if((i+1)%10 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_1 << std::endl;
                         counter_10_1++;
                     }
                 }
                 if (counter_20 < max_10_counter) {
-                    std::string kw = kKeywordGroupBase  + "20_" + id_string + "_" + std::to_string(counter_20);
-                    client->async_update(kw, ind);
+                    kw_20 = kKeywordGroupBase  + "20_" + id_string + "_" + std::to_string(counter_20);
                     
                     if((i+1)%20 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_20 << std::endl;
                         counter_20++;
                     }
                 }
                 if (counter_30 < max_10_counter) {
-                    std::string kw = kKeywordGroupBase  + "30_" + id_string + "_" + std::to_string(counter_30);
-                    client->async_update(kw, ind);
+                    kw_30 = kKeywordGroupBase  + "30_" + id_string + "_" + std::to_string(counter_30);
                     
                     if((i+1)%30 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_30 << std::endl;
                         counter_30++;
                     }
                 }
                 if (counter_60 < max_10_counter) {
-                    std::string kw = kKeywordGroupBase  + "60_" + id_string + "_" + std::to_string(counter_60);
-                    client->async_update(kw, ind);
+                    kw_60 = kKeywordGroupBase  + "60_" + id_string + "_" + std::to_string(counter_60);
                     
                     if((i+1)%60 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_60 << std::endl;
                         counter_60++;
                     }
                 }
                 if (counter_10_2 < max_10_counter) {
-                    std::string kw = kKeyword10GroupBase  + "2_" + id_string + "_" + std::to_string(counter_10_2);
-                    client->async_update(kw, ind);
+                    kw_10_2 = kKeyword10GroupBase  + "2_" + id_string + "_" + std::to_string(counter_10_2);
 
                     if((i+1)%100 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_2 << std::endl;
                         counter_10_2++;
                     }
                 }
                 if (counter_10_3 < max_10_counter) {
-                    std::string kw = kKeyword10GroupBase  + "3_" + id_string + "_" + std::to_string(counter_10_3);
-                    client->async_update(kw, ind);
+                    kw_10_3 = kKeyword10GroupBase  + "3_" + id_string + "_" + std::to_string(counter_10_3);
 
                     if((i+1)%((size_t)(1e3)) == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_3 << std::endl;
                         counter_10_3++;
                     }
                 }
                 if (counter_10_4 < max_10_counter) {
-                    std::string kw = kKeyword10GroupBase  + "4_" + id_string + "_" + std::to_string(counter_10_4);
-                    client->async_update(kw, ind);
+                    kw_10_4 = kKeyword10GroupBase  + "4_" + id_string + "_" + std::to_string(counter_10_4);
                     
                     if((i+1)%((size_t)(1e4)) == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_4 << std::endl;
                         counter_10_4++;
                     }
                 }
                 if (counter_10_5 < max_10_counter) {
-                    std::string kw = kKeyword10GroupBase  + "5_" + id_string + "_" + std::to_string(counter_10_5);
-                    client->async_update(kw, ind);
+                    kw_10_5 = kKeyword10GroupBase  + "5_" + id_string + "_" + std::to_string(counter_10_5);
                     
                     if((i+1)%((size_t)(1e5)) == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw << std::endl;
+                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_5 << std::endl;
                         counter_10_5++;
                     }
                 }
@@ -159,6 +155,16 @@ namespace sse {
                 if (((*entries_counter) % 100) == 0) {
                     logger::log(sse::logger::INFO) << "\rRandom DB generation: " << (*entries_counter) << " entries generated" << std::flush;
                 }
+                
+                client->async_update(kw_10_1, ind);
+                client->async_update(kw_10_2, ind);
+                client->async_update(kw_10_3, ind);
+                client->async_update(kw_10_4, ind);
+                client->async_update(kw_10_5, ind);
+                client->async_update(kw_20, ind);
+                client->async_update(kw_30, ind);
+                client->async_update(kw_60, ind);
+
             }
             
             std::string log = "Random DB generation: thread " + std::to_string(thread_id) + " completed: (" + std::to_string(counter_10_1) + ", " + std::to_string(counter_10_2) + ", "+ std::to_string(counter_10_3) + ", "+ std::to_string(counter_10_4) + ", "+ std::to_string(counter_10_5) + ")";
@@ -171,8 +177,11 @@ namespace sse {
             crypto::Fpe rnd_perm;
             std::atomic_size_t entries_counter(0);
 
+            client.start_update_session();
+
             unsigned int n_threads = std::thread::hardware_concurrency();
             std::vector<std::thread> threads;
+            std::mutex rpc_mutex;
             
             for (unsigned int i = 0; i < n_threads; i++) {
                 threads.push_back(std::thread(generation_job, &client, i, N_entries, n_threads, &rnd_perm, &entries_counter));
@@ -182,6 +191,7 @@ namespace sse {
                 threads[i].join();
             }
 
+            client.end_update_session();
         }
 
     }

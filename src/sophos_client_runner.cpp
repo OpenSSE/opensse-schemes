@@ -177,17 +177,21 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
     sophos::UpdateRequestMessage message;
     google::protobuf::Empty e;
     
-    message = request_to_message(client_->update_request(keyword, index));
 
-    grpc::Status status = stub_->update(&context, message, &e);
-    
-    if (status.ok()) {
-        logger::log(logger::TRACE) << "Update succeeded." << std::endl;
-    } else {
-        logger::log(logger::ERROR) << "Update failed:" << std::endl;
-        logger::log(logger::ERROR) << status.error_message() << std::endl;
+    if (bulk_update_state_.writer) { // an update session is running, use it
+        update_in_session(keyword, index);
+    }else{
+        message = request_to_message(client_->update_request(keyword, index));
+
+        grpc::Status status = stub_->update(&context, message, &e);
+        
+        if (status.ok()) {
+            logger::log(logger::TRACE) << "Update succeeded." << std::endl;
+        } else {
+            logger::log(logger::ERROR) << "Update failed:" << std::endl;
+            logger::log(logger::ERROR) << status.error_message() << std::endl;
+        }
     }
-
 }
 
 void SophosClientRunner::async_update(const std::string& keyword, uint64_t index)
@@ -195,19 +199,40 @@ void SophosClientRunner::async_update(const std::string& keyword, uint64_t index
     grpc::ClientContext context;
     sophos::UpdateRequestMessage message;
 
-    update_tag_type *tag = new update_tag_type();
     
-    message = request_to_message(client_->update_request(keyword, index));
-    
-    std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
-                                                                stub_->Asyncupdate(&context, message, &update_cq_));
 
-    tag->reply.reset(new google::protobuf::Empty());
-    tag->status.reset(new grpc::Status());
-    tag->index.reset(new size_t(update_launched_count_++));
-    
-    rpc->Finish(tag->reply.get(), tag->status.get(), tag);    
+    if (bulk_update_state_.is_up) { // an update session is running, use it
+        update_in_session(keyword, index);
+    }else{
+
+        message = request_to_message(client_->update_request(keyword, index));
+
+        update_tag_type *tag = new update_tag_type();
+        std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
+                                                                    stub_->Asyncupdate(&context, message, &update_cq_));
+
+        tag->reply.reset(new google::protobuf::Empty());
+        tag->status.reset(new grpc::Status());
+        tag->index.reset(new size_t(update_launched_count_++));
+        
+        rpc->Finish(tag->reply.get(), tag->status.get(), tag);
+    }
 }
+    
+    void SophosClientRunner::update_in_session(const std::string& keyword, uint64_t index)
+    {
+        sophos::UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
+
+        if(! bulk_update_state_.is_up)
+        {
+            throw std::runtime_error("Invalid state: the update session is not up");
+        }
+        
+        if(! bulk_update_state_.writer->Write(message))
+        {
+            logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
+        }
+    }
 
 void SophosClientRunner::wait_updates_completion()
 {
@@ -215,7 +240,40 @@ void SophosClientRunner::wait_updates_completion()
     std::unique_lock<std::mutex> lock(update_completion_mtx_);
     update_completion_cv_.wait(lock, [this]{ return update_launched_count_ == update_completed_count_; });
 }
+    
+void SophosClientRunner::start_update_session()
+{
+    if (bulk_update_state_.writer) {
+        logger::log(logger::WARNING) << "Invalid client state: the bulk update session is already up" << std::endl;
+        return;
+    }
+    
+    bulk_update_state_.context.reset(new grpc::ClientContext());
+    bulk_update_state_.writer = stub_->bulk_update(bulk_update_state_.context.get(), &(bulk_update_state_.response));
+    
+    logger::log(logger::TRACE) << "Update session started." << std::endl;
+}
 
+void SophosClientRunner::end_update_session()
+{
+    if (!bulk_update_state_.writer) {
+        logger::log(logger::WARNING) << "Invalid client state: the bulk update session is not up" << std::endl;
+        return;
+    }
+    
+    bulk_update_state_.writer->WritesDone();
+    ::grpc::Status status = bulk_update_state_.writer->Finish();
+    
+    if (!status.ok()) {
+        logger::log(logger::ERROR) << "Status not OK at the end of update sessions. Status: " << status.error_message() << std::endl;
+    }
+    bulk_update_state_.context.reset();
+    bulk_update_state_.writer.reset();
+    
+    logger::log(logger::TRACE) << "Update session terminated." << std::endl;
+}
+
+    
 void SophosClientRunner::update_completion_loop()
 {
     update_tag_type* tag;

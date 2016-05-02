@@ -35,6 +35,10 @@ public:
     void update(const std::string& keyword, uint64_t index);
     void async_update(const std::string& keyword, uint64_t index);
 
+    void start_update_session();
+    void end_update_session();
+    void update_in_session(const std::string& keyword, uint64_t index);
+
     void wait_updates_completion();
     
     bool load_inverted_index(const std::string& path);
@@ -51,6 +55,15 @@ private:
     
     std::unique_ptr<sophos::Sophos::Stub> stub_;
     std::unique_ptr<SophosClient> client_;
+    
+    struct {
+        std::unique_ptr<grpc::ClientWriter<sophos::UpdateRequestMessage>> writer;
+        std::unique_ptr<::grpc::ClientContext> context;
+        ::google::protobuf::Empty response;
+        
+        bool is_up;
+    } bulk_update_state_;
+//    std::unique_ptr<grpc::ClientWriter<sophos::UpdateRequestMessage>> bulk_update_writer_;
     
     grpc::CompletionQueue update_cq_;
 

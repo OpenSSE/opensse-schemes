@@ -46,6 +46,10 @@ namespace sophos {
                             const sophos::UpdateRequestMessage* request,
                             google::protobuf::Empty* e) override;
         
+        grpc::Status bulk_update(grpc::ServerContext* context,
+                                 grpc::ServerReader<sophos::UpdateRequestMessage>* reader,
+                                 google::protobuf::Empty* e) override;
+        
         std::ostream& print_stats(std::ostream& out) const;
 
         bool search_asynchronously() const;

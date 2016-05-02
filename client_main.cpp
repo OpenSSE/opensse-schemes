@@ -97,7 +97,16 @@ int main(int argc, char** argv) {
     if (json_file.size() > 0) {
         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, json_file) );
     }else{
-         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, 14e7, 2e6) );
+        size_t setup_size = 1e5;
+        uint32_t n_keywords = 1e4;
+        
+        if( rnd_entries_count > 0)
+        {
+            setup_size = 14*rnd_entries_count;
+            n_keywords = 1.1*rnd_entries_count/(10*std::thread::hardware_concurrency());
+        }
+        
+        client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, setup_size, n_keywords) );
     }
 
     for (std::string &path : input_files) {

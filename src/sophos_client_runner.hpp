@@ -61,6 +61,7 @@ private:
         std::unique_ptr<::grpc::ClientContext> context;
         ::google::protobuf::Empty response;
         
+        std::mutex mtx;
         bool is_up;
     } bulk_update_state_;
 //    std::unique_ptr<grpc::ClientWriter<sophos::UpdateRequestMessage>> bulk_update_writer_;

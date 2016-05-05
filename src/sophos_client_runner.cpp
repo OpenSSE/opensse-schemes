@@ -228,10 +228,12 @@ void SophosClientRunner::async_update(const std::string& keyword, uint64_t index
             throw std::runtime_error("Invalid state: the update session is not up");
         }
         
+        bulk_update_state_.mtx.lock();
         if(! bulk_update_state_.writer->Write(message))
         {
             logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
         }
+        bulk_update_state_.mtx.unlock();
     }
 
 void SophosClientRunner::wait_updates_completion()
@@ -250,6 +252,7 @@ void SophosClientRunner::start_update_session()
     
     bulk_update_state_.context.reset(new grpc::ClientContext());
     bulk_update_state_.writer = stub_->bulk_update(bulk_update_state_.context.get(), &(bulk_update_state_.response));
+    bulk_update_state_.is_up = true;
     
     logger::log(logger::TRACE) << "Update session started." << std::endl;
 }
@@ -267,6 +270,8 @@ void SophosClientRunner::end_update_session()
     if (!status.ok()) {
         logger::log(logger::ERROR) << "Status not OK at the end of update sessions. Status: " << status.error_message() << std::endl;
     }
+    
+    bulk_update_state_.is_up = false;
     bulk_update_state_.context.reset();
     bulk_update_state_.writer.reset();
     

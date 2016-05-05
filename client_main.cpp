@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
         
         if( rnd_entries_count > 0)
         {
-            setup_size = 14*rnd_entries_count;
+            setup_size = 11*rnd_entries_count;
             n_keywords = 1.1*rnd_entries_count/(10*std::thread::hardware_concurrency());
         }
         

@@ -95,6 +95,7 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
     std::string pairs_map_path  = storage_path_ + "/" + pairs_map_file;
 
     try {
+        logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
         server_.reset(new SophosServer(pairs_map_path, message->setup_size(), message->public_key()));
     } catch (std::exception &e) {
         logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;

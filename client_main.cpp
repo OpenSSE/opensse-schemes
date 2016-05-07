@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         if( rnd_entries_count > 0)
         {
             setup_size = 11*rnd_entries_count;
-            n_keywords = 1.1*rnd_entries_count/(10*std::thread::hardware_concurrency());
+            n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
         }
         
         client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, setup_size, n_keywords) );

@@ -52,6 +52,8 @@ env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 
 if env['PLATFORM'] == 'darwin':
     rpathprefix = '-rpath'
     env.Append(LINKFLAGS = [[rpathprefix, lib] for lib in env['RPATH']])
+    env.Append(CPPPATH=['/usr/local/opt/openssl/include'])
+    env.Append(LIBPATH=['/usr/local/opt/openssl/lib'])    
     # env.Append(LINKFLAGS = ['-rpath', cryto_lib_dir+'/lib'])
 
 

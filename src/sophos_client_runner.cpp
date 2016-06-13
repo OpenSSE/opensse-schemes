@@ -50,7 +50,7 @@ namespace sophos {
 
 
 SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
-    : update_launched_count_(0), update_completed_count_(0)
+    : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
 {
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                grpc::InsecureChannelCredentials()));
@@ -88,7 +88,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
 }
 
     SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
-    : update_launched_count_(0), update_completed_count_(0)
+    : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
     {
         std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                    grpc::InsecureChannelCredentials()));

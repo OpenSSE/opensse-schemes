@@ -119,7 +119,8 @@ edb_(db_path), public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
 }
 
 SophosServer::SophosServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk) :
-edb_(db_path, tm_setup_size), public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
+    edb_(db_path), /*edb_(db_path, tm_setup_size),*/
+    public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
 {
     
 }
@@ -601,14 +602,15 @@ void SophosServer::update(const UpdateRequest& req)
 {
     logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
 
-    edb_.add(req.token, req.index);
+//    edb_.add(req.token, req.index);
+    edb_.put(req.token, req.index);
 }
 
 std::ostream& SophosServer::print_stats(std::ostream& out) const
 {
-    out << "Number of tokens: " << edb_.size();
-    out << "; Load: " << edb_.load();
-    out << "; Overflow bucket size: " << edb_.overflow_size() << std::endl;
+//    out << "Number of tokens: " << edb_.size();
+//    out << "; Load: " << edb_.load();
+//    out << "; Overflow bucket size: " << edb_.overflow_size() << std::endl;
     
     return out;
 }

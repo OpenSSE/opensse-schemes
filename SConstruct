@@ -46,7 +46,7 @@ env.Append(CPPPATH = [config['cryto_include'], config['ssdmap_include'], config[
 env.Append(LIBPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
 env.Append(RPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
 
-env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl', 'sse_dbparser'])
+env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl', 'sse_dbparser', 'rocksdb'])
 
 #Workaround for OS X
 if env['PLATFORM'] == 'darwin':

@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "rocksdb_wrapper.hpp"
+
 #include <string>
 #include <array>
 #include <fstream>
@@ -119,7 +121,8 @@ public:
     
     std::ostream& print_stats(std::ostream& out) const;
 private:
-    ssdmap::bucket_map<update_token_type, index_type, TokenHasher> edb_;
+//    ssdmap::bucket_map<update_token_type, index_type, TokenHasher> edb_;
+    RockDBWrapper edb_;
     
     sse::crypto::TdpMultPool public_tdp_;
 };

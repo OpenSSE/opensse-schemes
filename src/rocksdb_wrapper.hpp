@@ -24,6 +24,9 @@
 #include "utils.hpp"
 
 #include <rocksdb/db.h>
+#include <rocksdb/table.h>
+#include <rocksdb/memtablerep.h>
+#include <rocksdb/options.h>
 
 #include <iostream>
 
@@ -53,6 +56,30 @@ private:
     {
         rocksdb::Options options;
         options.create_if_missing = true;
+        options.table_factory.reset(rocksdb::NewCuckooTableFactory());
+        options.memtable_factory.reset(new rocksdb::VectorRepFactory());
+        options.compression = rocksdb::kNoCompression;
+        options.bottommost_compression = rocksdb::kDisableCompressionOption;
+
+        options.compaction_style = rocksdb::kCompactionStyleLevel;
+        options.info_log_level = rocksdb::InfoLogLevel::DEBUG_LEVEL;
+
+        options.delayed_write_rate = 8388608;
+        options.max_open_files = 4864;
+        options.max_background_compactions = 20;
+
+        options.disableDataSync = true;
+        options.allow_mmap_reads = true;
+        options.new_table_reader_for_compaction_inputs = true;
+        
+        options.max_bytes_for_level_base = 4294967296;
+        options.arena_block_size = 134217728;
+        options.level0_file_num_compaction_trigger = 10;
+        options.level0_slowdown_writes_trigger = 16;
+        options.hard_pending_compaction_bytes_limit = 137438953472;
+        options.target_file_size_base=201327616;
+        options.write_buffer_size=1073741824;
+        
         rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
         
         if (!status.ok()) {
@@ -98,7 +125,13 @@ private:
 
         rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), db_->DefaultColumnFamily(), k_s, k_v);
         
-        assert(s.ok());
+        if (!s.ok()) {
+            logger::log(logger::ERROR) << "Unable to insert pair in the database: " << s.ToString() << std::endl;
+            logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key) << ", data=" << std::hex << data << std::endl;
+
+        }
+//        assert(s.ok());
+        
         return s.ok();
     }
 

@@ -54,7 +54,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
 {
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                grpc::InsecureChannelCredentials()));
-    stub_ = std::move(sophos::Sophos::NewStub(channel));
+    stub_ = sophos::Sophos::NewStub(channel);
                     
     if (is_directory(path)) {
         // try to initialize everything from this directory
@@ -92,7 +92,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     {
         std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                    grpc::InsecureChannelCredentials()));
-        stub_ = std::move(sophos::Sophos::NewStub(channel));
+        stub_ = sophos::Sophos::NewStub(channel);
         
         if (exists(db_path)){
             throw std::runtime_error("File or directory already exists at " + db_path);

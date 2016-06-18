@@ -166,7 +166,7 @@ namespace sse {
                 
                 (*entries_counter)++;
                 if (((*entries_counter) % 100) == 0) {
-                    logger::log(sse::logger::INFO) << "\rRandom DB generation: " << (*entries_counter) << " entries generated" << std::flush;
+                    logger::log(sse::logger::INFO) << "Random DB generation: " << (*entries_counter) << " entries generated\r" << std::flush;
                 }
                 
                 client->async_update(kw_10_1, ind);

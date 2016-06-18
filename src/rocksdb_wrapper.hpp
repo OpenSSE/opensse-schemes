@@ -56,13 +56,21 @@ private:
     {
         rocksdb::Options options;
         options.create_if_missing = true;
-        options.table_factory.reset(rocksdb::NewCuckooTableFactory());
+        
+        
+        rocksdb::CuckooTableOptions cuckoo_options;
+        cuckoo_options.use_module_hash = false;
+        cuckoo_options.identity_as_first_hash = true;
+        
+        options.table_factory.reset(rocksdb::NewCuckooTableFactory(cuckoo_options));
+        
         options.memtable_factory.reset(new rocksdb::VectorRepFactory());
+        
         options.compression = rocksdb::kNoCompression;
         options.bottommost_compression = rocksdb::kDisableCompressionOption;
 
         options.compaction_style = rocksdb::kCompactionStyleLevel;
-        options.info_log_level = rocksdb::InfoLogLevel::DEBUG_LEVEL;
+        options.info_log_level = rocksdb::InfoLogLevel::INFO_LEVEL;
 
         options.delayed_write_rate = 8388608;
         options.max_open_files = 4864;
@@ -79,6 +87,9 @@ private:
         options.hard_pending_compaction_bytes_limit = 137438953472;
         options.target_file_size_base=201327616;
         options.write_buffer_size=1073741824;
+        
+        options.optimize_filters_for_hits = true;
+        
         
         rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
         

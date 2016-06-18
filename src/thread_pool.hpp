@@ -58,7 +58,7 @@ private:
 
 // the constructor just launches some amount of workers
 inline ThreadPool::ThreadPool(size_t threads)
-:   stop(false), max_tasks_size_(0)
+:   max_tasks_size_(0), stop(false)
 {
     for(size_t i = 0;i<threads;++i)
         workers.emplace_back(

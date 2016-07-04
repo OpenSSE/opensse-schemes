@@ -31,6 +31,19 @@ You will actually need it to install dependencies:
 Sophos uses Google's [gRPC](http://grpc.io) as its RPC machinery.
 Follow the instructions to install gRPC's C++ binding (see [here](https://github.com/grpc/grpc/tree/release-0_14/src/cpp) for the 0.14 release).
 
+## Installing RocksDB
+Sophos uses Facebook's [RocksDB](http://rocksdb.org) as its storage engine. Sophos has been tested with the 4.9 release, which is available via git:
+
+```sh
+ $ git clone -b 4.9.fb https://github.com/facebook/rocksdb.git
+```
+Running ```[sudo] make install``` will compile the source and copy the library and headers in ```/usr/local``` by default. To set an other install path, set the ```INSTALL_PATH``` variable:
+
+```sh
+ $ export INSTALL_PATH=/path/to/rocksdb
+```
+
+
 
 ## Getting the code
 The code is available *via* git:

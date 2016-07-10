@@ -129,15 +129,15 @@ int main(int argc, char** argv) {
         
         auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res)
         {
-            logger_mtx.lock();
-            
-            if (!first) {
-                log_stream << ", ";
-            }
-            first = false;
-            log_stream << res;
-
-            logger_mtx.unlock();
+            // logger_mtx.lock();
+            //
+            // if (!first) {
+            //     log_stream << ", ";
+            // }
+            // first = false;
+            // log_stream << res;
+            //
+            // logger_mtx.unlock();
         };
         
         log_stream << "Search results: \n{";

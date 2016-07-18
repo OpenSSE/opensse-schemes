@@ -240,6 +240,12 @@
 		31B08D971CAAE58100DD6BF8 /* sophos.proto */ = {isa = PBXFileReference; lastKnownFileType = text; path = sophos.proto; sourceTree = "<group>"; };
 		31B1E8081CAC86A900643154 /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		31B1E8091CAC86A900643154 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = utils.hpp; sourceTree = "<group>"; };
+		31FC7B161D3D787900E54019 /* large_storage_sophos_client.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = large_storage_sophos_client.cpp; sourceTree = "<group>"; };
+		31FC7B171D3D787900E54019 /* large_storage_sophos_client.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = large_storage_sophos_client.hpp; sourceTree = "<group>"; };
+		31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = medium_storage_sophos_client.cpp; sourceTree = "<group>"; };
+		31FC7B191D3D787900E54019 /* medium_storage_sophos_client.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = medium_storage_sophos_client.hpp; sourceTree = "<group>"; };
+		31FC7B1A1D3D787900E54019 /* sophos_core.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_core.cpp; sourceTree = "<group>"; };
+		31FC7B1B1D3D787900E54019 /* sophos_core.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sophos_core.hpp; sourceTree = "<group>"; };
 		6C74230A1CD20DF900A76B8C /* db_generator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = db_generator.cpp; sourceTree = "<group>"; };
 		6C74230B1CD20DF900A76B8C /* db_generator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = db_generator.hpp; sourceTree = "<group>"; };
 		6C9CBEBB1CABBEAD003B0185 /* sophos_client_runner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_client_runner.cpp; sourceTree = "<group>"; };
@@ -327,6 +333,7 @@
 			children = (
 				31B08D961CAAE58100DD6BF8 /* protos */,
 				6C7423091CD20DDA00A76B8C /* aux */,
+				31FC7B151D3D787900E54019 /* sophos */,
 				31B1E8081CAC86A900643154 /* utils.cpp */,
 				31B1E8091CAC86A900643154 /* utils.hpp */,
 				315EB1291CB42C7C00EB5D9F /* logger.cpp */,
@@ -354,6 +361,19 @@
 				31B08D971CAAE58100DD6BF8 /* sophos.proto */,
 			);
 			path = protos;
+			sourceTree = "<group>";
+		};
+		31FC7B151D3D787900E54019 /* sophos */ = {
+			isa = PBXGroup;
+			children = (
+				31FC7B161D3D787900E54019 /* large_storage_sophos_client.cpp */,
+				31FC7B171D3D787900E54019 /* large_storage_sophos_client.hpp */,
+				31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */,
+				31FC7B191D3D787900E54019 /* medium_storage_sophos_client.hpp */,
+				31FC7B1A1D3D787900E54019 /* sophos_core.cpp */,
+				31FC7B1B1D3D787900E54019 /* sophos_core.hpp */,
+			);
+			path = sophos;
 			sourceTree = "<group>";
 		};
 		6C7423091CD20DDA00A76B8C /* aux */ = {

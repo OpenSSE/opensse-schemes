@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "sophos_core.hpp"
+#include "sophos/sophos_core.hpp"
 
 #include <mutex>
 #include <atomic>

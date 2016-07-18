@@ -2,7 +2,7 @@ import os.path
 
 Import('*')
 
-files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('sophos/*.cpp') + Glob('*.c')
+files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('sophos/*.cpp') + Glob('diane/*.cpp') + Glob('*.c')
 
 protos = env.SConscript('protos/build.scons', exports='env')
 protos_cpp = [x for x in protos if os.path.splitext(str(x))[1] in [".cc"]]

@@ -6,4 +6,4 @@
 	url = https://github.com/rbost/ssdmap.git
 [submodule "third_party/db-parser"]
 	path = third_party/db-parser
-	url = git@gitlab.com:sse/db-parser.git
+	url = https://gitlab.com/sse/db-parser.git

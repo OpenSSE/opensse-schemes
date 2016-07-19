@@ -34,8 +34,13 @@ namespace sse {
         
         class DianeClient {
         public:
-            DianeClient();
-            DianeClient(const std::string& derivation_master_key);
+            static constexpr size_t kKeywordIndexSize = 16;
+            typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
+
+            static constexpr size_t kTreeDepth = 48;
+            
+            DianeClient(const std::string& token_map_path, const size_t tm_setup_size);
+            DianeClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key);
             ~DianeClient();
 
             size_t keyword_count() const;
@@ -44,20 +49,48 @@ namespace sse {
             
             void write_keys(const std::string& dir_path) const;
 
+            keyword_index_type get_keyword_index(const std::string &kw) const;
 
             SearchRequest   search_request(const std::string &keyword) const;
             UpdateRequest   update_request(const std::string &keyword, const index_type index);
             
-            virtual std::ostream& print_stats(std::ostream& out) const;
+
+            SearchRequest   search_request_index(const keyword_index_type &kw_index) const;
+            SearchRequest   random_search_request() const;
+
+            std::ostream& print_stats(std::ostream& out) const;
             
             const crypto::Prf<kSearchTokenKeySize>& root_prf() const;
             const crypto::Prf<kKeywordTokenSize>& kw_token_prf() const;
             
             static const std::string derivation_keys_file__;
             
+            struct IndexHasher
+            {
+            public:
+                inline size_t operator()(const keyword_index_type& index) const
+                {
+                    size_t h = 0;
+                    for (size_t i = 0; i < index.size(); i++) {
+                        if (i > 0) {
+                            h <<= 8;
+                        }
+                        h = index[i] + h;
+                    }
+                    return h;
+                }
+
+            };
+
         private:
+
             crypto::Prf<kSearchTokenKeySize> root_prf_;
             crypto::Prf<kKeywordTokenSize> kw_token_prf_;
+            
+            
+            ssdmap::bucket_map< keyword_index_type, uint32_t, IndexHasher> counter_map_;
+            std::mutex token_map_mtx_;
+            std::atomic_uint keyword_counter_;
         };
         
         

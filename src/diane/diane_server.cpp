@@ -42,11 +42,11 @@ namespace sse {
             std::list<index_type> results;
             index_type r;
 
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.kw_token);
+            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
 
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
-                logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->key) << std::endl;
+                logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
 
                 // for now we implement the search algorithm in a naive way:
                 // the tokens are iteratively generated using the derive_node function
@@ -54,10 +54,10 @@ namespace sse {
                 // we leave optimizations for later
                 
                 
-                uint64_t count = 1 << it_token->depth;
+                uint64_t count = 1 << it_token->second;
                 
                 for (uint64_t i = 0; i < count; i++) {
-                    auto t = TokenTree::derive_node(it_token->key, i, it_token->depth);
+                    auto t = TokenTree::derive_node(it_token->first, i, it_token->second);
                     
                     logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;
 

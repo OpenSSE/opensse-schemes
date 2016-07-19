@@ -28,24 +28,20 @@ namespace sse {
 
         constexpr size_t kSearchTokenKeySize = TokenTree::kTokenSize;
         constexpr size_t kUpdateTokenSize = 16;
-        constexpr size_t kKeywordTokenSize = 16;
+        constexpr size_t kKeywordTokenSize = 32;
 
-        typedef std::array<uint8_t, kSearchTokenKeySize> search_token_key_type;
+        typedef TokenTree::token_type search_token_key_type;
         typedef std::array<uint8_t, kKeywordTokenSize> keyword_token_type;
         typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
         typedef uint64_t index_type;
         
-        struct SearchToken
-        {
-            search_token_key_type   key;
-            uint8_t             depth;
-        };
-        
+        typedef  std::list<std::pair<TokenTree::token_type, uint8_t>>  search_token_type;
+                
         struct SearchRequest
         {
-            std::list<SearchToken>  token_list;
+            std::list<std::pair<search_token_key_type, uint8_t>>  token_list;
             uint32_t                add_count;
-            std::string             kw_token;
+            keyword_token_type      kw_token;
         };
         
         struct UpdateRequest

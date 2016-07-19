@@ -1,9 +1,9 @@
 Import('*')
 
-proto_out = env.Protoc([], 'sophos.proto',
+proto_out = env.Protoc([], ['sophos.proto', 'diane.proto'],
        PROTOPATH=[Dir('.')], PROTOCPPOUT=Dir('..').abspath)
 
-gprc_out = env.Grpc([], 'sophos.proto',
+gprc_out = env.Grpc([], ['sophos.proto', 'diane.proto'],
        PROTOPATH=[Dir('.')], GRPCPPOUT=Dir('..').abspath)
 out = proto_out + gprc_out
 

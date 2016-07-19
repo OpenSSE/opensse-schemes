@@ -34,6 +34,7 @@ namespace sse {
         {
         public:
             static constexpr uint8_t kTokenSize = crypto::Prg::kKeySize;
+            
             typedef std::array<uint8_t, kTokenSize> token_type;
             
             static token_type derive_node(const token_type& K, uint64_t node_index, uint8_t depth);

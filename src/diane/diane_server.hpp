@@ -46,14 +46,14 @@ public:
     
     
     std::list<index_type> search(const SearchRequest& req);
-    void search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback);
-    
-    std::list<index_type> search_parallel_full(const SearchRequest& req);
-    std::list<index_type> search_parallel(const SearchRequest& req, uint8_t access_threads);
-    std::list<index_type> search_parallel_light(const SearchRequest& req, uint8_t thread_count);
-    
-    void search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count);
-    void search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count);
+//    void search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback);
+//    
+//    std::list<index_type> search_parallel_full(const SearchRequest& req);
+//    std::list<index_type> search_parallel(const SearchRequest& req, uint8_t access_threads);
+//    std::list<index_type> search_parallel_light(const SearchRequest& req, uint8_t thread_count);
+//    
+//    void search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count);
+//    void search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count);
     
     void update(const UpdateRequest& req);
     

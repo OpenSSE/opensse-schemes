@@ -45,7 +45,7 @@ namespace sse {
         {
             std::list<SearchToken>  token_list;
             uint32_t                add_count;
-            keyword_token_type      kw_token;
+            std::string             kw_token;
         };
         
         struct UpdateRequest

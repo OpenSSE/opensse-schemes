@@ -59,6 +59,17 @@ namespace sse {
         {
             return counter_map_.size();
         }
+        
+        const std::string DianeClient::master_derivation_key() const
+        {
+            return std::string(root_prf_.key().begin(), root_prf_.key().end());
+        }
+
+        const std::string DianeClient::kw_token_master_key() const
+        {
+            return std::string(kw_token_prf_.key().begin(), kw_token_prf_.key().end());
+        }
+
 
         DianeClient::keyword_index_type DianeClient::get_keyword_index(const std::string &kw) const
         {
@@ -118,6 +129,66 @@ namespace sse {
             
             return req;
 
+        }
+
+        UpdateRequest   DianeClient::update_request(const std::string &keyword, const index_type index)
+        {
+            bool found = false;
+            
+            UpdateRequest req;
+            search_token_key_type st;
+            
+            // get (and possibly construct) the keyword index
+            keyword_index_type kw_index = get_keyword_index(keyword);
+            std::string seed(kw_index.begin(),kw_index.end());
+            
+            // retrieve the counter
+            uint32_t kw_counter;
+            {
+                std::lock_guard<std::mutex> lock(token_map_mtx_);
+                found = counter_map_.get(kw_index, kw_counter);
+            }
+
+            if (!found) {
+                // set the counter to 0
+                kw_counter = 0;
+                keyword_counter_++;
+                
+                {
+                    std::lock_guard<std::mutex> lock(token_map_mtx_);
+                    counter_map_.add(kw_index, 0);
+                }
+                
+            }else{
+                // increment and store the counter
+                kw_counter++;
+                {
+                    std::lock_guard<std::mutex> lock(token_map_mtx_);
+                    counter_map_.at(kw_index) = kw_counter;
+                }
+
+                
+                
+            }
+            
+            
+            TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
+
+            st = TokenTree::derive_node(root, kw_counter, kTreeDepth);
+
+            logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+
+            std::array<uint8_t, sizeof(index_type)> mask;
+            
+            // derive the two parts of the leaf search token
+            // it avoids having to use some different IVs to have two different hash functions.
+            // it might decrease the security bounds by a few bits, but, meh ...
+            crypto::BlockHash::hash(st.data(), 16, req.token.data());
+            crypto::BlockHash::hash(st.data()+16, sizeof(index_type), mask.data());
+
+            req.index = xor_mask(index, mask);
+
+            return req;
         }
 
     }

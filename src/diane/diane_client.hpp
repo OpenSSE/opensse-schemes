@@ -46,6 +46,7 @@ namespace sse {
             size_t keyword_count() const;
             
             const std::string master_derivation_key() const;
+            const std::string kw_token_master_key() const;
             
             void write_keys(const std::string& dir_path) const;
 

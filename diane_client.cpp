@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     if (client_db.size()==0) {
         sse::logger::log(sse::logger::WARNING) << "Client database not specified" << std::endl;
         sse::logger::log(sse::logger::WARNING) << "Using \'test.cddb\' by default" << std::endl;
-        client_db = "test.csdb";
+        client_db = "test.cddb";
     }else{
         sse::logger::log(sse::logger::INFO) << "Running client with database " << client_db << std::endl;
     }

@@ -21,6 +21,8 @@
 
 #include "diane_server.hpp"
 
+#include "thread_pool.hpp"
+
 #include <sse/crypto/block_hash.hpp>
 
 namespace sse {
@@ -105,6 +107,92 @@ namespace sse {
                     
                 }
             }
+        }
+
+        std::list<index_type> DianeServer::search_parallel(const SearchRequest& req, uint8_t derivation_threads_count,uint8_t access_threads_count)
+        {
+            std::list<index_type> results;
+            
+            auto callback = [&results](index_type i)
+            {
+                results.push_back(i);
+            };
+            
+            search_parallel(req, callback, derivation_threads_count, access_threads_count);
+            
+            return results;
+        }
+        
+
+        void DianeServer::search_parallel(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t derivation_threads_count,uint8_t access_threads_count)
+        {
+            logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
+            logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
+            
+            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
+            
+            ThreadPool access_pool(access_threads_count);
+            ThreadPool derive_pool(derivation_threads_count);
+
+
+            auto lookup_job = [this, &post_callback](const update_token_type &ut, const std::array<uint8_t, sizeof(index_type)> &mask)
+            {
+                index_type r;
+                
+                
+                bool found = edb_.get(ut,r);
+                
+                if (found) {
+                    logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                    
+                    post_callback(xor_mask(r, mask));
+                }else{
+                    logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
+                }
+            };
+            
+            std::function<void(TokenTree::token_type, uint8_t)> derive_job = [&derive_job, &access_pool, &lookup_job, &derive_pool](TokenTree::token_type t, uint8_t d)
+            {
+                TokenTree::token_type st = TokenTree::derive_leftmost_node(t, d, derive_job);
+                
+                logger::log(logger::DBG) << "Derived leaf token: " << hex_string(st) << std::endl;
+
+                // apply the hash function
+                
+                // derive the two parts of the leaf search token
+                // it avoids having to use some different IVs to have two different hash functions.
+                // it might decrease the security bounds by a few bits, but, meh ...
+                update_token_type ut;
+                std::array<uint8_t, sizeof(index_type)> mask;
+
+                crypto::BlockHash::hash(st.data(), 16, ut.data());
+                crypto::BlockHash::hash(st.data()+16, sizeof(index_type), mask.data());
+                
+                
+                logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
+                logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                
+                access_pool.enqueue(lookup_job, ut, mask);
+
+            };
+            
+            
+            
+            
+            for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
+                
+                logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
+                logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
+
+                
+                // post the derivation job
+                
+                derive_pool.enqueue(derive_job, it_token->first, it_token->second);
+            }
+            
+            // wait for the pools to finish
+            derive_pool.join();
+            access_pool.join();
         }
 
         void DianeServer::update(const UpdateRequest& req)

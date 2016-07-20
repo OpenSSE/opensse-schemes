@@ -165,8 +165,8 @@ std::to_string((t)) )
             logger::log(logger::TRACE) << "Searching ...";
             std::list<uint64_t> res_list;
             
-                BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-            //    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//                BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+                BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),8,8)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
             //    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
 //            BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
             //    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
@@ -213,16 +213,21 @@ std::to_string((t)) )
                 res_size++;
             };
             
-//            if (mes->add_count() >= 40) { // run the search algorithm in parallel only if there are more than 2 results
+            if (mes->add_count() >= 40) { // run the search algorithm in parallel only if there are more than 2 results
+                
+                BENCHMARK_Q((server_->search_parallel(message_to_request(mes), post_callback, 8, 8)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+
 //                BENCHMARK_Q((server_->search_parallel_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency(), 8,1)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 //                //        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 //                //        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, 10)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
-//            }else if (mes->add_count() >= 2) {
+            }else if (mes->add_count() >= 2) {
+                BENCHMARK_Q((server_->search_parallel(message_to_request(mes), post_callback, 8, 8)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+
 //                BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
-//            }else{
+            }else{
                 BENCHMARK_Q((server_->search(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
-//            }
-            
+            }
+        
             
             logger::log(logger::TRACE) << " done" << std::endl;
             

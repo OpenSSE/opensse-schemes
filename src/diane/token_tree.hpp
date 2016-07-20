@@ -26,6 +26,7 @@
 #include <array>
 #include <list>
 #include <utility>
+#include <functional>
 
 namespace sse {
     namespace diane {
@@ -39,6 +40,7 @@ namespace sse {
             
             static token_type derive_node(const token_type& K, uint64_t node_index, uint8_t depth);
             
+            static token_type derive_leftmost_node(const token_type& K, uint8_t depth, std::function<void(token_type, uint8_t)> right_node_callback);
             
             static inline std::list<std::pair<token_type, uint8_t>> covering_list(const token_type& root, uint64_t node_count, uint8_t depth);
             

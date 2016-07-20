@@ -48,7 +48,29 @@ namespace sse {
         }
         
         
-        
+        TokenTree::token_type TokenTree::derive_leftmost_node(const token_type& K, uint8_t depth, std::function<void(token_type, uint8_t)> right_node_callback)
+        {
+            if (depth == 0) {
+                return K;
+            }
+            
+            token_type t = K;
+
+            for (uint8_t i = 0; i < depth; i++) {
+
+                token_type right;
+                
+                // in the future, optimize this:
+                // with AES-NI and a well written code, it should not cost more to derive two blocks than deriving a single one
+                crypto::Prg::derive(t, kTokenSize, right);
+                crypto::Prg::derive(t, 0, t);
+                
+                right_node_callback(right, depth-1-i);
+            }
+
+            return t;
+        }
+
         void TokenTree::covering_list_aux(const token_type& K, uint64_t node_count, uint8_t depth, std::list<std::pair<token_type, uint8_t>> &list)
         {
             assert(node_count > 0);

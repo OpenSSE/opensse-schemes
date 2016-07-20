@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
     
     if (server_db.size()==0) {
         sse::logger::log(sse::logger::WARNING) << "Server database not specified" << std::endl;
-        sse::logger::log(sse::logger::WARNING) << "Using \'test.scdb\' by default" << std::endl;
-        server_db = "test.scdb";
+        sse::logger::log(sse::logger::WARNING) << "Using \'test.dsdb\' by default" << std::endl;
+        server_db = "test.dsdb";
     }else{
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }

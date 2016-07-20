@@ -416,6 +416,9 @@ namespace sse {
                 };
                 
                 parser.addCallbackList(add_list_callback);
+                
+                start_update_session();
+
                 parser.parse();
                 
                 pool.join();
@@ -423,6 +426,8 @@ namespace sse {
                 
                 wait_updates_completion();
                 
+                end_update_session();
+
                 return true;
             } catch (std::exception& e) {
                 logger::log(logger::ERROR) << "\nFailed to load file " << path << " : " << e.what() << std::endl;

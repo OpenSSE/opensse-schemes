@@ -85,7 +85,8 @@ namespace sse {
                 std::mutex mtx;
                 bool is_up;
             } bulk_update_state_;
-            //    std::unique_ptr<grpc::ClientWriter<sophos::UpdateRequestMessage>> bulk_update_writer_;
+            
+            std::unique_ptr<grpc::ClientWriter<UpdateRequestMessage>> bulk_update_writer_;
             
             grpc::CompletionQueue update_cq_;
             

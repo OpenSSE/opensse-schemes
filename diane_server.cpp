@@ -1,12 +1,12 @@
 //
-//  server_main.cpp
-//  sophos
+//  diane_server.cpp
+//  Diane
 //
-//  Created by Raphael Bost on 03/04/2016.
+//  Created by Raphael Bost on 20/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-//#include "sophos/sophos_server_runner.hpp"
+#include "diane/server_runner.hpp"
 #include "logger.hpp"
 
 #include <grpc++/server.h>
@@ -78,14 +78,13 @@ int main(int argc, char** argv) {
     
     if (server_db.size()==0) {
         sse::logger::log(sse::logger::WARNING) << "Server database not specified" << std::endl;
-        sse::logger::log(sse::logger::WARNING) << "Using \'test.ssdb\' by default" << std::endl;
-        server_db = "test.ssdb";
+        sse::logger::log(sse::logger::WARNING) << "Using \'test.scdb\' by default" << std::endl;
+        server_db = "test.scdb";
     }else{
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-//    sse::sophos::run_sophos_server("0.0.0.0:4242", server_db, &server_ptr__, async_search);
-//    sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
+    sse::diane::run_diane_server("0.0.0.0:4241", server_db, &server_ptr__, async_search);
     
     sse::crypto::cleanup_crypto_lib();
 

@@ -49,6 +49,7 @@
 		31FC7BA81D3F5F1700E54019 /* sophos_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315A5A5C1CB15DEF0026DBB3 /* sophos_server.cpp */; };
 		31FC7BAB1D3F664600E54019 /* diane_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7BA91D3F664200E54019 /* diane_client.cpp */; };
 		31FC7BAC1D3F664900E54019 /* diane_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7BAA1D3F664200E54019 /* diane_server.cpp */; };
+		31FC7BAF1D3F6B6600E54019 /* server_runner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7BAD1D3F6B6600E54019 /* server_runner.cpp */; };
 		6C74230D1CD20DF900A76B8C /* db_generator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C74230A1CD20DF900A76B8C /* db_generator.cpp */; };
 		6C9CBEC41CABBFCC003B0185 /* sophos.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D971CAAE58100DD6BF8 /* sophos.proto */; };
 		6C9CBECF1CABC007003B0185 /* sophos.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D971CAAE58100DD6BF8 /* sophos.proto */; };
@@ -399,6 +400,8 @@
 		31FC7B9C1D3F5A6B00E54019 /* diane_client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = diane_client; sourceTree = BUILT_PRODUCTS_DIR; };
 		31FC7BA91D3F664200E54019 /* diane_client.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = diane_client.cpp; sourceTree = "<group>"; };
 		31FC7BAA1D3F664200E54019 /* diane_server.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = diane_server.cpp; sourceTree = "<group>"; };
+		31FC7BAD1D3F6B6600E54019 /* server_runner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server_runner.cpp; sourceTree = "<group>"; };
+		31FC7BAE1D3F6B6600E54019 /* server_runner.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = server_runner.hpp; sourceTree = "<group>"; };
 		6C74230A1CD20DF900A76B8C /* db_generator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = db_generator.cpp; sourceTree = "<group>"; };
 		6C74230B1CD20DF900A76B8C /* db_generator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = db_generator.hpp; sourceTree = "<group>"; };
 		6C9CBEBB1CABBEAD003B0185 /* sophos_client_runner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_client_runner.cpp; sourceTree = "<group>"; };
@@ -481,6 +484,8 @@
 				31FC7B361D3E760A00E54019 /* diane_client.hpp */,
 				31FC7B381D3E761600E54019 /* diane_server.cpp */,
 				31FC7B391D3E761600E54019 /* diane_server.hpp */,
+				31FC7BAD1D3F6B6600E54019 /* server_runner.cpp */,
+				31FC7BAE1D3F6B6600E54019 /* server_runner.hpp */,
 			);
 			path = diane;
 			sourceTree = "<group>";
@@ -867,6 +872,7 @@
 				31FC7B6D1D3F5A6400E54019 /* diane.proto in Sources */,
 				31FC7B6E1D3F5A6400E54019 /* token_tree.cpp in Sources */,
 				31FC7B711D3F5A6400E54019 /* diane_server.cpp in Sources */,
+				31FC7BAF1D3F6B6600E54019 /* server_runner.cpp in Sources */,
 				31FC7B721D3F5A6400E54019 /* logger.cpp in Sources */,
 				31FC7BAC1D3F664900E54019 /* diane_server.cpp in Sources */,
 				31FC7B751D3F5A6400E54019 /* utils.cpp in Sources */,

@@ -89,50 +89,27 @@ objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 # protos = SConscript('src/protos/build.scons', exports='env', duplicate=0)
 # Depends(objects, protos)
 
-env.Depends(objects,[crypto_lib_target, ssdmap_target, db_parser_target])
+env.Depends(objects["diane"],[crypto_lib_target, ssdmap_target, db_parser_target])
+env.Depends(objects["sophos"],[crypto_lib_target, ssdmap_target, db_parser_target])
 
 # clean_crypto = env.Command("clean_crypto", "", "cd third_party/crypto && scons -c lib")
 # clean_ssdmap = env.Command("clean_ssdmap", "", "cd third_party/ssdmap && scons -c lib")
 # env.Alias('clean_deps', [clean_crypto, clean_ssdmap])
 
-Clean(objects, 'build')
+Clean(objects["sophos"] + objects["diane"], 'build')
 
 outter_env = env.Clone()
 outter_env.Append(CPPPATH = ['build'])
 
 
-debug_prog = outter_env.Program('debug',['main.cpp'] + objects)
+sophos_debug_prog = outter_env.Program('sophos_debug',['test_sophos.cpp']          + objects["sophos"])
+sophos_client =     outter_env.Program('sophos_client',['sophos_client.cpp']  + objects["sophos"])
+sophos_server =     outter_env.Program('sophos_server',['sophos_server.cpp']  + objects["sophos"])
 
-# client = env.Program('client',['client_main.cpp'] + objects, CPPPATH = ['build'] + env.get('CPPPATH', []))
+diane_debug_prog = outter_env.Program('diane_debug',    ['test_diane.cpp']    + objects["diane"])
+diane_client =     outter_env.Program('diane_client',   ['diane_client.cpp']  + objects["diane"])
+diane_server =     outter_env.Program('diane_server',   ['diane_server.cpp']  + objects["diane"])
 
-# env_client = outter_env.Clone()
-# env_client.Append(LIBS = ['sse_dbparser'])
-
-client = outter_env.Program('client',['client_main.cpp'] + objects)
-
-server = outter_env.Program('server',['server_main.cpp'] + objects)
-
-env.Default([debug_prog, client, server])
-
-# check_env = env.Clone()
-#
-# tmp_env = Environment()
-#
-# if not check_env.GetOption('clean'):
-#     conf = Configure(tmp_env)
-#     if conf.CheckLib('boost_unit_test_framework'):
-#         print 'Found boost unit test framework'
-#
-#         check_env.Append(LIBS = ['boost_unit_test_framework'])
-#
-#         test_prog = check_env.Program('check', ['checks.cpp'] + objects + test_objects)
-#         test_run = check_env.Test('test_run', test_prog)
-#         Depends(test_run, test_prog)
-#         check_env.Alias('check', [test_prog, test_run])
-#
-#     else:
-#         print 'boost unit test framework not found'
-#         print 'Skipping checks. Be careful!'
-#     tmp_env = conf.Finish()
-#
-# check_env.Clean('check', ['check'] + objects)
+env.Alias('sophos', [sophos_debug_prog, sophos_client, sophos_server])
+env.Alias('diane', [diane_debug_prog, diane_client, diane_server])
+env.Default(['diane'])

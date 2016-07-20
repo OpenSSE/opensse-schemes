@@ -6,9 +6,9 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "sophos_client_runner.hpp"
+#include "sophos/sophos_client_runner.hpp"
 #include "logger.hpp"
-#include "src/aux/db_generator.hpp"
+#include "aux/db_generator.hpp"
 
 #include <sse/crypto/utils.hpp>
 
@@ -19,7 +19,7 @@
 
 int main(int argc, char** argv) {
     sse::logger::set_severity(sse::logger::INFO);
-    sse::logger::set_benchmark_file("benchmark_client.out");
+    sse::logger::set_benchmark_file("benchmark_sophos_client.out");
     
     sse::crypto::init_crypto_lib();
     

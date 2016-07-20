@@ -4,9 +4,23 @@ Import('*')
 
 files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('sophos/*.cpp') + Glob('diane/*.cpp') + Glob('*.c')
 
+common_files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('*.c')
+diane_files =  Glob('diane/*.cpp') 
+sophos_files = Glob('sophos/*.cpp')
+
 protos = env.SConscript('protos/build.scons', exports='env')
 protos_cpp = [x for x in protos if os.path.splitext(str(x))[1] in [".cc"]]
 
-objs = env.Object(files + protos_cpp, CPPPATH = ['.'] + env.get('CPPPATH', []))
+# objs = env.Object(files + protos_cpp, CPPPATH = ['.'] + env.get('CPPPATH', []))
+
+common_objs = env.Object(common_files + protos_cpp, CPPPATH = ['.'] + env.get('CPPPATH', []))
+diane_objs = env.Object(diane_files, CPPPATH = ['.'] + env.get('CPPPATH', []))
+sophos_objs = env.Object(sophos_files, CPPPATH = ['.'] + env.get('CPPPATH', []))
+
+objs = {}
+objs["diane"] = diane_objs + common_objs
+objs["sophos"] = sophos_objs + common_objs
+
+# objs = common_objs + diane_objs + sophos_objs
 
 Return('objs')

@@ -10,8 +10,8 @@
 #include <fstream>
 #include <memory>
 
-#include "src/diane/diane_client.hpp"
-#include "src/diane/diane_server.hpp"
+#include "diane/diane_client.hpp"
+#include "diane/diane_server.hpp"
 #include "utils.hpp"
 
 using namespace sse::diane;
@@ -51,10 +51,8 @@ void test_client_server()
         client_master_key_buf << client_master_key_in.rdbuf();
         client_kw_token_key_buf << client_kw_token_master_key_in.rdbuf();
 
-//        client.reset(new  LargeStorageSophosClient("client.sav", "client.csv", client_sk_buf.str(), client_master_key_buf.str()));
         client.reset(new  DianeClient("diane_client.sav", client_master_key_buf.str(), client_kw_token_key_buf.str()));
         
-//        server.reset(new SophosServer("diane_server.dat", server_pk_buf.str()));
         server.reset(new DianeServer("diane_server.dat"));
         
         SearchRequest s_req;
@@ -129,38 +127,6 @@ void test_client_server()
     client_master_key_in.close();
     client_kw_token_master_key_in.close();
 
-}
-
-void test_kw_indexer()
-{
-    
-    map<string, uint32_t> m, n;
-    
-    m["toto"] = 0;
-    m["titi"] = 1;
-    m["tata"] = 2;
-    m["tutu"] = 34;
-    
-    ofstream out("test.csv");
-    
-    write_keyword_map(out, m);
-    
-    out.close();
-    
-    ifstream in("test.csv");
-    
-    bool ret = parse_keyword_map(in, n);
-    
-    if (ret) {
-        cout << "Success" << endl;
-    }else{
-        cout << "Failed" << endl;
-    }
-    
-    for (auto p : n) {
-        cout << p.first << "| , |" << p.second << endl;
-    }
-    
 }
 
 int main(int argc, const char * argv[]) {

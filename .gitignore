@@ -69,8 +69,12 @@ library/
 build/
 debug
 check
-client
-server
+sophos_debug
+sophos_server
+sophos_client
+diane_debug
+diane_server
+diane_client
 test.csdb
 test.ssdb
 

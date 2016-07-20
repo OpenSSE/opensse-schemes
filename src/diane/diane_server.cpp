@@ -40,14 +40,27 @@ namespace sse {
         std::list<index_type> DianeServer::search(const SearchRequest& req)
         {
             std::list<index_type> results;
+
+            auto callback = [&results](index_type i)
+            {
+                results.push_back(i);
+            };
+            
+            search(req, callback);
+            
+            return results;
+        }
+
+        void DianeServer::search(const SearchRequest& req, std::function<void(index_type)> post_callback)
+        {
             index_type r;
-
+            
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
-
+            
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
                 logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
-
+                
                 // for now we implement the search algorithm in a naive way:
                 // the tokens are iteratively generated using the derive_node function
                 // this is not smart as some inner nodes will be recomputed several times.
@@ -60,39 +73,36 @@ namespace sse {
                     auto t = TokenTree::derive_node(it_token->first, i, it_token->second);
                     
                     logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;
-
+                    
                     update_token_type ut;
                     std::array<uint8_t, sizeof(index_type)> mask;
-
+                    
                     // derive the two parts of the leaf search token
                     // it avoids having to use some different IVs to have two different hash functions.
                     // it might decrease the security bounds by a few bits, but, meh ...
                     crypto::BlockHash::hash(t.data(), 16, ut.data());
                     crypto::BlockHash::hash(t.data()+16, sizeof(index_type), mask.data());
-
+                    
                     
                     logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
                     logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
-
+                    
                     bool found = edb_.get(ut,r);
-
+                    
                     if (found) {
                         logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
                         
                         r = xor_mask(r, mask);
                         
-                        results.push_back(r);
+                        post_callback(r);
                     }else{
                         logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
                     }
-
+                    
                 }
             }
-            
-            
-            return results;
         }
-        
+
         void DianeServer::update(const UpdateRequest& req)
         {
             logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;

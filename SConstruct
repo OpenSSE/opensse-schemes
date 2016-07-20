@@ -102,13 +102,13 @@ outter_env = env.Clone()
 outter_env.Append(CPPPATH = ['build'])
 
 
-sophos_debug_prog = outter_env.Program('sophos_debug',['test_sophos.cpp']          + objects["sophos"])
-sophos_client =     outter_env.Program('sophos_client',['sophos_client.cpp']  + objects["sophos"])
-sophos_server =     outter_env.Program('sophos_server',['sophos_server.cpp']  + objects["sophos"])
+sophos_debug_prog   = outter_env.Program('sophos_debug',    ['test_sophos.cpp']     + objects["sophos"])
+sophos_client       = outter_env.Program('sophos_client',   ['sophos_client.cpp']   + objects["sophos"])
+sophos_server       = outter_env.Program('sophos_server',   ['sophos_server.cpp']   + objects["sophos"])
 
-diane_debug_prog = outter_env.Program('diane_debug',    ['test_diane.cpp']    + objects["diane"])
-diane_client =     outter_env.Program('diane_client',   ['diane_client.cpp']  + objects["diane"])
-diane_server =     outter_env.Program('diane_server',   ['diane_server.cpp']  + objects["diane"])
+diane_debug_prog    = outter_env.Program('diane_debug',     ['test_diane.cpp']      + objects["diane"])
+diane_client        = outter_env.Program('diane_client',    ['diane_client.cpp']    + objects["diane"])
+diane_server        = outter_env.Program('diane_server',    ['diane_server.cpp']    + objects["diane"])
 
 env.Alias('sophos', [sophos_debug_prog, sophos_client, sophos_server])
 env.Alias('diane', [diane_debug_prog, diane_client, diane_server])

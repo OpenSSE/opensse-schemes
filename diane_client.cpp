@@ -1,8 +1,8 @@
 //
-//  client_main.cpp
-//  sophos
+//  diane_client.cpp
+//  diane
 //
-//  Created by Raphael Bost on 03/04/2016.
+//  Created by Raphael Bost on 20/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 
     if (client_db.size()==0) {
         sse::logger::log(sse::logger::WARNING) << "Client database not specified" << std::endl;
-        sse::logger::log(sse::logger::WARNING) << "Using \'test.csdb\' by default" << std::endl;
+        sse::logger::log(sse::logger::WARNING) << "Using \'test.cddb\' by default" << std::endl;
         client_db = "test.csdb";
     }else{
         sse::logger::log(sse::logger::INFO) << "Running client with database " << client_db << std::endl;

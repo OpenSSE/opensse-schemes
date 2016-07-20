@@ -23,22 +23,27 @@
 
 #include <cassert>
 
+
 namespace sse {
     namespace diane {
         
         TokenTree::token_type TokenTree::derive_node(const token_type& K, uint64_t node_index, uint8_t depth)
         {
+            if (depth == 0) {
+                return K;
+            }
             token_type t = K;
             
-            uint64_t mask = 1 << depth;
+            uint64_t mask = 1UL << (depth-1);
 
+            
             for (uint8_t i = 0; i < depth; i++) {
                 uint32_t offset = ((node_index & mask) == 0) ? 0 : kTokenSize;
                 crypto::Prg::derive(t, offset, t);
                 
                 mask >>= 1;
             }
-            
+
             return t;
         }
         
@@ -48,7 +53,7 @@ namespace sse {
         {
             assert(node_count > 0);
             
-            uint64_t siblings_count = 1 << depth;
+            uint64_t siblings_count = 1UL << depth;
             
             if (node_count == siblings_count) {
                 list.push_back(std::make_pair(K, depth));
@@ -59,7 +64,7 @@ namespace sse {
             crypto::Prg::derive(K, 0, K_left);
 
             if (node_count > (siblings_count>>1)) {
-                list.push_back(std::make_pair(K_left, depth));
+                list.push_back(std::make_pair(K_left, depth-1));
                 token_type K_right;
                 crypto::Prg::derive(K, kTokenSize, K_right);
                 

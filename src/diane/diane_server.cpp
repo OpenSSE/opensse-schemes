@@ -55,11 +55,15 @@ namespace sse {
         {
             index_type r;
             
+            logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
+            logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
+
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
             
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
                 logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
+                logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
                 
                 // for now we implement the search algorithm in a naive way:
                 // the tokens are iteratively generated using the derive_node function

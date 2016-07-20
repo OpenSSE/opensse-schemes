@@ -1,8 +1,8 @@
 //
-//  main.cpp
-//  sophos
+//  test_diane
+//  diane
 //
-//  Created by Raphael Bost on 29/03/2016.
+//  Created by Raphael Bost on 19/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
@@ -13,14 +13,17 @@
 #include "diane/diane_client.hpp"
 #include "diane/diane_server.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 using namespace sse::diane;
 using namespace std;
 
 void test_client_server()
 {
+    sse::logger::set_severity(sse::logger::DBG);
+    
     string client_master_key_path = "diane_derivation_master.key";
-    string client_kw_token_master_key_path = "diane_ kw_token_master.key";
+    string client_kw_token_master_key_path = "diane_kw_token_master.key";
 
     
     ifstream client_master_key_in(client_master_key_path.c_str());
@@ -80,14 +83,17 @@ void test_client_server()
         u_req = client->update_request("toto", 0);
         server->update(u_req);
         
-        u_req = client->update_request("titi", 0);
-        server->update(u_req);
+//        u_req = client->update_request("titi", 0);
+//        server->update(u_req);
         
         u_req = client->update_request("toto", 1);
         server->update(u_req);
         
-        u_req = client->update_request("tata", 0);
+        u_req = client->update_request("toto", 2);
         server->update(u_req);
+        
+//        u_req = client->update_request("tata", 0);
+//        server->update(u_req);
         
 
     }
@@ -104,25 +110,25 @@ void test_client_server()
     }
     cout << "]" << endl;
 
-    key = "titi";
-    s_req = client->search_request(key);
-    res = server->search(s_req);
-    
-    cout << "Search " << key << ". Results: [";
-    for(index_type i : res){
-        cout << i << ", ";
-    }
-    cout << "]" << endl;
-
-    key = "tata";
-    s_req = client->search_request(key);
-    res = server->search(s_req);
-    
-    cout << "Search " << key << ". Results: [";
-    for(index_type i : res){
-        cout << i << ", ";
-    }
-    cout << "]" << endl;
+//    key = "titi";
+//    s_req = client->search_request(key);
+//    res = server->search(s_req);
+//    
+//    cout << "Search " << key << ". Results: [";
+//    for(index_type i : res){
+//        cout << i << ", ";
+//    }
+//    cout << "]" << endl;
+//
+//    key = "tata";
+//    s_req = client->search_request(key);
+//    res = server->search(s_req);
+//    
+//    cout << "Search " << key << ". Results: [";
+//    for(index_type i : res){
+//        cout << i << ", ";
+//    }
+//    cout << "]" << endl;
 
     client_master_key_in.close();
     client_kw_token_master_key_in.close();

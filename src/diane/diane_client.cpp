@@ -191,5 +191,14 @@ namespace sse {
             return req;
         }
 
+        std::ostream& DianeClient::print_stats(std::ostream& out) const
+        {
+            out << "Number of keywords: " << counter_map_.size();
+            out << "; Load: " << counter_map_.load();
+            out << "; Overflow bucket size: " << counter_map_.overflow_size() << std::endl;
+            
+            return out;
+        }
+
     }
 }

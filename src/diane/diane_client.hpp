@@ -48,8 +48,6 @@ namespace sse {
             const std::string master_derivation_key() const;
             const std::string kw_token_master_key() const;
             
-            void write_keys(const std::string& dir_path) const;
-
             keyword_index_type get_keyword_index(const std::string &kw) const;
 
             SearchRequest   search_request(const std::string &keyword) const;

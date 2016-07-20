@@ -117,7 +117,17 @@ int main(int argc, char** argv) {
     
     if (rnd_entries_count > 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
-        gen_db(*client_runner, rnd_entries_count);
+        
+//        auto post_callback = [&writer, &res_size, &writer_lock](index_type i)
+
+        auto gen_callback = [&client_runner](const std::string &s, size_t i)
+        {
+            client_runner->async_update(s, i);
+        };
+        
+        client_runner->start_update_session();
+        sse::sophos::gen_db(rnd_entries_count, gen_callback);
+        client_runner->end_update_session();
     }
     
     for (std::string &kw : keywords) {

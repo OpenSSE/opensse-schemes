@@ -21,10 +21,12 @@
 
 #pragma once
 
-#include "sophos_client_runner.hpp"
+#include <functional>
+
+//#include "sophos_client_runner.hpp"
 
 namespace sse {
     namespace sophos {
-        void gen_db(SophosClientRunner& client, size_t N_entries);
+        void gen_db(size_t N_entries, std::function<void(const std::string &, size_t)> callback);
     }
 }

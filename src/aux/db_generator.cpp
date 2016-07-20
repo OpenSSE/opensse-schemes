@@ -41,7 +41,7 @@ namespace sse {
 
         constexpr uint32_t max_10_counter = ~0;
         
-        static void generation_job(SophosClientRunner* client, unsigned int thread_id, size_t N_entries, size_t step, crypto::Fpe *rnd_perm, std::atomic_size_t *entries_counter)
+        static void generation_job(unsigned int thread_id, size_t N_entries, size_t step, crypto::Fpe *rnd_perm, std::atomic_size_t *entries_counter, std::function<void(const std::string &, size_t)> callback)
         {
             size_t counter = thread_id;
             std::string id_string = std::to_string(thread_id);
@@ -62,9 +62,9 @@ namespace sse {
                 keyword_1   = kKeyword1PercentBase     + "_" + std::to_string(ind_1)    + "_1";
                 keyword_10  = kKeyword10PercentBase    + "_" + std::to_string(ind_10)   + "_1";
                 
-                client->async_update(keyword_01, ind);
-                client->async_update(keyword_1, ind);
-                client->async_update(keyword_10, ind);
+                callback(keyword_01, ind);
+                callback(keyword_1, ind);
+                callback(keyword_10, ind);
                 
                 ind_01 = (ind/1000) % 1000;
                 ind_1  = ind_01 % 100;
@@ -74,9 +74,9 @@ namespace sse {
                 keyword_1   = kKeyword1PercentBase     + "_" + std::to_string(ind_1)    + "_2";
                 keyword_10  = kKeyword10PercentBase    + "_" + std::to_string(ind_10)   + "_2";
                 
-                client->async_update(keyword_01, ind);
-                client->async_update(keyword_1, ind);
-                client->async_update(keyword_10, ind);
+                callback(keyword_01, ind);
+                callback(keyword_1, ind);
+                callback(keyword_10, ind);
 
                 ind_01 = (ind/((unsigned int)1e6)) % 1000;
                 ind_1  = ind_01 % 100;
@@ -169,14 +169,14 @@ namespace sse {
                     logger::log(sse::logger::INFO) << "Random DB generation: " << (*entries_counter) << " entries generated\r" << std::flush;
                 }
                 
-                client->async_update(kw_10_1, ind);
-                client->async_update(kw_10_2, ind);
-                client->async_update(kw_10_3, ind);
-                client->async_update(kw_10_4, ind);
-                client->async_update(kw_10_5, ind);
-                client->async_update(kw_20, ind);
-                client->async_update(kw_30, ind);
-                client->async_update(kw_60, ind);
+                callback(kw_10_1, ind);
+                callback(kw_10_2, ind);
+                callback(kw_10_3, ind);
+                callback(kw_10_4, ind);
+                callback(kw_10_5, ind);
+                callback(kw_20, ind);
+                callback(kw_30, ind);
+                callback(kw_60, ind);
 
             }
             
@@ -185,26 +185,22 @@ namespace sse {
         }
         
         
-        void gen_db(SophosClientRunner& client, size_t N_entries)
+        void gen_db(size_t N_entries, std::function<void(const std::string &, size_t)> callback)
         {
             crypto::Fpe rnd_perm;
             std::atomic_size_t entries_counter(0);
-
-            client.start_update_session();
 
             unsigned int n_threads = std::thread::hardware_concurrency();
             std::vector<std::thread> threads;
             std::mutex rpc_mutex;
             
             for (unsigned int i = 0; i < n_threads; i++) {
-                threads.push_back(std::thread(generation_job, &client, i, N_entries, n_threads, &rnd_perm, &entries_counter));
+                threads.push_back(std::thread(generation_job, i, N_entries, n_threads, &rnd_perm, &entries_counter, callback));
             }
 
             for (unsigned int i = 0; i < n_threads; i++) {
                 threads[i].join();
             }
-
-            client.end_update_session();
         }
 
     }

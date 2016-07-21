@@ -40,6 +40,7 @@ namespace sse {
             CRITICAL    = 50
         } LoggerSeverity;
         
+        LoggerSeverity severity();
         void set_severity(LoggerSeverity s);
         std::ostream& log(LoggerSeverity s);
         

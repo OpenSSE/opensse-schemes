@@ -96,7 +96,9 @@ namespace sse {
                     
                     if((i+1)%10 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_1 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_1 << std::endl;
+                        }
                         counter_10_1++;
                     }
                 }
@@ -105,7 +107,9 @@ namespace sse {
                     
                     if((i+1)%20 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_20 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_20 << std::endl;
+                        }
                         counter_20++;
                     }
                 }
@@ -114,7 +118,9 @@ namespace sse {
                     
                     if((i+1)%30 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_30 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_30 << std::endl;
+                        }
                         counter_30++;
                     }
                 }
@@ -123,7 +129,9 @@ namespace sse {
                     
                     if((i+1)%60 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_60 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_60 << std::endl;
+                        }
                         counter_60++;
                     }
                 }
@@ -132,7 +140,9 @@ namespace sse {
 
                     if((i+1)%100 == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_2 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_2 << std::endl;
+                        }
                         counter_10_2++;
                     }
                 }
@@ -141,7 +151,9 @@ namespace sse {
 
                     if((i+1)%((size_t)(1e3)) == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_3 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_3 << std::endl;
+                        }
                         counter_10_3++;
                     }
                 }
@@ -150,7 +162,9 @@ namespace sse {
                     
                     if((i+1)%((size_t)(1e4)) == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_4 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_4 << std::endl;
+                        }
                         counter_10_4++;
                     }
                 }
@@ -159,7 +173,9 @@ namespace sse {
                     
                     if((i+1)%((size_t)(1e5)) == 0)
                     {
-                        logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_5 << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Random DB generation: completed keyword: " << kw_10_5 << std::endl;
+                        }
                         counter_10_5++;
                     }
                 }

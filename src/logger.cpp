@@ -32,7 +32,11 @@ namespace sse {
         
         std::unique_ptr<std::ofstream> benchmark_stream__;
         
-        
+        LoggerSeverity severity()
+        {
+            return severity__;
+        }
+
         void set_severity(LoggerSeverity s)
         {
             severity__ = s;

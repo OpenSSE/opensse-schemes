@@ -112,10 +112,13 @@ namespace sse {
         std::list<index_type> DianeServer::search_parallel(const SearchRequest& req, uint8_t derivation_threads_count,uint8_t access_threads_count)
         {
             std::list<index_type> results;
+            std::mutex list_mutex;
             
-            auto callback = [&results](index_type i)
+            auto callback = [&results, &list_mutex](index_type i)
             {
+                list_mutex.lock();
                 results.push_back(i);
+                list_mutex.unlock();
             };
             
             search_parallel(req, callback, derivation_threads_count, access_threads_count);

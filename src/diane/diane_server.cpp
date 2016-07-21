@@ -274,7 +274,7 @@ namespace sse {
                 update_token_type ut;
                 TokenTree::token_type t;
                 
-                for (size_t i = loc_min_index; i < loc_max_index; i++) {
+                for (size_t i = loc_min_index; i <= loc_max_index; i++) {
                     // check that i is still in the span of the current node
                     if (leaf_count <= i) {
                         // we are out of the span of this node
@@ -332,7 +332,7 @@ namespace sse {
 
             size_t step = req.add_count/threads_count;
             size_t remaining = req.add_count % threads_count;
-            
+
             size_t min = 0;
             size_t max = step;
 
@@ -341,8 +341,8 @@ namespace sse {
                 if (t < remaining) {
                     max++;
                 }
-                
-                threads.push_back(std::thread(job, req, min, MIN(max, req.add_count-1)));
+                                
+                threads.push_back(std::thread(job, req, min, MIN(max, req.add_count)-1));
                 
                 min = max;
                 max += step;

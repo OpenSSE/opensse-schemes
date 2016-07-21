@@ -59,8 +59,18 @@ private:
         
         
         rocksdb::CuckooTableOptions cuckoo_options;
-        cuckoo_options.use_module_hash = false;
-        cuckoo_options.identity_as_first_hash = true;
+        cuckoo_options.identity_as_first_hash = false;
+        cuckoo_options.hash_table_ratio = 0.9;
+
+        
+//        cuckoo_options.use_module_hash = false;
+//        cuckoo_options.identity_as_first_hash = true;
+
+        options.table_cache_numshardbits = 4;
+        options.max_open_files = -1;
+        
+        
+        
         
         options.table_factory.reset(rocksdb::NewCuckooTableFactory(cuckoo_options));
         
@@ -72,6 +82,9 @@ private:
         options.compaction_style = rocksdb::kCompactionStyleLevel;
         options.info_log_level = rocksdb::InfoLogLevel::INFO_LEVEL;
 
+
+        options.max_grandparent_overlap_factor = 10;
+        
         options.delayed_write_rate = 8388608;
         options.max_open_files = 4864;
         options.max_background_compactions = 20;
@@ -88,7 +101,7 @@ private:
         options.target_file_size_base=201327616;
         options.write_buffer_size=1073741824;
         
-        options.optimize_filters_for_hits = true;
+//        options.optimize_filters_for_hits = true;
         
         
         rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
@@ -119,7 +132,7 @@ private:
         rocksdb::Slice k_s(reinterpret_cast<const char*>( key.data() ),N);
         std::string value;
         
-        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), db_->DefaultColumnFamily(), k_s, &value);
+        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(false,true), k_s, &value);
         
         if(s.ok()){
             ::memcpy(&data, value.data(), sizeof(V));
@@ -134,7 +147,7 @@ private:
         rocksdb::Slice k_s(reinterpret_cast<const char*>(key.data()),N);
         rocksdb::Slice k_v(reinterpret_cast<const char*>(&data), sizeof(V));
 
-        rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), db_->DefaultColumnFamily(), k_s, k_v);
+        rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), k_s, k_v);
         
         if (!s.ok()) {
             logger::log(logger::ERROR) << "Unable to insert pair in the database: " << s.ToString() << std::endl;

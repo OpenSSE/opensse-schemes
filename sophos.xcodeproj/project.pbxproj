@@ -1053,6 +1053,10 @@
 					"-lpthread",
 					"-ldl",
 					"-lrocksdb",
+					"-lz",
+					"-lsnappy",
+					"-llz4",
+					"-lbz2",
 				);
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = src;
@@ -1102,6 +1106,10 @@
 					"-lpthread",
 					"-ldl",
 					"-lrocksdb",
+					"-lz",
+					"-lsnappy",
+					"-llz4",
+					"-lbz2",
 				);
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = src;

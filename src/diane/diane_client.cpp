@@ -176,8 +176,10 @@ namespace sse {
 
             st = TokenTree::derive_node(root, kw_counter, kTreeDepth);
 
-            logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
-
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+            }
+            
             std::array<uint8_t, sizeof(index_type)> mask;
             
             // derive the two parts of the leaf search token

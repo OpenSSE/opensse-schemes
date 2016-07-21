@@ -25,6 +25,7 @@
 
 #include <sse/crypto/block_hash.hpp>
 
+#define MIN(a,b) (((a) > (b)) ? (b) : (a))
 namespace sse {
     namespace diane {
         
@@ -57,15 +58,19 @@ namespace sse {
         {
             index_type r;
             
-            logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
-            logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
-
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
+                logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
+            }
+            
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
             
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
-                logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
-                logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
+                    logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
+                }
                 
                 // for now we implement the search algorithm in a naive way:
                 // the tokens are iteratively generated using the derive_node function
@@ -78,7 +83,9 @@ namespace sse {
                 for (uint64_t i = 0; i < count; i++) {
                     auto t = TokenTree::derive_node(it_token->first, i, it_token->second);
                     
-                    logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;
+                    if (logger::severity() <= logger::DBG) {
+                        logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;
+                    }
                     
                     update_token_type ut;
                     std::array<uint8_t, sizeof(index_type)> mask;
@@ -90,13 +97,17 @@ namespace sse {
                     crypto::BlockHash::hash(t.data()+16, sizeof(index_type), mask.data());
                     
                     
-                    logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                    logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                    if (logger::severity() <= logger::DBG) {
+                        logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
+                        logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                    }
                     
                     bool found = edb_.get(ut,r);
                     
                     if (found) {
-                        logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                        }
                         
                         r = xor_mask(r, mask);
                         
@@ -129,8 +140,10 @@ namespace sse {
 
         void DianeServer::search_parallel(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t derivation_threads_count,uint8_t access_threads_count)
         {
-            logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
-            logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
+                logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
+            }
             
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
             
@@ -146,7 +159,9 @@ namespace sse {
                 bool found = edb_.get(ut,r);
                 
                 if (found) {
-                    logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                    if (logger::severity() <= logger::DBG) {
+                        logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                    }
                     
                     post_callback(xor_mask(r, mask));
                 }else{
@@ -158,8 +173,10 @@ namespace sse {
             {
                 TokenTree::token_type st = TokenTree::derive_leftmost_node(t, d, derive_job);
                 
-                logger::log(logger::DBG) << "Derived leaf token: " << hex_string(st) << std::endl;
-
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Derived leaf token: " << hex_string(st) << std::endl;
+                }
+                
                 // apply the hash function
                 
                 // derive the two parts of the leaf search token
@@ -172,8 +189,10 @@ namespace sse {
                 crypto::BlockHash::hash(st.data()+16, sizeof(index_type), mask.data());
                 
                 
-                logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
+                    logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                }
                 
                 access_pool.enqueue(lookup_job, ut, mask);
 
@@ -184,9 +203,10 @@ namespace sse {
             
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
-                logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
-                logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
-
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
+                    logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
+                }
                 
                 // post the derivation job
                 
@@ -198,9 +218,147 @@ namespace sse {
             access_pool.join();
         }
 
+        std::list<index_type> DianeServer::search_simple_parallel(const SearchRequest& req, uint8_t threads_count)
+        {
+            std::list<index_type> results;
+            std::mutex list_mutex;
+            
+            auto callback = [&results, &list_mutex](index_type i)
+            {
+                list_mutex.lock();
+                results.push_back(i);
+                list_mutex.unlock();
+            };
+            
+            search_simple_parallel(req, callback, threads_count);
+            
+            return results;
+        }
+        
+        void DianeServer::search_simple_parallel(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t threads_count)
+        {
+            auto job = [this, &post_callback](const SearchRequest& req, const uint64_t min_index, const uint64_t max_index)
+            {
+                uint64_t loc_min_index = min_index;
+                uint64_t loc_max_index = max_index;
+                
+                // find the starting token
+                uint64_t leaf_count = 0;
+                
+                auto key_it = req.token_list.begin();
+                
+                do{
+                    // this is the number of leafs for the current node
+                    leaf_count = (1UL << key_it->second);
+
+                    if((leaf_count > loc_min_index))
+                    {
+                        // the selected leaf does not cover the minimum index
+                        break;
+                    }
+
+                    // update the local index counters
+                    loc_min_index -= leaf_count; // no underflow:
+                    loc_max_index -= leaf_count; // leaf_count <= loc_min_index <= loc_max_index
+
+                    // get the next tree node
+                    ++key_it;
+                }while((key_it != req.token_list.end()));
+                
+                if (key_it == req.token_list.end()) {
+                    logger::log(logger::ERROR) << "Out of Bounds!" << std::endl;
+                    return;
+                }
+                
+                index_type r;
+                update_token_type ut;
+                TokenTree::token_type t;
+                
+                for (size_t i = loc_min_index; i < loc_max_index; i++) {
+                    // check that i is still in the span of the current node
+                    if (leaf_count <= i) {
+                        // we are out of the span of this node
+                        i -= leaf_count;
+                        loc_max_index -= leaf_count;
+                        
+                        ++key_it;
+                        if (key_it == req.token_list.end()) {
+                            logger::log(logger::ERROR) << "Out of Bounds!" << std::endl;
+                            break;
+                        }
+                        leaf_count = (1UL << key_it->second);
+                    }
+                    
+                    // ok, now we are sure that i is in the span.
+                    // do a regular leaf derivation
+                    t = TokenTree::derive_node(key_it->first, i, key_it->second);
+
+                    if (logger::severity() <= logger::DBG) {
+                        logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;
+                    }
+                    
+                    std::array<uint8_t, sizeof(index_type)> mask;
+                    
+                    // derive the two parts of the leaf search token
+                    // it avoids having to use some different IVs to have two different hash functions.
+                    // it might decrease the security bounds by a few bits, but, meh ...
+                    crypto::BlockHash::hash(t.data(), 16, ut.data());
+                    crypto::BlockHash::hash(t.data()+16, sizeof(index_type), mask.data());
+                    
+                    
+                    if (logger::severity() <= logger::DBG) {
+                        logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
+                        logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                    }
+                    
+                    bool found = edb_.get(ut,r);
+                    
+                    if (found) {
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                        }
+                        
+                        r = xor_mask(r, mask);
+                        
+                        post_callback(r);
+                    }else{
+                        logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
+                    }
+
+                }
+            };
+            
+            std::vector<std::thread> threads;
+
+            size_t step = req.add_count/threads_count;
+            size_t remaining = req.add_count % threads_count;
+            
+            size_t min = 0;
+            size_t max = step;
+
+            for (uint8_t t = 0; t < threads_count; t++) {
+                
+                if (t < remaining) {
+                    max++;
+                }
+                
+                threads.push_back(std::thread(job, req, min, MIN(max, req.add_count-1)));
+                
+                min = max;
+                max += step;
+            }
+            
+            for (uint8_t t = 0; t < threads_count; t++) {
+                threads[t].join();
+            }
+
+        }
+        
         void DianeServer::update(const UpdateRequest& req)
         {
-            logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+            }
             
             edb_.put(req.token, req.index);
         }

@@ -246,7 +246,9 @@ namespace sse {
                 // RSA_SK^{-kw_counter-1}(st) to get the kw_counter+1 search token
                 st = inverse_tdp().invert_mult(st, kw_counter+1);
                 
-                logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+                }
                 
                 {
                     std::lock_guard<std::mutex> lock(token_map_mtx_);
@@ -256,8 +258,9 @@ namespace sse {
             
             std::string deriv_key = derivation_prf().prf_string(seed);
 
-            logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;
-            
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;
+            }
             
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
             
@@ -266,7 +269,9 @@ namespace sse {
             req.token = derivation_prf.prf(st_string + '0');
             req.index = xor_mask(index, derivation_prf.prf(st_string + '1'));
             
-            logger::log(logger::DBG) << "Update token: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Update token: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+            }
             
             return req;
         }

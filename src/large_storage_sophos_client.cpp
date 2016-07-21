@@ -262,8 +262,9 @@ namespace sse {
                     std::lock_guard<std::mutex> lock(token_map_mtx_);
                     token_map_.add(kw_index, std::make_pair(st, 1));
                 }
-                logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
-                
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
+                }
             }else{
                 {
                     std::lock_guard<std::mutex> lock(token_map_mtx_);

@@ -220,24 +220,42 @@ namespace sse {
 
         std::list<index_type> DianeServer::search_simple_parallel(const SearchRequest& req, uint8_t threads_count)
         {
-            std::list<index_type> results;
-            std::mutex list_mutex;
+            assert(threads_count > 0);
             
-            auto callback = [&results, &list_mutex](index_type i)
+            
+            // use one result list per thread so to avoid using locks
+            std::list<index_type> *result_lists = new std::list<index_type>[threads_count];
+            
+            auto callback = [&result_lists](index_type i, uint8_t thread_id)
             {
-                list_mutex.lock();
-                results.push_back(i);
-                list_mutex.unlock();
+                result_lists[thread_id].push_back(i);
             };
             
             search_simple_parallel(req, callback, threads_count);
             
+            // merge the result lists
+            std::list<index_type> results(std::move(result_lists[0]));
+            for (uint8_t i = 1; i < threads_count; i++) {
+                results.splice(results.end(), result_lists[i]);
+            }
+            
+            delete []  result_lists;
+            
             return results;
         }
-        
+
         void DianeServer::search_simple_parallel(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t threads_count)
         {
-            auto job = [this, &post_callback](const SearchRequest& req, const uint64_t min_index, const uint64_t max_index)
+            auto aux = [&post_callback](index_type ind, uint8_t i)
+            {
+                post_callback(ind);
+            };
+            search_simple_parallel(req, aux, threads_count);
+        }
+        
+        void DianeServer::search_simple_parallel(const SearchRequest& req, std::function<void(index_type, uint8_t)> post_callback, uint8_t threads_count)
+        {
+            auto job = [this, &post_callback](const uint8_t t_id, const SearchRequest& req, const uint64_t min_index, const uint64_t max_index)
             {
                 uint64_t loc_min_index = min_index;
                 uint64_t loc_max_index = max_index;
@@ -320,7 +338,7 @@ namespace sse {
                         
                         r = xor_mask(r, mask);
                         
-                        post_callback(r);
+                        post_callback(r, t_id);
                     }else{
                         logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
                     }
@@ -342,7 +360,7 @@ namespace sse {
                     max++;
                 }
                                 
-                threads.push_back(std::thread(job, req, min, MIN(max, req.add_count)-1));
+                threads.push_back(std::thread(job, t, req, min, MIN(max, req.add_count)-1));
                 
                 min = max;
                 max += step;

@@ -167,7 +167,7 @@ std::to_string((t)) )
             
 //                BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
 //                BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),4,4)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-                BENCHMARK_Q((res_list = server_->search_simple_parallel(message_to_request(mes),std::thread::hardware_concurrency())),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+                BENCHMARK_Q((res_list = server_->search_simple_parallel(message_to_request(mes),4)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
             
             
 //            BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)

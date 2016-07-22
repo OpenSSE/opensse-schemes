@@ -86,7 +86,6 @@ private:
         options.max_grandparent_overlap_factor = 10;
         
         options.delayed_write_rate = 8388608;
-        options.max_open_files = 4864;
         options.max_background_compactions = 20;
 
         options.disableDataSync = true;

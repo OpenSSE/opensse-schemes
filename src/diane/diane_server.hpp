@@ -53,6 +53,7 @@ public:
 
     std::list<index_type> search_simple_parallel(const SearchRequest& req, uint8_t threads_count);
     void search_simple_parallel(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t threads_count);
+    void search_simple_parallel(const SearchRequest& req, std::function<void(index_type, uint8_t)> post_callback, uint8_t threads_count);
 
 //
 //    std::list<index_type> search_parallel_full(const SearchRequest& req);

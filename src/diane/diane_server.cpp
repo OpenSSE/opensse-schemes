@@ -103,7 +103,7 @@ namespace sse {
                     logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
                 }
                 
-                TokenTree::derive_all_leaves(it_token->first, it_token->second, get_callback);
+                       TokenTree::derive_all_leaves(it_token->first, it_token->second, get_callback);
             }
         
         }

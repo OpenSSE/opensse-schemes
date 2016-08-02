@@ -55,6 +55,61 @@ namespace sse {
 
         void DianeServer::search(const SearchRequest& req, std::function<void(index_type)> post_callback)
         {
+            
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
+                logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
+            }
+            
+            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
+            
+            auto get_callback = [this, &post_callback](const uint8_t *key)
+            {
+                index_type r;
+                update_token_type ut;
+                index_type mask;
+
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Derived leaf token: " << hex_string(std::string((const char*)key,kSearchTokenKeySize)) << std::endl;
+                }
+
+                gen_update_token_mask(key, ut, mask);
+
+                
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
+                    logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
+                }
+                
+                bool found = edb_.get(ut,r);
+                
+                if (found) {
+                    if (logger::severity() <= logger::DBG) {
+                        logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
+                    }
+                    
+                    r ^= mask;
+                    
+                    post_callback(r);
+                }else{
+                    logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
+                }
+            };
+            
+            for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
+                
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
+                    logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
+                }
+                
+                TokenTree::derive_all_leaves(it_token->first, it_token->second, get_callback);
+            }
+        
+        }
+        
+        void DianeServer::search_simple(const SearchRequest& req, std::function<void(index_type)> post_callback)
+        {
             index_type r;
             
             if (logger::severity() <= logger::DBG) {

@@ -43,6 +43,9 @@ public:
     template <size_t N, typename V>
         inline bool get(const std::array<uint8_t, N> &key, V &data) const;
     
+    template <typename V>
+    inline bool get(const uint8_t *key, const uint8_t key_length, V &data) const;
+
     template <size_t N, typename V>
     inline bool put(const std::array<uint8_t, N> &key, const V &data);
 
@@ -140,6 +143,22 @@ private:
         return s.ok();
     }
     
+    template <typename V>
+    bool RockDBWrapper::get(const uint8_t *key, const uint8_t key_length, V &data) const
+    {
+        rocksdb::Slice k_s(reinterpret_cast<const char*>( key ),key_length);
+        std::string value;
+        
+        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(false,true), k_s, &value);
+        
+        if(s.ok()){
+            ::memcpy(&data, value.data(), sizeof(V));
+        }
+        
+        return s.ok();
+    }
+    
+
     template <size_t N, typename V>
     bool RockDBWrapper::put(const std::array<uint8_t, N> &key, const V &data)
     {

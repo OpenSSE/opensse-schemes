@@ -22,7 +22,7 @@
 #include "token_tree.hpp"
 
 #include <cassert>
-
+#include <stack>
 
 namespace sse {
     namespace diane {
@@ -71,6 +71,7 @@ namespace sse {
             return t;
         }
 
+        
         void TokenTree::covering_list_aux(const token_type& K, uint64_t node_count, uint8_t depth, std::list<std::pair<token_type, uint8_t>> &list)
         {
             assert(node_count > 0);
@@ -96,6 +97,97 @@ namespace sse {
                 covering_list_aux(K_left, node_count, depth-1, list);
             }
         }
+        
+        
+/*
+        void TokenTree::derive_all_leaves(const token_type& K, const uint8_t depth, const std::function<void(token_type)> &callback)
+        {
+//            if (depth == 0) {
+//                callback(K);
+//                return;
+//            }
+            std::stack<token_type> token_stack;
+            std::stack<uint8_t> depth_stack;
+            
+            
+            uint8_t current_depth = 0;
+            token_type current_token = K;
+            token_type right_token;
+            std::array<uint8_t, 2*kTokenSize> derived_tokens;
+            
+            while (true) { // loop over the elements in the stack
+                
+                while (true) { // loop over the depth :
+                    // we will reach the maximum depth while pushing intermediate nodes
+                    // once we are done, we will pop the last node in the stack
+                    
+                    if (current_depth == depth) { // we are at the bottom level
+                        // post the leaf and exit the inner loop
+                        callback(current_token);
+                        break;
+                    }else{
+                        // generate tokens for the two children
+                        crypto::Prg::derive(current_token, 0, derived_tokens);
+                        
+                        std::copy(derived_tokens.begin(), derived_tokens.begin()+kTokenSize, current_token.begin());
+                        std::copy(derived_tokens.begin()+kTokenSize, derived_tokens.end(), right_token.begin());
+
+                        token_stack.push(right_token);
+                        depth_stack.push(current_depth);
+
+                        current_depth++;
+                    }
+                }
+                // check if the stack is empty or not
+                if (token_stack.empty()) {
+                    // then we are done
+                    break;
+                }
+                
+                // pop the top element
+                current_token = token_stack.top();
+                current_depth = depth_stack.top();
+                token_stack.pop();
+                depth_stack.pop();
+                
+            }
+            
+        }
+*/
+
+        static void derive_all_leaves_aux(const uint8_t* K, const uint8_t depth, const std::function<void(const uint8_t *)> &callback)
+        {
+            // generate the children
+            
+            uint8_t derived_tokens[2*TokenTree::kTokenSize];
+            
+            crypto::Prg::derive(K, 0, 2*TokenTree::kTokenSize, derived_tokens);
+            
+
+            if (depth == 1) {
+                // these are leaves
+                callback(derived_tokens);
+                callback(derived_tokens+TokenTree::kTokenSize);
+                
+                return;
+            }
+            
+            // recursive call on children
+            
+            derive_all_leaves_aux(derived_tokens, depth-1, callback);
+            derive_all_leaves_aux(derived_tokens+TokenTree::kTokenSize, depth-1, callback);
+        }
+        
+        void TokenTree::derive_all_leaves(const token_type& K, const uint8_t depth, const std::function<void(const uint8_t *)> &callback)
+        {
+            if (depth == 0) {
+                callback(K.data());
+                return;
+            }
+
+            derive_all_leaves_aux(K.data(), depth, callback);
+        }
+        
 
     }
 }

@@ -21,9 +21,8 @@
 
 #include "diane_server.hpp"
 
+#include "diane_common.hpp"
 #include "thread_pool.hpp"
-
-#include <sse/crypto/block_hash.hpp>
 
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 namespace sse {
@@ -88,18 +87,13 @@ namespace sse {
                     }
                     
                     update_token_type ut;
-                    std::array<uint8_t, sizeof(index_type)> mask;
+                    index_type mask;
                     
-                    // derive the two parts of the leaf search token
-                    // it avoids having to use some different IVs to have two different hash functions.
-                    // it might decrease the security bounds by a few bits, but, meh ...
-                    crypto::BlockHash::hash(t.data(), 16, ut.data());
-                    crypto::BlockHash::hash(t.data()+16, sizeof(index_type), mask.data());
-                    
+                    gen_update_token_mask(t, ut, mask);
                     
                     if (logger::severity() <= logger::DBG) {
                         logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                        logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                        logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
                     }
                     
                     bool found = edb_.get(ut,r);
@@ -109,8 +103,12 @@ namespace sse {
                             logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
                         }
                         
-                        r = xor_mask(r, mask);
+                        r ^= mask;
                         
+                        if (logger::severity() <= logger::DBG) {
+                            logger::log(logger::DBG) << "Unmasked: " << std::hex << r << std::endl;
+                        }
+
                         post_callback(r);
                     }else{
                         logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
@@ -151,7 +149,7 @@ namespace sse {
             ThreadPool derive_pool(derivation_threads_count);
 
 
-            auto lookup_job = [this, &post_callback](const update_token_type &ut, const std::array<uint8_t, sizeof(index_type)> &mask)
+            auto lookup_job = [this, &post_callback](const update_token_type &ut, index_type mask)
             {
                 index_type r;
                 
@@ -163,7 +161,7 @@ namespace sse {
                         logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
                     }
                     
-                    post_callback(xor_mask(r, mask));
+                    post_callback(r^mask);
                 }else{
                     logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
                 }
@@ -177,21 +175,17 @@ namespace sse {
                     logger::log(logger::DBG) << "Derived leaf token: " << hex_string(st) << std::endl;
                 }
                 
-                // apply the hash function
+                // get the token and mask
                 
-                // derive the two parts of the leaf search token
-                // it avoids having to use some different IVs to have two different hash functions.
-                // it might decrease the security bounds by a few bits, but, meh ...
                 update_token_type ut;
-                std::array<uint8_t, sizeof(index_type)> mask;
+                index_type mask;
 
-                crypto::BlockHash::hash(st.data(), 16, ut.data());
-                crypto::BlockHash::hash(st.data()+16, sizeof(index_type), mask.data());
-                
+                gen_update_token_mask(t, ut, mask);
+
                 
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                    logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                    logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
                 }
                 
                 access_pool.enqueue(lookup_job, ut, mask);
@@ -315,18 +309,14 @@ namespace sse {
                         logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;
                     }
                     
-                    std::array<uint8_t, sizeof(index_type)> mask;
+                    index_type mask;
                     
-                    // derive the two parts of the leaf search token
-                    // it avoids having to use some different IVs to have two different hash functions.
-                    // it might decrease the security bounds by a few bits, but, meh ...
-                    crypto::BlockHash::hash(t.data(), 16, ut.data());
-                    crypto::BlockHash::hash(t.data()+16, sizeof(index_type), mask.data());
-                    
+                    gen_update_token_mask(t, ut, mask);
+
                     
                     if (logger::severity() <= logger::DBG) {
                         logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                        logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
+                        logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
                     }
                     
                     bool found = edb_.get(ut,r);
@@ -336,7 +326,7 @@ namespace sse {
                             logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
                         }
                         
-                        r = xor_mask(r, mask);
+                        r ^= mask;
                         
                         post_callback(r, t_id);
                     }else{

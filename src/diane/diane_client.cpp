@@ -21,6 +21,8 @@
 
 #include "diane_client.hpp"
 
+#include "diane_common.hpp"
+
 #include "utils.hpp"
 #include "logger.hpp"
 
@@ -137,7 +139,8 @@ namespace sse {
             
             UpdateRequest req;
             search_token_key_type st;
-            
+            index_type mask;
+
             // get (and possibly construct) the keyword index
             keyword_index_type kw_index = get_keyword_index(keyword);
             std::string seed(kw_index.begin(),kw_index.end());
@@ -180,15 +183,14 @@ namespace sse {
                 logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
             }
             
-            std::array<uint8_t, sizeof(index_type)> mask;
-            
-            // derive the two parts of the leaf search token
-            // it avoids having to use some different IVs to have two different hash functions.
-            // it might decrease the security bounds by a few bits, but, meh ...
-            crypto::BlockHash::hash(st.data(), 16, req.token.data());
-            crypto::BlockHash::hash(st.data()+16, sizeof(index_type), mask.data());
 
-            req.index = xor_mask(index, mask);
+            gen_update_token_mask(st, req.token, mask);
+
+            req.index = index^mask;
+            
+//            if (logger::severity() <= logger::DBG) {
+//                logger::log(logger::DBG) << "Update Request: (" << hex_string(ut) << ", " << std::hex << req.index << ")" << std::endl;
+//            }
 
             return req;
         }

@@ -46,6 +46,8 @@ namespace sse {
             
             static void derive_all_leaves(const token_type& K, const uint8_t depth, const std::function<void(const uint8_t *)> &callback);
             
+            static void derive_leaves(const token_type& K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(const uint8_t *)> &callback);
+
         private:
             static void covering_list_aux(const token_type& root, uint64_t node_count, uint8_t depth, std::list<std::pair<token_type, uint8_t>> &list);
         };

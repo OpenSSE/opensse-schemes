@@ -24,6 +24,9 @@
 #include <cassert>
 #include <stack>
 
+#define MAX(a,b) (((a) < (b)) ? (b) : (a))
+#define MIN(a,b) (((a) > (b)) ? (b) : (a))
+
 namespace sse {
     namespace diane {
         
@@ -188,6 +191,88 @@ namespace sse {
             derive_all_leaves_aux(K.data(), depth, callback);
         }
         
+        static void derive_leaves_aux(const uint8_t* K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(const uint8_t *)> &callback)
+        {
+            if (depth == 0) {
+                if (start_index != 0) {
+                    throw std::out_of_range("Invalid start index (" + std::to_string(start_index) + "!= 0) for depth 0");
+                }
+                
+                callback(K);
+                
+                // we are done
+                return;
+            }
+            
+            // if the input node (K) spans all the leaves, derive everything
+            if (start_index == 0 && end_index == ((1UL << depth)-1)) {
+                derive_all_leaves_aux(K, depth, callback);
+                
+                return;
+            }
+            
+            uint64_t half_node_count = (1UL << (depth-1));
+            
+            // check if the left and/or right child is needed
+            bool need_left = (start_index <= (half_node_count-1));
+            bool need_right = (end_index >= half_node_count);
+            
+            uint8_t *left_node = NULL;
+            uint8_t *right_node = NULL;
+            
+            
+            if (need_left && need_right) {
+                // generate  both children
+                
+                uint8_t derived_tokens[2*TokenTree::kTokenSize];
+                
+                crypto::Prg::derive(K, 0, 2*TokenTree::kTokenSize, derived_tokens);
 
+                left_node = derived_tokens;
+                right_node = derived_tokens + TokenTree::kTokenSize;
+            }else if(need_left) {
+                uint8_t derived_token[TokenTree::kTokenSize];
+                
+                crypto::Prg::derive(K, 0, TokenTree::kTokenSize, derived_token);
+                
+                left_node = derived_token;
+            }else if(need_right) {
+                uint8_t derived_token[TokenTree::kTokenSize];
+                
+                crypto::Prg::derive(K, TokenTree::kTokenSize, TokenTree::kTokenSize, derived_token);
+                
+                right_node = derived_token;
+            }else{
+                // both flags are set to false
+                // this should not have happened
+             
+                throw std::out_of_range("Invalid start index (" + std::to_string(start_index) + ") or end index (" + std::to_string(end_index) + ")for depth " + std::to_string(depth));
+
+            }
+            
+            // recurse on the left child if necessary
+            if (need_left) {
+                uint64_t left_end = half_node_count-1;
+                if (!need_right) {
+                    left_end = end_index;
+                }
+                derive_leaves_aux(left_node, depth-1, start_index, left_end, callback);
+            }
+            if (need_right) {
+                uint64_t right_start = 0;
+                if(!need_left) {
+                    right_start = start_index - half_node_count;
+                }
+                uint64_t right_end = end_index - half_node_count;
+
+                derive_leaves_aux(right_node, depth-1, right_start, right_end, callback);
+            }
+            
+        }
+        
+        void TokenTree::derive_leaves(const token_type& K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(const uint8_t *)> &callback)
+        {
+            derive_leaves_aux(K.data(), depth, start_index, end_index, callback);
+        }
     }
 }

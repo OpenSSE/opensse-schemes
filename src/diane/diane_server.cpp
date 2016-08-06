@@ -296,8 +296,43 @@ namespace sse {
             }
             
             delete []  result_lists;
-            
+//
+//            index_type *result_array = new index_type[req.add_count];
+//            std::atomic<uint64_t> r_index(0);
+//            
+//            auto callback = [&result_array, &r_index](index_type i, uint8_t thread_id)
+//            {
+//                result_array[r_index++] = i;
+//            };
+//
+//            search_simple_parallel(req, callback, threads_count);
+//
+//            std::list<index_type> results;
+//            
+//            for (uint64_t i = 0; i < req.add_count; i++) {
+//                results.push_back(result_array[i]);
+//            }
+//
+//            delete [] result_array;
+
             return results;
+        }
+
+        void DianeServer::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results)
+        {
+            if (results.size() < req.add_count) {
+                // resize the vector if needed
+                results.reserve(req.add_count);
+            }
+            
+            std::atomic<uint64_t> r_index(0);
+
+            auto callback = [&results, &r_index](index_type i, uint8_t thread_id)
+            {
+                results[r_index++] = i;
+            };
+
+            search_simple_parallel(req, callback, threads_count);
         }
 
         void DianeServer::search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count)

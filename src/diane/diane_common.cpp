@@ -27,22 +27,41 @@
 namespace sse {
     namespace diane {
         
+//        void gen_update_token_mask(const uint8_t* search_token, update_token_type &update_token, index_type &mask)
+//        {
+//            uint8_t st_data[kSearchTokenKeySize];
+//            memcpy(st_data, search_token, kSearchTokenKeySize);
+//            
+//            // Derive the update token and the mask from a leaf search token
+//            // We want to avoid using a HMAC-like construction or
+//            // using some different IVs to have two different hash functions.
+//            // So, to ensure domain separation, set the first byte of the key to 0x00 or 0x01
+//            st_data[0] = 0x00;
+//            crypto::BlockHash::hash(st_data, kUpdateTokenSize, update_token.data());
+// 
+//            st_data[0] = 0x01;
+//            crypto::BlockHash::hash(st_data, sizeof(index_type), (uint8_t*)&mask);
+//
+//        }
+
         void gen_update_token_mask(const uint8_t* search_token, update_token_type &update_token, index_type &mask)
         {
-            uint8_t st_data[kSearchTokenKeySize];
+            uint8_t st_data[2*kSearchTokenKeySize], tmp[2*kSearchTokenKeySize];
             memcpy(st_data, search_token, kSearchTokenKeySize);
+            memcpy(st_data+kSearchTokenKeySize, search_token, kSearchTokenKeySize);
             
             // Derive the update token and the mask from a leaf search token
             // We want to avoid using a HMAC-like construction or
             // using some different IVs to have two different hash functions.
             // So, to ensure domain separation, set the first byte of the key to 0x00 or 0x01
             st_data[0] = 0x00;
-            crypto::BlockHash::hash(st_data, kUpdateTokenSize, update_token.data());
- 
-            st_data[0] = 0x01;
-            crypto::BlockHash::hash(st_data, sizeof(index_type), (uint8_t*)&mask);
-
+            st_data[kSearchTokenKeySize] = 0x01;
+            
+            crypto::BlockHash::mult_hash(st_data, 2*kSearchTokenKeySize, tmp);
+            
+            memcpy(update_token.data(), tmp, kSearchTokenKeySize);
+            memcpy(&mask, tmp+kSearchTokenKeySize, sizeof(index_type));
         }
-        
+
     }
 }

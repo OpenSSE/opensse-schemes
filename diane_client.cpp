@@ -38,7 +38,9 @@ int main(int argc, char** argv) {
     uint32_t bench_count = 0;
     uint32_t rnd_entries_count = 0;
     
-    while ((c = getopt (argc, argv, "l:b:o:i:t:dpr:")) != -1)
+    bool print_results = true;
+    
+    while ((c = getopt (argc, argv, "l:b:o:i:t:dpr:q")) != -1)
         switch (c)
     {
         case 'l':
@@ -62,6 +64,9 @@ int main(int argc, char** argv) {
             break;
         case 'p':
             print_stats = true;
+            break;
+        case 'q':
+            print_results = false;
             break;
         case 'r':
             rnd_entries_count = (uint32_t)std::stod(std::string(optarg),nullptr);
@@ -122,8 +127,6 @@ int main(int argc, char** argv) {
     if (rnd_entries_count > 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
         
-//        auto post_callback = [&writer, &res_size, &writer_lock](index_type i)
-
         auto gen_callback = [&client_runner](const std::string &s, size_t i)
         {
             client_runner->async_update(s, i);
@@ -141,17 +144,19 @@ int main(int argc, char** argv) {
         std::ostream& log_stream = sse::logger::log(sse::logger::INFO);
         bool first = true;
         
-        auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res)
+        auto print_callback = [&logger_mtx, &log_stream, &first, print_results](uint64_t res)
         {
-//             logger_mtx.lock();
-//            
-//             if (!first) {
-//                 log_stream << ", ";
-//             }
-//             first = false;
-//             log_stream << res;
-//            
-//             logger_mtx.unlock();
+            if (print_results) {
+             logger_mtx.lock();
+
+             if (!first) {
+                 log_stream << ", ";
+             }
+             first = false;
+             log_stream << res;
+            
+             logger_mtx.unlock();
+            }
         };
         
         log_stream << "Search results: \n{";

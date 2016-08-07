@@ -15,7 +15,7 @@ do
 	done
 done
 
-./diane_client -b $db_file $kw_list
+./diane_client -q -b $db_file $kw_list
 
 kw_list=""
 for i in `seq 0 7`;
@@ -25,7 +25,7 @@ do
 		kw_list=$kw_list" "$kKeywordGroupBase"20_"$i"_"$j
 	done
 done
-./diane_client -b $db_file $kw_list
+./diane_client -q -b $db_file $kw_list
 
 kw_list=""
 for i in `seq 0 7`;
@@ -35,7 +35,7 @@ do
 		kw_list=$kw_list" "$kKeywordGroupBase"30_"$i"_"$j
 	done
 done
-./diane_client -b $db_file $kw_list
+./diane_client -q -b $db_file $kw_list
 
 kw_list=""
 for i in `seq 0 7`;
@@ -45,7 +45,7 @@ do
 		kw_list=$kw_list" "$kKeywordGroupBase"60_"$i"_"$j
 	done
 done
-`./diane_client -b $db_file $kw_list`
+`./diane_client -q -b $db_file $kw_list`
 
 kw_list=""
 for i in `seq 0 7`;
@@ -55,7 +55,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"2_"$i"_"$j
 	done
 done
-./diane_client -b $db_file $kw_list
+./diane_client -q -b $db_file $kw_list
 
 for i in `seq 0 3`;
 do
@@ -67,7 +67,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"3_"$i"_"$j
 	done
 done
-./diane_client -b $db_file $kw_list
+./diane_client -q -b $db_file $kw_list
 done
 
 for i in `seq 0 3`;
@@ -80,7 +80,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"4_"$i"_"$j
 	done
 done
-./diane_client -b $db_file $kw_list
+./diane_client -q -b $db_file $kw_list
 done
 
 	# echo $kw_list

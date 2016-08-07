@@ -23,8 +23,8 @@
 
 #include "diane_common.hpp"
 
-#include "utils.hpp"
-#include "logger.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
 
 #include <sse/crypto/block_hash.hpp>
 

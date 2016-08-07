@@ -20,8 +20,8 @@
 
 #include "server_runner.hpp"
 
-#include "utils.hpp"
-#include "logger.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
 
 #include <fstream>
 #include <atomic>

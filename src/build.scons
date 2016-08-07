@@ -6,9 +6,8 @@ Import('*')
 def filter_cc(list):
     return [x for x in list if os.path.splitext(str(x))[1] in [".cc"]]
 
-files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('sophos/*.cpp') + Glob('diane/*.cpp') + Glob('*.c')
 
-common_files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('*.c')
+common_files = Glob('*.cpp') + Glob('aux/*.cpp') + Glob('utils/*.cpp') + Glob('*.c')
 diane_files =  Glob('diane/*.cpp') 
 sophos_files = Glob('sophos/*.cpp')
 

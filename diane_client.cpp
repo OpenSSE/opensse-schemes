@@ -7,7 +7,7 @@
 //
 
 #include "diane/client_runner.hpp"
-#include "logger.hpp"
+#include "utils/logger.hpp"
 #include "aux/db_generator.hpp"
 
 #include <sse/crypto/utils.hpp>

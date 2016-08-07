@@ -24,7 +24,7 @@
 #include "token_tree.hpp"
 #include "types.hpp"
 
-#include "rocksdb_wrapper.hpp"
+#include "utils/rocksdb_wrapper.hpp"
 
 
 #include <sse/crypto/prf.hpp>

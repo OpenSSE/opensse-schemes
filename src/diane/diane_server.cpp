@@ -22,7 +22,7 @@
 #include "diane_server.hpp"
 
 #include "diane_common.hpp"
-#include "thread_pool.hpp"
+#include "utils/thread_pool.hpp"
 
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 namespace sse {

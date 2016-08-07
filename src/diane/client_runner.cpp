@@ -24,9 +24,9 @@
 #include "types.hpp"
 #include "diane/diane_client.hpp"
 
-#include "thread_pool.hpp"
-#include "utils.hpp"
-#include "logger.hpp"
+#include "utils/thread_pool.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
 
 #include <sse/dbparser/DBParserJSON.h>
 
@@ -156,33 +156,7 @@ namespace sse {
             // start the thread that will look for completed updates
             update_completion_thread_ = new std::thread(&DianeClientRunner::update_completion_loop, this);
         }
-        
-//        DianeClientRunner::DianeClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
-//        : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
-//        {
-//            std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
-//                                                                       grpc::InsecureChannelCredentials()));
-//            stub_ = Diane::NewStub(channel);
-//            
-//            if (exists(db_path)){
-//                throw std::runtime_error("File or directory already exists at " + db_path);
-//            }else{
-//                // initialize a brand new Sophos client
-//                
-//                // start by creating a new directory
-//                
-//                if (!create_directory(db_path, (mode_t)0700)) {
-//                    throw std::runtime_error(db_path + ": unable to create directory");
-//                }
-//                
-//                client_ = MediumStorageSophosClient::construct_from_json(db_path, json_path);
-//            }
-//            
-//            // start the thread that will look for completed updates
-//            update_completion_thread_ = new std::thread(&DianeClientRunner::update_completion_loop, this);
-//        }
-        
-        
+                
         DianeClientRunner::~DianeClientRunner()
         {
             update_cq_.Shutdown();

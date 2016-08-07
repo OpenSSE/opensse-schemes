@@ -20,7 +20,7 @@
 
 
 #include "db_generator.hpp"
-#include "logger.hpp"
+#include "utils/logger.hpp"
 
 #include <sse/crypto/fpe.hpp>
 

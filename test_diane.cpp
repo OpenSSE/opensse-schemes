@@ -12,8 +12,8 @@
 
 #include "diane/diane_client.hpp"
 #include "diane/diane_server.hpp"
-#include "utils.hpp"
-#include "logger.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
 
 using namespace sse::diane;
 using namespace std;

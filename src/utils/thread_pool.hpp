@@ -32,10 +32,11 @@
 #include <functional>
 #include <stdexcept>
 #include <iostream>
+#include <unordered_map>
 
 class ThreadPool {
 public:
-    ThreadPool(size_t);
+    ThreadPool(uint32_t);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
     -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -43,6 +44,8 @@ public:
     void join();
     ~ThreadPool();
 private:
+    virtual void register_thread(uint32_t id_pool);
+    
     // need to keep track of threads so we can join them
     std::vector< std::thread > workers;
     // the task queue
@@ -56,14 +59,29 @@ private:
     bool stop;
 };
 
-// the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads)
-:   max_tasks_size_(0), stop(false)
+class IdentifiedThreadPool : public ThreadPool
 {
-    for(size_t i = 0;i<threads;++i)
+public:
+    IdentifiedThreadPool(uint32_t threads);
+    
+    uint32_t get_thread_index() const;
+
+private:
+    virtual void register_thread(uint32_t id_pool);
+
+    std::mutex setup_mutex_;
+    std::unordered_map<std::thread::id, uint32_t> thread_indexes_;
+};
+
+// the constructor just launches some amount of workers
+inline ThreadPool::ThreadPool(uint32_t threads)
+: max_tasks_size_(0), stop(false)
+{
+    for(uint32_t i = 0;i<threads;++i)
         workers.emplace_back(
-                             [this]
+                             [this, &i]
                              {
+                                 register_thread(i);
                                  for(;;)
                                  {
                                      std::function<void()> task;
@@ -84,6 +102,10 @@ inline ThreadPool::ThreadPool(size_t threads)
                                  }
                              }
                              );
+}
+
+inline void ThreadPool::register_thread(uint32_t id_pool)
+{
 }
 
 // add new work item to the pool
@@ -146,6 +168,24 @@ inline ThreadPool::~ThreadPool()
     }
     
 //    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
+}
+
+inline IdentifiedThreadPool::IdentifiedThreadPool(uint32_t threads) :
+    ThreadPool(threads), thread_indexes_(threads)
+{
+    
+}
+
+inline void IdentifiedThreadPool::register_thread(uint32_t id_pool)
+{
+    std::unique_lock<std::mutex> lock(setup_mutex_);
+    
+    thread_indexes_[std::this_thread::get_id()] = id_pool;
+}
+
+inline uint32_t IdentifiedThreadPool::get_thread_index() const
+{
+    return thread_indexes_.at(std::this_thread::get_id());
 }
 
 #endif

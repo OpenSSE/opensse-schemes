@@ -328,19 +328,21 @@ namespace sse {
             }
             
 
-            std::list<UpdateRequestMessage> message_list;
+//            std::list<UpdateRequestMessage> message_list;
             
-            for(auto it = update_list.begin(); it != update_list.end(); ++it)
-            {
-                message_list.push_back(request_to_message(client_->update_request(it->first, it->second)));
-            }
-            
+//            for(auto it = update_list.begin(); it != update_list.end(); ++it)
+//            {
+//                message_list.push_back(request_to_message(client_->update_request(it->first, it->second)));
+//            }
+
+            std::list<UpdateRequest> message_list = client_->bulk_update_request(update_list);
+
             bulk_update_state_.mtx.lock();
             
             for(auto it = message_list.begin(); it != message_list.end(); ++it)
             {
 
-                if(! bulk_update_state_.writer->Write(*it))
+                if(! bulk_update_state_.writer->Write(request_to_message(*it)))
                 {
                     logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
                     break;

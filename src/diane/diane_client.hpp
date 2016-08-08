@@ -52,7 +52,8 @@ namespace sse {
 
             SearchRequest   search_request(const std::string &keyword) const;
             UpdateRequest   update_request(const std::string &keyword, const index_type index);
-            
+            std::list<UpdateRequest>   bulk_update_request(const std::list<std::pair<std::string, uint64_t>> &update_list);
+
 
             SearchRequest   search_request_index(const keyword_index_type &kw_index) const;
             SearchRequest   random_search_request() const;

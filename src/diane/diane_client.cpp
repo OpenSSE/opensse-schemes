@@ -194,6 +194,70 @@ namespace sse {
 
             return req;
         }
+        
+        std::list<UpdateRequest>   DianeClient::bulk_update_request(const std::list<std::pair<std::string, uint64_t>> &update_list)
+        {
+            std::string keyword;
+            index_type index;
+            
+            std::list<UpdateRequest> req_list;
+            
+            token_map_mtx_.lock();
+            
+            for (auto it = update_list.begin(); it != update_list.end(); ++it) {
+                
+                bool found = false;
+                
+                    
+                keyword = it->first;
+                index = it->second;
+                UpdateRequest req;
+                search_token_key_type st;
+                index_type mask;
+                
+                // get (and possibly construct) the keyword index
+                keyword_index_type kw_index = get_keyword_index(keyword);
+                std::string seed(kw_index.begin(),kw_index.end());
+                
+                // retrieve the counter
+                uint32_t kw_counter;
+                
+                found = counter_map_.get(kw_index, kw_counter);
+                
+                if (!found) {
+                    // set the counter to 0
+                    kw_counter = 0;
+                    keyword_counter_++;
+                    
+                    counter_map_.add(kw_index, 0);
+                    
+                }else{
+                    // increment and store the counter
+                    kw_counter++;
+                    counter_map_.at(kw_index) = kw_counter;
+                }
+                
+                
+                TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
+                
+                st = TokenTree::derive_node(root, kw_counter, kTreeDepth);
+                
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+                }
+                
+                
+                gen_update_token_mask(st, req.token, mask);
+                
+                req.index = index^mask;
+                
+                req_list.push_back(req);
+            }
+            token_map_mtx_.unlock();
+            
+            return req_list;
+        }
+
 
         std::ostream& DianeClient::print_stats(std::ostream& out) const
         {

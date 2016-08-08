@@ -276,6 +276,32 @@ namespace sse {
             }
         }
         
+        void DianeClientRunner::async_update(const std::list<std::pair<std::string, uint64_t>> &update_list)
+        {
+            if (bulk_update_state_.is_up) { // an update session is running, use it
+                update_in_session(update_list);
+            }else{
+                grpc::ClientContext context;
+                UpdateRequestMessage message;
+            
+            
+                for(auto it = update_list.begin(); it != update_list.end(); ++it)
+                {
+                    message = request_to_message(client_->update_request(it->first, it->second));
+                    
+                    update_tag_type *tag = new update_tag_type();
+                    std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
+                                                                                                   stub_->Asyncupdate(&context, message, &update_cq_));
+                    
+                    tag->reply.reset(new google::protobuf::Empty());
+                    tag->status.reset(new grpc::Status());
+                    tag->index.reset(new size_t(update_launched_count_++));
+                    
+                    rpc->Finish(tag->reply.get(), tag->status.get(), tag);
+                }
+            }
+        }
+        
         void DianeClientRunner::update_in_session(const std::string& keyword, uint64_t index)
         {
             UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
@@ -289,6 +315,36 @@ namespace sse {
             if(! bulk_update_state_.writer->Write(message))
             {
                 logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
+            }
+            bulk_update_state_.mtx.unlock();
+        }
+        
+
+        void DianeClientRunner::update_in_session(const std::list<std::pair<std::string, uint64_t>> &update_list)
+        {
+            if(! bulk_update_state_.is_up)
+            {
+                throw std::runtime_error("Invalid state: the update session is not up");
+            }
+            
+
+            std::list<UpdateRequestMessage> message_list;
+            
+            for(auto it = update_list.begin(); it != update_list.end(); ++it)
+            {
+                message_list.push_back(request_to_message(client_->update_request(it->first, it->second)));
+            }
+            
+            bulk_update_state_.mtx.lock();
+            
+            for(auto it = message_list.begin(); it != message_list.end(); ++it)
+            {
+
+                if(! bulk_update_state_.writer->Write(*it))
+                {
+                    logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
+                    break;
+                }
             }
             bulk_update_state_.mtx.unlock();
         }

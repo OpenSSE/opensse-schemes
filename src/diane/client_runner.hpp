@@ -48,11 +48,13 @@ namespace sse {
             std::list<uint64_t> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const;
             void update(const std::string& keyword, uint64_t index);
             void async_update(const std::string& keyword, uint64_t index);
+            void async_update(const std::list<std::pair<std::string, uint64_t>> &update_list);
             
             void start_update_session();
             void end_update_session();
             void update_in_session(const std::string& keyword, uint64_t index);
-            
+            void update_in_session(const std::list<std::pair<std::string, uint64_t>> &update_list);
+
             void wait_updates_completion();
             
             bool load_inverted_index(const std::string& path);

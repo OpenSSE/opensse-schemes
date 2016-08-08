@@ -181,7 +181,7 @@ namespace sse {
                 }
                 
                 (*entries_counter)++;
-                if (((*entries_counter) % 100) == 0) {
+                if (((*entries_counter) % 1000) == 0) {
                     logger::log(sse::logger::INFO) << "Random DB generation: " << (*entries_counter) << " entries generated\r" << std::flush;
                 }
                 

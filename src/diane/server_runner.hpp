@@ -37,6 +37,7 @@ namespace sse {
         class DianeImpl final : public diane::Diane::Service {
         public:
             explicit DianeImpl(const std::string& path);
+            ~DianeImpl();
             
             grpc::Status setup(grpc::ServerContext* context,
                                const SetupMessage* request,
@@ -67,6 +68,7 @@ namespace sse {
             bool search_asynchronously() const;
             void set_search_asynchronously(bool flag);
             
+            void flush_server_storage();
             
         private:
             static const std::string pairs_map_file;

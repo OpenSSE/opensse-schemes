@@ -49,6 +49,7 @@ public:
     template <size_t N, typename V>
     inline bool put(const std::array<uint8_t, N> &key, const V &data);
 
+    inline void flush(bool blocking = true);
 private:
     rocksdb::DB* db_;
     
@@ -175,6 +176,21 @@ private:
 //        assert(s.ok());
         
         return s.ok();
+    }
+
+    
+    void RockDBWrapper::flush(bool blocking)
+    {
+        rocksdb::FlushOptions options;
+        
+        options.wait = blocking;
+        
+        rocksdb::Status s = db_->Flush(options);
+        
+        if (!s.ok()) {
+            logger::log(logger::ERROR) << "DB Flush failed: " << s.ToString() << std::endl;            
+        }
+
     }
 
 }

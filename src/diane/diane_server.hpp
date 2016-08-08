@@ -63,6 +63,8 @@ public:
     void update(const UpdateRequest& req);
     
     std::ostream& print_stats(std::ostream& out) const;
+    
+    void flush_edb();
 private:
 
     sophos::RockDBWrapper edb_;

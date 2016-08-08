@@ -447,5 +447,9 @@ namespace sse {
             return out;
         }
 
+        void DianeServer::flush_edb()
+        {
+            edb_.flush();
+        }
     }
 }

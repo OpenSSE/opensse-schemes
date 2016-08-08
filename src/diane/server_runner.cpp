@@ -62,6 +62,11 @@ namespace sse {
             }
         }
         
+        DianeImpl::~DianeImpl()
+        {
+            flush_server_storage();
+        }
+
         grpc::Status DianeImpl::setup(grpc::ServerContext* context,
                                        const SetupMessage* message,
                                        google::protobuf::Empty* e)
@@ -314,6 +319,19 @@ std::to_string((t)) )
         void DianeImpl::set_search_asynchronously(bool flag)
         {
             async_search_ = flag;
+        }
+        
+        
+        void DianeImpl::flush_server_storage()
+        {
+            if (server_) {
+                logger::log(logger::TRACE) << "Flush server storage..." << std::endl;
+                
+                server_->flush_edb();
+                
+                logger::log(logger::TRACE) << "Flush server storage... done" << std::endl;
+
+            }
         }
         
         SearchRequest message_to_request(const SearchRequestMessage* mes)

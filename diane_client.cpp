@@ -128,16 +128,11 @@ int main(int argc, char** argv) {
     
     if (rnd_entries_count > 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
-        std::mutex logger_mtx;
 
         auto gen_callback = [&client_runner, &logger_mtx](const std::string &s, size_t i)
         {
             if (buffer_list__ == NULL) {
-                logger_mtx.lock();
-                sse::logger::log(sse::logger::INFO) << "Init list" << std::endl;
-                
                 buffer_list__ = new std::list<std::pair<std::string, uint64_t>>();
-                logger_mtx.unlock();
             }
             buffer_list__->push_back(std::make_pair(s, i));
             

@@ -96,13 +96,13 @@ private:
         options.allow_mmap_reads = true;
         options.new_table_reader_for_compaction_inputs = true;
         
-        options.max_bytes_for_level_base = 4294967296;
-        options.arena_block_size = 134217728;
+        options.max_bytes_for_level_base = 4294967296; // 4 GB
+        options.arena_block_size = 134217728; // 128 MB
         options.level0_file_num_compaction_trigger = 10;
         options.level0_slowdown_writes_trigger = 16;
-        options.hard_pending_compaction_bytes_limit = 137438953472;
+        options.hard_pending_compaction_bytes_limit = 137438953472; // 128 GB
         options.target_file_size_base=201327616;
-        options.write_buffer_size=1073741824;
+        options.write_buffer_size=1073741824; // 1GB
         
 //        options.optimize_filters_for_hits = true;
         

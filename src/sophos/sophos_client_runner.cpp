@@ -218,6 +218,7 @@ void SophosClientRunner::async_update(const std::string& keyword, uint64_t index
     if (bulk_update_state_.is_up) { // an update session is running, use it
         update_in_session(keyword, index);
     }else{
+        logger::log(logger::WARNING) << "This is dangerous: you should not use async_updates, they are still buggy..." << std::endl;
 
         message = request_to_message(client_->update_request(keyword, index));
 

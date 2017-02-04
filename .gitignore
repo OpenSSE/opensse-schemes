@@ -75,6 +75,8 @@ sophos_client
 diane_debug
 diane_server
 diane_client
+client
+server
 
 *.csdb
 *.ssdb

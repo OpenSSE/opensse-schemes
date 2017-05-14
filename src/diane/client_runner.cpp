@@ -86,7 +86,7 @@ namespace sse {
             return std::unique_ptr<DC>(new  DC(counter_map_path, master_key_buf.str(), kw_token_key_buf.str()));
         }
         
-        std::unique_ptr<DC> create_in_directory(const std::string& dir_path, uint32_t n_keywords)
+        std::unique_ptr<DC> create_in_directory(const std::string& dir_path)
         {
             // try to initialize everything in this directory
             if (!is_directory(dir_path)) {
@@ -95,7 +95,7 @@ namespace sse {
             
             std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
             
-            auto c_ptr =  std::unique_ptr<DC>(new DC(counter_map_path, n_keywords));
+            auto c_ptr =  std::unique_ptr<DC>(new DC(counter_map_path));
             
             std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
             std::string kw_token_master_key_path = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
@@ -145,7 +145,7 @@ namespace sse {
                     throw std::runtime_error(path + ": unable to create directory");
                 }
                 
-                client_ = create_in_directory(path,n_keywords);
+                client_ = create_in_directory(path);
                 
                 // send a setup message to the server
                 bool success = send_setup(setup_size);

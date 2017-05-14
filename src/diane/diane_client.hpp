@@ -57,7 +57,7 @@ namespace sse {
 
             static constexpr size_t kTreeDepth = 48;
             
-            DianeClient(const std::string& token_map_path, const size_t tm_setup_size);
+            DianeClient(const std::string& token_map_path);
             DianeClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key);
             ~DianeClient();
 
@@ -122,7 +122,7 @@ namespace sse {
     namespace diane {
         
         template <typename T>
-        DianeClient<T>::DianeClient(const std::string& token_map_path, const size_t tm_setup_size) :
+        DianeClient<T>::DianeClient(const std::string& token_map_path) :
         root_prf_(), kw_token_prf_(), counter_map_(token_map_path)
         {
             

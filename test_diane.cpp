@@ -67,7 +67,7 @@ void test_client_server()
     }else{
         cout << "Create new Diane client-server instances" << endl;
         
-        client.reset(new DianeClient<index_type>("diane_client.sav", 1000));
+        client.reset(new DianeClient<index_type>("diane_client.sav"));
 
         server.reset(new DianeServer<index_type>("diane_server.dat", 1000));
         

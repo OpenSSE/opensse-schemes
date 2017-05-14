@@ -90,15 +90,15 @@ namespace sse {
             uint64_t n_groups_6 = optimal_num_group(N_entries, step, size_group_6);
 
             
-            use_rnd_group_3 = true || (1.5*N_entries >= n_groups_3*size_group_3*step);
-            use_rnd_group_4 = true || (1.5*N_entries >= n_groups_4*size_group_4*step);
-            use_rnd_group_5 = true || (1.5*N_entries >= n_groups_5*size_group_5*step);
-            use_rnd_group_6 = true || (1.5*N_entries >= n_groups_6*size_group_6*step);
+//            use_rnd_group_3 = true || (1.5*N_entries >= n_groups_3*size_group_3*step);
+//            use_rnd_group_4 = true || (1.5*N_entries >= n_groups_4*size_group_4*step);
+//            use_rnd_group_5 = true || (1.5*N_entries >= n_groups_5*size_group_5*step);
+//            use_rnd_group_6 = true || (1.5*N_entries >= n_groups_6*size_group_6*step);
 
-//            use_rnd_group_3 = false;
-//            use_rnd_group_4 = false;
-//            use_rnd_group_5 = false;
-//            use_rnd_group_6 = false;
+            use_rnd_group_3 = false;
+            use_rnd_group_4 = false;
+            use_rnd_group_5 = false;
+            use_rnd_group_6 = false;
 
 //            assert(use_rnd_group_3);
 //            assert(use_rnd_group_4);

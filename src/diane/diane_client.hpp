@@ -372,9 +372,6 @@ namespace sse {
                 search_token_key_type st;
                 index_type mask;
                 
-                if(keyword == "Group-10^1_1_1")
-                    logger::log(logger::INFO) << "Group-10^1_1_1 request" << std::endl;
-
                 // get (and possibly construct) the keyword index
                 keyword_index_type kw_index = get_keyword_index(keyword);
                 std::string seed(kw_index.begin(),kw_index.end());
@@ -418,11 +415,6 @@ namespace sse {
                 
                 
                 keyword = it->first;
-                
-                if(keyword == "Group-10^1_1_1")
-                    logger::log(logger::INFO) << "Group-10^1_1_1 counter" << std::endl;
-
-                
                 index = it->second;
                 
                 // get (and possibly construct) the keyword index

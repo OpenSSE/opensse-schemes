@@ -31,7 +31,7 @@ void exit_handler(int signal)
 
 int main(int argc, char** argv) {
 
-    sse::logger::set_severity(sse::logger::DBG);
+    sse::logger::set_severity(sse::logger::INFO);
     sse::logger::set_benchmark_file("benchmark_diane_server.out");
 
     std::signal(SIGTERM, exit_handler);

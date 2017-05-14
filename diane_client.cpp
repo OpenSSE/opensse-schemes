@@ -193,7 +193,7 @@ int main(int argc, char** argv) {
     
     if (print_stats)
     {
-        client_runner->print_stats(sse::logger::log(sse::logger::DBG));
+        client_runner->print_stats(sse::logger::log(sse::logger::INFO));
     }
     
     client_runner.reset();

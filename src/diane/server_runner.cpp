@@ -299,6 +299,8 @@ std::to_string((t)) )
             logger::log(logger::TRACE) << "Updating (bulk)... done" << std::endl;
             
             
+            flush_server_storage();
+            
             return grpc::Status::OK;
         }
         

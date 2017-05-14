@@ -1,10 +1,11 @@
 #!/bin/bash 
 
-db_file="bench_1e7.dcdb"
+db_file="/Volumes/SSE_Bench/db_bench_1e7.dcdb"
 
 kw_list=""
 kKeywordGroupBase="Group-"
 kKeyword10GroupBase=$kKeywordGroupBase"10^"
+kKeywordRand10GroupBase=$kKeywordGroupBase"rand-10^"
 
 
 for i in `seq 0 7`;

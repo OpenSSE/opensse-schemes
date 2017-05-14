@@ -324,15 +324,15 @@ namespace sse {
                 }
                 
 
-//                callback(kw_10_1, ind);
-//                callback(kw_10_2, ind);
-//                callback(kw_10_3, ind);
-//                callback(kw_10_4, ind);
-//                callback(kw_10_5, ind);
-//                callback(kw_10_6, ind);
-//                callback(kw_20, ind);
-//                callback(kw_30, ind);
-//                callback(kw_60, ind);
+                callback(kw_10_1, ind);
+                callback(kw_10_2, ind);
+                callback(kw_10_3, ind);
+                callback(kw_10_4, ind);
+                callback(kw_10_5, ind);
+                callback(kw_10_6, ind);
+                callback(kw_20, ind);
+                callback(kw_30, ind);
+                callback(kw_60, ind);
                 
                 
                 for (auto k : insertions) {

@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-db_file="/Volumes/SSE_Bench/db_bench_1e6.dcdb"
+db_file="/Volumes/SSE_Bench/db_bench_test.dcdb"
 
 kw_list=""
 kKeywordGroupBase="Group-"

@@ -81,5 +81,17 @@ namespace sse {
             
             return res;
         }
+        
+        template <size_t N>
+        std::array<uint8_t, N> xor_mask(const std::array<uint8_t, N>& index, const std::array<uint8_t, N> &mask)
+        {
+            std::array<uint8_t, N> res;
+            for (size_t i = 0; i < N; i++) {
+                res[i] = res[i] ^ res[i];
+            }
+            
+            return res;
+
+        }
     }
 }

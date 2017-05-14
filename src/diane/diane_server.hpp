@@ -105,7 +105,7 @@ namespace sse {
                 logger::log(logger::DBG) << "Derived leaf token: " << hex_string(std::string((const char*)key,kSearchTokenKeySize)) << std::endl;
             }
             
-            gen_update_token_mask(key, ut, mask);
+            gen_update_token_mask<T>(key, ut, mask);
             
             
             if (logger::severity() <= logger::DBG) {

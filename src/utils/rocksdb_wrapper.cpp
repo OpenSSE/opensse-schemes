@@ -31,7 +31,7 @@ namespace sse {
             rocksdb::Options options;
             options.create_if_missing = true;
             
-            
+  
             rocksdb::CuckooTableOptions cuckoo_options;
             cuckoo_options.identity_as_first_hash = false;
             cuckoo_options.hash_table_ratio = 0.9;
@@ -42,7 +42,7 @@ namespace sse {
             
             
             
-            options.table_factory.reset(rocksdb::NewCuckooTableFactory(cuckoo_options));
+//            options.table_factory.reset(rocksdb::NewCuckooTableFactory(cuckoo_options));
             
             options.compression = rocksdb::kNoCompression;
             options.bottommost_compression = rocksdb::kDisableCompressionOption;
@@ -82,10 +82,13 @@ namespace sse {
         
         bool RocksDBCounter::get(const std::string &key, uint32_t &val) const
         {
+
             std::string data;
 
             rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
             
+            logger::log(logger::DBG) << "Get: " << key  << " Status: " << s.ToString() << std::endl;
+
             if(s.ok()){
                 ::memcpy(&val, data.data(), sizeof(uint32_t));
             }
@@ -95,10 +98,13 @@ namespace sse {
         
         bool RocksDBCounter::get_and_increment(const std::string &key, uint32_t &val)
         {
+
             std::string data;
             
             rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
             
+            logger::log(logger::DBG) << "Get and inc: " << key << " Status: " << s.ToString() << std::endl;
+
             if(s.ok()){
                 ::memcpy(&val, data.data(), sizeof(uint32_t));
                 

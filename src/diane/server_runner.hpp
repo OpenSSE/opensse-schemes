@@ -36,6 +36,8 @@ namespace sse {
         
         class DianeImpl final : public diane::Diane::Service {
         public:
+            typedef uint64_t index_type;
+
             explicit DianeImpl(const std::string& path);
             ~DianeImpl();
             
@@ -73,7 +75,7 @@ namespace sse {
         private:
             static const std::string pairs_map_file;
             
-            std::unique_ptr<DianeServer> server_;
+            std::unique_ptr<DianeServer<index_type>> server_;
             std::string storage_path_;
             
             std::mutex update_mtx_;
@@ -82,7 +84,7 @@ namespace sse {
         };
         
         SearchRequest message_to_request(const SearchRequestMessage* mes);
-        UpdateRequest message_to_request(const UpdateRequestMessage* mes);
+        UpdateRequest<DianeImpl::index_type> message_to_request(const UpdateRequestMessage* mes);
         
         void run_diane_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
     }

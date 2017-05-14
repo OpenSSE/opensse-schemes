@@ -53,7 +53,7 @@ namespace sse {
                 }
                 
                 
-                server_.reset(new DianeServer(pairs_map_path));
+                server_.reset(new DianeServer<index_type>(pairs_map_path));
             }else if (exists(storage_path_)){
                 // there should be nothing else than a directory at path, but we found something  ...
                 throw std::runtime_error(storage_path_ + ": not a directory");
@@ -103,7 +103,7 @@ namespace sse {
             
             try {
                 logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
-                server_.reset(new DianeServer(pairs_map_path, message->setup_size()));
+                server_.reset(new DianeServer<index_type>(pairs_map_path, message->setup_size()));
             } catch (std::exception &e) {
                 logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
                 
@@ -354,9 +354,9 @@ std::to_string((t)) )
             return req;
         }
         
-        UpdateRequest message_to_request(const UpdateRequestMessage* mes)
+        UpdateRequest<DianeImpl::index_type> message_to_request(const UpdateRequestMessage* mes)
         {
-            UpdateRequest req;
+            UpdateRequest<DianeImpl::index_type> req;
             
             req.index = mes->index();
             std::copy(mes->update_token().begin(), mes->update_token().end(), req.token.begin());

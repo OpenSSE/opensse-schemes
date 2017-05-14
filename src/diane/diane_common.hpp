@@ -23,13 +23,26 @@
 
 #include "types.hpp"
 
+#include <sse/crypto/block_hash.hpp>
+
+#include <cstring>
+
 namespace sse {
     namespace diane {
         
-        void gen_update_token_mask(const uint8_t* search_token, update_token_type &update_token, index_type &mask);
-        
-        inline void gen_update_token_mask(const search_token_key_type &search_token, update_token_type &update_token, index_type &mask)
+        template <typename T>
+        void gen_update_token_mask(const uint8_t* search_token, update_token_type &update_token, T &mask)
         {
+            crypto::Prg prg(search_token);
+
+            prg.derive(0,kUpdateTokenSize, update_token.data());
+            prg.derive(kUpdateTokenSize, sizeof(T), (uint8_t *)&mask);
+        }
+        
+        template <typename T>
+        inline void gen_update_token_mask(const search_token_key_type &search_token, update_token_type &update_token, T &mask)
+        {
+            static_assert(crypto::Prg::kKeySize == kSearchTokenKeySize, "Invalid search token size");
             gen_update_token_mask(search_token.data(), update_token, mask);
         }
     }

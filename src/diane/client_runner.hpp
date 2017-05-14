@@ -39,13 +39,15 @@ namespace sse {
         
         class DianeClientRunner {
         public:
+            typedef uint64_t index_type;
+
             DianeClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
 //            DianeClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
             ~DianeClientRunner();
             
-            const DianeClient& client() const;
+            const DianeClient<index_type>& client() const;
             
-            std::list<uint64_t> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const;
+            std::list<index_type> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const;
             void update(const std::string& keyword, uint64_t index);
             void async_update(const std::string& keyword, uint64_t index);
             void async_update(const std::list<std::pair<std::string, uint64_t>> &update_list);
@@ -70,7 +72,7 @@ namespace sse {
             bool send_setup(const size_t setup_size) const;
             
             std::unique_ptr<diane::Diane::Stub> stub_;
-            std::unique_ptr<DianeClient> client_;
+            std::unique_ptr<DianeClient<index_type>> client_;
             
             typedef struct
             {
@@ -102,7 +104,7 @@ namespace sse {
         };
         
         SearchRequestMessage request_to_message(const SearchRequest& req);
-        UpdateRequestMessage request_to_message(const UpdateRequest& req);
+        UpdateRequestMessage request_to_message(const UpdateRequest<DianeClientRunner::index_type>& req);
         
     } // namespace diane
 } // namespace sse

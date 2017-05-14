@@ -87,14 +87,16 @@ private:
         options.info_log_level = rocksdb::InfoLogLevel::INFO_LEVEL;
 
 
-        options.max_grandparent_overlap_factor = 10;
+//        options.max_grandparent_overlap_factor = 10;
         
         options.delayed_write_rate = 8388608;
         options.max_background_compactions = 20;
 
-        options.disableDataSync = true;
+//        options.disableDataSync = true;
         options.allow_mmap_reads = true;
         options.new_table_reader_for_compaction_inputs = true;
+        
+        options.allow_concurrent_memtable_write = false;
         
         options.max_bytes_for_level_base = 4294967296; // 4 GB
         options.arena_block_size = 134217728; // 128 MB

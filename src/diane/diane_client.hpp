@@ -101,6 +101,8 @@ namespace sse {
 
         private:
 
+            std::list<std::tuple<std::string, T, uint32_t>>   get_counters_and_increment(const std::list<std::pair<std::string, index_type>> &update_list);
+
             crypto::Prf<kSearchTokenKeySize> root_prf_;
             crypto::Prf<kKeywordTokenSize> kw_token_prf_;
             
@@ -286,6 +288,7 @@ namespace sse {
             return req;
         }
         
+/*
         template <typename T>
         std::list<UpdateRequest<T>>   DianeClient<T>::bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list)
         {
@@ -349,7 +352,109 @@ namespace sse {
             
             return req_list;
         }
+        */
         
+        template <typename T>
+        std::list<UpdateRequest<T>>   DianeClient<T>::bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list)
+        {
+            std::string keyword;
+            index_type index;
+            
+            std::list<UpdateRequest<T>> req_list;
+            
+            std::list<std::tuple<std::string, T, uint32_t>> counter_list = get_counters_and_increment(update_list);
+
+            for (auto it = counter_list.begin(); it != counter_list.end(); ++it) {
+                
+                keyword = std::get<0>(*it);
+                index = std::get<1>(*it);
+                UpdateRequest<T> req;
+                search_token_key_type st;
+                index_type mask;
+                
+                if(keyword == "Group-10^1_1_1")
+                    logger::log(logger::INFO) << "Group-10^1_1_1 request" << std::endl;
+
+                // get (and possibly construct) the keyword index
+                keyword_index_type kw_index = get_keyword_index(keyword);
+                std::string seed(kw_index.begin(),kw_index.end());
+                
+                // retrieve the counter
+                uint32_t kw_counter = std::get<2>(*it);
+                
+                
+                TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
+                
+                st = TokenTree::derive_node(root, kw_counter, kTreeDepth);
+                
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+                }
+                
+                
+                gen_update_token_mask(st, req.token, mask);
+                
+                req.index = xor_mask(index, mask);
+                
+                req_list.push_back(req);
+            }
+            
+            return req_list;
+        }
+        
+        template <typename T>
+        std::list<std::tuple<std::string, T, uint32_t>>   DianeClient<T>::get_counters_and_increment(const std::list<std::pair<std::string, index_type>> &update_list)
+        {
+            std::string keyword;
+            index_type index;
+            
+            std::list<std::tuple<std::string, index_type, uint32_t>> res;
+            
+            token_map_mtx_.lock();
+            
+            for (auto it = update_list.begin(); it != update_list.end(); ++it) {
+                
+                bool found = false;
+                
+                
+                keyword = it->first;
+                
+                if(keyword == "Group-10^1_1_1")
+                    logger::log(logger::INFO) << "Group-10^1_1_1 counter" << std::endl;
+
+                
+                index = it->second;
+                
+                // get (and possibly construct) the keyword index
+                keyword_index_type kw_index = get_keyword_index(keyword);
+                
+                // retrieve the counter
+                uint32_t kw_counter;
+                
+                found = counter_map_.get(kw_index, kw_counter);
+                
+                if (!found) {
+                    // set the counter to 0
+                    kw_counter = 0;
+                    keyword_counter_++;
+                    
+                    counter_map_.add(kw_index, 0);
+                    
+                }else{
+                    // increment and store the counter
+                    kw_counter++;
+                    counter_map_.at(kw_index) = kw_counter;
+                }
+                
+                res.push_back({keyword, index, kw_counter});
+
+            }
+            token_map_mtx_.unlock();
+            
+            return res;
+        }
+        
+
         
         template <typename T>
         std::ostream& DianeClient<T>::print_stats(std::ostream& out) const

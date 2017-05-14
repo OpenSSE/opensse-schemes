@@ -94,7 +94,12 @@ namespace sse {
             use_rnd_group_4 = true || (1.5*N_entries >= n_groups_4*size_group_4*step);
             use_rnd_group_5 = true || (1.5*N_entries >= n_groups_5*size_group_5*step);
             use_rnd_group_6 = true || (1.5*N_entries >= n_groups_6*size_group_6*step);
-            
+
+//            use_rnd_group_3 = false;
+//            use_rnd_group_4 = false;
+//            use_rnd_group_5 = false;
+//            use_rnd_group_6 = false;
+
 //            assert(use_rnd_group_3);
 //            assert(use_rnd_group_4);
 //            assert(use_rnd_group_5);
@@ -324,22 +329,23 @@ namespace sse {
                 }
                 
 
-//                callback(kw_10_1, ind);
-//                callback(kw_10_2, ind);
-//                callback(kw_10_3, ind);
-//                callback(kw_10_4, ind);
-//                callback(kw_10_5, ind);
-//                callback(kw_10_6, ind);
-//                callback(kw_20, ind);
-//                callback(kw_30, ind);
-//                callback(kw_60, ind);
+                callback(kw_10_1, ind);
+                callback(kw_10_2, ind);
+                callback(kw_10_3, ind);
+                callback(kw_10_4, ind);
+                callback(kw_10_5, ind);
+                callback(kw_10_6, ind);
+                callback(kw_20, ind);
+                callback(kw_30, ind);
+                callback(kw_60, ind);
                 
                 
                 for (auto k : insertions) {
                     callback(k, ind);
                 }
 
-                new_entries += 9 + insertions.size();
+                new_entries += 9;
+                new_entries += insertions.size();
                 
                 (*entries_counter) += new_entries;
             }

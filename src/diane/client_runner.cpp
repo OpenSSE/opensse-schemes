@@ -206,6 +206,10 @@ namespace sse {
             
             message = request_to_message(client_->search_request(keyword));
             
+            if (message.add_count() == 0) {
+                return {};
+            }
+            
             std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
             std::list<uint64_t> results;
             

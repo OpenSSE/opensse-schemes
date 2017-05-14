@@ -195,5 +195,28 @@ private:
 
     }
 
+    
+    class RocksDBCounter {
+    public:
+        RocksDBCounter() = delete;
+        RocksDBCounter(const std::string &path);
+        inline ~RocksDBCounter()
+        {
+            if (db_) {
+                delete db_;
+            }
+        };
+        
+        bool get(const std::string &key, uint32_t &val) const;
+        
+        bool get_and_increment(const std::string &key, uint32_t &val);
+        
+        inline void flush(bool blocking = true);
+        
+    private:
+        rocksdb::DB* db_;
+        
+    };
+
 }
 }

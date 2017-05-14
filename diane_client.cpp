@@ -180,10 +180,6 @@ int main(int argc, char** argv) {
         log_stream << "}" << std::endl;
     }
     
-    if (bench_count > 0) {
-        std::cout << "-------------- Search Benchmarks --------------" << std::endl;
-        client_runner->search_benchmark(bench_count);
-    }
     
     if (output_path.size()>0) {
         sse::logger::log(sse::logger::CRITICAL) << "JSON export is not supported in Diane!" << std::endl;

@@ -498,43 +498,43 @@ namespace sse {
             return client_->print_stats(out);
         }
         
-        void DianeClientRunner::random_search() const
-        {
-            logger::log(logger::TRACE) << "Random Search " << std::endl;
-            
-            grpc::ClientContext context;
-            SearchRequestMessage message;
-            SearchReply reply;
-            
-            message = request_to_message((client_.get())->random_search_request());
-            
-            std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
-            std::list<uint64_t> results;
-            
-            
-            while (reader->Read(&reply)) {
-                logger::log(logger::TRACE) << "New result: "
-                << std::dec << reply.result() << std::endl;
-                results.push_back(reply.result());
-            }
-            grpc::Status status = reader->Finish();
-            if (status.ok()) {
-                logger::log(logger::TRACE) << "Search succeeded." << std::endl;
-            } else {
-                logger::log(logger::ERROR) << "Search failed:" << std::endl;
-                logger::log(logger::ERROR) << status.error_message() << std::endl;
-            }
-            
-        }
+//        void DianeClientRunner::random_search() const
+//        {
+//            logger::log(logger::TRACE) << "Random Search " << std::endl;
+//            
+//            grpc::ClientContext context;
+//            SearchRequestMessage message;
+//            SearchReply reply;
+//            
+//            message = request_to_message((client_.get())->random_search_request());
+//            
+//            std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
+//            std::list<uint64_t> results;
+//            
+//            
+//            while (reader->Read(&reply)) {
+//                logger::log(logger::TRACE) << "New result: "
+//                << std::dec << reply.result() << std::endl;
+//                results.push_back(reply.result());
+//            }
+//            grpc::Status status = reader->Finish();
+//            if (status.ok()) {
+//                logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+//            } else {
+//                logger::log(logger::ERROR) << "Search failed:" << std::endl;
+//                logger::log(logger::ERROR) << status.error_message() << std::endl;
+//            }
+//            
+//        }
         
-        void DianeClientRunner::search_benchmark(size_t n_bench) const
-        {
-            for (size_t i = 0; i < n_bench; i++) {
-                logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
-                random_search();
-            }
-            logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
-        }
+//        void DianeClientRunner::search_benchmark(size_t n_bench) const
+//        {
+//            for (size_t i = 0; i < n_bench; i++) {
+//                logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
+//                random_search();
+//            }
+//            logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
+//        }
         
         SearchRequestMessage request_to_message(const SearchRequest& req)
         {

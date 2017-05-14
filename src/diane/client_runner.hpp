@@ -64,8 +64,8 @@ namespace sse {
 //            bool output_db(const std::string& out_path);
             std::ostream& print_stats(std::ostream& out) const;
             
-            void random_search() const;
-            void search_benchmark(size_t n_bench) const;
+//            void random_search() const;
+//            void search_benchmark(size_t n_bench) const;
         private:
             void update_completion_loop();
             

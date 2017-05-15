@@ -68,7 +68,9 @@ namespace sse {
             
             keyword_index_type get_keyword_index(const std::string &kw) const;
 
-            SearchRequest       search_request(const std::string &keyword) const;
+            uint32_t get_match_count(const std::string &kw) const;
+
+            SearchRequest       search_request(const std::string &keyword, bool log_not_found = true) const;
             UpdateRequest<T>    update_request(const std::string &keyword, const index_type index);
             std::list<UpdateRequest<T>>   bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list);
 
@@ -165,9 +167,20 @@ namespace sse {
             
             return ret;
         }
-        
+
         template <typename T>
-        SearchRequest   DianeClient<T>::search_request(const std::string &keyword) const
+        uint32_t DianeClient<T>::get_match_count(const std::string &kw) const
+        {
+            uint32_t kw_counter;
+
+            bool found = counter_map_.get(kw, kw_counter);
+            
+            return (found) ? kw_counter : 0;
+        }
+        
+
+        template <typename T>
+        SearchRequest   DianeClient<T>::search_request(const std::string &keyword, bool log_not_found) const
         {
             keyword_index_type kw_index = get_keyword_index(keyword);
             
@@ -180,7 +193,9 @@ namespace sse {
             
             if(!found)
             {
-                logger::log(logger::INFO) << "No matching counter found for keyword " << hex_string(std::string(kw_index.begin(),kw_index.end())) << std::endl;
+                if (log_not_found) {
+                    logger::log(logger::INFO) << "No matching counter found for keyword " << hex_string(std::string(kw_index.begin(),kw_index.end())) << std::endl;
+                }
             }else{
                 req.add_count = kw_counter+1;
                 
@@ -228,7 +243,7 @@ namespace sse {
             
             gen_update_token_mask(st, req.token, mask);
             
-            req.index = index^mask;
+            req.index = xor_mask(index,mask);
             
             //            if (logger::severity() <= logger::DBG) {
             //                logger::log(logger::DBG) << "Update Request: (" << hex_string(ut) << ", " << std::hex << req.index << ")" << std::endl;

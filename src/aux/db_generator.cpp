@@ -83,12 +83,12 @@ namespace sse {
 //            uint16_t n_groups_3 = (int)ceilf(96./step), n_groups_4 = (int)ceilf(100./step), n_groups_5 = (int)ceilf(10./step), n_groups_6 = (int)ceilf(10./step);
 
             
-            uint64_t size_group_2 = 1e2, size_group_3 = 1e3, size_group_4 = 1e4, size_group_5 = 1e5, size_group_6 = 1e6;
-            uint64_t n_groups_2 = optimal_num_group(N_entries, step, size_group_2);
-            uint64_t n_groups_3 = optimal_num_group(N_entries, step, size_group_3);
-            uint64_t n_groups_4 = optimal_num_group(N_entries, step, size_group_4);
-            uint64_t n_groups_5 = optimal_num_group(N_entries, step, size_group_5);
-            uint64_t n_groups_6 = optimal_num_group(N_entries, step, size_group_6);
+            const uint64_t size_group_2 = 1e2, size_group_3 = 1e3, size_group_4 = 1e4, size_group_5 = 1e5, size_group_6 = 1e6;
+            const uint64_t n_groups_2 = 0.9*optimal_num_group(N_entries, step, size_group_2);
+            const uint64_t n_groups_3 = optimal_num_group(N_entries, step, size_group_3);
+            const uint64_t n_groups_4 = optimal_num_group(N_entries, step, size_group_4);
+            const uint64_t n_groups_5 = optimal_num_group(N_entries, step, size_group_5);
+            const uint64_t n_groups_6 = optimal_num_group(N_entries, step, size_group_6);
 
             
             use_rnd_group_2 = true || (1.5*N_entries >= n_groups_2*size_group_2*step);
@@ -97,34 +97,40 @@ namespace sse {
             use_rnd_group_5 = true || (1.5*N_entries >= n_groups_5*size_group_5*step);
             use_rnd_group_6 = true || (1.5*N_entries >= n_groups_6*size_group_6*step);
             
-            const double r_threshold_2 = 1.2*((double)n_groups_2*size_group_2*step)/((double)N_entries);
+            const double r_threshold_2 = 1.4*((double)n_groups_2*size_group_2*step)/((double)N_entries);
             const double r_threshold_3 = 1.2*((double)n_groups_3*size_group_3*step)/((double)N_entries);
             const double r_threshold_4 = 1.2*((double)n_groups_4*size_group_4*step)/((double)N_entries);
             const double r_threshold_5 = 1.2*((double)n_groups_5*size_group_5*step)/((double)N_entries);
             const double r_threshold_6 = 1.2*((double)n_groups_6*size_group_6*step)/((double)N_entries);
 
-            uint64_t group_rand_10_2[n_groups_2];
-            uint64_t group_rand_10_3[n_groups_3];
-            uint64_t group_rand_10_4[n_groups_4];
-            uint64_t group_rand_10_5[n_groups_5];
-            uint64_t group_rand_10_6[n_groups_6];
+            std::vector<uint64_t> group_rand_10_2(n_groups_2, 0);
+            std::vector<uint64_t> group_rand_10_3(n_groups_3, 0);
+            std::vector<uint64_t> group_rand_10_4(n_groups_4, 0);
+            std::vector<uint64_t> group_rand_10_5(n_groups_5, 0);
+            std::vector<uint64_t> group_rand_10_6(n_groups_6, 0);
+//            uint64_t *group_rand_10_2 = (uint64_t *)malloc(n_groups_2*sizeof(uint64_t));
+//            uint64_t *group_rand_10_3 = (uint64_t *)malloc(n_groups_3*sizeof(uint64_t));
+//            uint64_t *group_rand_10_4 = (uint64_t *)malloc(n_groups_4*sizeof(uint64_t));
+//            uint64_t *group_rand_10_5 = (uint64_t *)malloc(n_groups_5*sizeof(uint64_t));
+//            uint64_t *group_rand_10_6 = (uint64_t *)malloc(n_groups_6*sizeof(uint64_t));
 
-            for (size_t i=0; i< n_groups_2; i++) {
-                group_rand_10_2[i] = 0;
-            }
-            for (size_t i=0; i< n_groups_3; i++) {
-                group_rand_10_3[i] = 0;
-            }
-            for (size_t i=0; i< n_groups_4; i++) {
-                group_rand_10_4[i] = 0;
-            }
-            for (size_t i=0; i< n_groups_5; i++) {
-                group_rand_10_5[i] = 0;
-            }
-            for (size_t i=0; i< n_groups_6; i++) {
-                group_rand_10_6[i] = 0;
-            }
-            
+//            
+//            for (size_t i=0; i< n_groups_2; i++) {
+//                group_rand_10_2[i] = 0;
+//            }
+//            for (size_t i=0; i< n_groups_3; i++) {
+//                group_rand_10_3[i] = 0;
+//            }
+//            for (size_t i=0; i< n_groups_4; i++) {
+//                group_rand_10_4[i] = 0;
+//            }
+//            for (size_t i=0; i< n_groups_5; i++) {
+//                group_rand_10_5[i] = 0;
+//            }
+//            for (size_t i=0; i< n_groups_6; i++) {
+//                group_rand_10_6[i] = 0;
+//            }
+//            
             
             std::string kw;
             uint32_t new_entries;
@@ -363,27 +369,93 @@ namespace sse {
             
             log += " min rand: (";// + std::to_string(group_rand_10_3) + "-" + std::to_string(num_rand_10_3) + ")";
             
-            size_t min = group_rand_10_3[0];
-            for (size_t i=1; i< n_groups_3; i++) {
-                min = MIN(min, group_rand_10_3[i]);
-            }
-            log += std::to_string(min) + ",";
+            size_t min;
+            size_t non_full;
             
-            min = group_rand_10_4[0];
-            for (size_t i=1; i< n_groups_4; i++) {
-                min = MIN(min, group_rand_10_4[i]);
+            if (n_groups_2>0) {
+                min = group_rand_10_2[0];
+                non_full = 0;
+                if (group_rand_10_2[0] < size_group_2) {
+                    non_full++;
+                }
+
+                for (size_t i=1; i< n_groups_2; i++) {
+                    min = MIN(min, group_rand_10_2[i]);
+                    
+                    if (group_rand_10_2[i] < size_group_2) {
+                        non_full++;
+                    }
+                }
+                log += std::to_string(min) + "/" + std::to_string(non_full);
             }
-            log += std::to_string(min) + ",";
-            min = group_rand_10_5[0];
-            for (size_t i=1; i< n_groups_5; i++) {
-                min = MIN(min, group_rand_10_5[i]);
+            
+            if (n_groups_3>0) {
+                log += ",";
+                min = group_rand_10_3[0];
+                non_full = 0;
+                if (group_rand_10_3[0] < size_group_3) {
+                    non_full++;
+                }
+
+                for (size_t i=1; i< n_groups_3; i++) {
+                    min = MIN(min, group_rand_10_3[i]);
+                    if (group_rand_10_3[i] < size_group_3) {
+                        non_full++;
+                    }
+                }
+                log += std::to_string(min) + "/" + std::to_string(non_full);
             }
-            log += std::to_string(min) + ",";
-            min = group_rand_10_6[0];
-            for (size_t i=1; i< n_groups_6; i++) {
-                min = MIN(min, group_rand_10_6[i]);
+            if (n_groups_4>0) {
+                log += ",";
+                min = group_rand_10_4[0];
+                non_full = 0;
+                if (group_rand_10_4[0] < size_group_4) {
+                    non_full++;
+                }
+
+                for (size_t i=1; i< n_groups_4; i++) {
+                    min = MIN(min, group_rand_10_4[i]);
+                    if (group_rand_10_4[i] < size_group_4) {
+                        non_full++;
+                    }
+                }
+                log += std::to_string(min) + "/" + std::to_string(non_full);
             }
-            log += std::to_string(min) + ")";
+            
+            if (n_groups_5>0) {
+                log += ",";
+                min = group_rand_10_5[0];
+                non_full = 0;
+                if (group_rand_10_5[0] < size_group_5) {
+                    non_full++;
+                }
+
+                for (size_t i=1; i< n_groups_5; i++) {
+                    min = MIN(min, group_rand_10_5[i]);
+                    if (group_rand_10_5[i] < size_group_5) {
+                        non_full++;
+                    }
+                }
+                log += std::to_string(min) + "/" + std::to_string(non_full);
+            }
+            
+            if (n_groups_6>0) {
+                log += ",";
+                min = group_rand_10_6[0];
+                non_full = 0;
+                if (group_rand_10_6[0] < size_group_6) {
+                    non_full++;
+                }
+
+                for (size_t i=1; i< n_groups_6; i++) {
+                    min = MIN(min, group_rand_10_6[i]);
+                    if (group_rand_10_6[i] < size_group_6) {
+                        non_full++;
+                    }
+                }
+                log += std::to_string(min) + "/" + std::to_string(non_full);
+            }
+            log += ")";
             
             logger::log(logger::INFO) << log << std::endl;
         }

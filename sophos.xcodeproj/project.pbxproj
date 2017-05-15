@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		313CD45F1EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */; };
+		313CD4601EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */; };
+		313CD4611EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */; };
+		313CD4621EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */; };
+		313CD4631EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */; };
+		313CD4641EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */; };
 		31548C5C1D3D8DE5000A8346 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B161D3D787900E54019 /* large_storage_sophos_client.cpp */; };
 		31548C5D1D3D8DE5000A8346 /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */; };
 		31548C5E1D3D8DE5000A8346 /* sophos_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B1A1D3D787900E54019 /* sophos_core.cpp */; };
@@ -25,9 +31,7 @@
 		31FC7B461D3EC9AF00E54019 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B161D3D787900E54019 /* large_storage_sophos_client.cpp */; };
 		31FC7B471D3EC9B100E54019 /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */; };
 		31FC7B4D1D3ECE1700E54019 /* test_sophos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D8E1CAAE4A600DD6BF8 /* test_sophos.cpp */; };
-		31FC7B541D3ECE7800E54019 /* diane_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B351D3E760A00E54019 /* diane_client.cpp */; };
 		31FC7B551D3ECE7800E54019 /* token_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31548C571D3D8A14000A8346 /* token_tree.cpp */; };
-		31FC7B591D3ECE7800E54019 /* diane_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B381D3E761600E54019 /* diane_server.cpp */; };
 		31FC7B5A1D3ECE7800E54019 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B1E8081CAC86A900643154 /* utils.cpp */; };
 		31FC7B5C1D3ECE7800E54019 /* logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315EB1291CB42C7C00EB5D9F /* logger.cpp */; };
 		31FC7B5E1D3ECE7800E54019 /* libssdmap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF091CAC097D003B0185 /* libssdmap.dylib */; };
@@ -35,13 +39,11 @@
 		31FC7B661D3ECE8F00E54019 /* test_diane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B4B1D3ECD8800E54019 /* test_diane.cpp */; };
 		31FC7B6D1D3F5A6400E54019 /* diane.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B311D3E375800E54019 /* diane.proto */; };
 		31FC7B6E1D3F5A6400E54019 /* token_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31548C571D3D8A14000A8346 /* token_tree.cpp */; };
-		31FC7B711D3F5A6400E54019 /* diane_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B381D3E761600E54019 /* diane_server.cpp */; };
 		31FC7B721D3F5A6400E54019 /* logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315EB1291CB42C7C00EB5D9F /* logger.cpp */; };
 		31FC7B751D3F5A6400E54019 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B1E8081CAC86A900643154 /* utils.cpp */; };
 		31FC7B771D3F5A6400E54019 /* libssdmap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF091CAC097D003B0185 /* libssdmap.dylib */; };
 		31FC7B781D3F5A6400E54019 /* libsse_crypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF2C1CAC0C33003B0185 /* libsse_crypto.dylib */; };
 		31FC7B871D3F5A6B00E54019 /* diane.proto in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B311D3E375800E54019 /* diane.proto */; };
-		31FC7B8B1D3F5A6B00E54019 /* diane_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B351D3E760A00E54019 /* diane_client.cpp */; };
 		31FC7B8C1D3F5A6B00E54019 /* logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315EB1291CB42C7C00EB5D9F /* logger.cpp */; };
 		31FC7B8D1D3F5A6B00E54019 /* db_generator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C74230A1CD20DF900A76B8C /* db_generator.cpp */; };
 		31FC7B8E1D3F5A6B00E54019 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B1E8081CAC86A900643154 /* utils.cpp */; };
@@ -370,6 +372,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rocksdb_wrapper.cpp; path = utils/rocksdb_wrapper.cpp; sourceTree = "<group>"; };
 		31548C571D3D8A14000A8346 /* token_tree.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = token_tree.cpp; sourceTree = "<group>"; };
 		31548C581D3D8A14000A8346 /* token_tree.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = token_tree.hpp; sourceTree = "<group>"; };
 		315A5A531CB15D920026DBB3 /* sophos_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_client.cpp; sourceTree = "<group>"; };
@@ -396,9 +399,7 @@
 		31FC7B1B1D3D787900E54019 /* sophos_core.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sophos_core.hpp; sourceTree = "<group>"; };
 		31FC7B311D3E375800E54019 /* diane.proto */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = diane.proto; sourceTree = "<group>"; };
 		31FC7B341D3E6F4500E54019 /* types.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = types.hpp; sourceTree = "<group>"; };
-		31FC7B351D3E760A00E54019 /* diane_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = diane_client.cpp; sourceTree = "<group>"; };
 		31FC7B361D3E760A00E54019 /* diane_client.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = diane_client.hpp; sourceTree = "<group>"; };
-		31FC7B381D3E761600E54019 /* diane_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = diane_server.cpp; sourceTree = "<group>"; };
 		31FC7B391D3E761600E54019 /* diane_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = diane_server.hpp; sourceTree = "<group>"; };
 		31FC7B4B1D3ECD8800E54019 /* test_diane.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_diane.cpp; sourceTree = "<group>"; };
 		31FC7B651D3ECE7800E54019 /* diane */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = diane; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -491,6 +492,7 @@
 				31B1E8091CAC86A900643154 /* utils.hpp */,
 				315EB1441CB4719C00EB5D9F /* thread_pool.hpp */,
 				316F0D0D1D0F494A00F87904 /* rocksdb_wrapper.hpp */,
+				313CD45E1EC8C1430058A0C5 /* rocksdb_wrapper.cpp */,
 			);
 			name = utils;
 			sourceTree = "<group>";
@@ -503,9 +505,7 @@
 				31FC7B341D3E6F4500E54019 /* types.hpp */,
 				318516981D51369700A44AD7 /* diane_common.cpp */,
 				318516991D51369700A44AD7 /* diane_common.hpp */,
-				31FC7B351D3E760A00E54019 /* diane_client.cpp */,
 				31FC7B361D3E760A00E54019 /* diane_client.hpp */,
-				31FC7B381D3E761600E54019 /* diane_server.cpp */,
 				31FC7B391D3E761600E54019 /* diane_server.hpp */,
 				31FC7BB01D3F895200E54019 /* client_runner.cpp */,
 				31FC7BB11D3F895200E54019 /* client_runner.hpp */,
@@ -864,6 +864,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				31FC7B4D1D3ECE1700E54019 /* test_sophos.cpp in Sources */,
+				313CD45F1EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				31FC7B461D3EC9AF00E54019 /* large_storage_sophos_client.cpp in Sources */,
 				31FC7B451D3EC9A100E54019 /* sophos_core.cpp in Sources */,
 				31B1E80A1CAC86A900643154 /* utils.cpp in Sources */,
@@ -876,12 +877,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				31FC7B541D3ECE7800E54019 /* diane_client.cpp in Sources */,
 				3185169A1D51369700A44AD7 /* diane_common.cpp in Sources */,
 				31FC7B661D3ECE8F00E54019 /* test_diane.cpp in Sources */,
 				31FC7B551D3ECE7800E54019 /* token_tree.cpp in Sources */,
-				31FC7B591D3ECE7800E54019 /* diane_server.cpp in Sources */,
 				31FC7B5A1D3ECE7800E54019 /* utils.cpp in Sources */,
+				313CD4621EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				31FC7B5C1D3ECE7800E54019 /* logger.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -893,8 +893,8 @@
 				31FC7B6D1D3F5A6400E54019 /* diane.proto in Sources */,
 				31FC7B6E1D3F5A6400E54019 /* token_tree.cpp in Sources */,
 				3185169B1D51369700A44AD7 /* diane_common.cpp in Sources */,
-				31FC7B711D3F5A6400E54019 /* diane_server.cpp in Sources */,
 				31FC7BAF1D3F6B6600E54019 /* server_runner.cpp in Sources */,
+				313CD4631EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				31FC7B721D3F5A6400E54019 /* logger.cpp in Sources */,
 				31FC7BAC1D3F664900E54019 /* diane_server.cpp in Sources */,
 				31FC7B751D3F5A6400E54019 /* utils.cpp in Sources */,
@@ -906,13 +906,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				31FC7B871D3F5A6B00E54019 /* diane.proto in Sources */,
-				31FC7B8B1D3F5A6B00E54019 /* diane_client.cpp in Sources */,
 				31FC7BB21D3F895200E54019 /* client_runner.cpp in Sources */,
 				31FC7B8C1D3F5A6B00E54019 /* logger.cpp in Sources */,
 				31FC7B8D1D3F5A6B00E54019 /* db_generator.cpp in Sources */,
 				31FC7B8E1D3F5A6B00E54019 /* utils.cpp in Sources */,
 				31FC7BAB1D3F664600E54019 /* diane_client.cpp in Sources */,
 				31FC7B901D3F5A6B00E54019 /* token_tree.cpp in Sources */,
+				313CD4641EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				3185169C1D51369700A44AD7 /* diane_common.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -922,6 +922,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6C9CBED71CABC38B003B0185 /* sophos_server_runner.cpp in Sources */,
+				313CD4601EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				31FC7BA81D3F5F1700E54019 /* sophos_server.cpp in Sources */,
 				6C9CBEC41CABBFCC003B0185 /* sophos.proto in Sources */,
 				315EB1331CB432E100EB5D9F /* logger.cpp in Sources */,
@@ -942,6 +943,7 @@
 				31B1E80C1CAC86A900643154 /* utils.cpp in Sources */,
 				31548C5D1D3D8DE5000A8346 /* medium_storage_sophos_client.cpp in Sources */,
 				31548C5E1D3D8DE5000A8346 /* sophos_core.cpp in Sources */,
+				313CD4611EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				315A5A5B1CB15D9F0026DBB3 /* sophos_client.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

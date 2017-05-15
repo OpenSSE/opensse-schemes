@@ -29,11 +29,13 @@ void test_client_server()
     ifstream client_master_key_in(client_master_key_path.c_str());
     ifstream client_kw_token_master_key_in(client_kw_token_master_key_path.c_str());
     
-    unique_ptr<DianeClient> client;
-    unique_ptr<DianeServer> server;
+    typedef uint64_t index_type;
+    
+    unique_ptr<DianeClient<index_type>> client;
+    unique_ptr<DianeServer<index_type>> server;
     
     SearchRequest s_req;
-    UpdateRequest u_req;
+    UpdateRequest<index_type> u_req;
     std::list<index_type> res;
     string key;
 
@@ -54,9 +56,9 @@ void test_client_server()
         client_master_key_buf << client_master_key_in.rdbuf();
         client_kw_token_key_buf << client_kw_token_master_key_in.rdbuf();
 
-        client.reset(new  DianeClient("diane_client.sav", client_master_key_buf.str(), client_kw_token_key_buf.str()));
+        client.reset(new  DianeClient<index_type>("diane_client.sav", client_master_key_buf.str(), client_kw_token_key_buf.str()));
         
-        server.reset(new DianeServer("diane_server.dat"));
+        server.reset(new DianeServer<index_type>("diane_server.dat"));
         
         SearchRequest s_req;
         std::list<index_type> res;
@@ -65,9 +67,9 @@ void test_client_server()
     }else{
         cout << "Create new Diane client-server instances" << endl;
         
-        client.reset(new DianeClient("diane_client.sav", 1000));
+        client.reset(new DianeClient<index_type>("diane_client.sav"));
 
-        server.reset(new DianeServer("diane_server.dat", 1000));
+        server.reset(new DianeServer<index_type>("diane_server.dat", 1000));
         
         // write keys to files
         

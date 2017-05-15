@@ -129,6 +129,8 @@ int main(int argc, char** argv) {
     if (rnd_entries_count > 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
 
+        std::mutex buffer_mtx;
+
         auto gen_callback = [&client_runner](const std::string &s, size_t i)
         {
             if (buffer_list__ == NULL) {
@@ -178,10 +180,6 @@ int main(int argc, char** argv) {
         log_stream << "}" << std::endl;
     }
     
-    if (bench_count > 0) {
-        std::cout << "-------------- Search Benchmarks --------------" << std::endl;
-        client_runner->search_benchmark(bench_count);
-    }
     
     if (output_path.size()>0) {
         sse::logger::log(sse::logger::CRITICAL) << "JSON export is not supported in Diane!" << std::endl;

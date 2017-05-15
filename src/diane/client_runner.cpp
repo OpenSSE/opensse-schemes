@@ -50,7 +50,9 @@
 namespace sse {
     namespace diane {
         
-        static std::unique_ptr<DianeClient> init_client_from_directory(const std::string& dir_path)
+        typedef DianeClient<DianeClientRunner::index_type> DC;
+        
+        static std::unique_ptr<DC> init_client_from_directory(const std::string& dir_path)
         {
             // try to initialize everything from this directory
             if (!is_directory(dir_path)) {
@@ -81,10 +83,10 @@ namespace sse {
             master_key_buf << master_key_in.rdbuf();
             kw_token_key_buf << master_key_in.rdbuf();
             
-            return std::unique_ptr<DianeClient>(new  DianeClient(counter_map_path, master_key_buf.str(), kw_token_key_buf.str()));
+            return std::unique_ptr<DC>(new  DC(counter_map_path, master_key_buf.str(), kw_token_key_buf.str()));
         }
         
-        std::unique_ptr<DianeClient> create_in_directory(const std::string& dir_path, uint32_t n_keywords)
+        std::unique_ptr<DC> create_in_directory(const std::string& dir_path)
         {
             // try to initialize everything in this directory
             if (!is_directory(dir_path)) {
@@ -93,7 +95,7 @@ namespace sse {
             
             std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
             
-            auto c_ptr =  std::unique_ptr<DianeClient>(new DianeClient(counter_map_path, n_keywords));
+            auto c_ptr =  std::unique_ptr<DC>(new DC(counter_map_path));
             
             std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
             std::string kw_token_master_key_path = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
@@ -143,7 +145,7 @@ namespace sse {
                     throw std::runtime_error(path + ": unable to create directory");
                 }
                 
-                client_ = create_in_directory(path,n_keywords);
+                client_ = create_in_directory(path);
                 
                 // send a setup message to the server
                 bool success = send_setup(setup_size);
@@ -186,7 +188,7 @@ namespace sse {
         }
         
         
-        const DianeClient& DianeClientRunner::client() const
+        const DC& DianeClientRunner::client() const
         {
             if (!client_) {
                 throw std::logic_error("Invalid state");
@@ -203,6 +205,10 @@ namespace sse {
             SearchReply reply;
             
             message = request_to_message(client_->search_request(keyword));
+            
+            if (message.add_count() == 0) {
+                return {};
+            }
             
             std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
             std::list<uint64_t> results;
@@ -335,7 +341,7 @@ namespace sse {
 //                message_list.push_back(request_to_message(client_->update_request(it->first, it->second)));
 //            }
 
-            std::list<UpdateRequest> message_list = client_->bulk_update_request(update_list);
+            std::list<UpdateRequest<DianeClientRunner::index_type>> message_list = client_->bulk_update_request(update_list);
 
             bulk_update_state_.mtx.lock();
             
@@ -492,43 +498,43 @@ namespace sse {
             return client_->print_stats(out);
         }
         
-        void DianeClientRunner::random_search() const
-        {
-            logger::log(logger::TRACE) << "Random Search " << std::endl;
-            
-            grpc::ClientContext context;
-            SearchRequestMessage message;
-            SearchReply reply;
-            
-            message = request_to_message((client_.get())->random_search_request());
-            
-            std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
-            std::list<uint64_t> results;
-            
-            
-            while (reader->Read(&reply)) {
-                logger::log(logger::TRACE) << "New result: "
-                << std::dec << reply.result() << std::endl;
-                results.push_back(reply.result());
-            }
-            grpc::Status status = reader->Finish();
-            if (status.ok()) {
-                logger::log(logger::TRACE) << "Search succeeded." << std::endl;
-            } else {
-                logger::log(logger::ERROR) << "Search failed:" << std::endl;
-                logger::log(logger::ERROR) << status.error_message() << std::endl;
-            }
-            
-        }
+//        void DianeClientRunner::random_search() const
+//        {
+//            logger::log(logger::TRACE) << "Random Search " << std::endl;
+//            
+//            grpc::ClientContext context;
+//            SearchRequestMessage message;
+//            SearchReply reply;
+//            
+//            message = request_to_message((client_.get())->random_search_request());
+//            
+//            std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
+//            std::list<uint64_t> results;
+//            
+//            
+//            while (reader->Read(&reply)) {
+//                logger::log(logger::TRACE) << "New result: "
+//                << std::dec << reply.result() << std::endl;
+//                results.push_back(reply.result());
+//            }
+//            grpc::Status status = reader->Finish();
+//            if (status.ok()) {
+//                logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+//            } else {
+//                logger::log(logger::ERROR) << "Search failed:" << std::endl;
+//                logger::log(logger::ERROR) << status.error_message() << std::endl;
+//            }
+//            
+//        }
         
-        void DianeClientRunner::search_benchmark(size_t n_bench) const
-        {
-            for (size_t i = 0; i < n_bench; i++) {
-                logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
-                random_search();
-            }
-            logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
-        }
+//        void DianeClientRunner::search_benchmark(size_t n_bench) const
+//        {
+//            for (size_t i = 0; i < n_bench; i++) {
+//                logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
+//                random_search();
+//            }
+//            logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
+//        }
         
         SearchRequestMessage request_to_message(const SearchRequest& req)
         {
@@ -546,7 +552,7 @@ namespace sse {
             return mes;
         }
         
-        UpdateRequestMessage request_to_message(const UpdateRequest& req)
+        UpdateRequestMessage request_to_message(const UpdateRequest<DianeClientRunner::index_type>& req)
         {
             UpdateRequestMessage mes;
             

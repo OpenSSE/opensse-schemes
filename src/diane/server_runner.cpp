@@ -53,7 +53,7 @@ namespace sse {
                 }
                 
                 
-                server_.reset(new DianeServer(pairs_map_path));
+                server_.reset(new DianeServer<index_type>(pairs_map_path));
             }else if (exists(storage_path_)){
                 // there should be nothing else than a directory at path, but we found something  ...
                 throw std::runtime_error(storage_path_ + ": not a directory");
@@ -103,7 +103,7 @@ namespace sse {
             
             try {
                 logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
-                server_.reset(new DianeServer(pairs_map_path, message->setup_size()));
+                server_.reset(new DianeServer<index_type>(pairs_map_path, message->setup_size()));
             } catch (std::exception &e) {
                 logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
                 
@@ -167,35 +167,40 @@ std::to_string((t)) )
                 return grpc::Status(grpc::FAILED_PRECONDITION, "The server is not set up");
             }
             
-            logger::log(logger::TRACE) << "Searching ...";
+            logger::log(logger::TRACE) << "Searching ..." << std::endl;
 //            std::list<uint64_t> res_list;
             
             SearchRequest req = message_to_request(mes);
 
             std::vector<uint64_t> res_list(req.add_count);
             
+            logger::log(logger::TRACE) << req.add_count << " expected matches" << std::endl;
+
+            if (req.add_count == 0) {
+                logger::log(logger::INFO) << "Empty request (no expected match)"  << std::endl;
+            }else{
             
-//                BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-//                BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),4,4)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-//            BENCHMARK_Q((res_list = server_->search_simple_parallel(message_to_request(mes),8)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-            
-            
-            
-            BENCHMARK_Q((server_->search_simple_parallel(req ,8, res_list)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-            
-            
-//            BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-            //    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-            //    BENCHMARK_SIMPLE("\n\n",{;})
-            
-            for (auto& i : res_list) {
-                SearchReply reply;
-                reply.set_result((uint64_t) i);
+    //                BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+    //                BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),4,4)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+    //            BENCHMARK_Q((res_list = server_->search_simple_parallel(message_to_request(mes),8)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
                 
-                writer->Write(reply);
+                
+                
+                BENCHMARK_Q((server_->search_simple_parallel(req ,8, res_list)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+                
+                
+    //            BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+                //    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+                //    BENCHMARK_SIMPLE("\n\n",{;})
+                
+                for (auto& i : res_list) {
+                    SearchReply reply;
+                    reply.set_result((uint64_t) i);
+                    
+                    writer->Write(reply);
+                }
             }
-            
-            logger::log(logger::TRACE) << " done" << std::endl;
+            logger::log(logger::TRACE) << "Done searching" << std::endl;
             
             
             return grpc::Status::OK;
@@ -299,6 +304,8 @@ std::to_string((t)) )
             logger::log(logger::TRACE) << "Updating (bulk)... done" << std::endl;
             
             
+            flush_server_storage();
+            
             return grpc::Status::OK;
         }
         
@@ -354,9 +361,9 @@ std::to_string((t)) )
             return req;
         }
         
-        UpdateRequest message_to_request(const UpdateRequestMessage* mes)
+        UpdateRequest<DianeImpl::index_type> message_to_request(const UpdateRequestMessage* mes)
         {
-            UpdateRequest req;
+            UpdateRequest<DianeImpl::index_type> req;
             
             req.index = mes->index();
             std::copy(mes->update_token().begin(), mes->update_token().end(), req.token.begin());

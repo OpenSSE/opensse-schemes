@@ -386,7 +386,7 @@ namespace sse {
                         non_full++;
                     }
                 }
-                log += std::to_string(min) + "/" + std::to_string(non_full);
+                log += std::to_string(min) + "/" + std::to_string(n_groups_2) + "/" + std::to_string(non_full);
             }
             
             if (n_groups_3>0) {
@@ -403,7 +403,7 @@ namespace sse {
                         non_full++;
                     }
                 }
-                log += std::to_string(min) + "/" + std::to_string(non_full);
+                log += std::to_string(min) + "/" + std::to_string(n_groups_3) + "/" + std::to_string(non_full);
             }
             if (n_groups_4>0) {
                 log += ",";
@@ -419,7 +419,7 @@ namespace sse {
                         non_full++;
                     }
                 }
-                log += std::to_string(min) + "/" + std::to_string(non_full);
+                log += std::to_string(min) + "/" + std::to_string(n_groups_4) + "/" + std::to_string(non_full);
             }
             
             if (n_groups_5>0) {
@@ -436,7 +436,7 @@ namespace sse {
                         non_full++;
                     }
                 }
-                log += std::to_string(min) + "/" + std::to_string(non_full);
+                log += std::to_string(min) + "/" + std::to_string(n_groups_5) + "/" + std::to_string(non_full);
             }
             
             if (n_groups_6>0) {
@@ -453,7 +453,7 @@ namespace sse {
                         non_full++;
                     }
                 }
-                log += std::to_string(min) + "/" + std::to_string(non_full);
+                log += std::to_string(min) + "/" + std::to_string(n_groups_6) + "/" + std::to_string(non_full);
             }
             log += ")";
             

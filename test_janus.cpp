@@ -7,3 +7,15 @@
 //
 
 #include <stdio.h>
+
+void test_client_server()
+{
+    
+}
+
+int main(int argc, const char * argv[]) {
+    
+    test_client_server();
+    
+    return 0;
+}

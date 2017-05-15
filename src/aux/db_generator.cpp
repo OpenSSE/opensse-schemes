@@ -78,43 +78,40 @@ namespace sse {
             std::string kw_rand_10_3;
             
             
-            bool use_rnd_group_3 = false, use_rnd_group_4 = false, use_rnd_group_5 = false, use_rnd_group_6 = false;
+            bool use_rnd_group_2 = false, use_rnd_group_3 = false, use_rnd_group_4 = false, use_rnd_group_5 = false, use_rnd_group_6 = false;
             
 //            uint16_t n_groups_3 = (int)ceilf(96./step), n_groups_4 = (int)ceilf(100./step), n_groups_5 = (int)ceilf(10./step), n_groups_6 = (int)ceilf(10./step);
 
             
-            uint64_t size_group_3 = 1e3, size_group_4 = 1e4, size_group_5 = 1e5, size_group_6 = 1e6;
+            uint64_t size_group_2 = 1e2, size_group_3 = 1e3, size_group_4 = 1e4, size_group_5 = 1e5, size_group_6 = 1e6;
+            uint64_t n_groups_2 = optimal_num_group(N_entries, step, size_group_2);
             uint64_t n_groups_3 = optimal_num_group(N_entries, step, size_group_3);
             uint64_t n_groups_4 = optimal_num_group(N_entries, step, size_group_4);
             uint64_t n_groups_5 = optimal_num_group(N_entries, step, size_group_5);
             uint64_t n_groups_6 = optimal_num_group(N_entries, step, size_group_6);
 
             
-//            use_rnd_group_3 = true || (1.5*N_entries >= n_groups_3*size_group_3*step);
-//            use_rnd_group_4 = true || (1.5*N_entries >= n_groups_4*size_group_4*step);
-//            use_rnd_group_5 = true || (1.5*N_entries >= n_groups_5*size_group_5*step);
-//            use_rnd_group_6 = true || (1.5*N_entries >= n_groups_6*size_group_6*step);
-
-            use_rnd_group_3 = false;
-            use_rnd_group_4 = false;
-            use_rnd_group_5 = false;
-            use_rnd_group_6 = false;
-
-//            assert(use_rnd_group_3);
-//            assert(use_rnd_group_4);
-//            assert(use_rnd_group_5);
-//            assert(use_rnd_group_6);
+            use_rnd_group_2 = true || (1.5*N_entries >= n_groups_2*size_group_2*step);
+            use_rnd_group_3 = true || (1.5*N_entries >= n_groups_3*size_group_3*step);
+            use_rnd_group_4 = true || (1.5*N_entries >= n_groups_4*size_group_4*step);
+            use_rnd_group_5 = true || (1.5*N_entries >= n_groups_5*size_group_5*step);
+            use_rnd_group_6 = true || (1.5*N_entries >= n_groups_6*size_group_6*step);
             
-            const double r_threshold_3 = 1;//2*((double)n_groups_3*size_group_3*step)/((double)N_entries);
+            const double r_threshold_2 = 1.2*((double)n_groups_2*size_group_2*step)/((double)N_entries);
+            const double r_threshold_3 = 1.2*((double)n_groups_3*size_group_3*step)/((double)N_entries);
             const double r_threshold_4 = 1.2*((double)n_groups_4*size_group_4*step)/((double)N_entries);
             const double r_threshold_5 = 1.2*((double)n_groups_5*size_group_5*step)/((double)N_entries);
             const double r_threshold_6 = 1.2*((double)n_groups_6*size_group_6*step)/((double)N_entries);
 
+            uint64_t group_rand_10_2[n_groups_2];
             uint64_t group_rand_10_3[n_groups_3];
             uint64_t group_rand_10_4[n_groups_4];
             uint64_t group_rand_10_5[n_groups_5];
             uint64_t group_rand_10_6[n_groups_6];
 
+            for (size_t i=0; i< n_groups_2; i++) {
+                group_rand_10_2[i] = 0;
+            }
             for (size_t i=0; i< n_groups_3; i++) {
                 group_rand_10_3[i] = 0;
             }
@@ -235,6 +232,17 @@ namespace sse {
                         }
                         counter_10_2++;
                     }
+                    
+                    
+                    if (use_rnd_group_2 && w_d < r_threshold_2) {
+                        uint16_t g = ind%n_groups_2;
+                        if (group_rand_10_2[g] < size_group_2) {
+                            group_rand_10_2[g]++;
+                            kw = kKeywordRand10GroupBase  + "2_" + id_string + "_" + std::to_string(g);
+                            insertions.push_back(kw);
+                        }
+                    }
+
                 }
                 if (counter_10_3 < max_10_counter) {
                     kw_10_3 = kKeyword10GroupBase  + "3_" + id_string + "_" + std::to_string(counter_10_3);

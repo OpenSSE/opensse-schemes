@@ -91,12 +91,13 @@ objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 
 env.Depends(objects["diane"],[crypto_lib_target, ssdmap_target, db_parser_target])
 env.Depends(objects["sophos"],[crypto_lib_target, ssdmap_target, db_parser_target])
+env.Depends(objects["janus"],[crypto_lib_target, ssdmap_target, db_parser_target])
 
 # clean_crypto = env.Command("clean_crypto", "", "cd third_party/crypto && scons -c lib")
 # clean_ssdmap = env.Command("clean_ssdmap", "", "cd third_party/ssdmap && scons -c lib")
 # env.Alias('clean_deps', [clean_crypto, clean_ssdmap])
 
-Clean(objects["sophos"] + objects["diane"], 'build')
+Clean(objects["sophos"] + objects["diane"] + objects["janus"], 'build')
 
 outter_env = env.Clone()
 outter_env.Append(CPPPATH = ['build'])
@@ -110,6 +111,9 @@ diane_debug_prog    = outter_env.Program('diane_debug',     ['test_diane.cpp']  
 diane_client        = outter_env.Program('diane_client',    ['diane_client.cpp']    + objects["diane"])
 diane_server        = outter_env.Program('diane_server',    ['diane_server.cpp']    + objects["diane"])
 
+janus_debug_prog    = outter_env.Program('janus_debug',     ['test_janus.cpp']      + objects["janus"])
+
 env.Alias('sophos', [sophos_debug_prog, sophos_client, sophos_server])
 env.Alias('diane', [diane_debug_prog, diane_client, diane_server])
-env.Default(['diane'])
+env.Alias('janus', [janus_debug_prog])
+env.Default(['diane','janus'])

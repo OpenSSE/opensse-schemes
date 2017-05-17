@@ -77,6 +77,7 @@ diane_server
 diane_client
 client
 server
+janus_debug
 
 *.csdb
 *.ssdb

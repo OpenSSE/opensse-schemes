@@ -63,6 +63,17 @@ done
 
 # 'Random' groups
 
+# 1e2
+kw_list=""
+for i in `seq 0 7`;
+do
+	for j in `seq 0 103`;
+	do
+		kw_list=$kw_list" "$kKeywordRand10GroupBase"2_"$i"_"$j
+	done
+done
+./diane_client -q -b $db_file $kw_list
+
 # 1e3
 kw_list=""
 for i in `seq 0 7`;

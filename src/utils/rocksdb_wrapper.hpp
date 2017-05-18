@@ -50,6 +50,9 @@ public:
     inline bool put(const std::array<uint8_t, N> &key, const V &data);
 
     inline void flush(bool blocking = true);
+    
+    inline uint64_t approximate_size() const;
+
 private:
     rocksdb::DB* db_;
     
@@ -195,6 +198,16 @@ private:
 
     }
 
+    uint64_t RockDBWrapper::approximate_size() const
+    {
+        uint64_t v;
+        bool flag = db_->GetIntProperty(rocksdb::DB::Properties::kEstimateNumKeys, &v);
+        
+        assert(flag);
+        
+        return v;
+    }
+
     
     class RocksDBCounter {
     public:
@@ -213,6 +226,16 @@ private:
         
         inline void flush(bool blocking = true);
         
+        inline uint64_t approximate_size() const
+        {
+            uint64_t v;
+            bool flag = db_->GetIntProperty(rocksdb::DB::Properties::kEstimateNumKeys, &v);
+            
+            assert(flag);
+            
+            return v;
+        }
+
     private:
         rocksdb::DB* db_;
         

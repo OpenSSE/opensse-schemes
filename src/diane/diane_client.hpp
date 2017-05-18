@@ -301,7 +301,9 @@ namespace sse {
                 // retrieve the counter
                 uint32_t kw_counter;
                 bool success = counter_map_.get_and_increment(keyword, kw_counter);
-               
+                
+                assert(success);
+                
                 res.push_back({keyword, index, kw_counter});
 
             }
@@ -314,12 +316,16 @@ namespace sse {
         template <typename T>
         std::ostream& DianeClient<T>::print_stats(std::ostream& out) const
         {
-//            out << "Number of keywords: " << counter_map_.size();
-//            out << "; Load: " << counter_map_.load();
-//            out << "; Overflow bucket size: " << counter_map_.overflow_size() << std::endl;
-            
+            out << "Number of keywords: " << keyword_count() << std::endl;
+           
             return out;
         }
         
+        template <typename T>
+        size_t DianeClient<T>::keyword_count() const
+        {
+            return counter_map_.approximate_size();
+        }
+
     }
 }

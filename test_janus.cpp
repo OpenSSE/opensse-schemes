@@ -66,10 +66,10 @@ void benchmark_puncture_generation(ostream &out)
             tag[6] = (i>>48)&0xFF;
             tag[7] = (i>>56)&0xFF;
             
-            PuncturableEncryption cryptor(master_key);
-            
+
             auto t_start = std::chrono::high_resolution_clock::now();
             
+            PuncturableEncryption cryptor(master_key);
             auto sk_i = cryptor.inc_puncture(i, tag);
             
             auto t_end = std::chrono::high_resolution_clock::now();
@@ -111,10 +111,9 @@ void benchmark_encrypt(ostream &out)
             
             sse::crypto::random_bytes(sizeof(uint64_t), (uint8_t*) &M);
 
-            PuncturableEncryption cryptor(master_key);
-            
             auto t_start = std::chrono::high_resolution_clock::now();
-            
+
+            PuncturableEncryption cryptor(master_key);            
             auto sk_i = cryptor.encrypt(M, tag);
             
             auto t_end = std::chrono::high_resolution_clock::now();

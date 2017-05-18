@@ -205,6 +205,7 @@ void benchmark_decrypt(ostream &out)
                 time = t_end - t_start;
                 
                 out << "Decrypt_" << std::to_string(current_p_count) << " \t " << time.count() << endl;
+                out << "Decrypt_per_punct" << " \t " << time.count()/(keyshares.size()) << endl;
             }
         }
         cout << endl;

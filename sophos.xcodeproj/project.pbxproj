@@ -22,6 +22,7 @@
 		313CD47F1EC8FE720058A0C5 /* libsse_crypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9CBF2C1CAC0C33003B0185 /* libsse_crypto.dylib */; };
 		313CD4871EC8FEC10058A0C5 /* test_janus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD4861EC8FEC10058A0C5 /* test_janus.cpp */; };
 		313CD48A1EC8FF0B0058A0C5 /* janus_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD4881EC8FF0B0058A0C5 /* janus_client.cpp */; };
+		31523FB01EE7505A00973EEF /* janus_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31523FAE1EE7505A00973EEF /* janus_server.cpp */; };
 		31548C5C1D3D8DE5000A8346 /* large_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B161D3D787900E54019 /* large_storage_sophos_client.cpp */; };
 		31548C5D1D3D8DE5000A8346 /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */; };
 		31548C5E1D3D8DE5000A8346 /* sophos_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B1A1D3D787900E54019 /* sophos_core.cpp */; };
@@ -424,6 +425,8 @@
 		313CD4861EC8FEC10058A0C5 /* test_janus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_janus.cpp; sourceTree = "<group>"; };
 		313CD4881EC8FF0B0058A0C5 /* janus_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = janus_client.cpp; path = janus/janus_client.cpp; sourceTree = "<group>"; };
 		313CD4891EC8FF0B0058A0C5 /* janus_client.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = janus_client.hpp; path = janus/janus_client.hpp; sourceTree = "<group>"; };
+		31523FAE1EE7505A00973EEF /* janus_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = janus_server.cpp; path = janus/janus_server.cpp; sourceTree = "<group>"; };
+		31523FAF1EE7505A00973EEF /* janus_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = janus_server.hpp; path = janus/janus_server.hpp; sourceTree = "<group>"; };
 		31548C571D3D8A14000A8346 /* token_tree.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = token_tree.cpp; sourceTree = "<group>"; };
 		31548C581D3D8A14000A8346 /* token_tree.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = token_tree.hpp; sourceTree = "<group>"; };
 		315A5A531CB15D920026DBB3 /* sophos_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sophos_client.cpp; sourceTree = "<group>"; };
@@ -563,6 +566,8 @@
 				313CD4701EC8FBA30058A0C5 /* types.hpp */,
 				313CD4881EC8FF0B0058A0C5 /* janus_client.cpp */,
 				313CD4891EC8FF0B0058A0C5 /* janus_client.hpp */,
+				31523FAE1EE7505A00973EEF /* janus_server.cpp */,
+				31523FAF1EE7505A00973EEF /* janus_server.hpp */,
 			);
 			name = janus;
 			sourceTree = "<group>";
@@ -932,7 +937,8 @@
 		6C9CBF281CAC0C33003B0185 /* native_checks */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			path = native_checks;
+			name = native_checks;
+			path = "native checks";
 			remoteRef = 6C9CBF271CAC0C33003B0185 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -957,6 +963,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31523FB01EE7505A00973EEF /* janus_server.cpp in Sources */,
 				313CD48A1EC8FF0B0058A0C5 /* janus_client.cpp in Sources */,
 				313CD4771EC8FE720058A0C5 /* diane_common.cpp in Sources */,
 				313CD4791EC8FE720058A0C5 /* token_tree.cpp in Sources */,

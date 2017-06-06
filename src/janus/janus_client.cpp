@@ -40,7 +40,7 @@ namespace sse {
             
             // the key derivation will to be modified for the real implementation
             auto punct_encryption = crypto::PuncturableEncryption(punct_enc_master_prf_.prf(keyword));
-            req.first_key_share = punct_encryption.initial_keyshare(req.deletion_search_request.add_count);
+            req.first_key_share = punct_encryption.initial_keyshare(req.deletion_search_request.add_count); // the add_count for the deletion scheme is actually the number of deleted entries
             
             if (req.insertion_search_request.add_count < req.deletion_search_request.add_count) {
                 logger::log(logger::ERROR) << "Keyword " << keyword << " was inserted " << req.insertion_search_request.add_count << " times and deleted " << req.deletion_search_request.add_count << " times" << std::endl;

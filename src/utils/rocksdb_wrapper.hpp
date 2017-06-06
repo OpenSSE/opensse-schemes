@@ -172,7 +172,7 @@ private:
         
         if (!s.ok()) {
             logger::log(logger::ERROR) << "Unable to insert pair in the database: " << s.ToString() << std::endl;
-            logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key) << ", data=" << std::hex << data << std::endl;
+            logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key) << ", data=" << hex_string(data) << std::endl;
 
         }
 //        assert(s.ok());

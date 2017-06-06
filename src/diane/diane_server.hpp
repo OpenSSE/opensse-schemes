@@ -110,17 +110,17 @@ namespace sse {
             
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
+                logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
             }
             
             bool found = edb_.get(ut,index);
             
             if (found) {
                 if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "Found: " << std::hex << index << std::endl;
+                    logger::log(logger::DBG) << "Found: " << hex_string(index) << std::endl;
                 }
                 
-                index ^= mask;
+                index = xor_mask(index, mask);
             }else{
                 logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
             }
@@ -503,7 +503,7 @@ namespace sse {
         void DianeServer<T>::update(const UpdateRequest<T>& req)
         {
             if (logger::severity() <= logger::DBG) {
-                logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+                logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << hex_string(req.index) << ")" << std::endl;
             }
             
             edb_.put(req.token, req.index);

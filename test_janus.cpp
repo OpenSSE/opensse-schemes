@@ -284,8 +284,8 @@ void test_client_server()
         add_req = client->insertion_request("toto", 0);
         server->insert_entry(add_req);
         
-        //        u_req = client->update_request("titi", 0);
-        //        server->update(u_req);
+        add_req = client->insertion_request("titi", 0);
+        server->insert_entry(add_req);
         
         add_req = client->insertion_request("toto", 1);
         server->insert_entry(add_req);
@@ -293,8 +293,17 @@ void test_client_server()
         add_req = client->insertion_request("toto", 2);
         server->insert_entry(add_req);
         
-        //        u_req = client->update_request("tata", 0);
-        //        server->update(u_req);
+        add_req = client->insertion_request("tata", 0);
+        server->insert_entry(add_req);
+        add_req = client->insertion_request("tata", 3);
+        server->insert_entry(add_req);
+        add_req = client->insertion_request("tata", 5);
+        server->insert_entry(add_req);
+        
+        DeletionRequest del_req;
+        del_req = client->deletion_request("tata", 3);
+        server->delete_entry(del_req);
+        
     }
     
     SearchRequest s_req;
@@ -302,6 +311,16 @@ void test_client_server()
     std::string key = "toto";
     s_req = client->search_request(key);
     auto res = server->search(s_req);
+    
+    cout << "Search " << key << ". Results: [";
+    for(index_type i : res){
+        cout << i << ", ";
+    }
+    cout << "]" << endl;
+
+    key = "tata";
+    s_req = client->search_request(key);
+    res = server->search(s_req);
     
     cout << "Search " << key << ". Results: [";
     for(index_type i : res){

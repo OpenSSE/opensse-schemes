@@ -19,15 +19,14 @@ namespace sse {
         
         class JanusClient {
         public:
-            JanusClient(const std::string& add_map_path, const std::string& del_map_path);
-            JanusClient(const std::string& add_map_path, const std::string& del_map_path, const std::string& tag_derivation_key, const std::string& punct_enc_derivation_key);
+            JanusClient(const std::string& add_map_path, const std::string& del_map_path, const std::string& master_key);
 //            ~JanusClient();
             
             
-            inline const std::string tag_derivation_key() const
-            {
-                return std::string(tag_prf_.key().begin(), tag_prf_.key().end());
-            }
+//            inline const std::string tag_derivation_key() const
+//            {
+//                return std::string(tag_prf_.key().begin(), tag_prf_.key().end());
+//            }
             
             SearchRequest       search_request(const std::string &keyword) const;
             InsertionRequest    insertion_request(const std::string &keyword, const index_type index);

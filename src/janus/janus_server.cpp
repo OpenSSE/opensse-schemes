@@ -11,17 +11,17 @@
 namespace sse {
     namespace janus {
         
-        static inline std::string insertion_db_path(const std::string &path)
-        {
-            return path + "/insertion.db";
-        }
+//        static inline std::string insertion_db_path(const std::string &path)
+//        {
+//            return path + "/insertion.db";
+//        }
+//        
+//        static inline std::string deletion_db_path(const std::string &path)
+//        {
+//            return path + "/deletion.db";
+//        }
         
-        static inline std::string deletion_db_path(const std::string &path)
-        {
-            return path + "/deletion.db";
-        }
-        
-        JanusServer::JanusServer(const std::string& db_path) : insertion_server_(insertion_db_path(db_path)), deletion_server_(deletion_db_path(db_path))
+        JanusServer::JanusServer(const std::string& db_add_path, const std::string& db_del_path) : insertion_server_(db_add_path), deletion_server_(db_del_path)
         {}
 
         

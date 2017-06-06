@@ -20,7 +20,7 @@ namespace sse {
         
         class JanusServer {
         public:
-            JanusServer(const std::string& db_path);
+            JanusServer(const std::string& db_add_path, const std::string& db_del_path);
             
             bool get(const uint8_t *key, index_type &index) const;
             

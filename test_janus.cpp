@@ -17,7 +17,11 @@
 #include <chrono>
 #include <cassert>
 
+#include "janus/janus_client.hpp"
+#include "janus/janus_server.hpp"
+
 using namespace sse::crypto;
+using namespace sse::janus;
 using namespace std;
 
 void benchmark_sk0_generation(ostream &out)
@@ -230,14 +234,90 @@ void benchmark_puncturable_encryption()
 
 void test_client_server()
 {
+    sse::logger::set_severity(sse::logger::DBG);
+
+    string client_master_key_path = "janus_master.key";
+    ifstream client_master_key_in(client_master_key_path.c_str());
+
+    typedef uint64_t index_type;
+
+    unique_ptr<JanusClient> client;
+    unique_ptr<JanusServer> server;
+
+    if (client_master_key_in.good() == true) {
+        // the files exist
+        cout << "Restart Janus client and server" << endl;
+        
+        stringstream client_master_key_buf, client_kw_token_key_buf;
+        
+        client_master_key_buf << client_master_key_in.rdbuf();
+        
+        cout << "MASTER KEY: " << hex_string(client_master_key_buf.str()) << "\n";
+        
+        client.reset(new  JanusClient("janus_client.add.dat", "janus_client.del.dat", client_master_key_buf.str()));
+        
+        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat"));
+        
+        SearchRequest s_req;
+        std::list<index_type> res;
+        string key;
+        
+    }else{
+        cout << "Create new Diane client-server instances" << endl;
+        
+        string master_key = sse::crypto::random_string(32);
+        
+        cout << "MASTER KEY: " << hex_string(master_key) << "\n";
+
+        client.reset(new  JanusClient("janus_client.add.dat", "janus_client.del.dat", master_key));
+        
+        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat"));
+        
+        // write keys to files
+        
+        ofstream client_master_key_out(client_master_key_path.c_str());
+        client_master_key_out << master_key;
+        client_master_key_out.close();
+
+        InsertionRequest add_req;
+        
+        add_req = client->insertion_request("toto", 0);
+        server->insert_entry(add_req);
+        
+        //        u_req = client->update_request("titi", 0);
+        //        server->update(u_req);
+        
+        add_req = client->insertion_request("toto", 1);
+        server->insert_entry(add_req);
+        
+        add_req = client->insertion_request("toto", 2);
+        server->insert_entry(add_req);
+        
+        //        u_req = client->update_request("tata", 0);
+        //        server->update(u_req);
+    }
     
+    SearchRequest s_req;
+
+    std::string key = "toto";
+    s_req = client->search_request(key);
+    auto res = server->search(s_req);
+    
+    cout << "Search " << key << ". Results: [";
+    for(index_type i : res){
+        cout << i << ", ";
+    }
+    cout << "]" << endl;
+
+    
+    client_master_key_in.close();
 }
 
 int main(int argc, const char * argv[]) {
     
     init_crypto_lib();
     
-    benchmark_puncturable_encryption();
+//    benchmark_puncturable_encryption();
     test_client_server();
     
     cleanup_crypto_lib();

@@ -16,16 +16,24 @@ namespace sse {
             return std::to_string(ind) + "||" + kw; // FIX THAT
         }
         
-        JanusClient::JanusClient(const std::string& add_map_path, const std::string& del_map_path) :
-        tag_prf_(), punct_enc_master_prf_(), insertion_client_(add_map_path), deletion_client_(del_map_path)
+        inline std::string tag_derivation_key(const std::string& master_key)
         {
+            crypto::Prf<32> master_prf(master_key);
+            return master_prf.prf_string("tag_derivation");
+        }
+        
+        inline std::string punct_enc_key(const std::string& master_key)
+        {
+            crypto::Prf<32> master_prf(master_key);
+            return master_prf.prf_string("punct_enc");
+        }
+        
+        JanusClient::JanusClient(const std::string& add_map_path, const std::string& del_map_path, const std::string& master_key) :
+        tag_prf_(tag_derivation_key(master_key)), punct_enc_master_prf_(punct_enc_key(master_key)), insertion_client_(add_map_path), deletion_client_(del_map_path)
+        {
+            std::cout << "MASTER KEY: " << hex_string(master_key) << "\n";
         }
 
-        JanusClient::JanusClient(const std::string& add_map_path, const std::string& del_map_path, const std::string& tag_derivation_key, const std::string& punct_enc_derivation_key) :
-        tag_prf_(tag_derivation_key), punct_enc_master_prf_(punct_enc_derivation_key), insertion_client_(add_map_path), deletion_client_(del_map_path)
-        {
-            
-        }
 //        JanusClient::~JanusClient();
         
         

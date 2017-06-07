@@ -9,7 +9,53 @@
 #include "janus_server.hpp"
 
 namespace sse {
+    namespace sophos {
+        
+        using namespace janus;
+        
+        template<>
+        struct serialization<JanusServer::cached_result_type>
+        {
+            std::string serialize(const JanusServer::cached_result_type& elt)
+            {
+                return std::string((char*)(&(elt.first)), sizeof(index_type)) + std::string(elt.second.begin(), elt.second.end());
+            }
+            bool deserialize(std::string::iterator& begin, const std::string::iterator& end, JanusServer::cached_result_type& out)
+            {
+                if (end-begin < sizeof(janus::index_type)+sizeof(crypto::punct::kTagSize)) {
+                    
+                    if (end != begin) {
+                        logger::log(logger::ERROR) << "Unable to deserialize" << std::endl;
+                    }
+
+                    return false;
+                }
+                index_type ind;
+                crypto::punct::tag_type tag;
+                
+                for (size_t i = 0; i < sizeof(index_type); i++) {
+                    // I wish it would have been prettier, but I couldn't find any way to do so ...
+                    // begin is not a char*, so no memcpy ...
+                    (&ind)[i] = *(begin+i);
+                }
+                
+                std::copy(begin+sizeof(index_type), begin+sizeof(index_type)+tag.size(), tag.begin());
+                
+                begin +=sizeof(index_type)+tag.size();
+                
+                out = std::make_pair(ind, std::move(tag));
+                
+                return true;
+            }
+        };
+ 
+    }
+}
+namespace sse {
     namespace janus {
+        
+        
+        
         
 //        static inline std::string insertion_db_path(const std::string &path)
 //        {
@@ -21,7 +67,8 @@ namespace sse {
 //            return path + "/deletion.db";
 //        }
         
-        JanusServer::JanusServer(const std::string& db_add_path, const std::string& db_del_path) : insertion_server_(db_add_path), deletion_server_(db_del_path)
+        JanusServer::JanusServer(const std::string& db_add_path, const std::string& db_del_path, const std::string& db_cache_path) :
+            insertion_server_(db_add_path), deletion_server_(db_del_path), cached_results_edb_(db_cache_path)
         {}
 
         
@@ -44,14 +91,19 @@ namespace sse {
             
             
             std::list<index_type> results;
+            std::list<cached_result_type> cached_res;
             
             for (auto ct : insertions)
             {
                 index_type r;
                 if (decryptor.decrypt(ct, r)) {
                     results.push_back(r);
+                    cached_res.push_back(std::make_pair(r,crypto::punct::extract_tag(ct)));
                 }
             }
+            
+            // store results in the cache
+            cached_results_edb_.put(req.keyword_token, cached_res);
             
             
             return results;

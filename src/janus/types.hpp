@@ -20,8 +20,13 @@ namespace sse {
 
         typedef uint64_t index_type;
         
+        constexpr size_t kKeywordTokenSize = 16;
+        typedef std::array<uint8_t, kKeywordTokenSize> keyword_token_type;
+        
         struct SearchRequest
         {
+            keyword_token_type keyword_token;
+            
             diane::SearchRequest insertion_search_request;
             diane::SearchRequest deletion_search_request;
             

@@ -11,6 +11,7 @@
 #include "types.hpp"
 
 #include "diane/diane_server.hpp"
+#include "utils/rocksdb_wrapper.hpp"
 
 #include <sse/crypto/prf.hpp>
 
@@ -20,7 +21,9 @@ namespace sse {
         
         class JanusServer {
         public:
-            JanusServer(const std::string& db_add_path, const std::string& db_del_path);
+            typedef std::pair<index_type, crypto::punct::tag_type> cached_result_type;
+            
+            JanusServer(const std::string& db_add_path, const std::string& db_del_path, const std::string& db_cache_path);
             
             bool get(const uint8_t *key, index_type &index) const;
             
@@ -45,10 +48,11 @@ namespace sse {
             
             void flush_edb();
         private:
-            
             diane::DianeServer<crypto::punct::ciphertext_type> insertion_server_;
             diane::DianeServer<crypto::punct::key_share_type> deletion_server_;
-            
+
+            sophos::RockDBListStore<cached_result_type> cached_results_edb_;
+
         };
         
     }

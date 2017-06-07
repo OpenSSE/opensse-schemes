@@ -254,9 +254,9 @@ void test_client_server()
         
         cout << "MASTER KEY: " << hex_string(client_master_key_buf.str()) << "\n";
         
-        client.reset(new  JanusClient("janus_client.add.dat", "janus_client.del.dat", client_master_key_buf.str()));
+        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_buf.str()));
         
-        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat"));
+        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
         
         SearchRequest s_req;
         std::list<index_type> res;
@@ -265,9 +265,9 @@ void test_client_server()
     }else{
         cout << "Create new Diane client-server instances" << endl;
         
-        client.reset(new  JanusClient("janus_client.add.dat", "janus_client.del.dat"));
+        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat"));
         
-        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat"));
+        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
         
         // write keys to files
         

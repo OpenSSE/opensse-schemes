@@ -13,50 +13,54 @@ namespace sse {
         
         inline std::string keyword_doc_string(const std::string &kw, index_type ind)
         {
-            return std::to_string(ind) + "||" + kw; // FIX THAT
+            return hex_string(ind) + "||" + kw;
         }
         
-        inline std::string tag_derivation_key(const std::string& master_key)
+        std::string JanusClient::tag_derivation_key() const
         {
-            crypto::Prf<32> master_prf(master_key);
-            return master_prf.prf_string("tag_derivation");
+            return master_prf_.prf_string("tag_derivation");
         }
         
-        inline std::string punct_enc_key(const std::string& master_key)
+        std::string JanusClient::punct_enc_key() const
         {
-            crypto::Prf<32> master_prf(master_key);
-            return master_prf.prf_string("punct_enc");
+            return master_prf_.prf_string("punct_enc");
         }
         
-        inline std::string insertion_derivation_master_key(const std::string& master_key)
+        std::string JanusClient::insertion_derivation_master_key() const
         {
-            crypto::Prf<32> master_prf(master_key);
-            return master_prf.prf_string("add_derivation_master_key");
+            return master_prf_.prf_string("add_derivation_master_key");
         }
         
-        inline std::string insertion_kw_token_master_key(const std::string& master_key)
+        std::string JanusClient::insertion_kw_token_master_key() const
         {
-            crypto::Prf<32> master_prf(master_key);
-            return master_prf.prf_string("add_kw_token_master_key");
+            return master_prf_.prf_string("add_kw_token_master_key");
         }
         
-        inline std::string deletion_derivation_master_key(const std::string& master_key)
+        std::string JanusClient::deletion_derivation_master_key() const
         {
-            crypto::Prf<32> master_prf(master_key);
-            return master_prf.prf_string("del_derivation_master_key");
+            return master_prf_.prf_string("del_derivation_master_key");
         }
         
-        inline std::string delertion_kw_token_master_key(const std::string& master_key)
+        std::string JanusClient::delertion_kw_token_master_key() const
         {
-            crypto::Prf<32> master_prf(master_key);
-            return master_prf.prf_string("del_kw_token_master_key");
+            return master_prf_.prf_string("del_kw_token_master_key");
         }
         
+        JanusClient::JanusClient(const std::string& add_map_path, const std::string& del_map_path) :
+        master_prf_(),
+        tag_prf_(tag_derivation_key()),
+        punct_enc_master_prf_(punct_enc_key()),
+        insertion_client_(add_map_path, insertion_derivation_master_key(), insertion_kw_token_master_key()),
+        deletion_client_(del_map_path, deletion_derivation_master_key(), delertion_kw_token_master_key())
+        {
+        }
+
         JanusClient::JanusClient(const std::string& add_map_path, const std::string& del_map_path, const std::string& master_key) :
-            tag_prf_(tag_derivation_key(master_key)),
-            punct_enc_master_prf_(punct_enc_key(master_key)),
-            insertion_client_(add_map_path, insertion_derivation_master_key(master_key), insertion_kw_token_master_key(master_key)),
-            deletion_client_(del_map_path, deletion_derivation_master_key(master_key), delertion_kw_token_master_key(master_key))
+            master_prf_(master_key),
+            tag_prf_(tag_derivation_key()),
+            punct_enc_master_prf_(punct_enc_key()),
+            insertion_client_(add_map_path, insertion_derivation_master_key(), insertion_kw_token_master_key()),
+            deletion_client_(del_map_path, deletion_derivation_master_key(), delertion_kw_token_master_key())
         {
             std::cout << "MASTER KEY: " << hex_string(master_key) << "\n";
         }

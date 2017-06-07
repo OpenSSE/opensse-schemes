@@ -19,14 +19,18 @@ namespace sse {
         
         class JanusClient {
         public:
+            
+            static constexpr size_t kSubkeysSize = 32;
+            
+            JanusClient(const std::string& add_map_path, const std::string& del_map_path);
             JanusClient(const std::string& add_map_path, const std::string& del_map_path, const std::string& master_key);
 //            ~JanusClient();
             
             
-//            inline const std::string tag_derivation_key() const
-//            {
-//                return std::string(tag_prf_.key().begin(), tag_prf_.key().end());
-//            }
+            inline const std::string master_key() const
+            {
+                return std::string(master_prf_.key().begin(), master_prf_.key().end());
+            }
             
             SearchRequest       search_request(const std::string &keyword) const;
             InsertionRequest    insertion_request(const std::string &keyword, const index_type index);
@@ -64,17 +68,19 @@ namespace sse {
             
         private:
             
-//            std::list<std::tuple<std::string, T, uint32_t>>   get_counters_and_increment(const std::list<std::pair<std::string, index_type>> &update_list);
+            std::string tag_derivation_key() const;
+            std::string punct_enc_key() const;
+            std::string insertion_derivation_master_key() const;
+            std::string insertion_kw_token_master_key() const;
+            std::string deletion_derivation_master_key() const;
+            std::string delertion_kw_token_master_key() const;
             
-//            crypto::Prf<kSearchTokenKeySize> root_prf_;
+            crypto::Prf<kSubkeysSize> master_prf_;
             crypto::Prf<crypto::punct::kTagSize> tag_prf_;
             crypto::Prf<crypto::punct::kMasterKeySize> punct_enc_master_prf_;
             
             diane::DianeClient<crypto::punct::ciphertext_type> insertion_client_;
             diane::DianeClient<crypto::punct::key_share_type> deletion_client_;
-            
-//            sophos::RocksDBCounter counter_map_;
-//            std::atomic_uint keyword_counter_;
         };
         
         

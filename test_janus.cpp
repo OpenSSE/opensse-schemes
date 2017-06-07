@@ -265,18 +265,14 @@ void test_client_server()
     }else{
         cout << "Create new Diane client-server instances" << endl;
         
-        string master_key = sse::crypto::random_string(32);
-        
-        cout << "MASTER KEY: " << hex_string(master_key) << "\n";
-
-        client.reset(new  JanusClient("janus_client.add.dat", "janus_client.del.dat", master_key));
+        client.reset(new  JanusClient("janus_client.add.dat", "janus_client.del.dat"));
         
         server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat"));
         
         // write keys to files
         
         ofstream client_master_key_out(client_master_key_path.c_str());
-        client_master_key_out << master_key;
+        client_master_key_out << client->master_key();
         client_master_key_out.close();
 
         InsertionRequest add_req;

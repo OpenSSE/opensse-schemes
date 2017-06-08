@@ -21,12 +21,8 @@ namespace sse {
             std::string serialize(const JanusServer::cached_result_type& elt)
             {
                 logger::log(logger::DBG) << "Serializing pair (" << hex_string(elt.first) << ", " << hex_string(elt.second) << ")\n";
-                std::string out = std::string((char*)(&(elt.first)), sizeof(index_type)) + std::string(elt.second.begin(), elt.second.end());
-                
-                logger::log(logger::DBG) << "Serialized string: " << hex_string(out) << "\n";
-
-                
-                return out;
+               
+                return std::string((char*)(&(elt.first)), sizeof(index_type)) + std::string(elt.second.begin(), elt.second.end());;
             }
             bool deserialize(std::string::iterator& begin, const std::string::iterator& end, JanusServer::cached_result_type& out)
             {
@@ -44,16 +40,7 @@ namespace sse {
                 index_type ind;
                 crypto::punct::tag_type tag;
 
-                std::string tmp(begin, begin+sizeof(index_type));
-                memcpy(&ind, tmp.data(), sizeof(index_type));
-                
-//                for (size_t i = 0; i < sizeof(index_type); i++) {
-//                    // I wish it would have been prettier, but I couldn't find any way to do so ...
-//                    // begin is not a char*, so no memcpy ...
-//                    
-//                    (&ind)[i] = *(begin+i);
-//                }
-                
+                std::copy(begin, begin+sizeof(index_type), &ind);
                 std::copy(begin+sizeof(index_type), begin+sizeof(index_type)+tag.size(), tag.begin());
                 
                 begin +=sizeof(index_type)+tag.size();

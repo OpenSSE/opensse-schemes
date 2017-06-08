@@ -257,11 +257,27 @@ void test_client_server()
         client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_buf.str()));
         
         server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
-        
+
         SearchRequest s_req;
-        std::list<index_type> res;
-        string key;
         
+        std::string key = "toto";
+        s_req = client->search_request(key);
+        auto res = server->search(s_req);
+        
+        cout << "Search " << key << ". Results: [";
+        for(index_type i : res){
+            cout << i << ", ";
+        }
+        cout << "]" << endl;
+
+        DeletionRequest del_req;
+        del_req = client->deletion_request("toto", 2);
+        server->delete_entry(del_req);
+
+        InsertionRequest add_req;
+        add_req = client->insertion_request("tata", 6);
+        server->insert_entry(add_req);
+
     }else{
         cout << "Create new Diane client-server instances" << endl;
         

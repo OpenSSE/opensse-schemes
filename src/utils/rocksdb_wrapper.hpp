@@ -212,6 +212,10 @@ private:
         
         bool get_and_increment(const std::string &key, uint32_t &val);
         
+        bool increment(const std::string &key, uint32_t default_value = 0);
+
+        bool set(const std::string &key, uint32_t val);
+
         inline void flush(bool blocking = true);
         
     private:

@@ -89,8 +89,12 @@ namespace sse {
             
             // construct a set of newly removed tags
             std::set<crypto::punct::tag_type> removed_tags;
-            for (auto sk : key_shares) {
-                removed_tags.insert(crypto::punct::extract_tag(sk));
+            auto sk_it = key_shares.begin();
+            ++sk_it; // skip the first element
+            for ( ; sk_it != key_shares.end(); ++sk_it){
+                auto tag = crypto::punct::extract_tag(*sk_it);
+                logger::log(logger::DBG) << "tag " << hex_string(tag) << " is removed" << std::endl;
+                removed_tags.insert(std::move(tag));
             }
             
             crypto::PuncturableDecryption decryptor(
@@ -105,6 +109,7 @@ namespace sse {
             
             // get previously cached elements
             cached_results_edb_.get(req.keyword_token, cached_res_list);
+            
             
             // filter the previously cached elements to remove newly removed entries
             auto it = cached_res_list.begin();

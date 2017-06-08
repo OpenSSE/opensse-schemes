@@ -86,7 +86,10 @@ namespace sse {
         {
             
             uint32_t search_counter = 0;
-            search_counter_map_.get_and_increment(keyword, search_counter);
+            if( !search_counter_map_.get(keyword, search_counter))
+            {
+                search_counter = 0; // probably unnecessary but safer
+            }
             
             std::string m_kw = meta_keyword(keyword, search_counter);
             
@@ -108,6 +111,12 @@ namespace sse {
             }
             */
             
+            
+            // increment the search counter only if there were some insertions or some deletions
+            if (req.insertion_search_request.add_count > 0 || req.deletion_search_request.add_count > 0) {
+                search_counter_map_.set(keyword, search_counter+1);
+            }
+            
             return req;
         }
         
@@ -116,14 +125,15 @@ namespace sse {
             uint32_t search_counter = 0;
             if( !search_counter_map_.get(keyword, search_counter))
             {
-                search_counter = 0; // probably unnecessary but safe
+                search_counter = 0; // probably unnecessary but safer
             }
             
             std::string m_kw = meta_keyword(keyword, search_counter);
 
             auto punct_encryption = crypto::PuncturableEncryption(punct_enc_master_prf_.prf(m_kw));
             
-            crypto::punct::tag_type tag = tag_prf_.prf(keyword_doc_string(m_kw, index));
+            // use the real keyword to generate the tag
+            crypto::punct::tag_type tag = tag_prf_.prf(keyword_doc_string(keyword, index));
             crypto::punct::ciphertext_type ct = punct_encryption.encrypt(index, tag);
             
             return insertion_client_.update_request(m_kw, ct);
@@ -134,7 +144,7 @@ namespace sse {
             uint32_t search_counter = 0;
             if( !search_counter_map_.get(keyword, search_counter))
             {
-                search_counter = 0; // probably unnecessary but safe
+                search_counter = 0; // probably unnecessary but safer
             }
 
             std::string m_kw = meta_keyword(keyword, search_counter);
@@ -142,8 +152,9 @@ namespace sse {
             auto punct_encryption = crypto::PuncturableEncryption(punct_enc_master_prf_.prf(m_kw));
             
             uint32_t n_del = deletion_client_.get_match_count(m_kw);
-            
-            crypto::punct::tag_type tag = tag_prf_.prf(keyword_doc_string(m_kw, index));
+
+            // use the real keyword to generate the tag
+            crypto::punct::tag_type tag = tag_prf_.prf(keyword_doc_string(keyword, index));
             crypto::punct::key_share_type ks = punct_encryption.inc_puncture(n_del+1, tag);
             
             return deletion_client_.update_request(m_kw, ks);

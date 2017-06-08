@@ -8,6 +8,8 @@
 
 #include "janus_server.hpp"
 
+#include <set>
+
 namespace sse {
     namespace sophos {
         
@@ -18,10 +20,17 @@ namespace sse {
         {
             std::string serialize(const JanusServer::cached_result_type& elt)
             {
-                return std::string((char*)(&(elt.first)), sizeof(index_type)) + std::string(elt.second.begin(), elt.second.end());
+                logger::log(logger::DBG) << "Serializing pair (" << hex_string(elt.first) << ", " << hex_string(elt.second) << ")\n";
+                std::string out = std::string((char*)(&(elt.first)), sizeof(index_type)) + std::string(elt.second.begin(), elt.second.end());
+                
+                logger::log(logger::DBG) << "Serialized string: " << hex_string(out) << "\n";
+
+                
+                return out;
             }
             bool deserialize(std::string::iterator& begin, const std::string::iterator& end, JanusServer::cached_result_type& out)
             {
+
                 if (end-begin < sizeof(janus::index_type)+sizeof(crypto::punct::kTagSize)) {
                     
                     if (end != begin) {
@@ -30,14 +39,20 @@ namespace sse {
 
                     return false;
                 }
+                logger::log(logger::DBG) << "Deserialized string: " << hex_string(std::string(begin, begin+sizeof(janus::index_type)+sizeof(crypto::punct::kTagSize))) << "\n";
+
                 index_type ind;
                 crypto::punct::tag_type tag;
+
+                std::string tmp(begin, begin+sizeof(index_type));
+                memcpy(&ind, tmp.data(), sizeof(index_type));
                 
-                for (size_t i = 0; i < sizeof(index_type); i++) {
-                    // I wish it would have been prettier, but I couldn't find any way to do so ...
-                    // begin is not a char*, so no memcpy ...
-                    (&ind)[i] = *(begin+i);
-                }
+//                for (size_t i = 0; i < sizeof(index_type); i++) {
+//                    // I wish it would have been prettier, but I couldn't find any way to do so ...
+//                    // begin is not a char*, so no memcpy ...
+//                    
+//                    (&ind)[i] = *(begin+i);
+//                }
                 
                 std::copy(begin+sizeof(index_type), begin+sizeof(index_type)+tag.size(), tag.begin());
                 
@@ -45,6 +60,8 @@ namespace sse {
                 
                 out = std::make_pair(ind, std::move(tag));
                 
+                logger::log(logger::DBG) << "Deserializing pair (" << hex_string(out.first) << ", " << hex_string(out.second) << ")\n";
+
                 return true;
             }
         };
@@ -83,6 +100,12 @@ namespace sse {
             
             key_shares.push_front(req.first_key_share);
             
+            // construct a set of newly removed tags
+            std::set<crypto::punct::tag_type> removed_tags;
+            for (auto sk : key_shares) {
+                removed_tags.insert(crypto::punct::extract_tag(sk));
+            }
+            
             crypto::PuncturableDecryption decryptor(
                         crypto::punct::punctured_key_type{
                             std::make_move_iterator(std::begin(key_shares)),
@@ -91,19 +114,36 @@ namespace sse {
             
             
             std::list<index_type> results;
-            std::list<cached_result_type> cached_res;
+            std::list<cached_result_type> cached_res_list;
+            
+            // get previously cached elements
+            cached_results_edb_.get(req.keyword_token, cached_res_list);
+            
+            // filter the previously cached elements to remove newly removed entries
+            auto it = cached_res_list.begin();
+            
+            while (it != cached_res_list.end()) {
+                if(removed_tags.count(it->second) > 0)
+                {
+                    it = cached_res_list.erase(it);
+                }else{
+                    results.push_back(it->first);
+                    ++it;
+                }
+            }
+            
             
             for (auto ct : insertions)
             {
                 index_type r;
                 if (decryptor.decrypt(ct, r)) {
                     results.push_back(r);
-                    cached_res.push_back(std::make_pair(r,crypto::punct::extract_tag(ct)));
+                    cached_res_list.push_back(std::make_pair(r,crypto::punct::extract_tag(ct)));
                 }
             }
             
             // store results in the cache
-            cached_results_edb_.put(req.keyword_token, cached_res);
+            cached_results_edb_.put(req.keyword_token, cached_res_list);
             
             
             return results;

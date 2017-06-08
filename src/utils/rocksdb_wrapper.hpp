@@ -246,7 +246,7 @@ private:
         inline ~RockDBListStore();
         
         // find the list associated to key and append elements to data
-        bool get(const std::string &key, std::list<T> &data, serializer& deser = serializer()) const;
+        bool get(const std::string &key, std::list<T> &data, serializer& deser) const;
         bool get(const std::string &key, std::list<T> &data) const
         {
             serializer deser = serializer();
@@ -254,18 +254,18 @@ private:
         }
         
         template <size_t N>
-        inline bool get(const std::array<uint8_t, N> &key, std::list<T> &data, serializer& deser = serializer()) const
+        inline bool get(const std::array<uint8_t, N> &key, std::list<T> &data, serializer& deser) const
         {
             return get(key.data(), N, data, deser);
         }
         template <size_t N>
-        inline bool get(const std::array<uint8_t, N> &key, const uint8_t key_length, std::list<T> &data) const
+        inline bool get(const std::array<uint8_t, N> &key, std::list<T> &data) const
         {
             serializer deser = serializer();
             return get(key, data, deser);
         }
 
-        bool get(const uint8_t *key, const uint8_t key_length, std::list<T> &data, serializer& deser = serializer()) const;
+        bool get(const uint8_t *key, const uint8_t key_length, std::list<T> &data, serializer& deser) const;
         inline bool get(const uint8_t *key, const uint8_t key_length, std::list<T> &data) const
         {
             serializer deser = serializer();
@@ -395,7 +395,8 @@ private:
             T elt;
             
             while (deser.deserialize(it, end, elt)) {
-                data.push_back(std::move<T>(elt));
+                //                data.push_back(std::move<T>(elt));
+                data.push_back(elt);
             }
         }
         return s.ok();

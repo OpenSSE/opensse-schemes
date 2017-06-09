@@ -171,6 +171,14 @@ namespace sse {
             return s.ok();
         }
 
+        
+        bool RocksDBCounter::remove_key(const std::string &key)
+        {
+            rocksdb::Status s = db_->Delete(rocksdb::WriteOptions(), key);
+            
+            return s.ok();
+        }
+
         inline void RocksDBCounter::flush(bool blocking)
         {
             rocksdb::FlushOptions options;

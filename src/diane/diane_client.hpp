@@ -74,6 +74,7 @@ namespace sse {
             UpdateRequest<T>    update_request(const std::string &keyword, const index_type index);
             std::list<UpdateRequest<T>>   bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list);
 
+            bool remove_keyword(const std::string &kw);
 
 //            SearchRequest   search_request_index(const keyword_index_type &kw_index) const;
 //            SearchRequest   random_search_request() const;
@@ -324,7 +325,11 @@ namespace sse {
             return res;
         }
         
-
+        template <typename T>
+        bool DianeClient<T>::remove_keyword(const std::string &kw)
+        {
+            return counter_map_.remove_key(kw);
+        }
         
         template <typename T>
         std::ostream& DianeClient<T>::print_stats(std::ostream& out) const

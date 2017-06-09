@@ -117,6 +117,14 @@ namespace sse {
                 search_counter_map_.set(keyword, search_counter+1);
             }
             
+            // cleanup the counter maps
+            if (req.insertion_search_request.add_count > 0) {
+                insertion_client_.remove_keyword(m_kw);
+            }
+            if (req.deletion_search_request.add_count > 0) {
+                deletion_client_.remove_keyword(m_kw);
+            }
+            
             return req;
         }
         

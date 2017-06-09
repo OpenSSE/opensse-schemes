@@ -216,6 +216,8 @@ private:
 
         bool set(const std::string &key, uint32_t val);
 
+        bool remove_key(const std::string &key);
+        
         inline void flush(bool blocking = true);
         
     private:

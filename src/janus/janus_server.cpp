@@ -80,9 +80,9 @@ namespace sse {
         
         std::list<index_type> JanusServer::search(const SearchRequest& req)
         {
-            std::list<crypto::punct::ciphertext_type> insertions = insertion_server_.search(req.insertion_search_request);
+            std::list<crypto::punct::ciphertext_type> insertions = insertion_server_.search(req.insertion_search_request, true);
 
-            std::list<crypto::punct::key_share_type> key_shares = deletion_server_.search(req.deletion_search_request);
+            std::list<crypto::punct::key_share_type> key_shares = deletion_server_.search(req.deletion_search_request, true);
             
             
             key_shares.push_front(req.first_key_share);

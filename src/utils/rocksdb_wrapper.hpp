@@ -50,6 +50,11 @@ public:
     template <size_t N, typename V>
     inline bool put(const std::array<uint8_t, N> &key, const V &data);
 
+    template <size_t N>
+    inline bool remove(const std::array<uint8_t, N> &key);
+    
+    inline bool remove(const uint8_t *key, const uint8_t key_length);
+
     inline void flush(bool blocking = true);
 private:
     rocksdb::DB* db_;
@@ -181,6 +186,24 @@ private:
         return s.ok();
     }
 
+    template <size_t N>
+    bool RockDBWrapper::remove(const std::array<uint8_t, N> &key)
+    {
+        rocksdb::Slice k_s(reinterpret_cast<const char*>( key.data() ),N);
+        
+        rocksdb::Status s = db_->Delete(rocksdb::WriteOptions(), k_s);
+        
+        return s.ok();
+    }
+    
+    bool RockDBWrapper::remove(const uint8_t *key, const uint8_t key_length)
+    {
+        rocksdb::Slice k_s(reinterpret_cast<const char*>( key ),key_length);
+        
+        rocksdb::Status s = db_->Delete(rocksdb::WriteOptions(), k_s);
+        
+        return s.ok();
+    }
     
     void RockDBWrapper::flush(bool blocking)
     {

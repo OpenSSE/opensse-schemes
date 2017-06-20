@@ -262,8 +262,9 @@ void test_client_server()
         
         std::string key = "toto";
         s_req = client->search_request(key);
-        auto res = server->search(s_req);
-        
+//        auto res = server->search(s_req);
+        auto res = server->search_parallel(s_req,8);
+      
         cout << "Search " << key << ". Results: [";
         for(index_type i : res){
             cout << i << ", ";
@@ -322,7 +323,8 @@ void test_client_server()
 
     std::string key = "toto";
     s_req = client->search_request(key);
-    auto res = server->search(s_req);
+//    auto res = server->search(s_req);
+    auto res = server->search_parallel(s_req,8);
     
     cout << "Search " << key << ". Results: [";
     for(index_type i : res){
@@ -332,8 +334,9 @@ void test_client_server()
 
     key = "tata";
     s_req = client->search_request(key);
-    res = server->search(s_req);
-    
+//    res = server->search(s_req);
+    res = server->search_parallel(s_req,8);
+
     cout << "Search " << key << ". Results: [";
     for(index_type i : res){
         cout << i << ", ";

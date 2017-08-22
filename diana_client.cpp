@@ -33,16 +33,13 @@ int main(int argc, char** argv) {
 
     std::list<std::string> input_files;
     std::list<std::string> keywords;
-    std::string json_file;
     std::string client_db;
-    std::string output_path;
     bool print_stats = false;
-    uint32_t bench_count = 0;
     uint32_t rnd_entries_count = 0;
     
     bool print_results = true;
     
-    while ((c = getopt (argc, argv, "l:b:o:i:t:dpr:q")) != -1)
+    while ((c = getopt (argc, argv, "l:b:dpr:q")) != -1)
         switch (c)
     {
         case 'l':
@@ -50,15 +47,6 @@ int main(int argc, char** argv) {
             break;
         case 'b':
             client_db = std::string(optarg);
-            break;
-        case 'o':
-            output_path = std::string(optarg);
-            break;
-        case 'i':
-            json_file = std::string(optarg);
-            break;
-        case 't':
-            bench_count = atoi(optarg);
             break;
         case 'd': // load a default file, only for debugging
 //            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
@@ -104,22 +92,17 @@ int main(int argc, char** argv) {
     
     std::unique_ptr<sse::diana::DianaClientRunner> client_runner;
     
-    if (json_file.size() > 0) {
-        sse::logger::log(sse::logger::CRITICAL) << "JSON import is not supported in Diana!" << std::endl;
-//        client_runner.reset( new sse::diana::DianaClientRunner("localhost:4241", client_db, json_file) );
-    }else{
-        size_t setup_size = 1e5;
-        uint32_t n_keywords = 1e4;
-        
-        if( rnd_entries_count > 0)
-        {
-            setup_size = 11*rnd_entries_count;
-            n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
-        }
-        
-        client_runner.reset( new sse::diana::DianaClientRunner("localhost:4241", client_db, setup_size, n_keywords) );
+    size_t setup_size = 1e5;
+    uint32_t n_keywords = 1e4;
+    
+    if( rnd_entries_count > 0)
+    {
+        setup_size = 11*rnd_entries_count;
+        n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
     }
-
+    
+    client_runner.reset( new sse::diana::DianaClientRunner("localhost:4241", client_db, setup_size, n_keywords) );
+    
     for (std::string &path : input_files) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
         client_runner->load_inverted_index(path);
@@ -180,12 +163,6 @@ int main(int argc, char** argv) {
         log_stream << "}" << std::endl;
     }
     
-    
-    if (output_path.size()>0) {
-        sse::logger::log(sse::logger::CRITICAL) << "JSON export is not supported in Diana!" << std::endl;
-
-//        client_runner->output_db(output_path);
-    }
     
     if (print_stats)
     {

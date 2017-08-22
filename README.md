@@ -112,9 +112,8 @@ The clients usage is as follows
 * `-l file.json` : load the reversed index file.json and add it to the database. file.json is a JSON file with the following structure : 
 ```json
 {
-‘’keyword1’’ : [1,2,3,4,….],
-‘’keyword2’’ : [11,22,33,44,….],
-...
+	"keyword1" : [1,2,3,4],
+	"keyword2": [11,22,33,44,55]
 }
 ```
 In the repo, `inverted_index.json` is an example of such file.

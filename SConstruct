@@ -116,4 +116,4 @@ janus_debug_prog    = outter_env.Program('janus_debug',     ['test_janus.cpp']  
 env.Alias('sophos', [sophos_debug_prog, sophos_client, sophos_server])
 env.Alias('diana', [diana_debug_prog, diana_client, diana_server])
 env.Alias('janus', [janus_debug_prog])
-env.Default(['diana','janus'])
+env.Default(['sophos','diana','janus'])

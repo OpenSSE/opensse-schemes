@@ -861,7 +861,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 31B08D861CAAE4A600DD6BF8 /* Build configuration list for PBXProject "SSE Schemes" */;
+			buildConfigurationList = 31B08D861CAAE4A600DD6BF8 /* Build configuration list for PBXProject "SSE_Schemes" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -937,7 +937,8 @@
 		6C9CBF281CAC0C33003B0185 /* native_checks */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			path = native_checks;
+			name = native_checks;
+			path = "native checks";
 			remoteRef = 6C9CBF271CAC0C33003B0185 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -1371,7 +1372,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		31B08D861CAAE4A600DD6BF8 /* Build configuration list for PBXProject "SSE Schemes" */ = {
+		31B08D861CAAE4A600DD6BF8 /* Build configuration list for PBXProject "SSE_Schemes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31B08D901CAAE4A600DD6BF8 /* Debug */,

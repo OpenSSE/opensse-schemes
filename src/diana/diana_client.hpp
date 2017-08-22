@@ -25,7 +25,7 @@
 #include "token_tree.hpp"
 #include "types.hpp"
 
-#include "diane_common.hpp"
+#include "diana_common.hpp"
 
 #include "utils/rocksdb_wrapper.hpp"
 #include "utils/utils.hpp"
@@ -46,10 +46,10 @@
 #include <ssdmap/bucket_map.hpp>
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         template <typename T>
-        class DianeClient {
+        class DianaClient {
         public:
             static constexpr size_t kKeywordIndexSize = 16;
             typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
@@ -57,9 +57,9 @@ namespace sse {
 
             static constexpr size_t kTreeDepth = 48;
             
-            DianeClient(const std::string& token_map_path);
-            DianeClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key);
-            ~DianeClient();
+            DianaClient(const std::string& token_map_path);
+            DianaClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key);
+            ~DianaClient();
 
             size_t keyword_count() const;
             
@@ -122,44 +122,44 @@ namespace sse {
 
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         template <typename T>
-        DianeClient<T>::DianeClient(const std::string& token_map_path) :
+        DianaClient<T>::DianaClient(const std::string& token_map_path) :
         root_prf_(), kw_token_prf_(), counter_map_(token_map_path)
         {
             
         }
         
         template <typename T>
-        DianeClient<T>::DianeClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key) :
+        DianaClient<T>::DianaClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key) :
         root_prf_(derivation_master_key), kw_token_prf_(kw_token_master_key), counter_map_(token_map_path)
         {
             
         }
         
         template <typename T>
-        DianeClient<T>::~DianeClient()
+        DianaClient<T>::~DianaClient()
         {
             
         }
         
         
         template <typename T>
-        const std::string DianeClient<T>::master_derivation_key() const
+        const std::string DianaClient<T>::master_derivation_key() const
         {
             return std::string(root_prf_.key().begin(), root_prf_.key().end());
         }
         
         template <typename T>
-        const std::string DianeClient<T>::kw_token_master_key() const
+        const std::string DianaClient<T>::kw_token_master_key() const
         {
             return std::string(kw_token_prf_.key().begin(), kw_token_prf_.key().end());
         }
         
         
         template <typename T>
-        typename DianeClient<T>::keyword_index_type DianeClient<T>::get_keyword_index(const std::string &kw) const
+        typename DianaClient<T>::keyword_index_type DianaClient<T>::get_keyword_index(const std::string &kw) const
         {
             std::string hash_string = crypto::Hash::hash(kw);
             
@@ -170,7 +170,7 @@ namespace sse {
         }
 
         template <typename T>
-        uint32_t DianeClient<T>::get_match_count(const std::string &kw) const
+        uint32_t DianaClient<T>::get_match_count(const std::string &kw) const
         {
             uint32_t kw_counter;
 
@@ -181,7 +181,7 @@ namespace sse {
         
 
         template <typename T>
-        SearchRequest   DianeClient<T>::search_request(const std::string &keyword, bool log_not_found) const
+        SearchRequest   DianaClient<T>::search_request(const std::string &keyword, bool log_not_found) const
         {
             keyword_index_type kw_index = get_keyword_index(keyword);
             
@@ -216,7 +216,7 @@ namespace sse {
         }
         
         template <typename T>
-        UpdateRequest<T>   DianeClient<T>::update_request(const std::string &keyword, const index_type index)
+        UpdateRequest<T>   DianaClient<T>::update_request(const std::string &keyword, const index_type index)
         {
             UpdateRequest<T> req;
             search_token_key_type st;
@@ -254,7 +254,7 @@ namespace sse {
         }
  
         template <typename T>
-        std::list<UpdateRequest<T>>   DianeClient<T>::bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list)
+        std::list<UpdateRequest<T>>   DianaClient<T>::bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list)
         {
             std::string keyword;
             index_type index;
@@ -299,7 +299,7 @@ namespace sse {
         }
         
         template <typename T>
-        std::list<std::tuple<std::string, T, uint32_t>>   DianeClient<T>::get_counters_and_increment(const std::list<std::pair<std::string, index_type>> &update_list)
+        std::list<std::tuple<std::string, T, uint32_t>>   DianaClient<T>::get_counters_and_increment(const std::list<std::pair<std::string, index_type>> &update_list)
         {
             std::string keyword;
             index_type index;
@@ -328,13 +328,13 @@ namespace sse {
         }
         
         template <typename T>
-        bool DianeClient<T>::remove_keyword(const std::string &kw)
+        bool DianaClient<T>::remove_keyword(const std::string &kw)
         {
             return counter_map_.remove_key(kw);
         }
         
         template <typename T>
-        std::ostream& DianeClient<T>::print_stats(std::ostream& out) const
+        std::ostream& DianaClient<T>::print_stats(std::ostream& out) const
         {
             out << "Number of keywords: " << keyword_count() << std::endl;
            
@@ -342,7 +342,7 @@ namespace sse {
         }
         
         template <typename T>
-        size_t DianeClient<T>::keyword_count() const
+        size_t DianaClient<T>::keyword_count() const
         {
             return counter_map_.approximate_size();
         }

@@ -22,7 +22,7 @@
 #include "client_runner.hpp"
 
 #include "types.hpp"
-#include "diane/diane_client.hpp"
+#include "diana/diana_client.hpp"
 
 #include "utils/thread_pool.hpp"
 #include "utils/utils.hpp"
@@ -48,9 +48,9 @@
 #define COUNTER_MAP_FILE "counters.dat"
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
-        typedef DianeClient<DianeClientRunner::index_type> DC;
+        typedef DianaClient<DianaClientRunner::index_type> DC;
         
         static std::unique_ptr<DC> init_client_from_directory(const std::string& dir_path)
         {
@@ -121,12 +121,12 @@ namespace sse {
         }
 
         
-        DianeClientRunner::DianeClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
+        DianaClientRunner::DianaClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
         : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
         {
             std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                        grpc::InsecureChannelCredentials()));
-            stub_ = Diane::NewStub(channel);
+            stub_ = Diana::NewStub(channel);
             
             if (is_directory(path)) {
                 // try to initialize everything from this directory
@@ -156,17 +156,17 @@ namespace sse {
             }
             
             // start the thread that will look for completed updates
-            update_completion_thread_ = new std::thread(&DianeClientRunner::update_completion_loop, this);
+            update_completion_thread_ = new std::thread(&DianaClientRunner::update_completion_loop, this);
         }
                 
-        DianeClientRunner::~DianeClientRunner()
+        DianaClientRunner::~DianaClientRunner()
         {
             update_cq_.Shutdown();
             wait_updates_completion();
             update_completion_thread_->join();
         }
         
-        bool DianeClientRunner::send_setup(const size_t setup_size) const
+        bool DianaClientRunner::send_setup(const size_t setup_size) const
         {
             grpc::ClientContext context;
             SetupMessage message;
@@ -188,7 +188,7 @@ namespace sse {
         }
         
         
-        const DC& DianeClientRunner::client() const
+        const DC& DianaClientRunner::client() const
         {
             if (!client_) {
                 throw std::logic_error("Invalid state");
@@ -196,7 +196,7 @@ namespace sse {
             return *client_;
         }
         
-        std::list<uint64_t> DianeClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
+        std::list<uint64_t> DianaClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
         {
             logger::log(logger::TRACE) << "Search " << keyword << std::endl;
             
@@ -234,7 +234,7 @@ namespace sse {
             return results;
         }
         
-        void DianeClientRunner::update(const std::string& keyword, uint64_t index)
+        void DianaClientRunner::update(const std::string& keyword, uint64_t index)
         {
             grpc::ClientContext context;
             UpdateRequestMessage message;
@@ -257,7 +257,7 @@ namespace sse {
             }
         }
         
-        void DianeClientRunner::async_update(const std::string& keyword, uint64_t index)
+        void DianaClientRunner::async_update(const std::string& keyword, uint64_t index)
         {
             grpc::ClientContext context;
             UpdateRequestMessage message;
@@ -282,7 +282,7 @@ namespace sse {
             }
         }
         
-        void DianeClientRunner::async_update(const std::list<std::pair<std::string, uint64_t>> &update_list)
+        void DianaClientRunner::async_update(const std::list<std::pair<std::string, uint64_t>> &update_list)
         {
             if (bulk_update_state_.is_up) { // an update session is running, use it
                 update_in_session(update_list);
@@ -308,7 +308,7 @@ namespace sse {
             }
         }
         
-        void DianeClientRunner::update_in_session(const std::string& keyword, uint64_t index)
+        void DianaClientRunner::update_in_session(const std::string& keyword, uint64_t index)
         {
             UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
             
@@ -326,7 +326,7 @@ namespace sse {
         }
         
 
-        void DianeClientRunner::update_in_session(const std::list<std::pair<std::string, uint64_t>> &update_list)
+        void DianaClientRunner::update_in_session(const std::list<std::pair<std::string, uint64_t>> &update_list)
         {
             if(! bulk_update_state_.is_up)
             {
@@ -341,7 +341,7 @@ namespace sse {
 //                message_list.push_back(request_to_message(client_->update_request(it->first, it->second)));
 //            }
 
-            std::list<UpdateRequest<DianeClientRunner::index_type>> message_list = client_->bulk_update_request(update_list);
+            std::list<UpdateRequest<DianaClientRunner::index_type>> message_list = client_->bulk_update_request(update_list);
 
             bulk_update_state_.mtx.lock();
             
@@ -357,14 +357,14 @@ namespace sse {
             bulk_update_state_.mtx.unlock();
         }
         
-        void DianeClientRunner::wait_updates_completion()
+        void DianaClientRunner::wait_updates_completion()
         {
             stop_update_completion_thread_ = true;
             std::unique_lock<std::mutex> lock(update_completion_mtx_);
             update_completion_cv_.wait(lock, [this]{ return update_launched_count_ == update_completed_count_; });
         }
         
-        void DianeClientRunner::start_update_session()
+        void DianaClientRunner::start_update_session()
         {
             if (bulk_update_state_.writer) {
                 logger::log(logger::WARNING) << "Invalid client state: the bulk update session is already up" << std::endl;
@@ -378,7 +378,7 @@ namespace sse {
             logger::log(logger::TRACE) << "Update session started." << std::endl;
         }
         
-        void DianeClientRunner::end_update_session()
+        void DianaClientRunner::end_update_session()
         {
             if (!bulk_update_state_.writer) {
                 logger::log(logger::WARNING) << "Invalid client state: the bulk update session is not up" << std::endl;
@@ -400,7 +400,7 @@ namespace sse {
         }
         
         
-        void DianeClientRunner::update_completion_loop()
+        void DianaClientRunner::update_completion_loop()
         {
             update_tag_type* tag;
             bool ok = false;
@@ -427,7 +427,7 @@ namespace sse {
             }
         }
         
-        bool DianeClientRunner::load_inverted_index(const std::string& path)
+        bool DianaClientRunner::load_inverted_index(const std::string& path)
         {
             try {
                 
@@ -474,7 +474,7 @@ namespace sse {
             return false;
         }
         
-//        bool DianeClientRunner::output_db(const std::string& out_path)
+//        bool DianaClientRunner::output_db(const std::string& out_path)
 //        {
 //            std::ofstream os(out_path);
 //            
@@ -493,12 +493,12 @@ namespace sse {
 //            return true;
 //        }
         
-        std::ostream& DianeClientRunner::print_stats(std::ostream& out) const
+        std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
         {
             return client_->print_stats(out);
         }
         
-//        void DianeClientRunner::random_search() const
+//        void DianaClientRunner::random_search() const
 //        {
 //            logger::log(logger::TRACE) << "Random Search " << std::endl;
 //            
@@ -527,7 +527,7 @@ namespace sse {
 //            
 //        }
         
-//        void DianeClientRunner::search_benchmark(size_t n_bench) const
+//        void DianaClientRunner::search_benchmark(size_t n_bench) const
 //        {
 //            for (size_t i = 0; i < n_bench; i++) {
 //                logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
@@ -552,7 +552,7 @@ namespace sse {
             return mes;
         }
         
-        UpdateRequestMessage request_to_message(const UpdateRequest<DianeClientRunner::index_type>& req)
+        UpdateRequestMessage request_to_message(const UpdateRequest<DianaClientRunner::index_type>& req)
         {
             UpdateRequestMessage mes;
             
@@ -563,5 +563,5 @@ namespace sse {
         }
         
         
-    } // namespace diane
+    } // namespace diana
 } // namespace sse

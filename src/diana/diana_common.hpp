@@ -28,7 +28,7 @@
 #include <cstring>
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         void gen_update_token_mask(const uint8_t* search_token, update_token_type &update_token, const size_t mask_len, uint8_t *mask);
 

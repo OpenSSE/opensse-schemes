@@ -218,7 +218,7 @@ void benchmark_decrypt(ostream &out)
 
 void benchmark_puncturable_encryption()
 {
-    ofstream benchmark_file("/Users/rbost/Code/sse/diane/bench_janus.out");
+    ofstream benchmark_file("/Users/rbost/Code/sse/diana/bench_janus.out");
     
     assert(benchmark_file.is_open());
     
@@ -280,7 +280,7 @@ void test_client_server()
         server->insert_entry(add_req);
 
     }else{
-        cout << "Create new Diane client-server instances" << endl;
+        cout << "Create new Diana client-server instances" << endl;
         
         client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat"));
         

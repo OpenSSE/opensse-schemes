@@ -72,9 +72,9 @@ check
 sophos_debug
 sophos_server
 sophos_client
-diane_debug
-diane_server
-diane_client
+diana_debug
+diana_server
+diana_client
 client
 server
 janus_debug

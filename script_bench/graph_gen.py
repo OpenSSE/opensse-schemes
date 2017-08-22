@@ -61,7 +61,7 @@ def print_mean_var(stats, f):
             
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process a Diane server benchmark file.')
+    parser = argparse.ArgumentParser(description='Process a Diana server benchmark file.')
     
     parser.add_argument("-i", "--input", dest="in_file",nargs=1, required=True, help ="Input file", type=argparse.FileType('r'))
     parser.add_argument("-o", "--out", dest="out_file", nargs=1, required=True, help ="Output file", type=argparse.FileType('w')) 

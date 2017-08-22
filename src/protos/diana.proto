@@ -3,9 +3,9 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package sse.diane;
+package sse.diana;
 
-service Diane {
+service Diana {
 
 // Setup
 rpc setup (SetupMessage) returns (google.protobuf.Empty) {}

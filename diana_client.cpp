@@ -1,12 +1,12 @@
 //
-//  diane_client.cpp
-//  diane
+//  diana_client.cpp
+//  diana
 //
 //  Created by Raphael Bost on 20/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "diane/client_runner.hpp"
+#include "diana/client_runner.hpp"
 #include "utils/logger.hpp"
 #include "aux/db_generator.hpp"
 
@@ -24,7 +24,7 @@ __thread std::list<std::pair<std::string, uint64_t>> *buffer_list__ = NULL;
 
 int main(int argc, char** argv) {
     sse::logger::set_severity(sse::logger::INFO);
-    sse::logger::set_benchmark_file("benchmark_diane_client.out");
+    sse::logger::set_benchmark_file("benchmark_diana_client.out");
     
     sse::crypto::init_crypto_lib();
     
@@ -102,11 +102,11 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << client_db << std::endl;
     }
     
-    std::unique_ptr<sse::diane::DianeClientRunner> client_runner;
+    std::unique_ptr<sse::diana::DianaClientRunner> client_runner;
     
     if (json_file.size() > 0) {
-        sse::logger::log(sse::logger::CRITICAL) << "JSON import is not supported in Diane!" << std::endl;
-//        client_runner.reset( new sse::diane::DianeClientRunner("localhost:4241", client_db, json_file) );
+        sse::logger::log(sse::logger::CRITICAL) << "JSON import is not supported in Diana!" << std::endl;
+//        client_runner.reset( new sse::diana::DianaClientRunner("localhost:4241", client_db, json_file) );
     }else{
         size_t setup_size = 1e5;
         uint32_t n_keywords = 1e4;
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
             n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
         }
         
-        client_runner.reset( new sse::diane::DianeClientRunner("localhost:4241", client_db, setup_size, n_keywords) );
+        client_runner.reset( new sse::diana::DianaClientRunner("localhost:4241", client_db, setup_size, n_keywords) );
     }
 
     for (std::string &path : input_files) {
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
     
     
     if (output_path.size()>0) {
-        sse::logger::log(sse::logger::CRITICAL) << "JSON export is not supported in Diane!" << std::endl;
+        sse::logger::log(sse::logger::CRITICAL) << "JSON export is not supported in Diana!" << std::endl;
 
 //        client_runner->output_db(output_path);
     }

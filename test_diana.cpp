@@ -1,6 +1,6 @@
 //
-//  test_diane
-//  diane
+//  test_diana
+//  diana
 //
 //  Created by Raphael Bost on 19/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
@@ -10,20 +10,20 @@
 #include <fstream>
 #include <memory>
 
-#include "diane/diane_client.hpp"
-#include "diane/diane_server.hpp"
+#include "diana/diana_client.hpp"
+#include "diana/diana_server.hpp"
 #include "utils/utils.hpp"
 #include "utils/logger.hpp"
 
-using namespace sse::diane;
+using namespace sse::diana;
 using namespace std;
 
 void test_client_server()
 {
     sse::logger::set_severity(sse::logger::DBG);
     
-    string client_master_key_path = "diane_derivation_master.key";
-    string client_kw_token_master_key_path = "diane_kw_token_master.key";
+    string client_master_key_path = "diana_derivation_master.key";
+    string client_kw_token_master_key_path = "diana_kw_token_master.key";
 
     
     ifstream client_master_key_in(client_master_key_path.c_str());
@@ -31,8 +31,8 @@ void test_client_server()
     
     typedef uint64_t index_type;
     
-    unique_ptr<DianeClient<index_type>> client;
-    unique_ptr<DianeServer<index_type>> server;
+    unique_ptr<DianaClient<index_type>> client;
+    unique_ptr<DianaServer<index_type>> server;
     
     SearchRequest s_req;
     UpdateRequest<index_type> u_req;
@@ -49,27 +49,27 @@ void test_client_server()
     
     if (client_master_key_in.good() == true) {
         // the files exist
-        cout << "Restart Diane client and server" << endl;
+        cout << "Restart Diana client and server" << endl;
         
         stringstream client_master_key_buf, client_kw_token_key_buf;
 
         client_master_key_buf << client_master_key_in.rdbuf();
         client_kw_token_key_buf << client_kw_token_master_key_in.rdbuf();
 
-        client.reset(new  DianeClient<index_type>("diane_client.sav", client_master_key_buf.str(), client_kw_token_key_buf.str()));
+        client.reset(new  DianaClient<index_type>("diana_client.sav", client_master_key_buf.str(), client_kw_token_key_buf.str()));
         
-        server.reset(new DianeServer<index_type>("diane_server.dat"));
+        server.reset(new DianaServer<index_type>("diana_server.dat"));
         
         SearchRequest s_req;
         std::list<index_type> res;
         string key;
 
     }else{
-        cout << "Create new Diane client-server instances" << endl;
+        cout << "Create new Diana client-server instances" << endl;
         
-        client.reset(new DianeClient<index_type>("diane_client.sav"));
+        client.reset(new DianaClient<index_type>("diana_client.sav"));
 
-        server.reset(new DianeServer<index_type>("diane_server.dat", 1000));
+        server.reset(new DianaServer<index_type>("diana_server.dat", 1000));
         
         // write keys to files
         

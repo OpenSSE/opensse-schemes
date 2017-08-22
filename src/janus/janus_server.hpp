@@ -10,7 +10,7 @@
 
 #include "types.hpp"
 
-#include "diane/diane_server.hpp"
+#include "diana/diana_server.hpp"
 #include "utils/rocksdb_wrapper.hpp"
 
 #include <sse/crypto/prf.hpp>
@@ -52,8 +52,8 @@ namespace sse {
             
             void flush_edb();
         private:
-            diane::DianeServer<crypto::punct::ciphertext_type> insertion_server_;
-            diane::DianeServer<crypto::punct::key_share_type> deletion_server_;
+            diana::DianaServer<crypto::punct::ciphertext_type> insertion_server_;
+            diana::DianaServer<crypto::punct::key_share_type> deletion_server_;
 
             sophos::RockDBListStore<cached_result_type> cached_results_edb_;
 

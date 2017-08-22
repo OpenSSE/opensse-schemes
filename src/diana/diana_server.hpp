@@ -24,7 +24,7 @@
 #include "token_tree.hpp"
 #include "types.hpp"
 
-#include "diane_common.hpp"
+#include "diana_common.hpp"
 #include "utils/thread_pool.hpp"
 
 #include "utils/rocksdb_wrapper.hpp"
@@ -37,17 +37,17 @@
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         
 template <typename T>
-class DianeServer {
+class DianaServer {
 public:
     
     typedef T index_type;
     
-    DianeServer(const std::string& db_path);
-    DianeServer(const std::string& db_path, const size_t tm_setup_size);
+    DianaServer(const std::string& db_path);
+    DianaServer(const std::string& db_path, const size_t tm_setup_size);
     
     
     std::list<index_type> search(const SearchRequest& req, bool delete_results = false);
@@ -87,23 +87,23 @@ private:
 }
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         template <typename T>
-        DianeServer<T>::DianeServer(const std::string& db_path) :
+        DianaServer<T>::DianaServer(const std::string& db_path) :
         edb_(db_path)
         {
         }
         
         template <typename T>
-        DianeServer<T>::DianeServer(const std::string& db_path, const size_t tm_setup_size) :
+        DianaServer<T>::DianaServer(const std::string& db_path, const size_t tm_setup_size) :
         edb_(db_path)
         {
             
         }
 
         template <typename T>
-        bool DianeServer<T>::get_unmask(const uint8_t *key, index_type &index, bool delete_key)
+        bool DianaServer<T>::get_unmask(const uint8_t *key, index_type &index, bool delete_key)
         {
             update_token_type ut;
             index_type mask;
@@ -136,7 +136,7 @@ namespace sse {
         }
 
         template <typename T>
-        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search(const SearchRequest& req, bool delete_results)
+        std::list<typename DianaServer<T>::index_type> DianaServer<T>::search(const SearchRequest& req, bool delete_results)
         {
             std::list<index_type> results;
             
@@ -151,7 +151,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
+        void DianaServer<T>::search(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
         {
             
             if (logger::severity() <= logger::DBG) {
@@ -182,7 +182,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
+        void DianaServer<T>::search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
         {
             index_type r;
             
@@ -248,7 +248,7 @@ namespace sse {
         }
         
         template <typename T>
-        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, bool delete_results)
+        std::list<typename DianaServer<T>::index_type> DianaServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, bool delete_results)
         {
             assert(threads_count > 0);
             
@@ -293,7 +293,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results)
+        void DianaServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results)
         {
             if (results.size() < req.add_count) {
                 // resize the vector if needed
@@ -311,7 +311,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results)
+        void DianaServer<T>::search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results)
         {
             auto aux = [&post_callback](index_type ind, uint8_t i)
             {
@@ -321,7 +321,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple_parallel(const SearchRequest& req,const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results)
+        void DianaServer<T>::search_simple_parallel(const SearchRequest& req,const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results)
         {
             assert(threads_count>0);
             if(req.add_count == 0)
@@ -419,7 +419,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::update(const UpdateRequest<T>& req)
+        void DianaServer<T>::update(const UpdateRequest<T>& req)
         {
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << hex_string(req.index) << ")" << std::endl;
@@ -429,13 +429,13 @@ namespace sse {
         }
         
         template <typename T>
-        std::ostream& DianeServer<T>::print_stats(std::ostream& out) const
+        std::ostream& DianaServer<T>::print_stats(std::ostream& out) const
         {
             return out;
         }
         
         template <typename T>
-        void DianeServer<T>::flush_edb()
+        void DianaServer<T>::flush_edb()
         {
             edb_.flush();
         }

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "diane/types.hpp"
+#include "diana/types.hpp"
 
 #include <sse/crypto/puncturable_enc.hpp>
 #include <array>
@@ -27,15 +27,15 @@ namespace sse {
         {
             keyword_token_type keyword_token;
             
-            diane::SearchRequest insertion_search_request;
-            diane::SearchRequest deletion_search_request;
+            diana::SearchRequest insertion_search_request;
+            diana::SearchRequest deletion_search_request;
             
             crypto::punct::key_share_type first_key_share;
         };
 
-        typedef diane::UpdateRequest<crypto::punct::ciphertext_type> InsertionRequest;
+        typedef diana::UpdateRequest<crypto::punct::ciphertext_type> InsertionRequest;
         
-        typedef diane::UpdateRequest<crypto::punct::key_share_type> DeletionRequest;
+        typedef diana::UpdateRequest<crypto::punct::key_share_type> DeletionRequest;
 
     }
 }

@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "diane_server.hpp"
-#include "diane.grpc.pb.h"
+#include "diana_server.hpp"
+#include "diana.grpc.pb.h"
 
 #include <string>
 #include <memory>
@@ -32,14 +32,14 @@
 #include <grpc++/server_context.h>
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
-        class DianeImpl final : public diane::Diane::Service {
+        class DianaImpl final : public diana::Diana::Service {
         public:
             typedef uint64_t index_type;
 
-            explicit DianeImpl(const std::string& path);
-            ~DianeImpl();
+            explicit DianaImpl(const std::string& path);
+            ~DianaImpl();
             
             grpc::Status setup(grpc::ServerContext* context,
                                const SetupMessage* request,
@@ -75,7 +75,7 @@ namespace sse {
         private:
             static const std::string pairs_map_file;
             
-            std::unique_ptr<DianeServer<index_type>> server_;
+            std::unique_ptr<DianaServer<index_type>> server_;
             std::string storage_path_;
             
             std::mutex update_mtx_;
@@ -84,8 +84,8 @@ namespace sse {
         };
         
         SearchRequest message_to_request(const SearchRequestMessage* mes);
-        UpdateRequest<DianeImpl::index_type> message_to_request(const UpdateRequestMessage* mes);
+        UpdateRequest<DianaImpl::index_type> message_to_request(const UpdateRequestMessage* mes);
         
-        void run_diane_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
+        void run_diana_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
     }
 }

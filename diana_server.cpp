@@ -1,12 +1,12 @@
 //
-//  diane_server.cpp
-//  Diane
+//  diana_server.cpp
+//  Diana
 //
 //  Created by Raphael Bost on 20/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "diane/server_runner.hpp"
+#include "diana/server_runner.hpp"
 #include "utils/logger.hpp"
 
 #include <grpc++/server.h>
@@ -32,7 +32,7 @@ void exit_handler(int signal)
 int main(int argc, char** argv) {
 
     sse::logger::set_severity(sse::logger::INFO);
-    sse::logger::set_benchmark_file("benchmark_diane_server.out");
+    sse::logger::set_benchmark_file("benchmark_diana_server.out");
 
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-    sse::diane::run_diane_server("0.0.0.0:4241", server_db, &server_ptr__, async_search);
+    sse::diana::run_diana_server("0.0.0.0:4241", server_db, &server_ptr__, async_search);
     
     sse::crypto::cleanup_crypto_lib();
 

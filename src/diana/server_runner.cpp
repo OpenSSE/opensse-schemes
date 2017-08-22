@@ -35,11 +35,11 @@
 
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
-        const std::string DianeImpl::pairs_map_file = "pairs.dat";
+        const std::string DianaImpl::pairs_map_file = "pairs.dat";
         
-        DianeImpl::DianeImpl(const std::string& path) :
+        DianaImpl::DianaImpl(const std::string& path) :
         storage_path_(path), async_search_(true)
         {
             if (is_directory(storage_path_)) {
@@ -53,7 +53,7 @@ namespace sse {
                 }
                 
                 
-                server_.reset(new DianeServer<index_type>(pairs_map_path));
+                server_.reset(new DianaServer<index_type>(pairs_map_path));
             }else if (exists(storage_path_)){
                 // there should be nothing else than a directory at path, but we found something  ...
                 throw std::runtime_error(storage_path_ + ": not a directory");
@@ -62,12 +62,12 @@ namespace sse {
             }
         }
         
-        DianeImpl::~DianeImpl()
+        DianaImpl::~DianaImpl()
         {
             flush_server_storage();
         }
 
-        grpc::Status DianeImpl::setup(grpc::ServerContext* context,
+        grpc::Status DianaImpl::setup(grpc::ServerContext* context,
                                        const SetupMessage* message,
                                        google::protobuf::Empty* e)
         {
@@ -103,7 +103,7 @@ namespace sse {
             
             try {
                 logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
-                server_.reset(new DianeServer<index_type>(pairs_map_path, message->setup_size()));
+                server_.reset(new DianaServer<index_type>(pairs_map_path, message->setup_size()));
             } catch (std::exception &e) {
                 logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
                 
@@ -147,7 +147,7 @@ std::to_string((t)) )
         
         
         
-        grpc::Status DianeImpl::search(grpc::ServerContext* context,
+        grpc::Status DianaImpl::search(grpc::ServerContext* context,
                                         const SearchRequestMessage* mes,
                                         grpc::ServerWriter<SearchReply>* writer)
         {
@@ -158,7 +158,7 @@ std::to_string((t)) )
             }
         }
         
-        grpc::Status DianeImpl::sync_search(grpc::ServerContext* context,
+        grpc::Status DianaImpl::sync_search(grpc::ServerContext* context,
                                              const SearchRequestMessage* mes,
                                              grpc::ServerWriter<SearchReply>* writer)
         {
@@ -207,7 +207,7 @@ std::to_string((t)) )
         }
         
         
-        grpc::Status DianeImpl::async_search(grpc::ServerContext* context,
+        grpc::Status DianaImpl::async_search(grpc::ServerContext* context,
                                               const SearchRequestMessage* mes,
                                               grpc::ServerWriter<SearchReply>* writer)
         {
@@ -265,7 +265,7 @@ std::to_string((t)) )
         }
         
         
-        grpc::Status DianeImpl::update(grpc::ServerContext* context,
+        grpc::Status DianaImpl::update(grpc::ServerContext* context,
                                         const UpdateRequestMessage* mes,
                                         google::protobuf::Empty* e)
         {
@@ -285,7 +285,7 @@ std::to_string((t)) )
             return grpc::Status::OK;
         }
         
-        grpc::Status DianeImpl::bulk_update(grpc::ServerContext* context,
+        grpc::Status DianaImpl::bulk_update(grpc::ServerContext* context,
                                              grpc::ServerReader<UpdateRequestMessage>* reader, google::protobuf::Empty* e)
         {
             if (!server_) {
@@ -310,7 +310,7 @@ std::to_string((t)) )
         }
         
         
-        std::ostream& DianeImpl::print_stats(std::ostream& out) const
+        std::ostream& DianaImpl::print_stats(std::ostream& out) const
         {
             if (server_) {
                 return server_->print_stats(out);
@@ -318,18 +318,18 @@ std::to_string((t)) )
             return out;
         }
         
-        bool DianeImpl::search_asynchronously() const
+        bool DianaImpl::search_asynchronously() const
         {
             return async_search_;
         }
         
-        void DianeImpl::set_search_asynchronously(bool flag)
+        void DianaImpl::set_search_asynchronously(bool flag)
         {
             async_search_ = flag;
         }
         
         
-        void DianeImpl::flush_server_storage()
+        void DianaImpl::flush_server_storage()
         {
             if (server_) {
                 logger::log(logger::TRACE) << "Flush server storage..." << std::endl;
@@ -361,9 +361,9 @@ std::to_string((t)) )
             return req;
         }
         
-        UpdateRequest<DianeImpl::index_type> message_to_request(const UpdateRequestMessage* mes)
+        UpdateRequest<DianaImpl::index_type> message_to_request(const UpdateRequestMessage* mes)
         {
-            UpdateRequest<DianeImpl::index_type> req;
+            UpdateRequest<DianaImpl::index_type> req;
             
             req.index = mes->index();
             std::copy(mes->update_token().begin(), mes->update_token().end(), req.token.begin());
@@ -371,9 +371,9 @@ std::to_string((t)) )
             return req;
         }
         
-        void run_diane_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search) {
+        void run_diana_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search) {
             std::string server_address(address);
-            DianeImpl service(server_db_path);
+            DianaImpl service(server_db_path);
             
             grpc::ServerBuilder builder;
             builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

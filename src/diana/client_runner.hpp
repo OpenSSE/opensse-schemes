@@ -22,9 +22,9 @@
 #pragma once
 
 
-#include "diane/diane_client.hpp"
+#include "diana/diana_client.hpp"
 
-#include "diane.grpc.pb.h"
+#include "diana.grpc.pb.h"
 
 #include <memory>
 #include <thread>
@@ -35,17 +35,17 @@
 #include <condition_variable>
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
-        class DianeClientRunner {
+        class DianaClientRunner {
         public:
             typedef uint64_t index_type;
 
-            DianeClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
-//            DianeClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
-            ~DianeClientRunner();
+            DianaClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
+//            DianaClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
+            ~DianaClientRunner();
             
-            const DianeClient<index_type>& client() const;
+            const DianaClient<index_type>& client() const;
             
             std::list<index_type> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const;
             void update(const std::string& keyword, uint64_t index);
@@ -71,8 +71,8 @@ namespace sse {
             
             bool send_setup(const size_t setup_size) const;
             
-            std::unique_ptr<diane::Diane::Stub> stub_;
-            std::unique_ptr<DianeClient<index_type>> client_;
+            std::unique_ptr<diana::Diana::Stub> stub_;
+            std::unique_ptr<DianaClient<index_type>> client_;
             
             typedef struct
             {
@@ -104,7 +104,7 @@ namespace sse {
         };
         
         SearchRequestMessage request_to_message(const SearchRequest& req);
-        UpdateRequestMessage request_to_message(const UpdateRequest<DianeClientRunner::index_type>& req);
+        UpdateRequestMessage request_to_message(const UpdateRequest<DianaClientRunner::index_type>& req);
         
-    } // namespace diane
+    } // namespace diana
 } // namespace sse

@@ -11,7 +11,7 @@
 #include <sse/crypto/prf.hpp>
 
 #include "types.hpp"
-#include "diane/diane_client.hpp"
+#include "diana/diana_client.hpp"
 #include "utils/rocksdb_wrapper.hpp"
 
 namespace sse {
@@ -83,8 +83,8 @@ namespace sse {
             crypto::Prf<crypto::punct::kMasterKeySize> punct_enc_master_prf_;
             crypto::Prf<kKeywordTokenSize> kw_token_prf_;
 
-            diane::DianeClient<crypto::punct::ciphertext_type> insertion_client_;
-            diane::DianeClient<crypto::punct::key_share_type> deletion_client_;
+            diana::DianaClient<crypto::punct::ciphertext_type> insertion_client_;
+            diana::DianaClient<crypto::punct::key_share_type> deletion_client_;
             
             sophos::RocksDBCounter search_counter_map_;
             

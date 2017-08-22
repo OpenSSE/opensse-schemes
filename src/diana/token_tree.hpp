@@ -29,7 +29,7 @@
 #include <functional>
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         class TokenTree
         {

@@ -28,7 +28,7 @@
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 
 namespace sse {
-    namespace diane {
+    namespace diana {
         
         TokenTree::token_type TokenTree::derive_node(const token_type& K, uint64_t node_index, uint8_t depth)
         {

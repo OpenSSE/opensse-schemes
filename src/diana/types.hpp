@@ -24,7 +24,7 @@
 #include "token_tree.hpp"
 
 namespace sse {
-    namespace diane {
+    namespace diana {
 
         constexpr size_t kSearchTokenKeySize = TokenTree::kTokenSize;
         constexpr size_t kUpdateTokenSize = 16;

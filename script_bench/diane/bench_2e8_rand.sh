@@ -16,7 +16,7 @@ kKeywordRand10GroupBase=$kKeywordGroupBase"rand-10^"
 # 	done
 # done
 #
-# ./diane_client -q -b $db_file $kw_list
+# ./diana_client -q -b $db_file $kw_list
 #
 # kw_list=""
 # for i in `seq 0 7`;
@@ -26,7 +26,7 @@ kKeywordRand10GroupBase=$kKeywordGroupBase"rand-10^"
 # 		kw_list=$kw_list" "$kKeyword10GroupBase"2_"$i"_"$j
 # 	done
 # done
-# ./diane_client -q -b $db_file $kw_list
+# ./diana_client -q -b $db_file $kw_list
 #
 # kw_list=""
 # for i in `seq 0 7`;
@@ -36,7 +36,7 @@ kKeywordRand10GroupBase=$kKeywordGroupBase"rand-10^"
 # 		kw_list=$kw_list" "$kKeyword10GroupBase"3_"$i"_"$j
 # 	done
 # done
-# ./diane_client -q -b $db_file $kw_list
+# ./diana_client -q -b $db_file $kw_list
 #
 # kw_list=""
 # for i in `seq 0 7`;
@@ -46,7 +46,7 @@ kKeywordRand10GroupBase=$kKeywordGroupBase"rand-10^"
 # 		kw_list=$kw_list" "$kKeyword10GroupBase"4_"$i"_"$j
 # 	done
 # done
-# ./diane_client -q -b $db_file $kw_list
+# ./diana_client -q -b $db_file $kw_list
 #
 # kw_list=""
 # for i in `seq 0 7`;
@@ -56,7 +56,7 @@ kKeywordRand10GroupBase=$kKeywordGroupBase"rand-10^"
 #                 kw_list=$kw_list" "$kKeyword10GroupBase"5_"$i"_"$j
 #         done
 # done
-# ./diane_client -q -b $db_file $kw_list
+# ./diana_client -q -b $db_file $kw_list
 
 # 'Random' groups
 
@@ -69,7 +69,7 @@ do
 		kw_list=$kw_list" "$kKeywordRand10GroupBase"2_"$i"_"$j
 	done
 done
-./diane_client -q -b $db_file $kw_list
+./diana_client -q -b $db_file $kw_list
 
 # 1e3
 kw_list=""
@@ -80,7 +80,7 @@ do
 		kw_list=$kw_list" "$kKeywordRand10GroupBase"3_"$i"_"$j
 	done
 done
-./diane_client -q -b $db_file $kw_list
+./diana_client -q -b $db_file $kw_list
 
 #1e4
 kw_list=""
@@ -91,7 +91,7 @@ do
 		kw_list=$kw_list" "$kKeywordRand10GroupBase"4_"$i"_"$j
 	done
 done
-./diane_client -q -b $db_file $kw_list
+./diana_client -q -b $db_file $kw_list
 
 #1e5
 kw_list=""
@@ -102,7 +102,7 @@ do
 		kw_list=$kw_list" "$kKeywordRand10GroupBase"5_"$i"_"$j
 	done
 done
-./diane_client -q -b $db_file $kw_list
+./diana_client -q -b $db_file $kw_list
 
 # 1e6
 kw_list=""
@@ -113,6 +113,6 @@ do
 		kw_list=$kw_list" "$kKeywordRand10GroupBase"6_"$i"_"$j
 	done
 done
-./diane_client -q -b $db_file $kw_list
+./diana_client -q -b $db_file $kw_list
 
 	# echo $kw_list

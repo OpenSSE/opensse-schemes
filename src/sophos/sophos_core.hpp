@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "rocksdb_wrapper.hpp"
+#include "utils/rocksdb_wrapper.hpp"
 
 #include <string>
 #include <array>

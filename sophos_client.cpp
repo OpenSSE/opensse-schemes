@@ -7,7 +7,7 @@
 //
 
 #include "sophos/sophos_client_runner.hpp"
-#include "logger.hpp"
+#include "src/utils/logger.hpp"
 #include "aux/db_generator.hpp"
 
 #include <sse/crypto/utils.hpp>

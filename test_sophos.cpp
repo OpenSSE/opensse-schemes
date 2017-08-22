@@ -12,7 +12,7 @@
 
 #include "src/sophos/sophos_core.hpp"
 #include "src/sophos/large_storage_sophos_client.hpp"
-#include "utils.hpp"
+#include "src/utils/utils.hpp"
 
 using namespace sse::sophos;
 using namespace std;

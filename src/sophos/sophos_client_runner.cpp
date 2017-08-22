@@ -26,9 +26,9 @@
 #include "sophos/large_storage_sophos_client.hpp"
 #include "sophos/medium_storage_sophos_client.hpp"
 
-#include "thread_pool.hpp"
-#include "utils.hpp"
-#include "logger.hpp"
+#include "utils/thread_pool.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
 
 #include <sse/dbparser/DBParserJSON.h>
 

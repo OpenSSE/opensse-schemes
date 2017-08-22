@@ -21,9 +21,9 @@
 
 #include "sophos_core.hpp"
 
-#include "utils.hpp"
-#include "logger.hpp"
-#include "thread_pool.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
+#include "utils/thread_pool.hpp"
 
 #include <iostream>
 #include <algorithm>

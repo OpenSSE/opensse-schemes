@@ -20,8 +20,8 @@
 
 
 #include "large_storage_sophos_client.hpp"
-#include "utils.hpp"
-#include "logger.hpp"
+#include "utils/utils.hpp"
+#include "utils/logger.hpp"
 
 
 #include <sse/dbparser/rapidjson/rapidjson.h>

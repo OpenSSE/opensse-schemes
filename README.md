@@ -96,6 +96,42 @@ env.Append(CPPPATH=['~/grpc/include'])
 env.Append(LIBPATH=['~/grpc/lib'])
 ```
 
+# Usage
+
+This repository provides implementations of SSE as a proof of concept, and cannot really be used for real sensitive applications. In particular, the cryptographic toolkit most probably has many implementation flaws.
+
+The building script builds basic test programs for Sophos, Diana and Janus (respectively `sophos_debug`, `diana_debug`, and `janus_debug`), that are of no use *per se*, and two pairs of client/server programs for Sophos and Diana (`sophos_server` and `sophos_client` for Sophos, and `diana_server` and `diana_client` for Diana). These are the ones you are looking for.
+
+## Client
+The clients usage is as follows
+`sophos_client [-b client.db] [-l inverted_index.json] [-p] [-r count] [-q] [keyword1 [... keywordn]]`
+
+* `-b client.db` : use file as the client database (test.csdb by default)
+
+
+* `-l file.json` : load the reversed index file.json and add it to the database. file.json is a JSON file with the following structure : 
+```json
+{
+‘’keyword1’’ : [1,2,3,4,….],
+‘’keyword2’’ : [11,22,33,44,….],
+...
+}
+```
+In the repo, `inverted_index.json` is an example of such file.
+* `-p` : print stats about the loaded database (number of keywords)
+* `-r count` : generate a database with count entries. Look at the aux/db_generator.* files to see how such databases are generated
+* `keyword1 … keywordn` : search queries with keyword1 … keywordn. 
+
+
+## Server
+The servers usage is as follows
+`sophos_server [-b server.db] [-s]`
+
+* `-b server.db` : use file as the server database (test.ssdb by default)
+* `-s` : use synchronous searches (when searching, the server retrieves all the results before sending them to the client. By default, results are sent once retrieved). I used this option for the benchmarks without RPC.
+
+
+
 # Contributors
 
 Unless otherwise stated, the code has been written by [Raphael Bost](http://people.irisa.fr/Raphael.Bost/).

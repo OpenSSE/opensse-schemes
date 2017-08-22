@@ -1,9 +1,9 @@
 [submodule "third_party/crypto"]
 	path = third_party/crypto
-	url = https://gitlab.com/sse/crypto.git
+	url = https://github.com/OpenSSE/crypto-tk.git
 [submodule "ssdmap"]
 	path = third_party/ssdmap
 	url = https://github.com/rbost/ssdmap.git
 [submodule "third_party/db-parser"]
 	path = third_party/db-parser
-	url = https://gitlab.com/sse/db-parser.git
+	url = https://github.com/OpenSSE/db-parser.git

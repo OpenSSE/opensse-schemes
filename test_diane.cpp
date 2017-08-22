@@ -104,7 +104,8 @@ void test_client_server()
     
     key = "toto";
     s_req = client->search_request(key);
-    res = server->search(s_req);
+//    res = server->search(s_req);
+    res = server->search_simple_parallel(s_req,8);
 
     cout << "Search " << key << ". Results: [";
     for(index_type i : res){

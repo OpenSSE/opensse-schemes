@@ -49,20 +49,15 @@ public:
     DianeServer(const std::string& db_path);
     DianeServer(const std::string& db_path, const size_t tm_setup_size);
     
-    bool get(const uint8_t *key, index_type &index) const;
-
-
-    std::list<index_type> search(const SearchRequest& req);
-    void search(const SearchRequest& req, const std::function<void(index_type)> &post_callback);
-    void search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback);
     
-    std::list<index_type> search_parallel(const SearchRequest& req, uint8_t derivation_threads_count,uint8_t access_threads_count);
-    void search_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t derivation_threads_count,uint8_t access_threads_count);
-
-    std::list<index_type> search_simple_parallel(const SearchRequest& req, uint8_t threads_count);
-    void search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results);
-    void search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count);
-    void search_simple_parallel(const SearchRequest& req, const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count);
+    std::list<index_type> search(const SearchRequest& req, bool delete_results = false);
+    void search(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results = false);
+    void search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results = false);
+    
+    std::list<index_type> search_simple_parallel(const SearchRequest& req, uint8_t threads_count, bool delete_results = false);
+    void search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results = false);
+    void search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results = false);
+    void search_simple_parallel(const SearchRequest& req, const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results = false);
 
     
     void update(const UpdateRequest<index_type>& req);
@@ -71,6 +66,18 @@ public:
     
     void flush_edb();
 private:
+    bool get_unmask(const uint8_t *key, index_type &index, bool delete_key);
+    
+    inline bool retrieve_entry(const update_token_type key, index_type &index, bool delete_key)
+    {
+        bool found = edb_.get(key,index);
+        if (delete_key && found) {
+            edb_.remove(key);
+        }
+        
+        return found;
+    }
+    
 
     sophos::RockDBWrapper edb_;
     
@@ -94,9 +101,9 @@ namespace sse {
         {
             
         }
-        
+
         template <typename T>
-        bool DianeServer<T>::get(const uint8_t *key, index_type &index) const
+        bool DianeServer<T>::get_unmask(const uint8_t *key, index_type &index, bool delete_key)
         {
             update_token_type ut;
             index_type mask;
@@ -110,26 +117,26 @@ namespace sse {
             
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
+                logger::log(logger::DBG) << "Mask : " << hex_string(mask) << std::endl;
             }
             
-            bool found = edb_.get(ut,index);
+            bool found = retrieve_entry(ut,index, delete_key);
             
             if (found) {
                 if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "Found: " << std::hex << index << std::endl;
+                    logger::log(logger::DBG) << "Found: " << hex_string(index) << std::endl;
                 }
                 
-                index ^= mask;
+                index = xor_mask(index, mask);
             }else{
                 logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
             }
             
             return found;
         }
-        
+
         template <typename T>
-        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search(const SearchRequest& req)
+        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search(const SearchRequest& req, bool delete_results)
         {
             std::list<index_type> results;
             
@@ -138,13 +145,13 @@ namespace sse {
                 results.push_back(i);
             };
             
-            search(req, callback);
+            search(req, callback, delete_results);
             
             return results;
         }
         
         template <typename T>
-        void DianeServer<T>::search(const SearchRequest& req, const std::function<void(index_type)> &post_callback)
+        void DianeServer<T>::search(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
         {
             
             if (logger::severity() <= logger::DBG) {
@@ -154,10 +161,10 @@ namespace sse {
             
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
             
-            auto get_callback = [this, &post_callback](const uint8_t *key)
+            auto get_callback = [this, &post_callback, delete_results](const uint8_t *key)
             {
                 index_type index;
-                if (get(key, index)) {
+                if (get_unmask(key, index, delete_results)) {
                     post_callback(index);
                 }
             };
@@ -175,7 +182,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback)
+        void DianeServer<T>::search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
         {
             index_type r;
             
@@ -218,7 +225,7 @@ namespace sse {
                         logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
                     }
                     
-                    bool found = edb_.get(ut,r);
+                    bool found = retrieve_entry(ut,r, delete_results);
                     
                     if (found) {
                         if (logger::severity() <= logger::DBG) {
@@ -241,103 +248,7 @@ namespace sse {
         }
         
         template <typename T>
-        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search_parallel(const SearchRequest& req, uint8_t derivation_threads_count,uint8_t access_threads_count)
-        {
-            std::list<index_type> results;
-            std::mutex list_mutex;
-            
-            auto callback = [&results, &list_mutex](index_type i)
-            {
-                list_mutex.lock();
-                results.push_back(i);
-                list_mutex.unlock();
-            };
-            
-            search_parallel(req, callback, derivation_threads_count, access_threads_count);
-            
-            return results;
-        }
-        
-        
-        template <typename T>
-        void DianeServer<T>::search_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t derivation_threads_count,uint8_t access_threads_count)
-        {
-            if (logger::severity() <= logger::DBG) {
-                logger::log(logger::DBG) << "Expected matches: " << req.add_count << std::endl;
-                logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
-            }
-            
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
-            
-            ThreadPool access_pool(access_threads_count);
-            ThreadPool derive_pool(derivation_threads_count);
-            
-            
-            auto lookup_job = [this, &post_callback](const update_token_type &ut, index_type mask)
-            {
-                index_type r;
-                
-                
-                bool found = edb_.get(ut,r);
-                
-                if (found) {
-                    if (logger::severity() <= logger::DBG) {
-                        logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
-                    }
-                    
-                    post_callback(r^mask);
-                }else{
-                    logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
-                }
-            };
-            
-            std::function<void(TokenTree::token_type, uint8_t)> derive_job = [&derive_job, &access_pool, &lookup_job, &derive_pool](TokenTree::token_type t, uint8_t d)
-            {
-                TokenTree::token_type st = TokenTree::derive_leftmost_node(t, d, derive_job);
-                
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "Derived leaf token: " << hex_string(st) << std::endl;
-                }
-                
-                // get the token and mask
-                
-                update_token_type ut;
-                index_type mask;
-                
-                gen_update_token_mask(t, ut, mask);
-                
-                
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "Derived token : " << hex_string(ut) << std::endl;
-                    logger::log(logger::DBG) << "Mask : " << std::hex << mask << std::endl;
-                }
-                
-                access_pool.enqueue(lookup_job, ut, mask);
-                
-            };
-            
-            
-            
-            
-            for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
-                
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "Search token key: " << hex_string(it_token->first) << std::endl;
-                    logger::log(logger::DBG) << "Search token depth: " << std::dec << (uint32_t)(it_token->second) << std::endl;
-                }
-                
-                // post the derivation job
-                
-                derive_pool.enqueue(derive_job, it_token->first, it_token->second);
-            }
-            
-            // wait for the pools to finish
-            derive_pool.join();
-            access_pool.join();
-        }
-        
-        template <typename T>
-        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count)
+        std::list<typename DianeServer<T>::index_type> DianeServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, bool delete_results)
         {
             assert(threads_count > 0);
             
@@ -350,7 +261,7 @@ namespace sse {
                 result_lists[thread_id].push_back(i);
             };
             
-            search_simple_parallel(req, callback, threads_count);
+            search_simple_parallel(req, callback, threads_count, delete_results);
             
             // merge the result lists
             std::list<index_type> results(std::move(result_lists[0]));
@@ -382,7 +293,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results)
+        void DianeServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results)
         {
             if (results.size() < req.add_count) {
                 // resize the vector if needed
@@ -396,31 +307,36 @@ namespace sse {
                 results[r_index++] = i;
             };
             
-            search_simple_parallel(req, callback, threads_count);
+            search_simple_parallel(req, callback, threads_count, delete_results);
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count)
+        void DianeServer<T>::search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results)
         {
             auto aux = [&post_callback](index_type ind, uint8_t i)
             {
                 post_callback(ind);
             };
-            search_simple_parallel(req, aux, threads_count);
+            search_simple_parallel(req, aux, threads_count, delete_results);
         }
         
         template <typename T>
-        void DianeServer<T>::search_simple_parallel(const SearchRequest& req,const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count)
+        void DianeServer<T>::search_simple_parallel(const SearchRequest& req,const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results)
         {
+            assert(threads_count>0);
+            if(req.add_count == 0)
+            {
+                return;
+            }
             
-            auto job = [this, &post_callback](const uint8_t t_id, const SearchRequest& req, const uint64_t min_index, const uint64_t max_index)
+            auto job = [this, &post_callback, delete_results](const uint8_t t_id, const SearchRequest& req, const uint64_t min_index, const uint64_t max_index)
             {
                 
                 
-                auto get_callback = [this, t_id, &post_callback](const uint8_t *key)
+                auto get_callback = [this, t_id, &post_callback, delete_results](const uint8_t *key)
                 {
                     index_type index;
-                    if (get(key, index)) {
+                    if (get_unmask(key, index, delete_results)) {
                         post_callback(index, t_id);
                     }
                 };
@@ -475,6 +391,9 @@ namespace sse {
             
             std::vector<std::thread> threads;
             
+            threads_count = MIN(threads_count, req.add_count);
+            
+            
             size_t step = req.add_count/threads_count;
             size_t remaining = req.add_count % threads_count;
             
@@ -503,7 +422,7 @@ namespace sse {
         void DianeServer<T>::update(const UpdateRequest<T>& req)
         {
             if (logger::severity() <= logger::DBG) {
-                logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+                logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << hex_string(req.index) << ")" << std::endl;
             }
             
             edb_.put(req.token, req.index);

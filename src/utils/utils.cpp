@@ -86,6 +86,20 @@ std::ostream& print_hex(std::ostream& out, const std::string &s)
     return out;
 }
 
+std::string hex_string(const uint64_t &a)
+{
+    std::ostringstream out;
+    out << std::hex << std::setw(16) << std::setfill('0') << (uint64_t) a;
+    return out.str();
+}
+
+std::string hex_string(const uint32_t &a)
+{
+    std::ostringstream out;
+    out << std::hex << std::setw(8) << std::setfill('0') << (uint32_t) a;
+    return out.str();
+}
+
 void append_keyword_map(std::ostream& out, const std::string &kw, uint32_t index)
 {
     out << kw << "       " << std::hex << index << "\n";

@@ -74,6 +74,9 @@ std::ostream& print_hex(std::ostream& out, const std::array<uint8_t,N> &a) {
     return out;
 }
 
+std::string hex_string(const uint64_t &a);
+std::string hex_string(const uint32_t &a);
+
 template <class MapClass>
 void write_keyword_map(std::ostream& out, MapClass& kw_map)
 {

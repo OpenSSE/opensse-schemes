@@ -6,8 +6,36 @@
 //  Copyright © 2017 Raphael Bost. All rights reserved.
 //
 
-#ifndef types_h
-#define types_h
+#pragma once
 
+#include "diane/types.hpp"
 
-#endif /* types_h */
+#include <sse/crypto/puncturable_enc.hpp>
+#include <array>
+
+namespace sse {
+    namespace janus {
+
+        constexpr size_t kInsertionTokenPayloadSize = crypto::punct::kCiphertextSize;
+
+        typedef uint64_t index_type;
+        
+        constexpr size_t kKeywordTokenSize = 16;
+        typedef std::array<uint8_t, kKeywordTokenSize> keyword_token_type;
+        
+        struct SearchRequest
+        {
+            keyword_token_type keyword_token;
+            
+            diane::SearchRequest insertion_search_request;
+            diane::SearchRequest deletion_search_request;
+            
+            crypto::punct::key_share_type first_key_share;
+        };
+
+        typedef diane::UpdateRequest<crypto::punct::ciphertext_type> InsertionRequest;
+        
+        typedef diane::UpdateRequest<crypto::punct::key_share_type> DeletionRequest;
+
+    }
+}

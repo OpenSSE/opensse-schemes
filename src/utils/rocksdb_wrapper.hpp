@@ -28,6 +28,7 @@
 #include <rocksdb/memtablerep.h>
 #include <rocksdb/options.h>
 
+#include <list>
 #include <iostream>
 
 namespace sse {
@@ -48,6 +49,11 @@ public:
 
     template <size_t N, typename V>
     inline bool put(const std::array<uint8_t, N> &key, const V &data);
+
+    template <size_t N>
+    inline bool remove(const std::array<uint8_t, N> &key);
+    
+    inline bool remove(const uint8_t *key, const uint8_t key_length);
 
     inline void flush(bool blocking = true);
     
@@ -175,7 +181,7 @@ private:
         
         if (!s.ok()) {
             logger::log(logger::ERROR) << "Unable to insert pair in the database: " << s.ToString() << std::endl;
-            logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key) << ", data=" << std::hex << data << std::endl;
+            logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key) << ", data=" << hex_string(data) << std::endl;
 
         }
 //        assert(s.ok());
@@ -183,6 +189,24 @@ private:
         return s.ok();
     }
 
+    template <size_t N>
+    bool RockDBWrapper::remove(const std::array<uint8_t, N> &key)
+    {
+        rocksdb::Slice k_s(reinterpret_cast<const char*>( key.data() ),N);
+        
+        rocksdb::Status s = db_->Delete(rocksdb::WriteOptions(), k_s);
+        
+        return s.ok();
+    }
+    
+    bool RockDBWrapper::remove(const uint8_t *key, const uint8_t key_length)
+    {
+        rocksdb::Slice k_s(reinterpret_cast<const char*>( key ),key_length);
+        
+        rocksdb::Status s = db_->Delete(rocksdb::WriteOptions(), k_s);
+        
+        return s.ok();
+    }
     
     void RockDBWrapper::flush(bool blocking)
     {
@@ -224,6 +248,12 @@ private:
         
         bool get_and_increment(const std::string &key, uint32_t &val);
         
+        bool increment(const std::string &key, uint32_t default_value = 0);
+
+        bool set(const std::string &key, uint32_t val);
+
+        bool remove_key(const std::string &key);
+        
         inline void flush(bool blocking = true);
         
         inline uint64_t approximate_size() const
@@ -240,6 +270,230 @@ private:
         rocksdb::DB* db_;
         
     };
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    template<class T> struct serialization
+    {
+        std::string serialize(const T&);
+        bool deserialize(std::string::iterator& begin, const std::string::iterator& end, T& out);
+    };
+
+    template <typename T, class Serializer = serialization<T>>
+    class RockDBListStore {
+    public:
+        typedef Serializer      serializer;
+
+        RockDBListStore() = delete;
+        inline RockDBListStore(const std::string &path);
+        inline ~RockDBListStore();
+        
+        // find the list associated to key and append elements to data
+        bool get(const std::string &key, std::list<T> &data, serializer& deser) const;
+        bool get(const std::string &key, std::list<T> &data) const
+        {
+            serializer deser = serializer();
+            return get(key, data, deser);
+        }
+        
+        template <size_t N>
+        inline bool get(const std::array<uint8_t, N> &key, std::list<T> &data, serializer& deser) const
+        {
+            return get(key.data(), N, data, deser);
+        }
+        template <size_t N>
+        inline bool get(const std::array<uint8_t, N> &key, std::list<T> &data) const
+        {
+            serializer deser = serializer();
+            return get(key, data, deser);
+        }
+
+        bool get(const uint8_t *key, const uint8_t key_length, std::list<T> &data, serializer& deser) const;
+        inline bool get(const uint8_t *key, const uint8_t key_length, std::list<T> &data) const
+        {
+            serializer deser = serializer();
+            return get(key, key_length, data, deser);
+        }
+        
+        
+        template <size_t N>
+        bool put(const std::array<uint8_t, N> &key, const std::list<T> &data, serializer& ser);
+        
+        template <size_t N>
+        inline bool put(const std::array<uint8_t, N> &key, const std::list<T> &data)
+        {
+            serializer ser = serializer();
+            return put<N>(key, data, ser);
+        }
+        
+        
+        void flush(bool blocking = true);
+    private:
+        rocksdb::DB* db_;
+        
+    };
+
+    template <typename T, class Serializer>
+    RockDBListStore<T, Serializer>::RockDBListStore(const std::string &path)
+    {
+        rocksdb::Options options;
+        options.create_if_missing = true;
+        
+        
+        rocksdb::CuckooTableOptions cuckoo_options;
+        cuckoo_options.identity_as_first_hash = false;
+        cuckoo_options.hash_table_ratio = 0.9;
+        
+        options.table_cache_numshardbits = 4;
+        options.max_open_files = -1;
+        
+        options.compression = rocksdb::kNoCompression;
+        options.bottommost_compression = rocksdb::kDisableCompressionOption;
+        
+        options.compaction_style = rocksdb::kCompactionStyleLevel;
+        options.info_log_level = rocksdb::InfoLogLevel::INFO_LEVEL;
+        
+        options.delayed_write_rate = 8388608;
+        options.max_background_compactions = 20;
+        
+        options.allow_mmap_reads = true;
+        options.new_table_reader_for_compaction_inputs = true;
+        
+        options.allow_concurrent_memtable_write = options.memtable_factory->IsInsertConcurrentlySupported();
+        
+        options.max_bytes_for_level_base = 4294967296; // 4 GB
+        options.arena_block_size = 134217728; // 128 MB
+        options.level0_file_num_compaction_trigger = 10;
+        options.level0_slowdown_writes_trigger = 16;
+        options.hard_pending_compaction_bytes_limit = 137438953472; // 128 GB
+        options.target_file_size_base=201327616;
+        options.write_buffer_size=1073741824; // 1GB
+        
+        rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
+        
+        if (!status.ok()) {
+            logger::log(logger::CRITICAL) << "Unable to open the database: " << status.ToString() << std::endl;
+            db_ = NULL;
+        }
+    }
+    
+    template <typename T, class Serializer>
+    RockDBListStore<T, Serializer>::~RockDBListStore()
+    {
+        if (db_) {
+            delete db_;
+        }
+    }
+
+    template <typename T, class Serializer>
+    bool RockDBListStore<T, Serializer>::get(const std::string &key, std::list<T> &data, serializer& deser) const
+    {
+        std::string raw_string;
+        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &raw_string);
+        
+        if(s.ok()){
+            auto it = raw_string.begin();
+            const auto end = raw_string.end();
+            T elt;
+            
+            while (deser.deserialize(it, end, elt)) {
+                data.push_back(std::move<T>(elt));
+            }            
+        }
+        return s.ok();
+    }
+
+//    template <typename T, class Serializer>
+//    template <size_t N>
+//    bool RockDBListStore<T, Serializer>::get(const std::array<uint8_t, N> &key, std::list<T> &data, serializer& deser) const
+//    {
+//        rocksdb::Slice k_s(reinterpret_cast<const char*>( key.data() ),N);
+//        std::string raw_string;
+//        
+//        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(false,true), k_s, &raw_string);
+//        
+//        if(s.ok()){
+//            auto it = raw_string.begin();
+//            const auto end = raw_string.end();
+//            T elt;
+//            
+//            while (deser.deserialize(it, end, elt)) {
+//                data.push_back(std::move<T>(elt));
+//            }
+//        }
+//        return s.ok();
+//    }
+
+    template <typename T, class Serializer>
+    bool RockDBListStore<T, Serializer>::get(const uint8_t *key, const uint8_t key_length, std::list<T> &data, serializer& deser) const
+    {
+        rocksdb::Slice k_s(reinterpret_cast<const char*>( key ),key_length);
+        std::string raw_string;
+        
+        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(false,true), k_s, &raw_string);
+        
+        if(s.ok()){
+            auto it = raw_string.begin();
+            const auto end = raw_string.end();
+            T elt;
+            
+            while (deser.deserialize(it, end, elt)) {
+                //                data.push_back(std::move<T>(elt));
+                data.push_back(elt);
+            }
+        }
+        return s.ok();
+    }
+
+    template <typename T, class Serializer>
+    template <size_t N>
+    bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N> &key, const std::list<T> &data, serializer& ser)
+    {
+        std::string serialized_list;
+        
+        for (T elt : data) {
+            serialized_list += ser.serialize(elt);
+        }
+        
+        rocksdb::Slice k_s(reinterpret_cast<const char*>(key.data()),N);
+//        rocksdb::Slice k_v(reinterpret_cast<const char*>(&serialized_list.data()), sizeof(V));
+        rocksdb::Slice k_v(serialized_list.data(), serialized_list.size());
+        
+        rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), k_s, k_v);
+        
+        if (!s.ok()) {
+            logger::log(logger::ERROR) << "Unable to insert key in the database: " << s.ToString() << std::endl;
+//            logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key) << ", data=" << hex_string(data) << std::endl;
+            
+        }
+        
+        return s.ok();
+    }
+    
+    
+    template <typename T, class Serializer>
+    void RockDBListStore<T, Serializer>::flush(bool blocking)
+    {
+        rocksdb::FlushOptions options;
+        
+        options.wait = blocking;
+        
+        rocksdb::Status s = db_->Flush(options);
+        
+        if (!s.ok()) {
+            logger::log(logger::ERROR) << "DB Flush failed: " << s.ToString() << std::endl;
+        }
+        
+    }
 
 }
 }

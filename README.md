@@ -1,12 +1,11 @@
-# Sophos
+# OpenSSE Schemes
 
-Sophos is a forward private Symmetric Searchable Encryption scheme, with optimal asymptotic performance.
-This repo holds a C++ implementation of this scheme.
+Implementation of SSE schemes. For now, the repo includes a C++ implementation of Sophos, Diana and Janus. Sophos has been described in *[Σoφoς – Forward Secure Searchable Encryption](https://eprint.iacr.org/2016/728.pdf)* by Bost, and Diana and Janus in *[Forward and Backward Private Searchable Encryption from Constrained Cryptographic Primitives](https://eprint.iacr.org/2017/805.pdf)* by Bost, Minaud and Ohrimenko.
 
 
 # Pre-requisites
 ## All
-Sophos' dependencies need a compiler supporting C++14 (Sophos' core codebase doesn't). It has been successfully built and tested on Ubuntu 14 LTS using both clang 3.6 and gcc 4.9.3 and on Mac OS X.10 using clang 7.0.0
+OpenSSE's schemes implementation dependencies need a compiler supporting C++14 (although the core codebase doesn't). It has been successfully built and tested on Ubuntu 14 LTS using both clang 3.6 and gcc 4.9.3 and on Mac OS X.10 using clang 7.0.0
 
 ## Linux
 
@@ -28,28 +27,24 @@ You will actually need it to install dependencies:
 ```
 
 ## Installing gRPC
-Sophos uses Google's [gRPC](http://grpc.io) as its RPC machinery.
+OpenSSE uses Google's [gRPC](http://grpc.io) as its RPC machinery.
 Follow the instructions to install gRPC's C++ binding (see [here](https://github.com/grpc/grpc/tree/release-0_14/src/cpp) for the 0.14 release).
 
 ## Installing RocksDB
-Sophos uses Facebook's [RocksDB](http://rocksdb.org) as its storage engine. Sophos has been tested with the 4.9 release, which is available via git:
+OpenSSE uses Facebook's [RocksDB](http://rocksdb.org) as its storage engine. OpenSSE has been tested with the 5.7 release. See the [installation guide](https://github.com/facebook/rocksdb/blob/master/INSTALL.md).
+
+Note that on OS X, RocksDB ca be installed *via* Homebrew:
 
 ```sh
- $ git clone -b 4.9.fb https://github.com/facebook/rocksdb.git
+brew install rocksdb
 ```
-Running ```[sudo] make install``` will compile the source and copy the library and headers in ```/usr/local``` by default. To set an other install path, set the ```INSTALL_PATH``` variable:
-
-```sh
- $ export INSTALL_PATH=/path/to/rocksdb
-```
-
 
 
 ## Getting the code
 The code is available *via* git:
 
 ```sh
- $ git clone https://gitlab.com/sse/sophos.git
+ $ git clone https://github.com/OpenSSE/opensse-schemes.git
 ```
 
 You will also need to fetch the submodules:
@@ -74,7 +69,7 @@ or do it by hand:
  $ (cd third_party/crypto; scons lib); (cd third_party/ssdmap; scons lib); (cd third_party/db-parser; scons lib); 
 ```
 
-Then, to build Sophos itself, just enter in your terminal
+Then, to build the code itself, just enter in your terminal
 
 ```sh
  $ scons 
@@ -137,7 +132,7 @@ Unless otherwise stated, the code has been written by [Raphael Bost](http://peop
 
 # Licensing
 
-Sophos is licensed under the [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html).
+OpenSSE Schemes is licensed under the [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html).
 
 ![AGPL](http://www.gnu.org/graphics/agplv3-88x31.png)
 

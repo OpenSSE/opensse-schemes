@@ -43,8 +43,6 @@
 
 #include <sse/crypto/prf.hpp>
 
-#include <ssdmap/bucket_map.hpp>
-
 namespace sse {
     namespace diana {
         

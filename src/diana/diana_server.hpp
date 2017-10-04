@@ -32,8 +32,6 @@
 
 #include <sse/crypto/prf.hpp>
 
-#include <ssdmap/bucket_map.hpp>
-
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 
 namespace sse {

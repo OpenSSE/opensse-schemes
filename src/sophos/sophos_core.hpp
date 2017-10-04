@@ -28,7 +28,6 @@
 #include <fstream>
 #include <functional>
 
-#include <ssdmap/bucket_map.hpp>
 #include <sse/crypto/tdp.hpp>
 #include <sse/crypto/prf.hpp>
 
@@ -45,11 +44,6 @@ typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
 typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
 typedef uint64_t index_type;
     
-struct TokenHasher
-{
-public:
-    size_t operator()(const update_token_type& ut) const;
-};
     
 struct SearchRequest
 {
@@ -147,7 +141,6 @@ public:
     
     std::ostream& print_stats(std::ostream& out) const;
 private:
-//    ssdmap::bucket_map<update_token_type, index_type, TokenHasher> edb_;
     RockDBWrapper edb_;
     
     sse::crypto::TdpMultPool public_tdp_;

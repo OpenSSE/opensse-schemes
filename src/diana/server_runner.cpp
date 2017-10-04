@@ -108,7 +108,7 @@ namespace sse {
                 logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
                 
                 server_.reset();
-                return grpc::Status(grpc::FAILED_PRECONDITION, "Unable to create the server's core. Error in libssdmap");
+                return grpc::Status(grpc::FAILED_PRECONDITION, "Unable to create the server's core.");
             }
             
             logger::log(logger::TRACE) << "Successful setup" << std::endl;

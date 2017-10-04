@@ -21,10 +21,6 @@ config['cryto_lib_dir'] = root_dir + "/third_party/crypto/library"
 config['cryto_include'] = config['cryto_lib_dir']  + "/include"
 config['cryto_lib'] = config['cryto_lib_dir']  + "/lib"
 
-config['ssdmap_lib_dir'] = root_dir + "/third_party/ssdmap/library"
-config['ssdmap_include'] = config['ssdmap_lib_dir']  + "/include"
-config['ssdmap_lib'] = config['ssdmap_lib_dir']  + "/lib"
-
 config['db-parser_lib_dir'] = root_dir + "/third_party/db-parser/library"
 config['db-parser_include'] = config['db-parser_lib_dir']  + "/include"
 config['db-parser_lib'] = config['db-parser_lib_dir']  + "/lib"
@@ -42,11 +38,11 @@ config['db-parser_lib'] = config['db-parser_lib_dir']  + "/lib"
 
 env.Append(CCFLAGS = ['-fPIC','-Wall', '-march=native'])
 env.Append(CXXFLAGS = ['-std=c++11'])
-env.Append(CPPPATH = ['/usr/local/include', config['cryto_include'], config['ssdmap_include'], config['db-parser_include']])
-env.Append(LIBPATH = ['/usr/local/lib', config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
-env.Append(RPATH = [config['cryto_lib'], config['ssdmap_lib'], config['db-parser_lib']])
+env.Append(CPPPATH = ['/usr/local/include', config['cryto_include'], config['db-parser_include']])
+env.Append(LIBPATH = ['/usr/local/lib', config['cryto_lib'], config['db-parser_lib']])
+env.Append(RPATH = [config['cryto_lib'], config['db-parser_lib']])
 
-env.Append(LIBS = ['crypto', 'sse_crypto', 'ssdmap', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl', 'sse_dbparser', 'rocksdb', 'snappy', 'z', 'bz2',  'lz4'])
+env.Append(LIBS = ['crypto', 'sse_crypto', 'grpc++_unsecure', 'grpc', 'protobuf', 'pthread', 'dl', 'sse_dbparser', 'rocksdb', 'snappy', 'z', 'bz2',  'lz4'])
 
 #Workaround for OS X
 if env['PLATFORM'] == 'darwin':
@@ -81,21 +77,19 @@ env.Append(BUILDERS = {'Test' :  bld})
 
 
 crypto_lib_target = env.Command(config['cryto_lib_dir'], "", "cd third_party/crypto && scons lib")
-ssdmap_target = env.Command(config['ssdmap_lib_dir'], "", "cd third_party/ssdmap && scons lib")
 db_parser_target = env.Command(config['db-parser_lib_dir'], "", "cd third_party/db-parser && scons lib")
-env.Alias('deps', [crypto_lib_target, ssdmap_target, db_parser_target])
+env.Alias('deps', [crypto_lib_target, db_parser_target])
 
 objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 # protos = SConscript('src/protos/build.scons', exports='env', duplicate=0)
 # Depends(objects, protos)
 
-env.Depends(objects["diana"],[crypto_lib_target, ssdmap_target, db_parser_target])
-env.Depends(objects["sophos"],[crypto_lib_target, ssdmap_target, db_parser_target])
-env.Depends(objects["janus"],[crypto_lib_target, ssdmap_target, db_parser_target])
+env.Depends(objects["diana"],[crypto_lib_target, db_parser_target])
+env.Depends(objects["sophos"],[crypto_lib_target , db_parser_target])
+env.Depends(objects["janus"],[crypto_lib_target, db_parser_target])
 
 # clean_crypto = env.Command("clean_crypto", "", "cd third_party/crypto && scons -c lib")
-# clean_ssdmap = env.Command("clean_ssdmap", "", "cd third_party/ssdmap && scons -c lib")
-# env.Alias('clean_deps', [clean_crypto, clean_ssdmap])
+# env.Alias('clean_deps', [clean_crypto])
 
 Clean(objects["sophos"] + objects["diana"] + objects["janus"], 'build')
 

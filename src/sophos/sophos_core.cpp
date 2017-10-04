@@ -34,18 +34,6 @@ namespace sophos {
     const std::string SophosClient::tdp_sk_file__ = "tdp_sk.key";
     const std::string SophosClient::derivation_key_file__ = "derivation_master.key";
 
-size_t TokenHasher::operator()(const update_token_type& ut) const
-{
-    size_t h = 0;
-    for (size_t i = 0; i < kUpdateTokenSize; i++) {
-        if (i > 0) {
-            h <<= 8;
-        }
-        h = ut[i] + h;
-    }
-    return h;
-}
-
 size_t SophosClient::IndexHasher::operator()(const keyword_index_type& index) const
 {
     size_t h = 0;

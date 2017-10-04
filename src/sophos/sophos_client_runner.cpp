@@ -87,31 +87,6 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
 }
 
-//    SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path)
-//    : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
-//    {
-//        std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
-//                                                                   grpc::InsecureChannelCredentials()));
-//        stub_ = sophos::Sophos::NewStub(channel);
-//        
-//        if (exists(db_path)){
-//            throw std::runtime_error("File or directory already exists at " + db_path);
-//        }else{
-//            // initialize a brand new Sophos client
-//            
-//            // start by creating a new directory
-//            
-//            if (!create_directory(db_path, (mode_t)0700)) {
-//                throw std::runtime_error(db_path + ": unable to create directory");
-//            }
-//            
-//            client_ = MediumStorageSophosClient::construct_from_json(db_path, json_path);
-//        }
-//        
-//        // start the thread that will look for completed updates
-//        update_completion_thread_ = new std::thread(&SophosClientRunner::update_completion_loop, this);
-//    }
-    
 
 SophosClientRunner::~SophosClientRunner()
 {
@@ -369,67 +344,10 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
     return false;
 }
 
-//bool SophosClientRunner::output_db(const std::string& out_path)
-//{
-//    std::ofstream os(out_path);
-//
-//    if (!os.is_open()) {
-//        os.close();
-//        
-//        logger::log(logger::ERROR) << "Unable to create output file " << out_path << std::endl;
-//
-//        return false;
-//    }
-//
-//    client_->db_to_json(os);
-//    
-//    os.close();
-//    
-//    return true;
-//}
-
 std::ostream& SophosClientRunner::print_stats(std::ostream& out) const
 {
     return client_->print_stats(out);
 }
-
-//void SophosClientRunner::random_search() const
-//{
-//    logger::log(logger::TRACE) << "Random Search " << std::endl;
-//    
-//    grpc::ClientContext context;
-//    sophos::SearchRequestMessage message;
-//    sophos::SearchReply reply;
-//    
-//    message = request_to_message(dynamic_cast<MediumStorageSophosClient*>(client_.get())->random_search_request());
-//    
-//    std::unique_ptr<grpc::ClientReader<sophos::SearchReply> > reader( stub_->search(&context, message) );
-//    std::list<uint64_t> results;
-//    
-//    
-//    while (reader->Read(&reply)) {
-//        logger::log(logger::TRACE) << "New result: "
-//        << std::dec << reply.result() << std::endl;
-//        results.push_back(reply.result());
-//    }
-//    grpc::Status status = reader->Finish();
-//    if (status.ok()) {
-//        logger::log(logger::TRACE) << "Search succeeded." << std::endl;
-//    } else {
-//        logger::log(logger::ERROR) << "Search failed:" << std::endl;
-//        logger::log(logger::ERROR) << status.error_message() << std::endl;
-//    }
-//
-//}
-
-//void SophosClientRunner::search_benchmark(size_t n_bench) const
-//{
-//    for (size_t i = 0; i < n_bench; i++) {
-//        logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
-//        random_search();
-//    }
-//    logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
-//}
     
 SearchRequestMessage request_to_message(const SearchRequest& req)
 {

@@ -41,8 +41,6 @@ namespace sse {
             static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
 
             
-//            static std::unique_ptr<SophosClient> construct_from_json(const std::string& dir_path, const std::string& json_path);
-            
             MediumStorageSophosClient(const std::string& token_map_path, const size_t tm_setup_size);
             MediumStorageSophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key);
             MediumStorageSophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size);
@@ -59,7 +57,6 @@ namespace sse {
             
             void write_keys(const std::string& dir_path) const;
             
-//            std::ostream& db_to_json(std::ostream& out) const;
             std::ostream& print_stats(std::ostream& out) const;
             
             struct IndexHasher
@@ -72,8 +69,6 @@ namespace sse {
             static const std::string rsa_prg_key_file__;
             static const std::string counter_map_file__;
 
-//            class JSONHandler;
-//            friend JSONHandler;
             
             keyword_index_type get_keyword_index(const std::string &kw) const;
             
@@ -81,7 +76,6 @@ namespace sse {
             
             sophos::RocksDBCounter counter_map_;
             std::mutex token_map_mtx_;
-            std::atomic_uint keyword_counter_;
         };
     }
 }

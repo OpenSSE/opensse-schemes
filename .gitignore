@@ -84,6 +84,10 @@ janus_debug
 *.dsdb
 *.dcdb
 
+janus_client.*
+janus_server.*
+janus_master.key
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore

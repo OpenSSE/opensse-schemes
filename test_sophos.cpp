@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "src/sophos/sophos_core.hpp"
-#include "src/sophos/large_storage_sophos_client.hpp"
+#include "src/sophos/medium_storage_sophos_client.hpp"
 #include "src/utils/utils.hpp"
 
 using namespace sse::sophos;
@@ -21,11 +21,13 @@ void test_client_server()
 {
     string client_sk_path = "tdp_sk.key";
     string client_master_key_path = "derivation_master.key";
+    string client_tdp_prg_key_path = "tdp_prg.key";
     string server_pk_path = "tdp_pk.key";
     
     
     ifstream client_sk_in(client_sk_path.c_str());
     ifstream client_master_key_in(client_master_key_path.c_str());
+    ifstream client_tdp_prg_key_in(client_tdp_prg_key_path.c_str());
     ifstream server_pk_in(server_pk_path.c_str());
     
     unique_ptr<SophosClient> client;
@@ -36,12 +38,13 @@ void test_client_server()
     std::list<index_type> res;
     string key;
 
-    if((client_sk_in.good() != client_master_key_in.good()) || (client_sk_in.good() != server_pk_in.good()))
+    if((client_sk_in.good() != client_master_key_in.good()) || (client_sk_in.good() != server_pk_in.good()) || (client_sk_in.good() != client_tdp_prg_key_in.good()))
     {
         client_sk_in.close();
         client_master_key_in.close();
         server_pk_in.close();
-
+        client_tdp_prg_key_in.close();
+        
         throw std::runtime_error("All streams are not in the same state");
     }
     
@@ -49,13 +52,14 @@ void test_client_server()
         // the files exist
         cout << "Restart client and server" << endl;
         
-        stringstream client_sk_buf, client_master_key_buf, server_pk_buf;
+        stringstream client_sk_buf, client_master_key_buf, server_pk_buf, client_tdp_prg_key_buf;
 
         client_sk_buf << client_sk_in.rdbuf();
         client_master_key_buf << client_master_key_in.rdbuf();
         server_pk_buf << server_pk_in.rdbuf();
+        client_tdp_prg_key_buf << client_tdp_prg_key_in.rdbuf();
 
-        client.reset(new  LargeStorageSophosClient("client.sav", "client.csv", client_sk_buf.str(), client_master_key_buf.str()));
+        client.reset(new  MediumStorageSophosClient("client.sav", client_sk_buf.str(), client_master_key_buf.str(), client_tdp_prg_key_buf.str()));
         
         server.reset(new SophosServer("server.dat", server_pk_buf.str()));
         
@@ -66,7 +70,7 @@ void test_client_server()
     }else{
         cout << "Create new client-server instances" << endl;
         
-        client.reset(new LargeStorageSophosClient("client.sav", "client.csv", 1000));
+        client.reset(new MediumStorageSophosClient("client.sav", 1000));
 
         server.reset(new SophosServer("server.dat", 1000, client->public_key()));
         

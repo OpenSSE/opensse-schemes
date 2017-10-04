@@ -23,7 +23,7 @@
 #include "sophos_client_runner.hpp"
 
 #include "sophos_net_types.hpp"
-#include "sophos/medium_storage_sophos_client.hpp"
+#include "sophos/sophos_core.hpp"
 
 #include "utils/thread_pool.hpp"
 #include "utils/utils.hpp"
@@ -58,7 +58,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     if (is_directory(path)) {
         // try to initialize everything from this directory
 
-        client_ = MediumStorageSophosClient::construct_from_directory(path);
+        client_ = SophosClient::construct_from_directory(path);
         
     }else if (exists(path)){
         // there should be nothing else than a directory at path, but we found something  ...
@@ -72,7 +72,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
             throw std::runtime_error(path + ": unable to create directory");
         }
         
-        client_ = MediumStorageSophosClient::init_in_directory(path,n_keywords);
+        client_ = SophosClient::init_in_directory(path,n_keywords);
         
         // send a setup message to the server
         bool success = send_setup(setup_size);

@@ -11,7 +11,6 @@
 #include <memory>
 
 #include "src/sophos/sophos_core.hpp"
-#include "src/sophos/medium_storage_sophos_client.hpp"
 #include "src/utils/utils.hpp"
 
 using namespace sse::sophos;
@@ -59,7 +58,7 @@ void test_client_server()
         server_pk_buf << server_pk_in.rdbuf();
         client_tdp_prg_key_buf << client_tdp_prg_key_in.rdbuf();
 
-        client.reset(new  MediumStorageSophosClient("client.sav", client_sk_buf.str(), client_master_key_buf.str(), client_tdp_prg_key_buf.str()));
+        client.reset(new  SophosClient("client.sav", client_sk_buf.str(), client_master_key_buf.str(), client_tdp_prg_key_buf.str()));
         
         server.reset(new SophosServer("server.dat", server_pk_buf.str()));
         
@@ -70,7 +69,7 @@ void test_client_server()
     }else{
         cout << "Create new client-server instances" << endl;
         
-        client.reset(new MediumStorageSophosClient("client.sav", 1000));
+        client.reset(new SophosClient("client.sav", 1000));
 
         server.reset(new SophosServer("server.dat", 1000, client->public_key()));
         

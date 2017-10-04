@@ -23,7 +23,6 @@
 		313CD4871EC8FEC10058A0C5 /* test_janus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD4861EC8FEC10058A0C5 /* test_janus.cpp */; };
 		313CD48A1EC8FF0B0058A0C5 /* janus_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 313CD4881EC8FF0B0058A0C5 /* janus_client.cpp */; };
 		31523FB01EE7505A00973EEF /* janus_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31523FAE1EE7505A00973EEF /* janus_server.cpp */; };
-		31548C5D1D3D8DE5000A8346 /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */; };
 		31548C5E1D3D8DE5000A8346 /* sophos_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B1A1D3D787900E54019 /* sophos_core.cpp */; };
 		31548C611D3D8DE5000A8346 /* sophos_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B1A1D3D787900E54019 /* sophos_core.cpp */; };
 		315A5A5B1CB15D9F0026DBB3 /* sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 315A5A531CB15D920026DBB3 /* sophos_client.cpp */; };
@@ -37,7 +36,6 @@
 		31B1E80B1CAC86A900643154 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B1E8081CAC86A900643154 /* utils.cpp */; };
 		31B1E80C1CAC86A900643154 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B1E8081CAC86A900643154 /* utils.cpp */; };
 		31FC7B451D3EC9A100E54019 /* sophos_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B1A1D3D787900E54019 /* sophos_core.cpp */; };
-		31FC7B471D3EC9B100E54019 /* medium_storage_sophos_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31FC7B181D3D787900E54019 /* medium_storage_sophos_client.cpp */; };
 		31FC7B4D1D3ECE1700E54019 /* test_sophos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B08D8E1CAAE4A600DD6BF8 /* test_sophos.cpp */; };
 		31FC7B551D3ECE7800E54019 /* token_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31548C571D3D8A14000A8346 /* token_tree.cpp */; };
 		31FC7B5A1D3ECE7800E54019 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31B1E8081CAC86A900643154 /* utils.cpp */; };
@@ -976,7 +974,6 @@
 				313CD45F1EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				31FC7B451D3EC9A100E54019 /* sophos_core.cpp in Sources */,
 				31B1E80A1CAC86A900643154 /* utils.cpp in Sources */,
-				31FC7B471D3EC9B100E54019 /* medium_storage_sophos_client.cpp in Sources */,
 				315EB12B1CB42C7C00EB5D9F /* logger.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1048,7 +1045,6 @@
 				315EB1341CB432E200EB5D9F /* logger.cpp in Sources */,
 				6C74230D1CD20DF900A76B8C /* db_generator.cpp in Sources */,
 				31B1E80C1CAC86A900643154 /* utils.cpp in Sources */,
-				31548C5D1D3D8DE5000A8346 /* medium_storage_sophos_client.cpp in Sources */,
 				31548C5E1D3D8DE5000A8346 /* sophos_core.cpp in Sources */,
 				313CD4611EC8C1430058A0C5 /* rocksdb_wrapper.cpp in Sources */,
 				315A5A5B1CB15D9F0026DBB3 /* sophos_client.cpp in Sources */,

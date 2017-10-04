@@ -68,22 +68,31 @@ struct UpdateRequest
     
 class SophosClient {
 public:
-    SophosClient();
-    SophosClient(const std::string& tdp_private_key, const std::string& derivation_master_key);
-    virtual ~SophosClient();
+    static constexpr size_t kKeywordIndexSize = 16;
+    typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
+
+    static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
+    static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
     
-    virtual size_t keyword_count() const = 0;
+    SophosClient(const std::string& token_map_path, const size_t tm_setup_size);
+    SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key);
+    SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size);
+    
+    ~SophosClient();
+    
+    size_t keyword_count() const;
     
     const std::string private_key() const;
     const std::string public_key() const;
     const std::string master_derivation_key() const;
+    std::string rsa_prg_key() const;
 
-    virtual void write_keys(const std::string& dir_path) const;
+    void write_keys(const std::string& dir_path) const;
     
-    virtual SearchRequest   search_request(const std::string &keyword) const = 0;
-    virtual UpdateRequest   update_request(const std::string &keyword, const index_type index) = 0;
+    SearchRequest   search_request(const std::string &keyword) const;
+    UpdateRequest   update_request(const std::string &keyword, const index_type index);
     
-    virtual std::ostream& print_stats(std::ostream& out) const = 0;
+    std::ostream& print_stats(std::ostream& out) const;
 
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
     const sse::crypto::TdpInverse& inverse_tdp() const;
@@ -91,9 +100,27 @@ public:
     static const std::string tdp_sk_file__;
     static const std::string derivation_key_file__;
 
+    struct IndexHasher
+    {
+    public:
+        size_t operator()(const keyword_index_type& ind) const;
+    };
+
 private:
+    static const std::string rsa_prg_key_file__;
+    static const std::string counter_map_file__;
+
     crypto::Prf<kDerivationKeySize> k_prf_;
     sse::crypto::TdpInverse inverse_tdp_;
+    
+    
+    keyword_index_type get_keyword_index(const std::string &kw) const;
+    
+    crypto::Prf<crypto::Tdp::kRSAPrgSize> rsa_prg_;
+    
+    sophos::RocksDBCounter counter_map_;
+    std::mutex token_map_mtx_;
+
 };
 
 class SophosServer {

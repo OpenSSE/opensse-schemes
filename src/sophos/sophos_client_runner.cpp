@@ -23,7 +23,8 @@
 #include "sophos_client_runner.hpp"
 
 #include "sophos_net_types.hpp"
-#include "sophos/sophos_core.hpp"
+#include "sophos/sophos_client.hpp"
+#include "sophos/sophos_server.hpp"
 
 #include "utils/thread_pool.hpp"
 #include "utils/utils.hpp"

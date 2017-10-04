@@ -10,7 +10,8 @@
 #include <fstream>
 #include <memory>
 
-#include "src/sophos/sophos_core.hpp"
+#include "sophos/sophos_client.hpp"
+#include "sophos/sophos_server.hpp"
 #include "src/utils/utils.hpp"
 
 using namespace sse::sophos;

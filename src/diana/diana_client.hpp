@@ -84,22 +84,6 @@ namespace sse {
             
             static const std::string derivation_keys_file__;
             
-            struct IndexHasher
-            {
-            public:
-                inline size_t operator()(const keyword_index_type& index) const
-                {
-                    size_t h = 0;
-                    for (size_t i = 0; i < index.size(); i++) {
-                        if (i > 0) {
-                            h <<= 8;
-                        }
-                        h = index[i] + h;
-                    }
-                    return h;
-                }
-
-            };
 
         private:
 

@@ -19,7 +19,8 @@
 //
 
 
-#include "sophos_core.hpp"
+#include "sophos_server.hpp"
+
 
 #include "utils/utils.hpp"
 #include "utils/logger.hpp"
@@ -31,269 +32,7 @@
 namespace sse {
 namespace sophos {
     
-    const std::string SophosClient::tdp_sk_file__ = "tdp_sk.key";
-    const std::string SophosClient::derivation_key_file__ = "derivation_master.key";
 
-size_t SophosClient::IndexHasher::operator()(const keyword_index_type& index) const
-{
-    size_t h = 0;
-    for (size_t i = 0; i < index.size(); i++) {
-        if (i > 0) {
-            h <<= 8;
-        }
-        h = index[i] + h;
-    }
-    return h;
-}
-
-const std::string SophosClient::rsa_prg_key_file__ = "rsa_prg.key";
-const std::string SophosClient::counter_map_file__ = "counters.dat";
-    
-std::unique_ptr<SophosClient> SophosClient::construct_from_directory(const std::string& dir_path)
-{
-    // try to initialize everything from this directory
-    if (!is_directory(dir_path)) {
-        throw std::runtime_error(dir_path + ": not a directory");
-    }
-    
-    std::string sk_path = dir_path + "/" + tdp_sk_file__;
-    std::string master_key_path = dir_path + "/" + derivation_key_file__;
-    std::string counter_map_path = dir_path + "/" + counter_map_file__;
-    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
-    
-    if (!is_file(sk_path)) {
-        // error, the secret key file is not there
-        throw std::runtime_error("Missing secret key file");
-    }
-    if (!is_file(master_key_path)) {
-        // error, the derivation key file is not there
-        throw std::runtime_error("Missing master derivation key file");
-    }
-    if (!is_file(rsa_prg_key_path)) {
-        // error, the rsa prg key file is not there
-        throw std::runtime_error("Missing rsa prg key file");
-    }
-    if (!is_directory(counter_map_path)) {
-        // error, the token map data is not there
-        throw std::runtime_error("Missing token data");
-    }
-    
-    std::ifstream sk_in(sk_path.c_str());
-    std::ifstream master_key_in(master_key_path.c_str());
-    std::ifstream rsa_prg_key_in(rsa_prg_key_path.c_str());
-    std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
-    
-    sk_buf << sk_in.rdbuf();
-    master_key_buf << master_key_in.rdbuf();
-    rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
-    
-    return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path, sk_buf.str(), master_key_buf.str(), rsa_prg_key_buf.str()));
-}
-
-std::unique_ptr<SophosClient> SophosClient::init_in_directory(const std::string& dir_path, uint32_t n_keywords)
-{
-    // try to initialize everything in this directory
-    if (!is_directory(dir_path)) {
-        throw std::runtime_error(dir_path + ": not a directory");
-    }
-    
-    std::string counter_map_path = dir_path + "/" + counter_map_file__;
-    
-    auto c_ptr =  std::unique_ptr<SophosClient>(new SophosClient(counter_map_path, n_keywords));
-    
-    c_ptr->write_keys(dir_path);
-    
-    return c_ptr;
-}
-
-SophosClient::SophosClient(const std::string& token_map_path, const size_t tm_setup_size) :
-k_prf_(), inverse_tdp_(), rsa_prg_(), counter_map_(token_map_path)
-{
-}
-
-SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key) :
-k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
-{
-}
-
-SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size) :
-k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
-{
-}
-
-
-SophosClient::~SophosClient()
-{
-    
-}
-
-size_t SophosClient::keyword_count() const
-{
-    return counter_map_.approximate_size();
-}
-    
-const std::string SophosClient::public_key() const
-{
-    return inverse_tdp_.public_key();
-}
-
-const std::string SophosClient::private_key() const
-{
-    return inverse_tdp_.private_key();
-}
-    
-const std::string SophosClient::master_derivation_key() const
-{
-    return std::string(k_prf_.key().begin(), k_prf_.key().end());
-}
-
-const crypto::Prf<kDerivationKeySize>& SophosClient::derivation_prf() const
-{
-    return k_prf_;
-}
-const sse::crypto::TdpInverse& SophosClient::inverse_tdp() const
-{
-    return inverse_tdp_;
-}
-    
-SophosClient::keyword_index_type SophosClient::get_keyword_index(const std::string &kw) const
-{
-    std::string hash_string = crypto::Hash::hash(kw);
-    
-    keyword_index_type ret;
-    std::copy_n(hash_string.begin(), kKeywordIndexSize, ret.begin());
-    
-    return ret;
-}
-
-SearchRequest   SophosClient::search_request(const std::string &keyword) const
-{
-    uint32_t kw_counter;
-    bool found;
-    SearchRequest req;
-    req.add_count = 0;
-    
-    keyword_index_type kw_index = get_keyword_index(keyword);
-    std::string seed(kw_index.begin(),kw_index.end());
-    
-    found = counter_map_.get(keyword, kw_counter);
-    
-    if(!found)
-    {
-        logger::log(logger::INFO) << "No matching counter found for keyword " << keyword << " (index " << hex_string(seed) << ")" << std::endl;
-    }else{
-        // Now derive the original search token from the kw_index (as seed)
-        req.token = inverse_tdp().generate_array(rsa_prg_, seed);
-        req.token = inverse_tdp().invert_mult(req.token, kw_counter);
-        
-        
-        req.derivation_key = derivation_prf().prf_string(seed);
-        req.add_count = kw_counter+1;
-    }
-    
-    return req;
-}
-
-
-UpdateRequest   SophosClient::update_request(const std::string &keyword, const index_type index)
-{
-    UpdateRequest req;
-    search_token_type st;
-    
-    // get (and possibly construct) the keyword index
-    keyword_index_type kw_index = get_keyword_index(keyword);
-    std::string seed(kw_index.begin(),kw_index.end());
-    
-    
-    
-    // retrieve the counter
-    uint32_t kw_counter;
-    
-    bool success = counter_map_.get_and_increment(keyword, kw_counter);
-    
-    assert(success);
-    
-    st = inverse_tdp().generate_array(rsa_prg_, seed);
-    
-    if (kw_counter==0) {
-        logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
-    }else{
-        st = inverse_tdp().invert_mult(st, kw_counter);
-        
-        if (logger::severity() <= logger::DBG) {
-            logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
-        }
-    }
-    
-    
-    std::string deriv_key = derivation_prf().prf_string(seed);
-    
-    if (logger::severity() <= logger::DBG) {
-        logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;
-    }
-    
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
-    
-    std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
-    
-    req.token = derivation_prf.prf(st_string + '0');
-    req.index = xor_mask(index, derivation_prf.prf(st_string + '1'));
-    
-    if (logger::severity() <= logger::DBG) {
-        logger::log(logger::DBG) << "Update token: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
-    }
-    
-    return req;
-}
-
-std::string SophosClient::rsa_prg_key() const
-{
-    return std::string(rsa_prg_.key().begin(), rsa_prg_.key().end());
-}
-
-std::ostream& SophosClient::print_stats(std::ostream& out) const
-{
-    out << "Number of keywords: " << keyword_count() << std::endl;
-    
-    return out;
-}
-
-void SophosClient::write_keys(const std::string& dir_path) const
-{
-    if (!is_directory(dir_path)) {
-        throw std::runtime_error(dir_path + ": not a directory");
-    }
-    
-    std::string sk_path = dir_path + "/" + tdp_sk_file__;
-    std::string master_key_path = dir_path + "/" + derivation_key_file__;
-
-    std::ofstream sk_out(sk_path.c_str());
-    if (!sk_out.is_open()) {
-        throw std::runtime_error(sk_path + ": unable to write the secret key");
-    }
-    
-    sk_out << private_key();
-    sk_out.close();
-    
-    std::ofstream master_key_out(master_key_path.c_str());
-    if (!master_key_out.is_open()) {
-        throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
-    }
-    
-    master_key_out << master_derivation_key();
-    master_key_out.close();
-    
-    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
-    
-    std::ofstream rsa_prg_key_out(rsa_prg_key_path.c_str());
-    if (!rsa_prg_key_out.is_open()) {
-        throw std::runtime_error(rsa_prg_key_path + ": unable to write the rsa prg key");
-    }
-    
-    rsa_prg_key_out << rsa_prg_key();
-    rsa_prg_key_out.close();
-}
-    
 SophosServer::SophosServer(const std::string& db_path, const std::string& tdp_pk) :
 edb_(db_path), public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
 {
@@ -318,8 +57,6 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     
     search_token_type st = req.token;
 
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
-
     if (logger::severity() <= logger::DBG) {
 
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -330,8 +67,10 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     for (size_t i = 0; i < req.add_count; i++) {
         std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
         index_type r;
-        update_token_type ut = derivation_prf.prf(st_string + '0');
-
+        update_token_type ut;
+        std::array<uint8_t, kUpdateTokenSize> mask;
+        gen_update_token_masks(req.derivation_key, st.data(), ut, mask);
+        
         if (logger::severity() <= logger::DBG) {
             logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl;
         }
@@ -343,7 +82,7 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
                 logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
             }
             
-            r = xor_mask(r, derivation_prf.prf(st_string + '1'));
+            r = xor_mask(r, mask);
             results.push_back(r);
         }else{
             logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
@@ -359,7 +98,6 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     {
         search_token_type st = req.token;
         
-        auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
 
         if (logger::severity() <= logger::DBG) {
             logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -370,7 +108,9 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
         for (size_t i = 0; i < req.add_count; i++) {
             std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
             index_type r;
-            update_token_type ut = derivation_prf.prf(st_string + '0');
+            update_token_type ut;
+            std::array<uint8_t, kUpdateTokenSize> mask;
+            gen_update_token_masks(req.derivation_key, st.data(), ut, mask);
             
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl;
@@ -383,7 +123,7 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
                     logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
                 }
                 
-                r = xor_mask(r, derivation_prf.prf(st_string + '1'));
+                r = xor_mask(r, mask);
                 post_callback(r);
             }else{
                 logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
@@ -498,7 +238,7 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, ui
     
     search_token_type st = req.token;
     
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+//    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
     
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -508,9 +248,11 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, ui
     
     ThreadPool access_pool(access_threads);
         
-    auto access_job = [&derivation_prf, this, &results, &res_mutex](const std::string& st_string)
+    auto access_job = [&req, this, &results, &res_mutex](const std::string& st_string)
     {
-        update_token_type token = derivation_prf.prf(st_string + '0');
+        update_token_type token;
+        std::array<uint8_t, kUpdateTokenSize> mask;
+        gen_update_token_masks(req.derivation_key, (uint8_t *)st_string.data(), token, mask);
 
         index_type r;
         
@@ -528,7 +270,7 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, ui
             logger::log(logger::ERROR) << "We were supposed to find something!" << std::endl;
         }
         
-        index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+        index_type v = xor_mask(r, mask);
         
         res_mutex.lock();
         results.push_back(v);
@@ -584,7 +326,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
     std::list<index_type> results;
     std::mutex res_mutex;
 
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+//    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
 
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -592,10 +334,13 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
         logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
     }
     
-    auto derive_access = [&derivation_prf, this, &results, &res_mutex](const search_token_type st, size_t i)
+    auto derive_access = [&req, this, &results, &res_mutex](const search_token_type st, size_t i)
     {
-        std::string st_string(reinterpret_cast<const char*>(st.data()), st.size());
-        update_token_type token = derivation_prf.prf(st_string + '0');
+
+        update_token_type token;
+        std::array<uint8_t, kUpdateTokenSize> mask;
+        gen_update_token_masks(req.derivation_key, st.data(), token, mask);
+
         
         index_type r;
         
@@ -610,7 +355,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
                 logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
             }
             
-            index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+            index_type v = xor_mask(r, mask);
             
             res_mutex.lock();
             results.push_back(v);
@@ -618,7 +363,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
             
         }else{
             logger::log(logger::ERROR) << "We were supposed to find a value mapped to key " << hex_string(token);
-            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << st_string << ")" << std::endl;
+            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << hex_string(st) << ")" << std::endl;
         }
         
     };
@@ -626,7 +371,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
     
     
     // the rsa job launched with input index,max computes all the RSA tokens of order i + kN up to max
-    auto job = [this, &st, &derivation_prf, &derive_access](const uint8_t index, const size_t max, const uint8_t N)
+    auto job = [this, &st, &derive_access](const uint8_t index, const size_t max, const uint8_t N)
     {
         search_token_type local_st = st;
         if (index != 0) {
@@ -665,7 +410,7 @@ void SophosServer::search_parallel_callback(const SearchRequest& req, std::funct
 {
     search_token_type st = req.token;
     
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+//    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
 
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -676,10 +421,11 @@ void SophosServer::search_parallel_callback(const SearchRequest& req, std::funct
     ThreadPool access_pool(access_thread_count);
     ThreadPool post_pool(post_thread_count);
     
-    auto access_job = [&derivation_prf, this, &post_pool, &post_callback](const search_token_type st, size_t i)
+    auto access_job = [&req, this, &post_pool, &post_callback](const search_token_type st, size_t i)
     {
-        std::string st_string(reinterpret_cast<const char*>(st.data()), st.size());
-        update_token_type token = derivation_prf.prf(st_string + '0');
+        update_token_type token;
+        std::array<uint8_t, kUpdateTokenSize> mask;
+        gen_update_token_masks(req.derivation_key, st.data(), token, mask);
         
         index_type r;
         
@@ -694,13 +440,13 @@ void SophosServer::search_parallel_callback(const SearchRequest& req, std::funct
                 logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
             }
             
-            index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+            index_type v = xor_mask(r, mask);
             
             post_pool.enqueue(post_callback, v);
             
         }else{
             logger::log(logger::ERROR) << "We were supposed to find a value mapped to key " << hex_string(token);
-            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << st_string << ")" << std::endl;
+            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << hex_string(st) << ")" << std::endl;
         }
         
     };
@@ -747,18 +493,17 @@ void SophosServer::search_parallel_light_callback(const SearchRequest& req, std:
 {
     search_token_type st = req.token;
     
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
-
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
     
         logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
     }
     
-    auto derive_access = [&derivation_prf, this, &post_callback](const search_token_type st, size_t i)
+    auto derive_access = [&req, this, &post_callback](const search_token_type st, size_t i)
     {
-        std::string st_string(reinterpret_cast<const char*>(st.data()), st.size());
-        update_token_type token = derivation_prf.prf(st_string + '0');
+        update_token_type token;
+        std::array<uint8_t, kUpdateTokenSize> mask;
+        gen_update_token_masks(req.derivation_key, st.data(), token, mask);
         
         index_type r;
         
@@ -773,13 +518,13 @@ void SophosServer::search_parallel_light_callback(const SearchRequest& req, std:
                 logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
             }
             
-            index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+            index_type v = xor_mask(r, mask);
             
             post_callback(v);
             
         }else{
             logger::log(logger::ERROR) << "We were supposed to find a value mapped to key " << hex_string(token);
-            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << st_string << ")" << std::endl;
+            logger::log(logger::ERROR) << " (" << i << "-th derived key from search token " << hex_string(st) << ")" << std::endl;
         }
         
     };
@@ -787,7 +532,7 @@ void SophosServer::search_parallel_light_callback(const SearchRequest& req, std:
     
     
     // the rsa job launched with input index,max computes all the RSA tokens of order i + kN up to max
-    auto job = [this, &st, &derivation_prf, &derive_access](const uint8_t index, const size_t max, const uint8_t N)
+    auto job = [this, &st, &derive_access](const uint8_t index, const size_t max, const uint8_t N)
     {
         search_token_type local_st = st;
         if (index != 0) {

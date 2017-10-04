@@ -32,6 +32,8 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <atomic> 
+#include <mutex>
 
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 

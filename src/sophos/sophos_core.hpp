@@ -83,7 +83,6 @@ public:
     virtual SearchRequest   search_request(const std::string &keyword) const = 0;
     virtual UpdateRequest   update_request(const std::string &keyword, const index_type index) = 0;
     
-    virtual std::ostream& db_to_json(std::ostream& out) const = 0;
     virtual std::ostream& print_stats(std::ostream& out) const = 0;
 
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;

@@ -10,7 +10,7 @@ env = Environment(tools=['default', 'protoc', 'grpc'])
 try:
     env.Append(ENV = {'TERM' : os.environ['TERM']}) # Keep our nice terminal environment (like colors ...)
 except:
-    print "Not running in a terminal"
+    print("Not running in a terminal")
 
 root_dir = Dir('#').srcnode().abspath
 #

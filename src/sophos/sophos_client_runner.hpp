@@ -39,7 +39,7 @@ namespace sophos {
 class SophosClientRunner {
 public:
     SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
-    SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
+//    SophosClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
     ~SophosClientRunner();
     
     const SophosClient& client() const;
@@ -56,11 +56,11 @@ public:
     
     bool load_inverted_index(const std::string& path);
 
-    bool output_db(const std::string& out_path);
+//    bool output_db(const std::string& out_path);
     std::ostream& print_stats(std::ostream& out) const;
 
-    void random_search() const;
-    void search_benchmark(size_t n_bench) const;
+//    void random_search() const;
+//    void search_benchmark(size_t n_bench) const;
 private:
     void update_completion_loop();
     

@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-    sse::sophos::run_sophos_server("0.0.0.0:4242", server_db, &server_ptr__, async_search);
+    sse::sophos::run_sophos_server("0.0.0.0:4240", server_db, &server_ptr__, async_search);
 //    sse::sophos::run_sophos_server("0.0.0.0:4242", "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
     
     sse::crypto::cleanup_crypto_lib();

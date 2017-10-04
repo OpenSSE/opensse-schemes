@@ -28,9 +28,7 @@ int main(int argc, char** argv) {
 
     std::list<std::string> input_files;
     std::list<std::string> keywords;
-    std::string json_file;
     std::string client_db;
-    std::string output_path;
     bool print_stats = false;
     uint32_t bench_count = 0;
     uint32_t rnd_entries_count = 0;
@@ -43,12 +41,6 @@ int main(int argc, char** argv) {
             break;
         case 'b':
             client_db = std::string(optarg);
-            break;
-        case 'o':
-            output_path = std::string(optarg);
-            break;
-        case 'i':
-            json_file = std::string(optarg);
             break;
         case 't':
             bench_count = atoi(optarg);
@@ -65,7 +57,7 @@ int main(int argc, char** argv) {
             //atol(optarg);
             break;
         case '?':
-            if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i' || optopt == 't' || optopt == 'r')
+            if (optopt == 'l' || optopt == 'b' || optopt == 't' || optopt == 'r')
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -94,21 +86,18 @@ int main(int argc, char** argv) {
     
     std::unique_ptr<sse::sophos::SophosClientRunner> client_runner;
     
-    if (json_file.size() > 0) {
-        client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, json_file) );
-    }else{
-        size_t setup_size = 1e5;
-        uint32_t n_keywords = 1e4;
-        
-        if( rnd_entries_count > 0)
-        {
-            setup_size = 11*rnd_entries_count;
-            n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
-        }
-        
-        client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4242", client_db, setup_size, n_keywords) );
-    }
 
+    size_t setup_size = 1e5;
+    uint32_t n_keywords = 1e4;
+    
+    if( rnd_entries_count > 0)
+    {
+        setup_size = 11*rnd_entries_count;
+        n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
+    }
+    
+    client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4240", client_db, setup_size, n_keywords) );
+    
     for (std::string &path : input_files) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
         client_runner->load_inverted_index(path);
@@ -139,15 +128,15 @@ int main(int argc, char** argv) {
         
         auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res)
         {
-            // logger_mtx.lock();
-            //
-            // if (!first) {
-            //     log_stream << ", ";
-            // }
-            // first = false;
-            // log_stream << res;
-            //
-            // logger_mtx.unlock();
+             logger_mtx.lock();
+            
+             if (!first) {
+                 log_stream << ", ";
+             }
+             first = false;
+             log_stream << res;
+            
+             logger_mtx.unlock();
         };
         
         log_stream << "Search results: \n{";
@@ -157,14 +146,10 @@ int main(int argc, char** argv) {
         log_stream << "}" << std::endl;
     }
     
-    if (bench_count > 0) {
-        std::cout << "-------------- Search Benchmarks --------------" << std::endl;
-        client_runner->search_benchmark(bench_count);
-    }
-    
-    if (output_path.size()>0) {
-        client_runner->output_db(output_path);
-    }
+//    if (bench_count > 0) {
+//        std::cout << "-------------- Search Benchmarks --------------" << std::endl;
+//        client_runner->search_benchmark(bench_count);
+//    }
     
     if (print_stats)
     {

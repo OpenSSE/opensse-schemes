@@ -1,0 +1,37 @@
+language: cpp
+
+os: linux
+dist: trusty
+sudo: required
+addons:
+   apt:
+     sources:
+       - ubuntu-toolchain-r-test
+     packages:
+       - g++-4.9
+       - libssl-dev
+       - yasm
+       - libgmp-dev
+       - libgflags-dev
+       - libsnappy-dev
+	   - zlib1g-dev
+	   - libbz2-dev
+	   - liblz4-dev
+	   - libzstd-dev
+	   - autoconf
+	   - libtool
+
+env:
+- MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+  - ./install_crypto_tk_deps.sh
+  - ./install_grpc.sh
+  - ./install_rocksdb.sh
+  
+script:
+  - scons deps static_relic=1
+  - scons sophos
+  - scons diana
+  - scons janus

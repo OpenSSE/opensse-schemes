@@ -3,6 +3,11 @@ language: cpp
 os: linux
 dist: trusty
 sudo: required
+
+cache:
+   directories:
+     - $HOME/deps
+
 addons:
    apt:
      sources:
@@ -28,11 +33,15 @@ before_install:
   - ./install_crypto_tk_deps.sh
   - ./install_grpc.sh
   - ./install_rocksdb.sh
+  - PATH=$PATH:$HOME/deps/bin
+  - echo $CPATH
+  - echo $LD_LIBRARY_PATH
+  - echo $PATH
   - (cd third_party/crypto; scons lib static_relic=1)
   - (cd third_party/db-parser; scons lib)
   
   
 script:
-  - scons sophos
-  - scons diana
-  - scons janus
+  - scons config_file=ci_config.scons sophos
+  - scons config_file=ci_config.scons diana
+  - scons config_file=ci_config.scons janus

@@ -17,7 +17,6 @@ addons:
        - zlib1g-dev
        - libbz2-dev
        - liblz4-dev
-       - libzstd-dev
        - autoconf
        - libtool
 

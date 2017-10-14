@@ -9,33 +9,30 @@ addons:
        - ubuntu-toolchain-r-test
      packages:
        - g++-4.9
-       # - libssl-dev
-       # - yasm
-       # - libgmp-dev
-       # - libgflags-dev
-       # - libsnappy-dev
-       # - zlib1g-dev
-       # - libbz2-dev
-       # - liblz4-dev
-       # - autoconf
-       # - libtool
+       - libssl-dev
+       - yasm
+       - libgmp-dev
+       - libgflags-dev
+       - libsnappy-dev
+       - zlib1g-dev
+       - libbz2-dev
+       - liblz4-dev
+       - autoconf
+       - libtool
 
 env:
 - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
 before_install:
   - eval "${MATRIX_EVAL}"
-  # - ./install_crypto_tk_deps.sh
-  # - ./install_grpc.sh
-  # - ./install_rocksdb.sh
-  # - eval "${MATRIX_EVAL}"
+  - ./install_crypto_tk_deps.sh
+  - ./install_grpc.sh
+  - ./install_rocksdb.sh
   - (cd third_party/crypto; scons lib static_relic=1)
   - (cd third_party/db-parser; scons lib)
   
   
 script:
-  - echo ${CC}
-  - echo ${CXX}
   - scons sophos
   - scons diana
   - scons janus

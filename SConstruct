@@ -12,6 +12,12 @@ try:
 except:
     print("Not running in a terminal")
 
+if 'CC' in os.environ:
+    env['CC']=os.environ['CC']
+    
+if 'CXX' in os.environ:
+    env['CXX']=os.environ['CXX']
+
 root_dir = Dir('#').srcnode().abspath
 #
 config = {}
@@ -63,6 +69,8 @@ if int(debug):
 else:
 	env.Append(CCFLAGS = ['-O2'])
 
+static_relic = ARGUMENTS.get('static_relic', 0)
+
 env.Append(CPPDEFINES = ['BENCHMARK'])
 
 def run_test(target, source, env):
@@ -76,7 +84,7 @@ bld = Builder(action = run_test)
 env.Append(BUILDERS = {'Test' :  bld})
 
 
-crypto_lib_target = env.Command(config['cryto_lib_dir'], "", "cd third_party/crypto && scons lib")
+crypto_lib_target = env.Command(config['cryto_lib_dir'], "", "cd third_party/crypto && scons lib static_relic={0}".format(static_relic))
 db_parser_target = env.Command(config['db-parser_lib_dir'], "", "cd third_party/db-parser && scons lib")
 env.Alias('deps', [crypto_lib_target, db_parser_target])
 

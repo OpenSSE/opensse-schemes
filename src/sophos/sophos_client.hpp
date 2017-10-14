@@ -28,6 +28,7 @@
 #include <array>
 #include <fstream>
 #include <functional>
+#include <mutex>
 
 #include <sse/crypto/tdp.hpp>
 #include <sse/crypto/prf.hpp>

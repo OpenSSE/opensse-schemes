@@ -302,7 +302,7 @@ namespace sse {
                 
                 assert(success);
                 
-                res.push_back({keyword, index, kw_counter});
+                res.push_back(std::make_tuple(keyword, index, kw_counter));
 
             }
             

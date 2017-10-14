@@ -30,6 +30,7 @@ before_install:
   - ./install_rocksdb.sh
   
 script:
+  - eval "${MATRIX_EVAL}"
   - scons deps static_relic=1
   - scons sophos
   - scons diana

@@ -12,6 +12,12 @@ try:
 except:
     print("Not running in a terminal")
 
+if 'CC' in os.environ:
+    env['CC']=os.environ['CC']
+    
+if 'CXX' in os.environ:
+    env['CXX']=os.environ['CXX']
+
 root_dir = Dir('#').srcnode().abspath
 #
 config = {}

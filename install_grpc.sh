@@ -10,3 +10,4 @@ make -j2
 (cd third_party/protobuf; sudo make install;)
 
 sudo make install
+make clean

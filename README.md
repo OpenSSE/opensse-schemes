@@ -1,4 +1,5 @@
 # OpenSSE Schemes
+[![Build Status](https://travis-ci.org/OpenSSE/opensse-schemes.svg?branch=master)](https://travis-ci.org/OpenSSE/opensse-schemes)
 
 Implementation of SSE schemes. For now, the repo includes a C++ implementation of Sophos, Diana and Janus. Sophos has been described in *[Σoφoς – Forward Secure Searchable Encryption](https://eprint.iacr.org/2016/728.pdf)* by Bost, and Diana and Janus in *[Forward and Backward Private Searchable Encryption from Constrained Cryptographic Primitives](https://eprint.iacr.org/2017/805.pdf)* by Bost, Minaud and Ohrimenko.
 

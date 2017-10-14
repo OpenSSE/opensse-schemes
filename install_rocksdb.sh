@@ -6,3 +6,4 @@ cd rocksdb
 
 make static_lib -j2
 sudo make install
+make clean

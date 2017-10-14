@@ -14,12 +14,12 @@ addons:
        - libgmp-dev
        - libgflags-dev
        - libsnappy-dev
-	   - zlib1g-dev
-	   - libbz2-dev
-	   - liblz4-dev
-	   - libzstd-dev
-	   - autoconf
-	   - libtool
+       - zlib1g-dev
+       - libbz2-dev
+       - liblz4-dev
+       - libzstd-dev
+       - autoconf
+       - libtool
 
 env:
 - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"

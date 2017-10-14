@@ -22,7 +22,7 @@ cd third_party/protobuf
 
 autoreconf -f -i -Wall,no-obsolete && ./configure --prefix=$INSTALL_DIR && make
 sudo make install
-sudo ldcondfig
+sudo ldconfig
 
 cd ../..
 

@@ -15,15 +15,13 @@ import os
 env=Environment(ENV=os.environ, tools=['default', 'protoc', 'grpc'])
 
 print(env['ENV']['HOME'])
+print(env['ENV']['PATH'])
 
 if 'CC' in os.environ:
     env['CC']=os.environ['CC']
     
 if 'CXX' in os.environ:
     env['CXX']=os.environ['CXX']
-
-if 'CPATH' in os.environ:
-    env['CPATH']=os.environ['CPATH']
 
 root_dir = Dir('#').srcnode().abspath
 #
@@ -52,7 +50,7 @@ if 'config_file' in ARGUMENTS:
 
 
 
-env.Append(CCFLAGS = ['-fPIC','-Wall', '-march=native', '-v'])
+env.Append(CCFLAGS = ['-fPIC','-Wall', '-march=native'])
 env.Append(CXXFLAGS = ['-std=c++11'])
 env.Append(CPPPATH = ['/usr/local/include', config['cryto_include'], config['db-parser_include']])
 env.Append(LIBPATH = ['/usr/local/lib', config['cryto_lib'], config['db-parser_lib']])

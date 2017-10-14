@@ -30,13 +30,16 @@ env:
 
 before_install:
   - eval "${MATRIX_EVAL}"
-  - ./install_crypto_tk_deps.sh
-  - ./install_grpc.sh
-  - ./install_rocksdb.sh
-  - PATH=$PATH:$HOME/deps/bin
+  - INSTALL_DIR=$HOME/deps
+  - CPATH=$CPATH:$INSTALL_DIR/include
+  - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib
+  - PATH=$PATH:$INSTALL_DIR/bin
   - echo $CPATH
   - echo $LD_LIBRARY_PATH
   - echo $PATH
+  - ./install_crypto_tk_deps.sh
+  - ./install_grpc.sh
+  - ./install_rocksdb.sh
   - (cd third_party/crypto; scons lib static_relic=1)
   - (cd third_party/db-parser; scons lib)
   

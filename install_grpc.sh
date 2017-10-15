@@ -16,18 +16,11 @@ git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
 cd grpc
 git submodule update --init
 
-# install protobuf
-# we have to do it that way because we need to cache the dependencies
+PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" make prefix=$INSTALL_DIR  -j2
+PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" sudo make prefix=$INSTALL_DIR install
+
 cd third_party/protobuf
-
-autoreconf -f -i -Wall,no-obsolete && ./configure --prefix=$INSTALL_DIR && make
 sudo make install
-sudo ldconfig
 
-cd ../..
-
-
-make prefix=$INSTALL_DIR -j2
-sudo make prefix=$INSTALL_DIR install
-make clean
+# make clean
 fi

@@ -96,6 +96,11 @@ janus_master.key
 build/
 DerivedData
 
+## CI generated
+deps
+grpc
+rocksdb
+
 ## Various settings
 *.pbxuser
 !default.pbxuser

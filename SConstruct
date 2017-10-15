@@ -4,13 +4,18 @@ import os
 # AddOption('--prefix',dest='prefix',type='string', nargs=1, default='install',
     # action='store', metavar='DIR', help='installation prefix')
 
-env = Environment(tools=['default', 'protoc', 'grpc'])
+# env = Environment(tools=['default', 'protoc', 'grpc'])
 # def_env = DefaultEnvironment(PREFIX = GetOption('prefix'))
 
-try:
-    env.Append(ENV = {'TERM' : os.environ['TERM']}) # Keep our nice terminal environment (like colors ...)
-except:
-    print("Not running in a terminal")
+# try:
+#     env.Append(ENV = {'TERM' : os.environ['TERM']}) # Keep our nice terminal environment (like colors ...)
+# except:
+#     print("Not running in a terminal")
+
+env=Environment(ENV=os.environ, tools=['default', 'protoc', 'grpc'])
+
+print(env['ENV']['HOME'])
+print(env['ENV']['PATH'])
 
 if 'CC' in os.environ:
     env['CC']=os.environ['CC']
@@ -39,8 +44,11 @@ config['db-parser_lib'] = config['db-parser_lib_dir']  + "/lib"
 # config['verifiable_containers_include'] = config['verifiable_containers_lib_dir']  + "/include"
 # config['verifiable_containers_lib'] = config['verifiable_containers_lib_dir']  + "/lib"
 
-# if FindFile('config.scons', '.'):
-#     SConscript('config.scons', exports=['env','config'])
+
+if 'config_file' in ARGUMENTS:
+    SConscript(ARGUMENTS['config_file'], exports=['env','config'])
+
+
 
 env.Append(CCFLAGS = ['-fPIC','-Wall', '-march=native'])
 env.Append(CXXFLAGS = ['-std=c++11'])

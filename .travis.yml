@@ -3,6 +3,11 @@ language: cpp
 os: linux
 dist: trusty
 sudo: required
+
+cache:
+   directories:
+     - $HOME/deps
+
 addons:
    apt:
      sources:
@@ -25,6 +30,13 @@ env:
 
 before_install:
   - eval "${MATRIX_EVAL}"
+  - INSTALL_DIR=$HOME/deps
+  - CPATH=$CPATH:$INSTALL_DIR/include
+  - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib
+  - PATH=$PATH:$INSTALL_DIR/bin
+  - echo $CPATH
+  - echo $LD_LIBRARY_PATH
+  - echo $PATH
   - ./install_crypto_tk_deps.sh
   - ./install_grpc.sh
   - ./install_rocksdb.sh
@@ -33,6 +45,6 @@ before_install:
   
   
 script:
-  - scons sophos
-  - scons diana
-  - scons janus
+  - scons config_file=ci_config.scons sophos
+  - scons config_file=ci_config.scons diana
+  - scons config_file=ci_config.scons janus

@@ -254,7 +254,13 @@ void test_client_server()
         
         cout << "MASTER KEY: " << hex_string(client_master_key_buf.str()) << "\n";
         
-        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_buf.str()));
+        std::array<uint8_t, 32> client_master_key_array;
+        
+        assert(client_master_key_buf.str().size() == client_master_key_array.size());
+        
+        std::copy(client_master_key_buf.str().begin(), client_master_key_buf.str().end(), client_master_key_array.begin());
+        
+        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_array));
         
         server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
 

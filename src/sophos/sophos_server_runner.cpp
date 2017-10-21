@@ -322,7 +322,9 @@ SearchRequest message_to_request(const SearchRequestMessage* mes)
     SearchRequest req;
     
     req.add_count = mes->add_count();
-    req.derivation_key = mes->derivation_key();
+    
+    assert(mes->derivation_key().size() == kDerivationKeySize);
+    std::copy(mes->derivation_key().begin(), mes->derivation_key().begin()+kDerivationKeySize, req.derivation_key.begin());
     std::copy(mes->search_token().begin(), mes->search_token().end(), req.token.begin());
 
     return req;

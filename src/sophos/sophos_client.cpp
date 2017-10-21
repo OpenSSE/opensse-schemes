@@ -39,6 +39,8 @@ namespace sse {
         const std::string SophosClient::rsa_prg_key_file__ = "rsa_prg.key";
         const std::string SophosClient::counter_map_file__ = "counters.dat";
         
+        constexpr size_t SophosClient::kKeywordIndexSize;
+
         std::unique_ptr<SophosClient> SophosClient::construct_from_directory(const std::string& dir_path)
         {
             // try to initialize everything from this directory
@@ -172,7 +174,7 @@ namespace sse {
                 req.token = inverse_tdp().invert_mult(req.token, kw_counter);
                 
                 
-                req.derivation_key = derivation_prf().prf_string(seed);
+                req.derivation_key = derivation_prf().prf(reinterpret_cast<const uint8_t *>(seed.data()), kKeywordIndexSize);
                 req.add_count = kw_counter+1;
             }
             
@@ -210,7 +212,7 @@ namespace sse {
             }
             
             
-            std::string deriv_key = derivation_prf().prf_string(seed);
+            auto deriv_key = derivation_prf().prf(reinterpret_cast<const uint8_t *>(seed.data()), kKeywordIndexSize);
             
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;

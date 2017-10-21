@@ -83,7 +83,15 @@ namespace sse {
             master_key_buf << master_key_in.rdbuf();
             kw_token_key_buf << master_key_in.rdbuf();
             
-            return std::unique_ptr<DC>(new  DC(counter_map_path, master_key_buf.str(), kw_token_key_buf.str()));
+            std::array<uint8_t, 32> client_master_key_array,  client_kw_token_key_array;
+            
+            assert(master_key_buf.str().size() == client_master_key_array.size());
+            assert(kw_token_key_buf.str().size() == client_kw_token_key_array.size());
+            
+            std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
+            std::copy(kw_token_key_buf.str().begin(), kw_token_key_buf.str().end(), client_kw_token_key_array.begin());
+
+            return std::unique_ptr<DC>(new  DC(counter_map_path, client_master_key_array, client_kw_token_key_array));
         }
         
         std::unique_ptr<DC> create_in_directory(const std::string& dir_path)

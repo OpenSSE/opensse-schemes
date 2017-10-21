@@ -354,7 +354,7 @@ SearchRequestMessage request_to_message(const SearchRequest& req)
     SearchRequestMessage mes;
     
     mes.set_add_count(req.add_count);
-    mes.set_derivation_key(req.derivation_key);
+    mes.set_derivation_key(req.derivation_key.data(), kDerivationKeySize);
     mes.set_search_token(req.token.data(), req.token.size());
     
     return mes;

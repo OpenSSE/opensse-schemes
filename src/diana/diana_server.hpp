@@ -157,7 +157,7 @@ namespace sse {
                 logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
             }
             
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
+            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.kw_token);
             
             auto get_callback = [this, &post_callback, delete_results](const uint8_t *key)
             {
@@ -189,7 +189,7 @@ namespace sse {
                 logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
             }
             
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(&req.kw_token);
+            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.kw_token);
             
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 

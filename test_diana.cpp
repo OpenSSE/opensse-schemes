@@ -56,7 +56,16 @@ void test_client_server()
         client_master_key_buf << client_master_key_in.rdbuf();
         client_kw_token_key_buf << client_kw_token_master_key_in.rdbuf();
 
-        client.reset(new  DianaClient<index_type>("diana_client.sav", client_master_key_buf.str(), client_kw_token_key_buf.str()));
+        std::array<uint8_t, 32> client_master_key_array,  client_kw_token_key_array;
+        
+        assert(client_master_key_buf.str().size() == client_master_key_array.size());
+        assert(client_kw_token_key_buf.str().size() == client_kw_token_key_array.size());
+        
+        std::copy(client_master_key_buf.str().begin(), client_master_key_buf.str().end(), client_master_key_array.begin());
+        std::copy(client_kw_token_key_buf.str().begin(), client_kw_token_key_buf.str().end(), client_kw_token_key_array.begin());
+        
+        
+        client.reset(new  DianaClient<index_type>("diana_client.sav", client_master_key_array, client_kw_token_key_array));
         
         server.reset(new DianaServer<index_type>("diana_server.dat"));
         

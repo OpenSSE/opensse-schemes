@@ -20,10 +20,10 @@ namespace sse {
         class JanusClient {
         public:
             
-            static constexpr size_t kSubkeysSize = 32;
+            static constexpr size_t kPRFKeySize = 32;
             
             JanusClient(const std::string& search_counter_map_path, const std::string& add_map_path, const std::string& del_map_path);
-            JanusClient(const std::string& search_counter_map_path, const std::string& add_map_path, const std::string& del_map_path, const std::string& master_key);
+            JanusClient(const std::string& search_counter_map_path, const std::string& add_map_path, const std::string& del_map_path, const std::array<uint8_t, kPRFKeySize>& master_key);
 //            ~JanusClient();
             
             
@@ -70,15 +70,15 @@ namespace sse {
             
         private:
             
-            std::string tag_derivation_key() const;
-            std::string punct_enc_key() const;
-            std::string kw_token_key() const;
-            std::string insertion_derivation_master_key() const;
-            std::string insertion_kw_token_master_key() const;
-            std::string deletion_derivation_master_key() const;
-            std::string delertion_kw_token_master_key() const;
+            std::array<uint8_t, kPRFKeySize> tag_derivation_key() const;
+            std::array<uint8_t, kPRFKeySize> punct_enc_key() const;
+            std::array<uint8_t, kPRFKeySize> kw_token_key() const;
+            std::array<uint8_t, kPRFKeySize> insertion_derivation_master_key() const;
+            std::array<uint8_t, kPRFKeySize> insertion_kw_token_master_key() const;
+            std::array<uint8_t, kPRFKeySize> deletion_derivation_master_key() const;
+            std::array<uint8_t, kPRFKeySize> delertion_kw_token_master_key() const;
             
-            crypto::Prf<kSubkeysSize> master_prf_;
+            crypto::Prf<kPRFKeySize> master_prf_;
             crypto::Prf<crypto::punct::kTagSize> tag_prf_;
             crypto::Prf<crypto::punct::kMasterKeySize> punct_enc_master_prf_;
             crypto::Prf<kKeywordTokenSize> kw_token_prf_;

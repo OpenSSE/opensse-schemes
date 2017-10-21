@@ -16,39 +16,39 @@ namespace sse {
             return hex_string(ind) + "||" + kw;
         }
         
-        std::string JanusClient::tag_derivation_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::tag_derivation_key() const
         {
-            return master_prf_.prf_string("tag_derivation");
+            return master_prf_.prf("tag_derivation");
         }
         
-        std::string JanusClient::punct_enc_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::punct_enc_key() const
         {
-            return master_prf_.prf_string("punct_enc");
+            return master_prf_.prf("punct_enc");
         }
         
-        std::string JanusClient::kw_token_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::kw_token_key() const
         {
-            return master_prf_.prf_string("keyword_token");
+            return master_prf_.prf("keyword_token");
         }
         
-        std::string JanusClient::insertion_derivation_master_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::insertion_derivation_master_key() const
         {
-            return master_prf_.prf_string("add_derivation_master_key");
+            return master_prf_.prf("add_derivation_master_key");
         }
         
-        std::string JanusClient::insertion_kw_token_master_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::insertion_kw_token_master_key() const
         {
-            return master_prf_.prf_string("add_kw_token_master_key");
+            return master_prf_.prf("add_kw_token_master_key");
         }
         
-        std::string JanusClient::deletion_derivation_master_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::deletion_derivation_master_key() const
         {
-            return master_prf_.prf_string("del_derivation_master_key");
+            return master_prf_.prf("del_derivation_master_key");
         }
         
-        std::string JanusClient::delertion_kw_token_master_key() const
+        std::array<uint8_t, JanusClient::kPRFKeySize> JanusClient::delertion_kw_token_master_key() const
         {
-            return master_prf_.prf_string("del_kw_token_master_key");
+            return master_prf_.prf("del_kw_token_master_key");
         }
         
         JanusClient::JanusClient(const std::string& search_counter_map_path, const std::string& add_map_path, const std::string& del_map_path) :
@@ -62,7 +62,7 @@ namespace sse {
         {
         }
 
-        JanusClient::JanusClient(const std::string& search_counter_map_path, const std::string& add_map_path, const std::string& del_map_path, const std::string& master_key) :
+        JanusClient::JanusClient(const std::string& search_counter_map_path, const std::string& add_map_path, const std::string& del_map_path, const std::array<uint8_t, kPRFKeySize>& master_key) :
             master_prf_(master_key),
             tag_prf_(tag_derivation_key()),
             punct_enc_master_prf_(punct_enc_key()),

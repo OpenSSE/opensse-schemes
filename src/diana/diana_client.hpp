@@ -50,13 +50,15 @@ namespace sse {
         class DianaClient {
         public:
             static constexpr size_t kKeywordIndexSize = 16;
+            static constexpr size_t kKeySize = 32;
+            
             typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
             typedef T index_type;
 
             static constexpr size_t kTreeDepth = 48;
             
             DianaClient(const std::string& token_map_path);
-            DianaClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key);
+            DianaClient(const std::string& token_map_path, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& kw_token_master_key);
             ~DianaClient();
 
             size_t keyword_count() const;
@@ -114,7 +116,7 @@ namespace sse {
         }
         
         template <typename T>
-        DianaClient<T>::DianaClient(const std::string& token_map_path, const std::string& derivation_master_key, const std::string& kw_token_master_key) :
+        DianaClient<T>::DianaClient(const std::string& token_map_path, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& kw_token_master_key) :
         root_prf_(derivation_master_key), kw_token_prf_(kw_token_master_key), counter_map_(token_map_path)
         {
             

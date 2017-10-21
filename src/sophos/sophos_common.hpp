@@ -30,7 +30,7 @@ namespace sse {
     namespace sophos {
 
         constexpr size_t kSearchTokenSize = crypto::Tdp::kMessageSize;
-        constexpr size_t kDerivationKeySize = 16;
+        constexpr size_t kDerivationKeySize = 32;
         constexpr size_t kUpdateTokenSize = 16;
         
         typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
@@ -40,9 +40,9 @@ namespace sse {
         
         struct SearchRequest
         {
-            search_token_type   token;
-            std::string         derivation_key;
-            uint32_t            add_count;
+            search_token_type                               token;
+            std::array<uint8_t, kDerivationKeySize>         derivation_key;
+            uint32_t                                        add_count;
         };
         
         
@@ -52,7 +52,7 @@ namespace sse {
             index_type          index;
         };
         
-        void gen_update_token_masks(const std::string &deriv_key,
+        void gen_update_token_masks(const std::array<uint8_t, kDerivationKeySize> &deriv_key,
                                     const uint8_t* search_token,
                                     update_token_type &update_token,
                                     std::array<uint8_t, kUpdateTokenSize> &mask);

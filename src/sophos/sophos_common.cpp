@@ -16,7 +16,7 @@
 namespace sse {
     namespace sophos {
         
-        void gen_update_token_masks(const std::string &deriv_key,
+        void gen_update_token_masks(const std::array<uint8_t, kDerivationKeySize> &deriv_key,
                                     const uint8_t* search_token,
                                     update_token_type &update_token,
                                     std::array<uint8_t, kUpdateTokenSize> &mask)

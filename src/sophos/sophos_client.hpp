@@ -88,5 +88,6 @@ namespace sse {
             std::mutex token_map_mtx_;
             
         };
+        
     } // namespace sophos
 } // namespace sse

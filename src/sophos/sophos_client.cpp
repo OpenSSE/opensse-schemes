@@ -79,7 +79,17 @@ namespace sse {
             master_key_buf << master_key_in.rdbuf();
             rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
             
-            return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path, sk_buf.str(), master_key_buf.str(), rsa_prg_key_buf.str()));
+            std::array<uint8_t, 32> client_master_key_array,  client_tdp_prg_key_array;
+            
+            assert(master_key_buf.str().size() == client_master_key_array.size());
+            assert(rsa_prg_key_buf.str().size() == client_tdp_prg_key_array.size());
+            
+            std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
+            std::copy(rsa_prg_key_buf.str().begin(), rsa_prg_key_buf.str().end(), client_tdp_prg_key_array.begin());
+            
+
+            
+            return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path, sk_buf.str(), client_master_key_array, client_tdp_prg_key_array));
         }
         
         std::unique_ptr<SophosClient> SophosClient::init_in_directory(const std::string& dir_path, uint32_t n_keywords)
@@ -103,12 +113,12 @@ namespace sse {
         {
         }
         
-        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key) :
+        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& rsa_prg_key) :
         k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
         {
         }
         
-        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size) :
+        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& rsa_prg_key, const size_t tm_setup_size) :
         k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
         {
         }

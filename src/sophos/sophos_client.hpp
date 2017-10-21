@@ -41,14 +41,16 @@ namespace sse {
         class SophosClient {
         public:
             static constexpr size_t kKeywordIndexSize = 16;
+            static constexpr size_t kKeySize = 32;
+            
             //    typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
             
             static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
             static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
             
             SophosClient(const std::string& token_map_path, const size_t tm_setup_size);
-            SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key);
-            SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::string& derivation_master_key, const std::string& rsa_prg_key, const size_t tm_setup_size);
+            SophosClient(const std::string& token_map_path, const  std::string& tdp_private_key, const  std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& rsa_prg_key);
+            SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const  std::array<uint8_t, kKeySize>& derivation_master_key, const  std::array<uint8_t, kKeySize>& rsa_prg_key, const size_t tm_setup_size);
             
             ~SophosClient();
             

@@ -59,7 +59,15 @@ void test_client_server()
         server_pk_buf << server_pk_in.rdbuf();
         client_tdp_prg_key_buf << client_tdp_prg_key_in.rdbuf();
 
-        client.reset(new  SophosClient("client.sav", client_sk_buf.str(), client_master_key_buf.str(), client_tdp_prg_key_buf.str()));
+        std::array<uint8_t, 32> client_master_key_array,  client_tdp_prg_key_array;
+        
+        assert(client_master_key_buf.str().size() == client_master_key_array.size());
+        assert(client_tdp_prg_key_buf.str().size() == client_tdp_prg_key_array.size());
+        
+        std::copy(client_master_key_buf.str().begin(), client_master_key_buf.str().end(), client_master_key_array.begin());
+        std::copy(client_tdp_prg_key_buf.str().begin(), client_tdp_prg_key_buf.str().end(), client_tdp_prg_key_array.begin());
+
+        client.reset(new  SophosClient("client.sav", client_sk_buf.str(), client_master_key_array, client_tdp_prg_key_array));
         
         server.reset(new SophosServer("server.dat", server_pk_buf.str()));
         

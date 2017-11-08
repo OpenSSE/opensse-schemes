@@ -19,10 +19,12 @@ using namespace std;
 
 void test_client_server()
 {
-    string client_sk_path = "tdp_sk.key";
-    string client_master_key_path = "derivation_master.key";
-    string client_tdp_prg_key_path = "tdp_prg.key";
-    string server_pk_path = "tdp_pk.key";
+    sse::logger::set_severity(sse::logger::DBG);
+
+    string client_sk_path = "sophos_client_test/tdp_sk.key";
+    string client_master_key_path = "sophos_client_test/derivation_master.key";
+    string client_tdp_prg_key_path = "sophos_client_test/tdp_prg.key";
+    string server_pk_path = "sophos_server_test/tdp_pk.key";
     
     
     ifstream client_sk_in(client_sk_path.c_str());
@@ -64,14 +66,17 @@ void test_client_server()
         assert(client_master_key_buf.str().size() == client_master_key_array.size());
         assert(client_tdp_prg_key_buf.str().size() == client_tdp_prg_key_array.size());
         
-        std::copy(client_master_key_buf.str().begin(), client_master_key_buf.str().end(), client_master_key_array.begin());
-        std::copy(client_tdp_prg_key_buf.str().begin(), client_tdp_prg_key_buf.str().end(), client_tdp_prg_key_array.begin());
+        auto client_master_key = client_master_key_buf.str();
+        auto client_tdp_prg_key = client_tdp_prg_key_buf.str();
 
-        client.reset(new  SophosClient("client.sav", client_sk_buf.str(),
+        std::copy(client_master_key.begin(), client_master_key.end(), client_master_key_array.begin());
+        std::copy(client_tdp_prg_key.begin(), client_tdp_prg_key.end(), client_tdp_prg_key_array.begin());
+
+        client.reset(new  SophosClient("sophos_client_test/client.sav", client_sk_buf.str(),
                                        sse::crypto::Key<SophosClient::kKeySize>(client_master_key_array.data()),
                                        sse::crypto::Key<SophosClient::kKeySize>(client_tdp_prg_key_array.data())));
         
-        server.reset(new SophosServer("server.dat", server_pk_buf.str()));
+        server.reset(new SophosServer("sophos_server_test/server.dat", server_pk_buf.str()));
         
         SearchRequest s_req;
         std::list<index_type> res;
@@ -105,23 +110,24 @@ void test_client_server()
 
         // create the client and the server
         
-        client.reset(new SophosClient("client.sav", tdp.private_key(), derivation_master_key.data(), rsa_prg_key.data()));
+        client.reset(new SophosClient("sophos_client_test/client.sav", tdp.private_key(), derivation_master_key.data(), rsa_prg_key.data()));
         
-        server.reset(new SophosServer("server.dat", tdp.public_key()));
+        server.reset(new SophosServer("sophos_server_test/server.dat", tdp.public_key()));
+        
         
         // make a few requests
 
         u_req = client->update_request("toto", 0);
         server->update(u_req);
         
-        u_req = client->update_request("titi", 0);
-        server->update(u_req);
+//        u_req = client->update_request("titi", 0);
+//        server->update(u_req);
         
         u_req = client->update_request("toto", 1);
         server->update(u_req);
         
-        u_req = client->update_request("tata", 0);
-        server->update(u_req);
+//        u_req = client->update_request("tata", 0);
+//        server->update(u_req);
         
 
     }
@@ -138,25 +144,25 @@ void test_client_server()
     }
     cout << "]" << endl;
 
-    key = "titi";
-    s_req = client->search_request(key);
-    res = server->search(s_req);
-    
-    cout << "Search " << key << ". Results: [";
-    for(index_type i : res){
-        cout << i << ", ";
-    }
-    cout << "]" << endl;
-
-    key = "tata";
-    s_req = client->search_request(key);
-    res = server->search(s_req);
-    
-    cout << "Search " << key << ". Results: [";
-    for(index_type i : res){
-        cout << i << ", ";
-    }
-    cout << "]" << endl;
+//    key = "titi";
+//    s_req = client->search_request(key);
+//    res = server->search(s_req);
+//    
+//    cout << "Search " << key << ". Results: [";
+//    for(index_type i : res){
+//        cout << i << ", ";
+//    }
+//    cout << "]" << endl;
+//
+//    key = "tata";
+//    s_req = client->search_request(key);
+//    res = server->search(s_req);
+//    
+//    cout << "Search " << key << ". Results: [";
+//    for(index_type i : res){
+//        cout << i << ", ";
+//    }
+//    cout << "]" << endl;
 
     
     client_sk_in.close();

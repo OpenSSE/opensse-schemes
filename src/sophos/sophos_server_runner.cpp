@@ -108,8 +108,8 @@ grpc::Status SophosImpl::setup(grpc::ServerContext* context,
     std::string pairs_map_path  = storage_path_ + "/" + pairs_map_file;
 
     try {
-        logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
-        server_.reset(new SophosServer(pairs_map_path, message->setup_size(), message->public_key()));
+        logger::log(logger::INFO) << "Seting up server" << std::endl;
+        server_.reset(new SophosServer(pairs_map_path, message->public_key()));
     } catch (std::exception &e) {
         logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
         
@@ -190,11 +190,13 @@ grpc::Status SophosImpl::sync_search(grpc::ServerContext* context,
     logger::log(logger::TRACE) << "Searching ...";
     std::list<uint64_t> res_list;
     
-//    BENCHMARK_Q((res_list = server_->search(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-//    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes))),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),1)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-    BENCHMARK_Q((res_list = server_->search_parallel(message_to_request(mes),2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
-//    BENCHMARK_Q((res_list = server_->search_parallel_light(message_to_request(mes),3)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+    auto req = message_to_request(mes);
+    
+//    BENCHMARK_Q((res_list = server_->search(req)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//    BENCHMARK_Q((res_list = server_->search_parallel(req)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//    BENCHMARK_Q((res_list = server_->search_parallel_light(req,1)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+    BENCHMARK_Q((res_list = server_->search_parallel(req,2)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
+//    BENCHMARK_Q((res_list = server_->search_parallel_light(req,3)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
 //    BENCHMARK_SIMPLE("\n\n",{;})
     
     for (auto& i : res_list) {
@@ -221,6 +223,7 @@ grpc::Status SophosImpl::async_search(grpc::ServerContext* context,
     }
     
     logger::log(logger::TRACE) << "Searching ...";
+    auto req = message_to_request(mes);
 
     std::atomic_uint res_size(0);
     
@@ -239,13 +242,13 @@ grpc::Status SophosImpl::async_search(grpc::ServerContext* context,
     };
 
     if (mes->add_count() >= 40) { // run the search algorithm in parallel only if there are more than 2 results
-        BENCHMARK_Q((server_->search_parallel_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency(), 8,1)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+        BENCHMARK_Q((server_->search_parallel_callback(req, post_callback, std::thread::hardware_concurrency(), 8,1)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 //        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 //        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, 10)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
     }else if (mes->add_count() >= 2) {
-                BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+                BENCHMARK_Q((server_->search_parallel_light_callback(req, post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
     }else{
-        BENCHMARK_Q((server_->search_callback(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+        BENCHMARK_Q((server_->search_callback(req, post_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
     }
     
     

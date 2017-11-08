@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
         n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
     }
     
-    client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4240", client_db, setup_size, n_keywords) );
+    client_runner.reset( new sse::sophos::SophosClientRunner("localhost:4240", client_db) );
     
     for (std::string &path : input_files) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;

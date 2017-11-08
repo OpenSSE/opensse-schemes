@@ -48,8 +48,113 @@
 namespace sse {
 namespace sophos {
 
+const std::string tdp_sk_file__ = "tdp_sk.key";
+const std::string derivation_key_file__ = "derivation_master.key";
 
-SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
+
+const std::string rsa_prg_key_file__ = "rsa_prg.key";
+const std::string counter_map_file__ = "counters.dat";
+
+static std::unique_ptr<SophosClient> init_client_in_directory(const std::string& dir_path)
+{
+    // try to initialize everything in this directory
+    if (!is_directory(dir_path)) {
+        throw std::runtime_error(dir_path + ": not a directory");
+    }
+
+    std::string counter_map_path = dir_path + "/" + counter_map_file__;
+    std::string sk_path = dir_path + "/" + tdp_sk_file__;
+    std::string master_key_path = dir_path + "/" + derivation_key_file__;
+    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
+
+    // generate the keys
+    std::array<uint8_t, SophosClient::kKeySize> derivation_master_key = crypto::random_bytes<uint8_t, SophosClient::kKeySize>();
+    std::array<uint8_t, SophosClient::kKeySize> rsa_prg_key = crypto::random_bytes<uint8_t, SophosClient::kKeySize>();
+    crypto::TdpInverse tdp;
+
+    
+    // start by writing all the keys to disk
+    
+    std::ofstream sk_out(sk_path.c_str());
+    if (!sk_out.is_open()) {
+        throw std::runtime_error(sk_path + ": unable to write the secret key");
+    }
+    
+    sk_out << tdp.private_key();
+    sk_out.close();
+    
+    std::ofstream master_key_out(master_key_path.c_str());
+    if (!master_key_out.is_open()) {
+        throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
+    }
+    master_key_out << std::string(derivation_master_key.begin(), derivation_master_key.end());
+    master_key_out.close();
+    
+    std::ofstream rsa_prg_key_out(rsa_prg_key_path.c_str());
+    if (!rsa_prg_key_out.is_open()) {
+        throw std::runtime_error(rsa_prg_key_path + ": unable to write the rsa prg key");
+    }
+    rsa_prg_key_out << std::string(rsa_prg_key.begin(), rsa_prg_key.end());
+    rsa_prg_key_out.close();
+    
+    
+    auto c_ptr =  std::unique_ptr<SophosClient>(new SophosClient(counter_map_path, tdp.private_key(), derivation_master_key.data(), rsa_prg_key.data()));
+
+    return c_ptr;
+}
+
+static std::unique_ptr<SophosClient> construct_client_from_directory(const std::string& dir_path)
+{
+    // try to initialize everything from this directory
+    if (!is_directory(dir_path)) {
+        throw std::runtime_error(dir_path + ": not a directory");
+    }
+
+    std::string sk_path = dir_path + "/" + tdp_sk_file__;
+    std::string master_key_path = dir_path + "/" + derivation_key_file__;
+    std::string counter_map_path = dir_path + "/" + counter_map_file__;
+    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
+
+    if (!is_file(sk_path)) {
+        // error, the secret key file is not there
+        throw std::runtime_error("Missing secret key file");
+    }
+    if (!is_file(master_key_path)) {
+        // error, the derivation key file is not there
+        throw std::runtime_error("Missing master derivation key file");
+    }
+    if (!is_file(rsa_prg_key_path)) {
+        // error, the rsa prg key file is not there
+        throw std::runtime_error("Missing rsa prg key file");
+    }
+    if (!is_directory(counter_map_path)) {
+        // error, the token map data is not there
+        throw std::runtime_error("Missing token data");
+    }
+    
+    std::ifstream sk_in(sk_path.c_str());
+    std::ifstream master_key_in(master_key_path.c_str());
+    std::ifstream rsa_prg_key_in(rsa_prg_key_path.c_str());
+    std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
+    
+    sk_buf << sk_in.rdbuf();
+    master_key_buf << master_key_in.rdbuf();
+    rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
+    
+    std::array<uint8_t, 32> client_master_key_array,  client_tdp_prg_key_array;
+    
+    assert(master_key_buf.str().size() == client_master_key_array.size());
+    assert(rsa_prg_key_buf.str().size() == client_tdp_prg_key_array.size());
+    
+    std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
+    std::copy(rsa_prg_key_buf.str().begin(), rsa_prg_key_buf.str().end(), client_tdp_prg_key_array.begin());
+    
+    
+    
+    return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path, sk_buf.str(), client_master_key_array.data(), client_tdp_prg_key_array.data()));
+}
+    
+SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& path)
     : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
 {
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
@@ -59,7 +164,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
     if (is_directory(path)) {
         // try to initialize everything from this directory
 
-        client_ = SophosClient::construct_from_directory(path);
+        client_ = construct_client_from_directory(path);
         
     }else if (exists(path)){
         // there should be nothing else than a directory at path, but we found something  ...
@@ -73,10 +178,10 @@ SophosClientRunner::SophosClientRunner(const std::string& address, const std::st
             throw std::runtime_error(path + ": unable to create directory");
         }
         
-        client_ = SophosClient::init_in_directory(path,n_keywords);
+        client_ = init_client_in_directory(path);
         
         // send a setup message to the server
-        bool success = send_setup(setup_size);
+        bool success = send_setup();
         
         if (!success) {
             throw std::runtime_error("Unsuccessful server setup");
@@ -95,13 +200,12 @@ SophosClientRunner::~SophosClientRunner()
     update_completion_thread_->join();
 }
     
-bool SophosClientRunner::send_setup(const size_t setup_size) const
+bool SophosClientRunner::send_setup() const
 {
     grpc::ClientContext context;
     sophos::SetupMessage message;
     google::protobuf::Empty e;
 
-    message.set_setup_size(setup_size);
     message.set_public_key(client_->public_key());
     
     grpc::Status status = stub_->setup(&context, message, &e);

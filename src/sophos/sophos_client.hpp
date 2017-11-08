@@ -45,12 +45,11 @@ namespace sse {
             
             //    typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
             
-            static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
-            static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
+//            static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
+//            static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
             
-            SophosClient(const std::string& token_map_path, const size_t tm_setup_size);
-            SophosClient(const std::string& token_map_path, const  std::string& tdp_private_key, const  std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& rsa_prg_key);
-            SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const  std::array<uint8_t, kKeySize>& derivation_master_key, const  std::array<uint8_t, kKeySize>& rsa_prg_key, const size_t tm_setup_size);
+//            SophosClient(const std::string& token_map_path);
+            SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, crypto::Key<kKeySize>&& derivation_master_key, crypto::Key<kKeySize>&& rsa_prg_key);
             
             ~SophosClient();
             
@@ -58,10 +57,8 @@ namespace sse {
             
             const std::string private_key() const;
             const std::string public_key() const;
-            const std::string master_derivation_key() const;
-            std::string rsa_prg_key() const;
             
-            void write_keys(const std::string& dir_path) const;
+//            void write_keys(const std::string& dir_path) const;
             
             SearchRequest   search_request(const std::string &keyword) const;
             UpdateRequest   update_request(const std::string &keyword, const index_type index);

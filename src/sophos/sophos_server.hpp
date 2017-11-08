@@ -42,19 +42,18 @@ namespace sophos {
         
         
         SophosServer(const std::string& db_path, const std::string& tdp_pk);
-        SophosServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk);
         
         const std::string public_key() const;
 
-        std::list<index_type> search(const SearchRequest& req);
-        void search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback);
+        std::list<index_type> search(SearchRequest& req);
+        void search_callback(SearchRequest& req, std::function<void(index_type)> post_callback);
         
-        std::list<index_type> search_parallel_full(const SearchRequest& req);
-        std::list<index_type> search_parallel(const SearchRequest& req, uint8_t access_threads);
-        std::list<index_type> search_parallel_light(const SearchRequest& req, uint8_t thread_count);
+        std::list<index_type> search_parallel_full(SearchRequest& req);
+        std::list<index_type> search_parallel(SearchRequest& req, uint8_t access_threads);
+        std::list<index_type> search_parallel_light(SearchRequest& req, uint8_t thread_count);
 
-        void search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count);
-        void search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count);
+        void search_parallel_callback(SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count);
+        void search_parallel_light_callback(SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count);
 
         void update(const UpdateRequest& req);
         

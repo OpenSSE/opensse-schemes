@@ -39,19 +39,12 @@ edb_(db_path), public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
     
 }
 
-SophosServer::SophosServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk) :
-    edb_(db_path), /*edb_(db_path, tm_setup_size),*/
-    public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
-{
-    
-}
-
 const std::string SophosServer::public_key() const
 {
     return public_tdp_.public_key();
 }
 
-std::list<index_type> SophosServer::search(const SearchRequest& req)
+std::list<index_type> SophosServer::search(SearchRequest& req)
 {
     std::list<index_type> results;
     
@@ -69,7 +62,7 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
         index_type r;
         update_token_type ut;
         std::array<uint8_t, kUpdateTokenSize> mask;
-        gen_update_token_masks(req.derivation_key, st.data(), ut, mask);
+        gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(req.derivation_key.data()), st.data(), ut, mask);
         
         if (logger::severity() <= logger::DBG) {
             logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl;
@@ -94,7 +87,7 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     return results;
 }
 
-    void SophosServer::search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback)
+    void SophosServer::search_callback(SearchRequest& req, std::function<void(index_type)> post_callback)
     {
         search_token_type st = req.token;
         
@@ -110,7 +103,7 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
             index_type r;
             update_token_type ut;
             std::array<uint8_t, kUpdateTokenSize> mask;
-            gen_update_token_masks(req.derivation_key, st.data(), ut, mask);
+            gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(req.derivation_key.data()), st.data(), ut, mask);
             
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl;
@@ -134,13 +127,13 @@ std::list<index_type> SophosServer::search(const SearchRequest& req)
     }
     
 
-std::list<index_type> SophosServer::search_parallel_full(const SearchRequest& req)
+std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
 {
     std::list<index_type> results;
     
     search_token_type st = req.token;
     
-    auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.derivation_key);
+    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
 
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -231,7 +224,7 @@ std::list<index_type> SophosServer::search_parallel_full(const SearchRequest& re
     return results;
 }
 
-std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, uint8_t access_threads)
+std::list<index_type> SophosServer::search_parallel(SearchRequest& req, uint8_t access_threads)
 {
     std::list<index_type> results;
     std::mutex res_mutex;
@@ -252,7 +245,7 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, ui
     {
         update_token_type token;
         std::array<uint8_t, kUpdateTokenSize> mask;
-        gen_update_token_masks(req.derivation_key, (uint8_t *)st_string.data(), token, mask);
+        gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(req.derivation_key.data()), (uint8_t *)st_string.data(), token, mask);
 
         index_type r;
         
@@ -320,7 +313,7 @@ std::list<index_type> SophosServer::search_parallel(const SearchRequest& req, ui
     return results;
 }
 
-std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& req, uint8_t thread_count)
+std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req, uint8_t thread_count)
 {
     search_token_type st = req.token;
     std::list<index_type> results;
@@ -339,7 +332,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
 
         update_token_type token;
         std::array<uint8_t, kUpdateTokenSize> mask;
-        gen_update_token_masks(req.derivation_key, st.data(), token, mask);
+        gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(req.derivation_key.data()), st.data(), token, mask);
 
         
         index_type r;
@@ -406,7 +399,7 @@ std::list<index_type> SophosServer::search_parallel_light(const SearchRequest& r
     return results;
 }
 
-void SophosServer::search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count)
+void SophosServer::search_parallel_callback(SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count)
 {
     search_token_type st = req.token;
     
@@ -425,7 +418,7 @@ void SophosServer::search_parallel_callback(const SearchRequest& req, std::funct
     {
         update_token_type token;
         std::array<uint8_t, kUpdateTokenSize> mask;
-        gen_update_token_masks(req.derivation_key, st.data(), token, mask);
+        gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(req.derivation_key.data()), st.data(), token, mask);
         
         index_type r;
         
@@ -489,7 +482,7 @@ void SophosServer::search_parallel_callback(const SearchRequest& req, std::funct
     post_pool.join();
 }
 
-void SophosServer::search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count)
+void SophosServer::search_parallel_light_callback(SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count)
 {
     search_token_type st = req.token;
     
@@ -503,7 +496,7 @@ void SophosServer::search_parallel_light_callback(const SearchRequest& req, std:
     {
         update_token_type token;
         std::array<uint8_t, kUpdateTokenSize> mask;
-        gen_update_token_masks(req.derivation_key, st.data(), token, mask);
+        gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(req.derivation_key.data()), st.data(), token, mask);
         
         index_type r;
         

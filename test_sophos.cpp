@@ -67,7 +67,9 @@ void test_client_server()
         std::copy(client_master_key_buf.str().begin(), client_master_key_buf.str().end(), client_master_key_array.begin());
         std::copy(client_tdp_prg_key_buf.str().begin(), client_tdp_prg_key_buf.str().end(), client_tdp_prg_key_array.begin());
 
-        client.reset(new  SophosClient("client.sav", client_sk_buf.str(), client_master_key_array, client_tdp_prg_key_array));
+        client.reset(new  SophosClient("client.sav", client_sk_buf.str(),
+                                       sse::crypto::Key<SophosClient::kKeySize>(client_master_key_array.data()),
+                                       sse::crypto::Key<SophosClient::kKeySize>(client_tdp_prg_key_array.data())));
         
         server.reset(new SophosServer("server.dat", server_pk_buf.str()));
         
@@ -78,22 +80,36 @@ void test_client_server()
     }else{
         cout << "Create new client-server instances" << endl;
         
-        client.reset(new SophosClient("client.sav", 1000));
-
-        server.reset(new SophosServer("server.dat", 1000, client->public_key()));
+        // generate the keys
+        std::array<uint8_t, SophosClient::kKeySize> derivation_master_key = sse::crypto::random_bytes<uint8_t, SophosClient::kKeySize>();
+        std::array<uint8_t, SophosClient::kKeySize> rsa_prg_key = sse::crypto::random_bytes<uint8_t, SophosClient::kKeySize>();
+        sse::crypto::TdpInverse tdp;
         
-        // write keys to files
+        // start by writing all the keys
+        
         ofstream client_sk_out(client_sk_path.c_str());
-        client_sk_out << client->private_key();
+        client_sk_out << tdp.private_key();
         client_sk_out.close();
         
         ofstream client_master_key_out(client_master_key_path.c_str());
-        client_master_key_out << client->master_derivation_key();
+        client_master_key_out << std::string(derivation_master_key.begin(), derivation_master_key.end());
         client_master_key_out.close();
+        
+        ofstream client_tdp_prg_key_out(client_tdp_prg_key_path.c_str());
+        client_tdp_prg_key_out << std::string(rsa_prg_key.begin(), rsa_prg_key.end());
+        client_tdp_prg_key_out.close();
 
         ofstream server_pk_out(server_pk_path.c_str());
-        server_pk_out << server->public_key();
+        server_pk_out << tdp.public_key();
         server_pk_out.close();
+
+        // create the client and the server
+        
+        client.reset(new SophosClient("client.sav", tdp.private_key(), derivation_master_key.data(), rsa_prg_key.data()));
+        
+        server.reset(new SophosServer("server.dat", tdp.public_key()));
+        
+        // make a few requests
 
         u_req = client->update_request("toto", 0);
         server->update(u_req);

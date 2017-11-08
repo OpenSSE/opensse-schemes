@@ -23,6 +23,7 @@
 #include <string>
 #include <array>
 
+#include <sse/crypto/key.hpp>
 #include <sse/crypto/tdp.hpp>
 #include <sse/crypto/prf.hpp>
 
@@ -52,7 +53,7 @@ namespace sse {
             index_type          index;
         };
         
-        void gen_update_token_masks(const std::array<uint8_t, kDerivationKeySize> &deriv_key,
+        void gen_update_token_masks(const crypto::Prf<kUpdateTokenSize> &derivation_prf,
                                     const uint8_t* search_token,
                                     update_token_type &update_token,
                                     std::array<uint8_t, kUpdateTokenSize> &mask);

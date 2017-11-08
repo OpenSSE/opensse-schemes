@@ -40,89 +40,11 @@ namespace sse {
         const std::string SophosClient::counter_map_file__ = "counters.dat";
         
         constexpr size_t SophosClient::kKeywordIndexSize;
-
-        std::unique_ptr<SophosClient> SophosClient::construct_from_directory(const std::string& dir_path)
-        {
-            // try to initialize everything from this directory
-            if (!is_directory(dir_path)) {
-                throw std::runtime_error(dir_path + ": not a directory");
-            }
-            
-            std::string sk_path = dir_path + "/" + tdp_sk_file__;
-            std::string master_key_path = dir_path + "/" + derivation_key_file__;
-            std::string counter_map_path = dir_path + "/" + counter_map_file__;
-            std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
-            
-            if (!is_file(sk_path)) {
-                // error, the secret key file is not there
-                throw std::runtime_error("Missing secret key file");
-            }
-            if (!is_file(master_key_path)) {
-                // error, the derivation key file is not there
-                throw std::runtime_error("Missing master derivation key file");
-            }
-            if (!is_file(rsa_prg_key_path)) {
-                // error, the rsa prg key file is not there
-                throw std::runtime_error("Missing rsa prg key file");
-            }
-            if (!is_directory(counter_map_path)) {
-                // error, the token map data is not there
-                throw std::runtime_error("Missing token data");
-            }
-            
-            std::ifstream sk_in(sk_path.c_str());
-            std::ifstream master_key_in(master_key_path.c_str());
-            std::ifstream rsa_prg_key_in(rsa_prg_key_path.c_str());
-            std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
-            
-            sk_buf << sk_in.rdbuf();
-            master_key_buf << master_key_in.rdbuf();
-            rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
-            
-            std::array<uint8_t, 32> client_master_key_array,  client_tdp_prg_key_array;
-            
-            assert(master_key_buf.str().size() == client_master_key_array.size());
-            assert(rsa_prg_key_buf.str().size() == client_tdp_prg_key_array.size());
-            
-            std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
-            std::copy(rsa_prg_key_buf.str().begin(), rsa_prg_key_buf.str().end(), client_tdp_prg_key_array.begin());
-            
-
-            
-            return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path, sk_buf.str(), client_master_key_array, client_tdp_prg_key_array));
-        }
         
-        std::unique_ptr<SophosClient> SophosClient::init_in_directory(const std::string& dir_path, uint32_t n_keywords)
-        {
-            // try to initialize everything in this directory
-            if (!is_directory(dir_path)) {
-                throw std::runtime_error(dir_path + ": not a directory");
-            }
-            
-            std::string counter_map_path = dir_path + "/" + counter_map_file__;
-            
-            auto c_ptr =  std::unique_ptr<SophosClient>(new SophosClient(counter_map_path, n_keywords));
-            
-            c_ptr->write_keys(dir_path);
-            
-            return c_ptr;
-        }
-        
-        SophosClient::SophosClient(const std::string& token_map_path, const size_t tm_setup_size) :
-        k_prf_(), inverse_tdp_(), rsa_prg_(), counter_map_(token_map_path)
+        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, crypto::Key<kKeySize>&& derivation_master_key, crypto::Key<kKeySize>&& rsa_prg_key) :
+        k_prf_(std::move(derivation_master_key)), inverse_tdp_(tdp_private_key), rsa_prg_(std::move(rsa_prg_key)), counter_map_(token_map_path)
         {
         }
-        
-        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& rsa_prg_key) :
-        k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
-        {
-        }
-        
-        SophosClient::SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& rsa_prg_key, const size_t tm_setup_size) :
-        k_prf_(derivation_master_key), inverse_tdp_(tdp_private_key), rsa_prg_(rsa_prg_key), counter_map_(token_map_path)
-        {
-        }
-        
         
         SophosClient::~SophosClient()
         {
@@ -142,11 +64,6 @@ namespace sse {
         const std::string SophosClient::private_key() const
         {
             return inverse_tdp_.private_key();
-        }
-        
-        const std::string SophosClient::master_derivation_key() const
-        {
-            return std::string(k_prf_.key().begin(), k_prf_.key().end());
         }
         
         const crypto::Prf<kDerivationKeySize>& SophosClient::derivation_prf() const
@@ -230,7 +147,7 @@ namespace sse {
             
             std::array<uint8_t, kUpdateTokenSize> mask;
             
-            gen_update_token_masks(deriv_key, st.data(), req.token,mask);
+            gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(deriv_key.data()), st.data(), req.token,mask);
             req.index = xor_mask(index, mask);
             
             if (logger::severity() <= logger::DBG) {
@@ -240,18 +157,14 @@ namespace sse {
             return req;
         }
         
-        std::string SophosClient::rsa_prg_key() const
-        {
-            return std::string(rsa_prg_.key().begin(), rsa_prg_.key().end());
-        }
-        
         std::ostream& SophosClient::print_stats(std::ostream& out) const
         {
             out << "Number of keywords: " << keyword_count() << std::endl;
             
             return out;
         }
-        
+
+        /*
         void SophosClient::write_keys(const std::string& dir_path) const
         {
             if (!is_directory(dir_path)) {
@@ -287,5 +200,6 @@ namespace sse {
             rsa_prg_key_out << rsa_prg_key();
             rsa_prg_key_out.close();
         }
+         */
     }
 }

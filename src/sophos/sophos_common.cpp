@@ -16,12 +16,12 @@
 namespace sse {
     namespace sophos {
         
-        void gen_update_token_masks(const std::array<uint8_t, kDerivationKeySize> &deriv_key,
+        void gen_update_token_masks(const crypto::Prf<kUpdateTokenSize> &derivation_prf,
                                     const uint8_t* search_token,
                                     update_token_type &update_token,
                                     std::array<uint8_t, kUpdateTokenSize> &mask)
         {
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
+//            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
 
             std::string st_string(reinterpret_cast<const char*>(search_token), kSearchTokenSize);
             

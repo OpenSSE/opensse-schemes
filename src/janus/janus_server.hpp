@@ -28,10 +28,10 @@ namespace sse {
             bool get(const uint8_t *key, index_type &index) const;
             
             
-            std::list<index_type> search(const SearchRequest& req);
-            std::list<index_type> search_parallel(const SearchRequest& req, uint8_t threads_count);
-            void search_parallel(const SearchRequest& req, uint8_t threads_count, const std::function<void(index_type)> &post_callback);
-            void search_parallel(const SearchRequest& req, uint8_t threads_count, const std::function<void(index_type, uint8_t)> &post_callback);
+            std::list<index_type> search(SearchRequest& req);
+            std::list<index_type> search_parallel(SearchRequest& req, uint8_t threads_count);
+            void search_parallel(SearchRequest& req, uint8_t threads_count, const std::function<void(index_type)> &post_callback);
+            void search_parallel(SearchRequest& req, uint8_t threads_count, const std::function<void(index_type, uint8_t)> &post_callback);
             
 //            void search(const SearchRequest& req, const std::function<void(index_type)> &post_callback);
 //            void search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback);

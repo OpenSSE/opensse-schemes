@@ -26,17 +26,16 @@ using namespace std;
 
 void benchmark_sk0_generation(ostream &out)
 {
-    punct::master_key_type master_key;
     const size_t bench_count = 100;
     
     std::chrono::duration<double, std::milli> keyshare_time(0);
 
     for (size_t i = 0; i < bench_count; i++) {
-        sse::crypto::random_bytes(master_key);
+        punct::master_key_type master_key;
         auto t_start = std::chrono::high_resolution_clock::now();
 
-        PuncturableEncryption cryptor(master_key);
-        auto sk0 = cryptor.initial_keyshare(i);
+        PuncturableEncryption cryptor(std::move(master_key));
+        auto volatile sk0 = cryptor.initial_keyshare(i);
         
         auto t_end = std::chrono::high_resolution_clock::now();
         
@@ -48,15 +47,14 @@ void benchmark_sk0_generation(ostream &out)
 
 void benchmark_puncture_generation(ostream &out)
 {
-    punct::master_key_type master_key;
     const size_t puncture_count = 20;
     const size_t bench_count = 20;
     
     
     for (size_t j = 0; j < bench_count; j++) {
         
-        sse::crypto::random_bytes(master_key);
-        
+        auto master_key_array = sse::crypto::random_bytes<uint8_t, 32>();
+
         std::chrono::duration<double, std::milli> keyshare_time(0);
         
         for (size_t i = 1; i < puncture_count+1; i++) {
@@ -70,11 +68,13 @@ void benchmark_puncture_generation(ostream &out)
             tag[6] = (i>>48)&0xFF;
             tag[7] = (i>>56)&0xFF;
             
-
+            // to do the benchmark, we have to copy the key as it is going to be erased otherwise
+            auto master_key_array_cp = master_key_array;
+            
             auto t_start = std::chrono::high_resolution_clock::now();
             
-            PuncturableEncryption cryptor(master_key);
-            auto sk_i = cryptor.inc_puncture(i, tag);
+            PuncturableEncryption cryptor(master_key_array_cp.data());
+            auto volatile sk_i = cryptor.inc_puncture(i, tag);
             
             auto t_end = std::chrono::high_resolution_clock::now();
             
@@ -87,7 +87,6 @@ void benchmark_puncture_generation(ostream &out)
 
 void benchmark_encrypt(ostream &out)
 {
-    punct::master_key_type master_key;
     const size_t encrypt_count = 20;
     const size_t bench_count = 20;
     
@@ -96,8 +95,8 @@ void benchmark_encrypt(ostream &out)
     
     for (size_t j = 0; j < bench_count; j++) {
         
-        sse::crypto::random_bytes(master_key);
-        
+        auto master_key_array = sse::crypto::random_bytes<uint8_t, 32>();
+
         std::chrono::duration<double, std::milli> time(0);
         
         for (size_t i = 0; i < encrypt_count; i++) {
@@ -115,9 +114,13 @@ void benchmark_encrypt(ostream &out)
             
             sse::crypto::random_bytes(sizeof(uint64_t), (uint8_t*) &M);
 
+            // to do the benchmark, we have to copy the key as it is going to be erased otherwise
+            auto master_key_array_cp = master_key_array;
+
+            
             auto t_start = std::chrono::high_resolution_clock::now();
 
-            PuncturableEncryption cryptor(master_key);            
+            PuncturableEncryption cryptor(master_key_array_cp.data());
             auto sk_i = cryptor.encrypt(M, tag);
             
             auto t_end = std::chrono::high_resolution_clock::now();
@@ -131,7 +134,6 @@ void benchmark_encrypt(ostream &out)
 
 void benchmark_decrypt(ostream &out)
 {
-    punct::master_key_type master_key;
     const size_t decrypt_count = 20;
     const size_t bench_count = 20;
     
@@ -142,11 +144,11 @@ void benchmark_decrypt(ostream &out)
     for (size_t j = 0; j < bench_count; j++) {
         cout << "Decryption round " << j;
 
-        sse::crypto::random_bytes(master_key);
-        
+        punct::master_key_type master_key;
+
         std::chrono::duration<double, std::milli> time(0);
         
-        PuncturableEncryption cryptor(master_key);
+        PuncturableEncryption cryptor(std::move(master_key));
 
         std::vector<punct::key_share_type> keyshares;
 
@@ -218,7 +220,7 @@ void benchmark_decrypt(ostream &out)
 
 void benchmark_puncturable_encryption()
 {
-    ofstream benchmark_file("/Users/rbost/Code/sse/diana/bench_janus.out");
+    ofstream benchmark_file("bench_janus.out");
     
     assert(benchmark_file.is_open());
     
@@ -248,19 +250,19 @@ void test_client_server()
         // the files exist
         cout << "Restart Janus client and server" << endl;
         
-        stringstream client_master_key_buf, client_kw_token_key_buf;
+        stringstream client_master_key_buf;
+        string client_master_key;
         
         client_master_key_buf << client_master_key_in.rdbuf();
-        
-        cout << "MASTER KEY: " << hex_string(client_master_key_buf.str()) << "\n";
+        client_master_key = client_master_key_buf.str();
         
         std::array<uint8_t, 32> client_master_key_array;
         
-        assert(client_master_key_buf.str().size() == client_master_key_array.size());
+        assert(client_master_key.size() == client_master_key_array.size());
         
-        std::copy(client_master_key_buf.str().begin(), client_master_key_buf.str().end(), client_master_key_array.begin());
+        std::copy(client_master_key.begin(), client_master_key.end(), client_master_key_array.begin());
         
-        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_array));
+        client.reset(new JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_array.data()));
         
         server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
 
@@ -286,17 +288,21 @@ void test_client_server()
         server->insert_entry(add_req);
 
     }else{
-        cout << "Create new Diana client-server instances" << endl;
+        cout << "Create new Janus client-server instances" << endl;
         
-        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat"));
-        
-        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
+        // generate new keys
+        std::array<uint8_t, 32> client_master_key = sse::crypto::random_bytes<uint8_t, 32>();
+
         
         // write keys to files
         
         ofstream client_master_key_out(client_master_key_path.c_str());
-        client_master_key_out << client->master_key();
+        client_master_key_out << std::string(client_master_key.begin(), client_master_key.end());
         client_master_key_out.close();
+
+        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key.data()));
+        
+        server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
 
         InsertionRequest add_req;
         
@@ -357,8 +363,8 @@ int main(int argc, const char * argv[]) {
     
     init_crypto_lib();
     
-//    benchmark_puncturable_encryption();
-    test_client_server();
+    benchmark_puncturable_encryption();
+//    test_client_server();
     
     cleanup_crypto_lib();
     

@@ -78,7 +78,7 @@ namespace sse {
         
         
         
-        std::list<index_type> JanusServer::search(const SearchRequest& req)
+        std::list<index_type> JanusServer::search(SearchRequest& req)
         {
 //            std::list<crypto::punct::ciphertext_type> insertions = insertion_server_.search(req.insertion_search_request, true);
 //
@@ -144,7 +144,7 @@ namespace sse {
             return results;
         }
         
-        std::list<index_type> JanusServer::search_parallel(const SearchRequest& req, uint8_t threads_count)
+        std::list<index_type> JanusServer::search_parallel(SearchRequest& req, uint8_t threads_count)
         {
             assert(threads_count > 1);
             
@@ -170,7 +170,7 @@ namespace sse {
             return results;
         }
 
-        void JanusServer::search_parallel(const SearchRequest& req, uint8_t threads_count, const std::function<void(index_type)> &post_callback)
+        void JanusServer::search_parallel(SearchRequest& req, uint8_t threads_count, const std::function<void(index_type)> &post_callback)
         {
             auto aux = [&post_callback](index_type ind, uint8_t i)
             {
@@ -179,7 +179,7 @@ namespace sse {
             search_parallel(req, threads_count, aux);
         }
         
-        void JanusServer::search_parallel(const SearchRequest& req, uint8_t threads_count, const std::function<void(index_type, uint8_t)> &post_callback)
+        void JanusServer::search_parallel(SearchRequest& req, uint8_t threads_count, const std::function<void(index_type, uint8_t)> &post_callback)
         {
             // start by retrieving the key shares
             std::list<crypto::punct::key_share_type> key_shares = deletion_server_.search_simple_parallel(req.deletion_search_request, threads_count, true);

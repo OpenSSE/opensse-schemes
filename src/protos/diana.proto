@@ -21,7 +21,6 @@ rpc bulk_update (stream UpdateRequestMessage) returns (google.protobuf.Empty) {}
 
 message SetupMessage
 {
-    uint64 setup_size = 1;
 }
 
 message SearchToken

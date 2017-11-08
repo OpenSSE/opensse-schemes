@@ -52,7 +52,7 @@ namespace sse {
         
         typedef DianaClient<DianaClientRunner::index_type> DC;
         
-        static std::unique_ptr<DC> init_client_from_directory(const std::string& dir_path)
+        static std::unique_ptr<DC> construct_client_from_directory(const std::string& dir_path)
         {
             // try to initialize everything from this directory
             if (!is_directory(dir_path)) {
@@ -91,10 +91,10 @@ namespace sse {
             std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
             std::copy(kw_token_key_buf.str().begin(), kw_token_key_buf.str().end(), client_kw_token_key_array.begin());
 
-            return std::unique_ptr<DC>(new  DC(counter_map_path, client_master_key_array, client_kw_token_key_array));
+            return std::unique_ptr<DC>(new  DC(counter_map_path, client_master_key_array.data(), client_kw_token_key_array.data()));
         }
         
-        std::unique_ptr<DC> create_in_directory(const std::string& dir_path)
+        std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
         {
             // try to initialize everything in this directory
             if (!is_directory(dir_path)) {
@@ -102,19 +102,20 @@ namespace sse {
             }
             
             std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
-            
-            auto c_ptr =  std::unique_ptr<DC>(new DC(counter_map_path));
-            
             std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
             std::string kw_token_master_key_path = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
 
             
+            // generate the keys
+            std::array<uint8_t, DC::kKeySize> master_derivation_key = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+            std::array<uint8_t, DC::kKeySize> kw_token_master_key = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+
             std::ofstream master_key_out(master_key_path.c_str());
             if (!master_key_out.is_open()) {
                 throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
             }
             
-            master_key_out << c_ptr->master_derivation_key();
+            master_key_out << std::string(master_derivation_key.begin(), master_derivation_key.end());
             master_key_out.close();
 
             std::ofstream kw_token_key_out(kw_token_master_key_path.c_str());
@@ -122,10 +123,11 @@ namespace sse {
                 throw std::runtime_error(kw_token_master_key_path + ": unable to write the master derivation key");
             }
             
-            kw_token_key_out << c_ptr->kw_token_master_key();
+            kw_token_key_out << std::string(kw_token_master_key.begin(), kw_token_master_key.end());
             kw_token_key_out.close();
 
-            return c_ptr;
+            return std::unique_ptr<DC>(new DC(counter_map_path, master_derivation_key.data(), kw_token_master_key.data()));
+;
         }
 
         
@@ -139,13 +141,13 @@ namespace sse {
             if (is_directory(path)) {
                 // try to initialize everything from this directory
                 
-                client_ = init_client_from_directory(path);
+                client_ = construct_client_from_directory(path);
                 
             }else if (exists(path)){
                 // there should be nothing else than a directory at path, but we found something  ...
                 throw std::runtime_error(path + ": not a directory");
             }else{
-                // initialize a brand new Sophos client
+                // initialize a brand new Diana client
                 
                 // start by creating a new directory
                 
@@ -153,7 +155,7 @@ namespace sse {
                     throw std::runtime_error(path + ": unable to create directory");
                 }
                 
-                client_ = create_in_directory(path);
+                client_ = init_client_in_directory(path);
                 
                 // send a setup message to the server
                 bool success = send_setup(setup_size);
@@ -179,9 +181,7 @@ namespace sse {
             grpc::ClientContext context;
             SetupMessage message;
             google::protobuf::Empty e;
-            
-            message.set_setup_size(setup_size);
-            
+                        
             grpc::Status status = stub_->setup(&context, message, &e);
             
             if (status.ok()) {

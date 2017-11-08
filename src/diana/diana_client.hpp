@@ -31,6 +31,7 @@
 #include "utils/utils.hpp"
 #include "utils/logger.hpp"
 
+#include <sse/crypto/key.hpp>
 #include <sse/crypto/block_hash.hpp>
 
 #include <sse/dbparser/rapidjson/rapidjson.h>
@@ -57,15 +58,11 @@ namespace sse {
 
             static constexpr size_t kTreeDepth = 48;
             
-            DianaClient(const std::string& token_map_path);
-            DianaClient(const std::string& token_map_path, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& kw_token_master_key);
+            DianaClient(const std::string& token_map_path, crypto::Key<kKeySize>&& derivation_master_key, crypto::Key<kKeySize>&& kw_token_master_key);
             ~DianaClient();
 
             size_t keyword_count() const;
-            
-            const std::string master_derivation_key() const;
-            const std::string kw_token_master_key() const;
-            
+                        
             keyword_index_type get_keyword_index(const std::string &kw) const;
 
             uint32_t get_match_count(const std::string &kw) const;
@@ -75,9 +72,6 @@ namespace sse {
             std::list<UpdateRequest<T>>   bulk_update_request(const std::list<std::pair<std::string, index_type>> &update_list);
 
             bool remove_keyword(const std::string &kw);
-
-//            SearchRequest   search_request_index(const keyword_index_type &kw_index) const;
-//            SearchRequest   random_search_request() const;
 
             std::ostream& print_stats(std::ostream& out) const;
             
@@ -109,15 +103,8 @@ namespace sse {
     namespace diana {
         
         template <typename T>
-        DianaClient<T>::DianaClient(const std::string& token_map_path) :
-        root_prf_(), kw_token_prf_(), counter_map_(token_map_path)
-        {
-            
-        }
-        
-        template <typename T>
-        DianaClient<T>::DianaClient(const std::string& token_map_path, const std::array<uint8_t, kKeySize>& derivation_master_key, const std::array<uint8_t, kKeySize>& kw_token_master_key) :
-        root_prf_(derivation_master_key), kw_token_prf_(kw_token_master_key), counter_map_(token_map_path)
+        DianaClient<T>::DianaClient(const std::string& token_map_path, crypto::Key<kKeySize>&& derivation_master_key, crypto::Key<kKeySize>&& kw_token_master_key) :
+        root_prf_(std::move(derivation_master_key)), kw_token_prf_(std::move(kw_token_master_key)), counter_map_(token_map_path)
         {
             
         }
@@ -126,19 +113,6 @@ namespace sse {
         DianaClient<T>::~DianaClient()
         {
             
-        }
-        
-        
-        template <typename T>
-        const std::string DianaClient<T>::master_derivation_key() const
-        {
-            return std::string(root_prf_.key().begin(), root_prf_.key().end());
-        }
-        
-        template <typename T>
-        const std::string DianaClient<T>::kw_token_master_key() const
-        {
-            return std::string(kw_token_prf_.key().begin(), kw_token_prf_.key().end());
         }
         
         

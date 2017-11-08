@@ -102,8 +102,8 @@ namespace sse {
             std::string pairs_map_path  = storage_path_ + "/" + pairs_map_file;
             
             try {
-                logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
-                server_.reset(new DianaServer<index_type>(pairs_map_path, message->setup_size()));
+                logger::log(logger::INFO) << "Seting up" << std::endl;
+                server_.reset(new DianaServer<index_type>(pairs_map_path));
             } catch (std::exception &e) {
                 logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
                 
@@ -234,10 +234,12 @@ std::to_string((t)) )
                 res_size++;
             };
             
+            auto req = message_to_request(mes);
+            
             if (mes->add_count() >= 40) { // run the search algorithm in parallel only if there are more than 2 results
                 
 //                BENCHMARK_Q((server_->search_parallel(message_to_request(mes), post_callback, 8, 8)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
-                BENCHMARK_Q((server_->search_simple_parallel(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+                BENCHMARK_Q((server_->search_simple_parallel(req, post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 
 //                BENCHMARK_Q((res_list = server_->search_simple_parallel(message_to_request(mes),8)),res_list.size(), PRINT_BENCH_SEARCH_PAR_NORPC)
                 
@@ -250,11 +252,11 @@ std::to_string((t)) )
             }else if (mes->add_count() >= 2) {
 //                BENCHMARK_Q((server_->search_parallel(message_to_request(mes), post_callback, 8, 8)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 
-                BENCHMARK_Q((server_->search_simple_parallel(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+                BENCHMARK_Q((server_->search_simple_parallel(req, post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
 
 //                BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes), post_callback, std::thread::hardware_concurrency())),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
             }else{
-                BENCHMARK_Q((server_->search(message_to_request(mes), post_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
+                BENCHMARK_Q((server_->search(req, post_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
             }
         
             

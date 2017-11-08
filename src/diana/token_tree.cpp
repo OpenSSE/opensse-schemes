@@ -42,7 +42,7 @@ namespace sse {
             
             for (uint8_t i = 0; i < depth; i++) {
                 uint32_t offset = ((node_index & mask) == 0) ? 0 : kTokenSize;
-                crypto::Prg::derive(t, offset, t);
+                crypto::Prg::derive(t.data(), offset, kTokenSize, t.data());
                 
                 mask >>= 1;
             }
@@ -65,9 +65,12 @@ namespace sse {
                 
                 // in the future, optimize this:
                 // with AES-NI and a well written code, it should not cost more to derive two blocks than deriving a single one
-                crypto::Prg::derive(t, kTokenSize, right);
-                crypto::Prg::derive(t, 0, t);
+                crypto::Prg prg(t.data());
                 
+                
+                prg.derive(0, kTokenSize, t.data());
+                prg.derive(kTokenSize, kTokenSize, right.data());
+
                 right_node_callback(right, depth-1-i);
             }
 
@@ -86,13 +89,16 @@ namespace sse {
                 return;
             }
             
-            token_type K_left;
-            crypto::Prg::derive(K, 0, K_left);
+            token_type K_left = K;
+            crypto::Prg prg(K_left.data());
+
+            prg.derive(0, kTokenSize, K_left.data());
 
             if (node_count > (siblings_count>>1)) {
                 list.push_back(std::make_pair(K_left, depth-1));
                 token_type K_right;
-                crypto::Prg::derive(K, kTokenSize, K_right);
+
+                prg.derive(kTokenSize, kTokenSize, K_right.data());
                 
                 covering_list_aux(K_right, node_count - (siblings_count>>1), depth-1, list);
             }else{
@@ -101,64 +107,8 @@ namespace sse {
             }
         }
         
-        
-/*
-        void TokenTree::derive_all_leaves(const token_type& K, const uint8_t depth, const std::function<void(token_type)> &callback)
-        {
-//            if (depth == 0) {
-//                callback(K);
-//                return;
-//            }
-            std::stack<token_type> token_stack;
-            std::stack<uint8_t> depth_stack;
-            
-            
-            uint8_t current_depth = 0;
-            token_type current_token = K;
-            token_type right_token;
-            std::array<uint8_t, 2*kTokenSize> derived_tokens;
-            
-            while (true) { // loop over the elements in the stack
-                
-                while (true) { // loop over the depth :
-                    // we will reach the maximum depth while pushing intermediate nodes
-                    // once we are done, we will pop the last node in the stack
-                    
-                    if (current_depth == depth) { // we are at the bottom level
-                        // post the leaf and exit the inner loop
-                        callback(current_token);
-                        break;
-                    }else{
-                        // generate tokens for the two children
-                        crypto::Prg::derive(current_token, 0, derived_tokens);
-                        
-                        std::copy(derived_tokens.begin(), derived_tokens.begin()+kTokenSize, current_token.begin());
-                        std::copy(derived_tokens.begin()+kTokenSize, derived_tokens.end(), right_token.begin());
 
-                        token_stack.push(right_token);
-                        depth_stack.push(current_depth);
-
-                        current_depth++;
-                    }
-                }
-                // check if the stack is empty or not
-                if (token_stack.empty()) {
-                    // then we are done
-                    break;
-                }
-                
-                // pop the top element
-                current_token = token_stack.top();
-                current_depth = depth_stack.top();
-                token_stack.pop();
-                depth_stack.pop();
-                
-            }
-            
-        }
-*/
-
-        static void derive_all_leaves_aux(const uint8_t* K, const uint8_t depth, const std::function<void(const uint8_t *)> &callback)
+        static void derive_all_leaves_aux(uint8_t* K, const uint8_t depth, const std::function<void(uint8_t *)> &callback)
         {
             // generate the children
             
@@ -181,7 +131,7 @@ namespace sse {
             derive_all_leaves_aux(derived_tokens+TokenTree::kTokenSize, depth-1, callback);
         }
         
-        void TokenTree::derive_all_leaves(const token_type& K, const uint8_t depth, const std::function<void(const uint8_t *)> &callback)
+        void TokenTree::derive_all_leaves(token_type& K, const uint8_t depth, const std::function<void(uint8_t *)> &callback)
         {
             if (depth == 0) {
                 callback(K.data());
@@ -191,7 +141,7 @@ namespace sse {
             derive_all_leaves_aux(K.data(), depth, callback);
         }
         
-        static void derive_leaves_aux(const uint8_t* K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(const uint8_t *)> &callback)
+        static void derive_leaves_aux(uint8_t* K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(uint8_t *)> &callback)
         {
             if (depth == 0) {
                 if (start_index != 0) {
@@ -270,7 +220,7 @@ namespace sse {
             
         }
         
-        void TokenTree::derive_leaves(const token_type& K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(const uint8_t *)> &callback)
+        void TokenTree::derive_leaves(token_type& K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(uint8_t *)> &callback)
         {
             derive_leaves_aux(K.data(), depth, start_index, end_index, callback);
         }

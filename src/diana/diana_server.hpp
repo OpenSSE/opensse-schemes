@@ -45,17 +45,15 @@ public:
     typedef T index_type;
     
     DianaServer(const std::string& db_path);
-    DianaServer(const std::string& db_path, const size_t tm_setup_size);
     
+    std::list<index_type> search(SearchRequest& req, bool delete_results = false);
+    void search(SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results = false);
+    void search_simple(SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results = false);
     
-    std::list<index_type> search(const SearchRequest& req, bool delete_results = false);
-    void search(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results = false);
-    void search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results = false);
-    
-    std::list<index_type> search_simple_parallel(const SearchRequest& req, uint8_t threads_count, bool delete_results = false);
-    void search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results = false);
-    void search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results = false);
-    void search_simple_parallel(const SearchRequest& req, const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results = false);
+    std::list<index_type> search_simple_parallel(SearchRequest& req, uint8_t threads_count, bool delete_results = false);
+    void search_simple_parallel(SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results = false);
+    void search_simple_parallel(SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results = false);
+    void search_simple_parallel(SearchRequest& req, const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results = false);
 
     
     void update(const UpdateRequest<index_type>& req);
@@ -64,7 +62,7 @@ public:
     
     void flush_edb();
 private:
-    bool get_unmask(const uint8_t *key, index_type &index, bool delete_key);
+    bool get_unmask(uint8_t *key, index_type &index, bool delete_key);
     
     inline bool retrieve_entry(const update_token_type key, index_type &index, bool delete_key)
     {
@@ -94,14 +92,7 @@ namespace sse {
         }
         
         template <typename T>
-        DianaServer<T>::DianaServer(const std::string& db_path, const size_t tm_setup_size) :
-        edb_(db_path)
-        {
-            
-        }
-
-        template <typename T>
-        bool DianaServer<T>::get_unmask(const uint8_t *key, index_type &index, bool delete_key)
+        bool DianaServer<T>::get_unmask(uint8_t *key, index_type &index, bool delete_key)
         {
             update_token_type ut;
             index_type mask;
@@ -134,7 +125,7 @@ namespace sse {
         }
 
         template <typename T>
-        std::list<typename DianaServer<T>::index_type> DianaServer<T>::search(const SearchRequest& req, bool delete_results)
+        std::list<typename DianaServer<T>::index_type> DianaServer<T>::search(SearchRequest& req, bool delete_results)
         {
             std::list<index_type> results;
             
@@ -149,7 +140,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianaServer<T>::search(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
+        void DianaServer<T>::search(SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
         {
             
             if (logger::severity() <= logger::DBG) {
@@ -157,9 +148,9 @@ namespace sse {
                 logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
             }
             
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.kw_token);
+            crypto::Prf<kUpdateTokenSize> derivation_prf(req.kw_token.data());
             
-            auto get_callback = [this, &post_callback, delete_results](const uint8_t *key)
+            auto get_callback = [this, &post_callback, delete_results](uint8_t *key)
             {
                 index_type index;
                 if (get_unmask(key, index, delete_results)) {
@@ -180,7 +171,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianaServer<T>::search_simple(const SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
+        void DianaServer<T>::search_simple(SearchRequest& req, const std::function<void(index_type)> &post_callback, bool delete_results)
         {
             index_type r;
             
@@ -189,8 +180,8 @@ namespace sse {
                 logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
             }
             
-            auto derivation_prf = crypto::Prf<kUpdateTokenSize>(req.kw_token);
-            
+            crypto::Prf<kUpdateTokenSize> derivation_prf(req.kw_token.data());
+
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
                 if (logger::severity() <= logger::DBG) {
@@ -246,7 +237,7 @@ namespace sse {
         }
         
         template <typename T>
-        std::list<typename DianaServer<T>::index_type> DianaServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, bool delete_results)
+        std::list<typename DianaServer<T>::index_type> DianaServer<T>::search_simple_parallel(SearchRequest& req, uint8_t threads_count, bool delete_results)
         {
             assert(threads_count > 0);
             
@@ -268,30 +259,12 @@ namespace sse {
             }
             
             delete []  result_lists;
-            //
-            //            index_type *result_array = new index_type[req.add_count];
-            //            std::atomic<uint64_t> r_index(0);
-            //
-            //            auto callback = [&result_array, &r_index](index_type i, uint8_t thread_id)
-            //            {
-            //                result_array[r_index++] = i;
-            //            };
-            //
-            //            search_simple_parallel(req, callback, threads_count);
-            //
-            //            std::list<index_type> results;
-            //
-            //            for (uint64_t i = 0; i < req.add_count; i++) {
-            //                results.push_back(result_array[i]);
-            //            }
-            //
-            //            delete [] result_array;
             
             return results;
         }
         
         template <typename T>
-        void DianaServer<T>::search_simple_parallel(const SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results)
+        void DianaServer<T>::search_simple_parallel(SearchRequest& req, uint8_t threads_count, std::vector<index_type> &results, bool delete_results)
         {
             if (results.size() < req.add_count) {
                 // resize the vector if needed
@@ -309,7 +282,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianaServer<T>::search_simple_parallel(const SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results)
+        void DianaServer<T>::search_simple_parallel(SearchRequest& req, const std::function<void(index_type)> &post_callback, uint8_t threads_count, bool delete_results)
         {
             auto aux = [&post_callback](index_type ind, uint8_t i)
             {
@@ -319,7 +292,7 @@ namespace sse {
         }
         
         template <typename T>
-        void DianaServer<T>::search_simple_parallel(const SearchRequest& req,const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results)
+        void DianaServer<T>::search_simple_parallel(SearchRequest& req,const std::function<void(index_type, uint8_t)> &post_callback, uint8_t threads_count, bool delete_results)
         {
             assert(threads_count>0);
             if(req.add_count == 0)
@@ -331,7 +304,7 @@ namespace sse {
             {
                 
                 
-                auto get_callback = [this, t_id, &post_callback, delete_results](const uint8_t *key)
+                auto get_callback = [this, t_id, &post_callback, delete_results](uint8_t *key)
                 {
                     index_type index;
                     if (get_unmask(key, index, delete_results)) {
@@ -362,8 +335,8 @@ namespace sse {
                         
                     }else if( (leaf_count > loc_max_index) ){
                         // this is the last node for us
-                        
-                        TokenTree::derive_leaves(key_it->first, key_it->second, loc_min_index, loc_max_index, get_callback);
+                        auto token = key_it->first; // copy the node as it will be erased by the next function
+                        TokenTree::derive_leaves(token, key_it->second, loc_min_index, loc_max_index, get_callback);
                         
                         
                         
@@ -372,7 +345,8 @@ namespace sse {
                         // leaf_count > loc_min_index and leaf_count <= loc_max_index
                         
                         
-                        TokenTree::derive_leaves(key_it->first, key_it->second, loc_min_index, leaf_count-1, get_callback);
+                        auto token = key_it->first; // copy the node as it will be erased by the next function
+                        TokenTree::derive_leaves(token, key_it->second, loc_min_index, leaf_count-1, get_callback);
                         
                         // update the local index counters
                         loc_min_index = 0; // the first leaves have been generated now

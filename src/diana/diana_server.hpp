@@ -198,7 +198,11 @@ namespace sse {
                 uint64_t count = 1 << it_token->second;
                 
                 for (uint64_t i = 0; i < count; i++) {
-                    auto t = TokenTree::derive_node(it_token->first, i, it_token->second);
+                    // because we are using the naive algorithm, we will call derive_node many times with the same key
+                    // if not copied, the key will be set to 0 during the first call
+                    // so, although this is unsecure, we have to explicitely copy the key
+                    auto node_copy = it_token->first;
+                    auto t = TokenTree::derive_node(node_copy.data(), i, it_token->second);
                     
                     if (logger::severity() <= logger::DBG) {
                         logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;

@@ -21,6 +21,7 @@
 
 #include "token_tree.hpp"
 
+#include <exception>
 #include <cassert>
 #include <stack>
 
@@ -30,29 +31,61 @@
 namespace sse {
     namespace diana {
         
-        TokenTree::token_type TokenTree::derive_node(const token_type& K, uint64_t node_index, uint8_t depth)
+        TokenTree::inner_token_type TokenTree::derive_inner_node(inner_token_type&& K, uint64_t node_index, uint8_t depth)
         {
             if (depth == 0) {
-                return K;
+                return std::move(K);
             }
-            token_type t = K;
+            if (depth >= 64) {
+                throw std::invalid_argument("Invalid depth >= 64. Depth is too big.");
+            }
+            if (node_index>>depth != 0 ) {
+                throw std::invalid_argument("Invalid node index: node_index > 2^depth -1.");
+            }
+            
+            inner_token_type t(std::move(K));
             
             uint64_t mask = 1UL << (depth-1);
-
+            
             
             for (uint8_t i = 0; i < depth; i++) {
-                uint32_t offset = ((node_index & mask) == 0) ? 0 : kTokenSize;
-                crypto::Prg::derive(t.data(), offset, kTokenSize, t.data());
+                uint8_t offset = ((node_index & mask) == 0) ? 0 : 1;
+
+                t = crypto::Prg::derive_key<kTokenSize>(std::move(t), offset);
                 
                 mask >>= 1;
             }
-
+            
             return t;
         }
-        
+
+        TokenTree::token_type TokenTree::derive_node(inner_token_type&& K, uint64_t node_index, uint8_t depth)
+        {
+            if (depth == 0) {
+                throw std::invalid_argument("Invalid depth == 0. A node at depth 0 is not an inner node");
+            }
+            if (depth >= 64) {
+                throw std::invalid_argument("Invalid depth >= 64. Depth is too big.");
+            }
+            if (node_index>>depth != 0 ) {
+                throw std::invalid_argument("Invalid node index: node_index > 2^depth -1.");
+            }
+
+            inner_token_type last_inner = derive_inner_node(std::move(K), node_index>>1, depth-1);
+            
+            token_type res;
+            uint32_t offset = (node_index %2)*kTokenSize;
+
+            crypto::Prg::derive(std::move(last_inner), offset, kTokenSize, res.data());
+
+            return res;
+        }
         
         TokenTree::token_type TokenTree::derive_leftmost_node(const token_type& K, uint8_t depth, std::function<void(token_type, uint8_t)> right_node_callback)
         {
+            if (depth >= 64) {
+                throw std::invalid_argument("Invalid depth >= 64. Depth is too big.");
+            }
             if (depth == 0) {
                 return K;
             }
@@ -136,6 +169,9 @@ namespace sse {
             if (depth == 0) {
                 callback(K.data());
                 return;
+            }
+            if (depth >= 64) {
+                throw std::invalid_argument("Invalid depth >= 64. Depth is too big.");
             }
 
             derive_all_leaves_aux(K.data(), depth, callback);
@@ -222,6 +258,9 @@ namespace sse {
         
         void TokenTree::derive_leaves(token_type& K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(uint8_t *)> &callback)
         {
+            if (depth >= 64) {
+                throw std::invalid_argument("Invalid depth >= 64. Depth is too big.");
+            }
             derive_leaves_aux(K.data(), depth, start_index, end_index, callback);
         }
     }

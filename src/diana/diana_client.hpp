@@ -191,9 +191,9 @@ namespace sse {
             
             assert(success);
             
-            TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
-            
-            st = TokenTree::derive_node(root, kw_counter, kTreeDepth);
+            TokenTree::inner_token_type root = root_prf_.derive_key(kw_index.data(), kw_index.size());
+
+            st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
             
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
@@ -237,10 +237,10 @@ namespace sse {
                 uint32_t kw_counter = std::get<2>(*it);
                 
                 
-                TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
+                TokenTree::inner_token_type root = root_prf_.derive_key(kw_index.data(), kw_index.size());
                 
-                st = TokenTree::derive_node(root, kw_counter, kTreeDepth);
-                
+                st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
+
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
                 }

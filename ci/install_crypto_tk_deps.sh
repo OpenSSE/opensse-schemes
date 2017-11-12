@@ -10,3 +10,6 @@ mv boost_1_60_0/boost src/.
 
 # install relic
 ./install_relic.sh
+
+# install libsodium
+./install_libsodium.sh

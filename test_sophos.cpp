@@ -10,6 +10,8 @@
 #include <fstream>
 #include <memory>
 
+#include <sse/crypto/utils.hpp>
+
 #include "sophos/sophos_client.hpp"
 #include "sophos/sophos_server.hpp"
 #include "src/utils/utils.hpp"
@@ -205,7 +207,9 @@ void test_kw_indexer()
 
 int main(int argc, const char * argv[]) {
 
+    sse::crypto::init_crypto_lib();
     test_client_server();
-    
+    sse::crypto::cleanup_crypto_lib();
+
     return 0;
 }

@@ -6,14 +6,16 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include <iostream>
-#include <fstream>
-#include <memory>
-
 #include "diana/diana_client.hpp"
 #include "diana/diana_server.hpp"
 #include "utils/utils.hpp"
 #include "utils/logger.hpp"
+
+#include <iostream>
+#include <fstream>
+#include <memory>
+
+#include <sse/crypto/utils.hpp>
 
 using namespace sse::diana;
 using namespace std;
@@ -156,7 +158,9 @@ void test_client_server()
 
 int main(int argc, const char * argv[]) {
 
+    sse::crypto::init_crypto_lib();
     test_client_server();
-    
+    sse::crypto::cleanup_crypto_lib();
+
     return 0;
 }

@@ -1057,6 +1057,7 @@
 					"-lsnappy",
 					"-llz4",
 					"-lbz2",
+					"-lsodium",
 				);
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = src;
@@ -1110,6 +1111,7 @@
 					"-lsnappy",
 					"-llz4",
 					"-lbz2",
+					"-lsodium",
 				);
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = src;

@@ -1,15 +1,13 @@
 #!/bin/sh
 set -ex
 
-cd third_party/crypto
+cd third_party/crypto/install_dependencies
 
 # get Boost
-wget -q http://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.gz;
-tar xf boost_1_60_0.tar.gz
-mv boost_1_60_0/boost src/.
+./install_boost.sh
 
 # install relic
-./install_relic.sh
+./install_relic_ubuntu_14_easy.sh
 
 # install libsodium
 ./install_libsodium.sh

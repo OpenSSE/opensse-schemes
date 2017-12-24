@@ -24,6 +24,8 @@ using namespace sse::crypto;
 using namespace sse::janus;
 using namespace std;
 
+using master_key_type = sse::crypto::Key<sse::crypto::punct::kMasterKeySize>;
+
 void benchmark_sk0_generation(ostream &out)
 {
     const size_t bench_count = 100;
@@ -73,7 +75,7 @@ void benchmark_puncture_generation(ostream &out)
             
             auto t_start = std::chrono::high_resolution_clock::now();
             
-            PuncturableEncryption cryptor(master_key_array_cp.data());
+            PuncturableEncryption cryptor(master_key_type(master_key_array_cp.data()));
             auto volatile sk_i = cryptor.inc_puncture(i, tag);
             
             auto t_end = std::chrono::high_resolution_clock::now();
@@ -120,7 +122,7 @@ void benchmark_encrypt(ostream &out)
             
             auto t_start = std::chrono::high_resolution_clock::now();
 
-            PuncturableEncryption cryptor(master_key_array_cp.data());
+            PuncturableEncryption cryptor(master_key_type(master_key_array_cp.data()));
             auto sk_i = cryptor.encrypt(M, tag);
             
             auto t_end = std::chrono::high_resolution_clock::now();
@@ -262,7 +264,8 @@ void test_client_server()
         
         std::copy(client_master_key.begin(), client_master_key.end(), client_master_key_array.begin());
         
-        client.reset(new JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key_array.data()));
+        client.reset(new JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat",
+                                     Key<JanusClient::kPRFKeySize>(client_master_key_array.data())));
         
         server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
 
@@ -300,7 +303,8 @@ void test_client_server()
         client_master_key_out << std::string(client_master_key.begin(), client_master_key.end());
         client_master_key_out.close();
 
-        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat", client_master_key.data()));
+        client.reset(new  JanusClient("janus_client.search.dat", "janus_client.add.dat", "janus_client.del.dat",
+                                      Key<JanusClient::kPRFKeySize>(client_master_key.data())));
         
         server.reset(new JanusServer("janus_server.add.dat", "janus_server.del.dat", "janus_server.cache.dat"));
 

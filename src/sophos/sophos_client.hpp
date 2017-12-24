@@ -81,7 +81,7 @@ namespace sse {
             
             std::string get_keyword_index(const std::string &kw) const;
             
-            crypto::Prf<crypto::Tdp::kRSAPrgSize> rsa_prg_;
+            crypto::Prf<crypto::Tdp::kRSAPrfSize> rsa_prg_;
             
             sophos::RocksDBCounter counter_map_;
             std::mutex token_map_mtx_;

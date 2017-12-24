@@ -112,7 +112,9 @@ void test_client_server()
 
         // create the client and the server
         
-        client.reset(new SophosClient("sophos_client_test/client.sav", tdp.private_key(), derivation_master_key.data(), rsa_prg_key.data()));
+        client.reset(new SophosClient("sophos_client_test/client.sav", tdp.private_key(),
+                                      sse::crypto::Key<SophosClient::kKeySize>(derivation_master_key.data()),
+                                      sse::crypto::Key<SophosClient::kKeySize>(rsa_prg_key.data())));
         
         server.reset(new SophosServer("sophos_server_test/server.dat", tdp.public_key()));
         

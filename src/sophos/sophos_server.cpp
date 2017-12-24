@@ -57,7 +57,7 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
         logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
     }
     
-    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+    crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
     
     for (size_t i = 0; i < req.add_count; i++) {
         std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
@@ -102,7 +102,7 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
             logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
         }
 
-        crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+        crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
         for (size_t i = 0; i < req.add_count; i++) {
             std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
@@ -139,7 +139,7 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
     
     search_token_type st = req.token;
     
-    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+    crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -237,7 +237,7 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req, uint8_t 
     
     search_token_type st = req.token;
     
-    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+    crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -331,7 +331,7 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req, ui
         logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
     }
     
-    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+    crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     auto derive_access = [&derivation_prf, this, &results, &res_mutex](const search_token_type st, size_t i)
     {
@@ -409,7 +409,7 @@ void SophosServer::search_parallel_callback(SearchRequest& req, std::function<vo
 {
     search_token_type st = req.token;
     
-    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+    crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Search token: " << hex_string(req.token) << std::endl;
@@ -498,7 +498,7 @@ void SophosServer::search_parallel_light_callback(SearchRequest& req, std::funct
         logger::log(logger::DBG) << "Derivation key: " << hex_string(req.derivation_key) << std::endl;
     }
 
-    crypto::Prf<kUpdateTokenSize> derivation_prf(req.derivation_key.data());
+    crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     auto derive_access = [&derivation_prf, this, &post_callback](const search_token_type st, size_t i)
     {

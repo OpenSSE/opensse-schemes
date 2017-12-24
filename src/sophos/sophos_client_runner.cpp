@@ -98,7 +98,9 @@ static std::unique_ptr<SophosClient> init_client_in_directory(const std::string&
     rsa_prg_key_out.close();
     
     
-    auto c_ptr =  std::unique_ptr<SophosClient>(new SophosClient(counter_map_path, tdp.private_key(), derivation_master_key.data(), rsa_prg_key.data()));
+    auto c_ptr =  std::unique_ptr<SophosClient>(new SophosClient(counter_map_path, tdp.private_key(),
+                                                                 sse::crypto::Key<SophosClient::kKeySize>(derivation_master_key.data()),
+                                                                 sse::crypto::Key<SophosClient::kKeySize>(rsa_prg_key.data())));
 
     return c_ptr;
 }
@@ -151,7 +153,10 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(const std::
     
     
     
-    return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path, sk_buf.str(), client_master_key_array.data(), client_tdp_prg_key_array.data()));
+    return std::unique_ptr<SophosClient>(new  SophosClient(counter_map_path,
+                                                           sk_buf.str(),
+                                                           sse::crypto::Key<SophosClient::kKeySize>(client_master_key_array.data()),
+                                                           sse::crypto::Key<SophosClient::kKeySize>(client_tdp_prg_key_array.data())));
 }
     
 SophosClientRunner::SophosClientRunner(const std::string& address, const std::string& path)

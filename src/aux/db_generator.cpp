@@ -22,7 +22,6 @@
 #include "db_generator.hpp"
 #include "utils/logger.hpp"
 
-#include <sse/crypto/fpe.hpp>
 #include <sse/crypto/random.hpp>
 
 #include <string>
@@ -34,22 +33,12 @@
 #include <cmath>
 #include <atomic> 
 #include <mutex>
+#include <random>
 
 #define MIN(a,b) (((a) > (b)) ? (b) : (a))
 
 namespace sse {
     namespace sophos {
-
-        static uint64_t xorshift128(uint64_t &x, uint64_t &y, uint64_t &z, uint64_t &w) {
-            uint64_t t = x;
-            t ^= t << 11;
-            t ^= t >> 8;
-            x = y; y = z; z = w;
-            w ^= w >> 19;
-            w ^= t;
-            return w;
-        }
-
         
         static uint64_t optimal_num_group(size_t N_entries, size_t step, size_t group_size)
         {
@@ -66,9 +55,13 @@ namespace sse {
 
         constexpr uint32_t max_10_counter = ~0;
         
-        static void generation_job(unsigned int thread_id, size_t N_entries, size_t step, crypto::Fpe *rnd_perm, std::atomic_size_t *entries_counter, std::atomic_size_t *docs_counter, std::function<void(const std::string &, size_t)> callback)
+        static void generation_job(unsigned int thread_id, size_t N_entries, size_t step, std::atomic_size_t *entries_counter, std::atomic_size_t *docs_counter, std::function<void(const std::string &, size_t)> callback)
         {
             
+            std::random_device rd;
+            std::mt19937 rng(rd()); //Standard mersenne_twister_engine seeded with rd()
+            std::uniform_int_distribution<size_t> dist;
+
             size_t counter = thread_id;
             std::string id_string = std::to_string(thread_id);
             
@@ -138,7 +131,7 @@ namespace sse {
             uint32_t new_entries;
 
             for (size_t i = 0; counter < N_entries; counter += step, i++) {
-                size_t ind = rnd_perm->encrypt_64(counter);
+                size_t ind = dist(rng);
                 new_entries = 0;
 
                 double w_d = ((double)ind)/((uint64_t)~0);
@@ -465,7 +458,6 @@ namespace sse {
         
         void gen_db(size_t N_entries, std::function<void(const std::string &, size_t)> callback)
         {
-            crypto::Fpe rnd_perm;
             std::atomic_size_t entries_counter(0);
             std::atomic_size_t docs_counter(0);
 
@@ -474,7 +466,7 @@ namespace sse {
             std::mutex rpc_mutex;
             
             for (unsigned int i = 0; i < n_threads; i++) {
-                threads.push_back(std::thread(generation_job, i, N_entries, n_threads, &rnd_perm, &entries_counter, &docs_counter, callback));
+                threads.push_back(std::thread(generation_job, i, N_entries, n_threads, &entries_counter, &docs_counter, callback));
             }
 
             for (unsigned int i = 0; i < n_threads; i++) {

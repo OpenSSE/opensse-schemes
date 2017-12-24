@@ -147,7 +147,7 @@ namespace sse {
             
             std::array<uint8_t, kUpdateTokenSize> mask;
             
-            gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(deriv_key.data()), st.data(), req.token,mask);
+            gen_update_token_masks(crypto::Prf<kUpdateTokenSize>(crypto::Key<kKeySize>(deriv_key.data())), st.data(), req.token,mask);
             req.index = xor_mask(index, mask);
             
             if (logger::severity() <= logger::DBG) {

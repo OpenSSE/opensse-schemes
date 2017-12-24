@@ -97,9 +97,8 @@ namespace sse {
                 token_type right;
                 
                 // in the future, optimize this:
-                // with AES-NI and a well written code, it should not cost more to derive two blocks than deriving a single one
-                crypto::Prg prg(t.data());
-                
+                crypto::Prg prg((crypto::Key<crypto::Prg::kKeySize>(t.data())));
+
                 
                 prg.derive(0, kTokenSize, t.data());
                 prg.derive(kTokenSize, kTokenSize, right.data());
@@ -123,7 +122,7 @@ namespace sse {
             }
             
             token_type K_left = K;
-            crypto::Prg prg(K_left.data());
+            crypto::Prg prg((crypto::Key<crypto::Prg::kKeySize>(K_left.data())));
 
             prg.derive(0, kTokenSize, K_left.data());
 
@@ -147,7 +146,7 @@ namespace sse {
             
             uint8_t derived_tokens[2*TokenTree::kTokenSize];
             
-            crypto::Prg::derive(K, 0, 2*TokenTree::kTokenSize, derived_tokens);
+            crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K), 0, 2*TokenTree::kTokenSize, derived_tokens);
             
 
             if (depth == 1) {
@@ -212,20 +211,20 @@ namespace sse {
                 
                 uint8_t derived_tokens[2*TokenTree::kTokenSize];
                 
-                crypto::Prg::derive(K, 0, 2*TokenTree::kTokenSize, derived_tokens);
+                crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K), 0, 2*TokenTree::kTokenSize, derived_tokens);
 
                 left_node = derived_tokens;
                 right_node = derived_tokens + TokenTree::kTokenSize;
             }else if(need_left) {
                 uint8_t derived_token[TokenTree::kTokenSize];
                 
-                crypto::Prg::derive(K, 0, TokenTree::kTokenSize, derived_token);
+                crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K), 0, TokenTree::kTokenSize, derived_token);
                 
                 left_node = derived_token;
             }else if(need_right) {
                 uint8_t derived_token[TokenTree::kTokenSize];
                 
-                crypto::Prg::derive(K, TokenTree::kTokenSize, TokenTree::kTokenSize, derived_token);
+                crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K), TokenTree::kTokenSize, TokenTree::kTokenSize, derived_token);
                 
                 right_node = derived_token;
             }else{

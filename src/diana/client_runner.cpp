@@ -91,7 +91,9 @@ namespace sse {
             std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
             std::copy(kw_token_key_buf.str().begin(), kw_token_key_buf.str().end(), client_kw_token_key_array.begin());
 
-            return std::unique_ptr<DC>(new  DC(counter_map_path, client_master_key_array.data(), client_kw_token_key_array.data()));
+            return std::unique_ptr<DC>(new  DC(counter_map_path,
+                                               sse::crypto::Key<DC::kKeySize>(client_master_key_array.data()),
+                                               sse::crypto::Key<DC::kKeySize>(client_kw_token_key_array.data())));
         }
         
         std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
@@ -126,8 +128,9 @@ namespace sse {
             kw_token_key_out << std::string(kw_token_master_key.begin(), kw_token_master_key.end());
             kw_token_key_out.close();
 
-            return std::unique_ptr<DC>(new DC(counter_map_path, master_derivation_key.data(), kw_token_master_key.data()));
-;
+            return std::unique_ptr<DC>(new DC(counter_map_path,
+                                              sse::crypto::Key<DC::kKeySize>(master_derivation_key.data()),
+                                              sse::crypto::Key<DC::kKeySize>(kw_token_master_key.data())));
         }
 
         

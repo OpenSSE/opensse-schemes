@@ -68,7 +68,9 @@ void test_client_server()
         std::copy(client_kw_token_key.begin(), client_kw_token_key.end(), client_kw_token_key_array.begin());
         
         
-        client.reset(new  DianaClient<index_type>("diana_client.sav", client_master_key_array.data(), client_kw_token_key_array.data()));
+        client.reset(new  DianaClient<index_type>("diana_client.sav",
+                                                  sse::crypto::Key<DianaClient<index_type>::kKeySize>(client_master_key_array.data()),
+                                                  sse::crypto::Key<DianaClient<index_type>::kKeySize>(client_kw_token_key_array.data())));
         
         server.reset(new DianaServer<index_type>("diana_server.dat"));
         
@@ -92,7 +94,9 @@ void test_client_server()
 
 
         
-        client.reset(new DianaClient<index_type>("diana_client.sav",master_derivation_key.data(), kw_token_master_key.data()));
+        client.reset(new DianaClient<index_type>("diana_client.sav",
+                                                 sse::crypto::Key<DianaClient<index_type>::kKeySize>(master_derivation_key.data()),
+                                                 sse::crypto::Key<DianaClient<index_type>::kKeySize>(kw_token_master_key.data())));
         
         server.reset(new DianaServer<index_type>("diana_server.dat"));
         

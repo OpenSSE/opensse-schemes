@@ -32,7 +32,6 @@
 #include "utils/logger.hpp"
 
 #include <sse/crypto/key.hpp>
-#include <sse/crypto/block_hash.hpp>
 
 #include <sse/dbparser/rapidjson/rapidjson.h>
 #include <sse/dbparser/rapidjson/writer.h>

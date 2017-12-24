@@ -23,8 +23,6 @@
 
 #include "types.hpp"
 
-#include <sse/crypto/block_hash.hpp>
-
 #include <cstring>
 
 namespace sse {

@@ -41,7 +41,8 @@ namespace sse {
 template <typename T>
 class DianaServer {
 public:
-    
+    static constexpr size_t kKeySize = 32;
+
     typedef T index_type;
     
     DianaServer(const std::string& db_path);
@@ -148,8 +149,8 @@ namespace sse {
                 logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
             }
             
-            crypto::Prf<kUpdateTokenSize> derivation_prf(req.kw_token.data());
-            
+            crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kKeySize>(req.kw_token.data()));
+
             auto get_callback = [this, &post_callback, delete_results](uint8_t *key)
             {
                 index_type index;
@@ -180,7 +181,7 @@ namespace sse {
                 logger::log(logger::DBG) << "Number of search nodes: " << req.token_list.size() << std::endl;
             }
             
-            crypto::Prf<kUpdateTokenSize> derivation_prf(req.kw_token.data());
+            crypto::Prf<kUpdateTokenSize> derivation_prf(crypto::Key<kKeySize>(req.kw_token.data()));
 
             for (auto it_token = req.token_list.begin(); it_token != req.token_list.end(); ++it_token) {
                 
@@ -202,7 +203,7 @@ namespace sse {
                     // if not copied, the key will be set to 0 during the first call
                     // so, although this is unsecure, we have to explicitely copy the key
                     auto node_copy = it_token->first;
-                    auto t = TokenTree::derive_node(node_copy.data(), i, it_token->second);
+                    auto t = TokenTree::derive_node(crypto::Key<TokenTree::kTokenSize>(node_copy.data()), i, it_token->second);
                     
                     if (logger::severity() <= logger::DBG) {
                         logger::log(logger::DBG) << "Derived leaf token: " << hex_string(t) << std::endl;

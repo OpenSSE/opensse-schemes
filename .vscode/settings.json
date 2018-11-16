@@ -1,0 +1,3 @@
+{
+    "cmake.buildToolArgs": ["--config-file", "cmake-format.json"],
+}

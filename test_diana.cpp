@@ -6,10 +6,10 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "diana/diana_client.hpp"
-#include "diana/diana_server.hpp"
-#include "utils/utils.hpp"
-#include "utils/logger.hpp"
+#include <sse/schemes/diana/diana_client.hpp>
+#include <sse/schemes/diana/diana_server.hpp>
+#include <sse/schemes/utils/utils.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
 #include <iostream>
 #include <fstream>

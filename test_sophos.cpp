@@ -12,9 +12,9 @@
 
 #include <sse/crypto/utils.hpp>
 
-#include "sophos/sophos_client.hpp"
-#include "sophos/sophos_server.hpp"
-#include "src/utils/utils.hpp"
+#include <sse/schemes/sophos/sophos_client.hpp>
+#include <sse/schemes/sophos/sophos_server.hpp>
+#include <sse/schemes/utils/utils.hpp>
 
 using namespace sse::sophos;
 using namespace std;

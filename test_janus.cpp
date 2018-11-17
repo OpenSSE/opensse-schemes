@@ -17,8 +17,8 @@
 #include <chrono>
 #include <cassert>
 
-#include "janus/janus_client.hpp"
-#include "janus/janus_server.hpp"
+#include <sse/schemes/janus/janus_client.hpp>
+#include <sse/schemes/janus/janus_server.hpp>
 
 using namespace sse::crypto;
 using namespace sse::janus;

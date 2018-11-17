@@ -6,9 +6,9 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "diana/client_runner.hpp"
-#include "utils/logger.hpp"
-#include "aux/db_generator.hpp"
+#include <sse/runners/diana/client_runner.hpp>
+#include <sse/schemes/utils/logger.hpp>
+#include <sse/schemes/utils/db_generator.hpp>
 
 #include <sse/crypto/utils.hpp>
 

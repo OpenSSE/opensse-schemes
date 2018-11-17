@@ -6,8 +6,8 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "sophos/sophos_server_runner.hpp"
-#include "src/utils/logger.hpp"
+#include <sse/runners/sophos/sophos_server_runner.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
 #include <sse/crypto/utils.hpp>
 

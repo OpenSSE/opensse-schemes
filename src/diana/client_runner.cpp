@@ -21,7 +21,7 @@
 
 #include <sse/runners/diana/client_runner.hpp>
 
-#include <sse/schemes/types.hpp>
+#include <sse/schemes/diana/types.hpp>
 #include <sse/schemes/diana/diana_client.hpp>
 
 #include <sse/schemes/utils/thread_pool.hpp>

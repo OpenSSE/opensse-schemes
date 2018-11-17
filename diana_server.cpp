@@ -6,8 +6,8 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "diana/server_runner.hpp"
-#include "utils/logger.hpp"
+#include <sse/runners/diana/server_runner.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
 #include <grpc++/server.h>
 

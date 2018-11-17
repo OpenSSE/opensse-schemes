@@ -6,9 +6,9 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-#include "sophos/sophos_client_runner.hpp"
-#include "src/utils/logger.hpp"
-#include "aux/db_generator.hpp"
+#include <sse/runners/sophos/sophos_client_runner.hpp>
+#include <sse/schemes/utils/logger.hpp>
+#include <sse/schemes/utils/db_generator.hpp>
 
 #include <sse/crypto/utils.hpp>
 

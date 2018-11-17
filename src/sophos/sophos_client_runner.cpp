@@ -23,6 +23,7 @@
 #include "sophos/sophos_client_runner.hpp"
 
 #include "sophos/sophos_net_types.hpp"
+
 #include <sse/schemes/sophos/sophos_client.hpp>
 #include <sse/schemes/sophos/sophos_server.hpp>
 
@@ -30,7 +31,7 @@
 #include <sse/schemes/utils/utils.hpp>
 #include <sse/schemes/utils/logger.hpp>
 
-#include <sse/dbparser/DBParserJSON.h>
+#include <sse/dbparser/json/DBParserJSON.h>
 
 #include <chrono>
 #include <iostream>

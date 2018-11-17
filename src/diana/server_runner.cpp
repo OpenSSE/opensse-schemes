@@ -18,10 +18,10 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "server_runner.hpp"
+#include "diana/server_runner.hpp"
 
-#include "utils/utils.hpp"
-#include "utils/logger.hpp"
+#include <sse/schemes/utils/utils.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
 #include <fstream>
 #include <atomic>

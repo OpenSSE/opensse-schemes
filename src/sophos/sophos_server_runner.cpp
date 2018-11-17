@@ -19,10 +19,10 @@
 //
 
 
-#include "sophos_server_runner.hpp"
+#include "sophos/sophos_server_runner.hpp"
 
-#include "utils/utils.hpp"
-#include "utils/logger.hpp"
+#include <sse/schemes/utils/utils.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
 #include <fstream>
 #include <atomic>

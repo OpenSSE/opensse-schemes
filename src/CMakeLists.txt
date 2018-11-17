@@ -4,6 +4,7 @@ add_library(
     utils/logger.cpp
     utils/rocksdb_wrapper.cpp
     utils/utils.cpp
+    utils/db_generator.cpp
     sophos/sophos_common.cpp
     sophos/sophos_client.cpp
     sophos/sophos_server.cpp
@@ -51,6 +52,17 @@ target_link_libraries(
     ${ROCKSDB_LIBRARIES}
 )
 
+set(PROTOS
+    ${CMAKE_CURRENT_SOURCE_DIR}/protos/sophos.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/protos/diana.proto
+)
+
+set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR})
+# file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
+
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
+grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
+
 add_library(
     runners
     SHARED
@@ -58,7 +70,13 @@ add_library(
     sophos/sophos_server_runner.cpp
     diana/client_runner.cpp
     diana/server_runner.cpp
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
 )
+
+target_include_directories(runners SYSTEM PUBLIC ${PROTO_SRC_DIR})
+
+
 # Add an alias
 add_library(OpenSSE::runners ALIAS runners)
 
@@ -95,5 +113,7 @@ target_link_libraries(
     runners
     OpenSSE::crypto
     OpenSSE::dbparser
-    ${ROCKSDB_LIBRARIES}
+    OpenSSE::schemes
+    gRPC::grpc++
+    protobuf::libprotobuf
 )

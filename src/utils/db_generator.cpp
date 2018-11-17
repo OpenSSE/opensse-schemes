@@ -19,7 +19,7 @@
 //
 
 
-#include "db_generator.hpp"
+#include "utils/db_generator.hpp"
 #include "utils/logger.hpp"
 
 #include <sse/crypto/random.hpp>

@@ -22,19 +22,28 @@
 #pragma once
 
 #include <sse/schemes/sophos/sophos_client.hpp>
-
 #include "sophos.grpc.pb.h"
 
 #include <memory>
 #include <thread>
 #include <atomic>
+
 #include <grpc++/channel.h>
+#include <grpc++/completion_queue.h>
+#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 
 #include <mutex>
 #include <condition_variable>
 
 namespace sse {
 namespace sophos {
+
+// Forward declaration of some GRPC types
+// class Sophos;
+// class Sophos::Stub;
+
+// class SearchRequestMessage;
+// class UpdateRequestMessage;
 
 class SophosClientRunner {
 public:

@@ -22,7 +22,7 @@
 #pragma once
 
 
-#include "diana/diana_client.hpp"
+#include <sse/schemes/diana/diana_client.hpp>
 
 #include "diana.grpc.pb.h"
 

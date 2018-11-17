@@ -18,7 +18,7 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "rocksdb_wrapper.hpp"
+#include <sse/schemes/utils/rocksdb_wrapper.hpp>
 
 namespace sse {
     namespace sophos {

@@ -6,7 +6,7 @@
 //  Copyright © 2017 Raphael Bost. All rights reserved.
 //
 
-#include "janus_server.hpp"
+#include <sse/schemes/janus/janus_server.hpp>
 
 #include <set>
 

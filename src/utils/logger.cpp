@@ -19,7 +19,8 @@
 //
 
 
-#include "logger.hpp"
+#include <sse/schemes/utils/logger.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <memory>

@@ -6,7 +6,7 @@
 //  Copyright © 2017 Raphael Bost. All rights reserved.
 //
 
-#include "janus_client.hpp"
+#include <sse/schemes/janus/janus_client.hpp>
 
 namespace sse {
     namespace janus {

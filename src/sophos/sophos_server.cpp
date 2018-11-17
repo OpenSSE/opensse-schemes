@@ -19,12 +19,12 @@
 //
 
 
-#include "sophos_server.hpp"
+#include <sse/schemes/sophos/sophos_server.hpp>
 
 
-#include "utils/utils.hpp"
-#include "utils/logger.hpp"
-#include "utils/thread_pool.hpp"
+#include <sse/schemes/utils/utils.hpp>
+#include <sse/schemes/utils/logger.hpp>
+#include <sse/schemes/utils/thread_pool.hpp>
 
 #include <iostream>
 #include <algorithm>

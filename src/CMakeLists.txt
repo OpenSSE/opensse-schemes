@@ -50,3 +50,50 @@ target_link_libraries(
     OpenSSE::dbparser
     ${ROCKSDB_LIBRARIES}
 )
+
+add_library(
+    runners
+    SHARED
+    sophos/sophos_client_runner.cpp
+    sophos/sophos_server_runner.cpp
+    diana/client_runner.cpp
+    diana/server_runner.cpp
+)
+# Add an alias
+add_library(OpenSSE::runners ALIAS runners)
+
+# Generate PIC for the library
+set_target_properties(runners PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_compile_features(
+    runners
+    PUBLIC
+    cxx_auto_type
+    cxx_nullptr
+    cxx_constexpr
+    cxx_defaulted_functions
+    cxx_deleted_functions
+    cxx_extern_templates
+    cxx_noexcept
+    cxx_static_assert
+    cxx_thread_local
+    PRIVATE
+    cxx_lambdas
+)
+
+target_include_directories(
+    runners
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/sse/runners
+    PRIVATE ${ROCKSDB_INCLUDE_DIRS}
+)
+
+target_link_libraries(
+    runners
+    OpenSSE::crypto
+    OpenSSE::dbparser
+    ${ROCKSDB_LIBRARIES}
+)

@@ -19,7 +19,7 @@
 //
 
 
-#include "token_tree.hpp"
+#include <sse/schemes/diana/token_tree.hpp>
 
 #include <exception>
 #include <cassert>

@@ -20,15 +20,15 @@
 
 
 
-#include "sophos_client_runner.hpp"
+#include "sophos/sophos_client_runner.hpp"
 
-#include "sophos_net_types.hpp"
-#include "sophos/sophos_client.hpp"
-#include "sophos/sophos_server.hpp"
+#include "sophos/sophos_net_types.hpp"
+#include <sse/schemes/sophos/sophos_client.hpp>
+#include <sse/schemes/sophos/sophos_server.hpp>
 
-#include "utils/thread_pool.hpp"
-#include "utils/utils.hpp"
-#include "utils/logger.hpp"
+#include <sse/schemes/utils/thread_pool.hpp>
+#include <sse/schemes/utils/utils.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
 #include <sse/dbparser/DBParserJSON.h>
 

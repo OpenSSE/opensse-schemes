@@ -6,7 +6,7 @@
 //  Copyright © 2017 Raphael Bost. All rights reserved.
 //
 
-#include "sophos_common.hpp"
+#include <sse/schemes/sophos/sophos_common.hpp>
 
 
 #include <sse/crypto/prf.hpp>

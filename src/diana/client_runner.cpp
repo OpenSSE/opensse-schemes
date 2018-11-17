@@ -19,16 +19,16 @@
 //
 
 
-#include "client_runner.hpp"
+#include <sse/runners/diana/client_runner.hpp>
 
-#include "types.hpp"
-#include "diana/diana_client.hpp"
+#include <sse/schemes/types.hpp>
+#include <sse/schemes/diana/diana_client.hpp>
 
-#include "utils/thread_pool.hpp"
-#include "utils/utils.hpp"
-#include "utils/logger.hpp"
+#include <sse/schemes/utils/thread_pool.hpp>
+#include <sse/schemes/utils/utils.hpp>
+#include <sse/schemes/utils/logger.hpp>
 
-#include <sse/dbparser/DBParserJSON.h>
+#include <sse/dbparser/json/DBParserJSON.h>
 
 #include <chrono>
 #include <iostream>

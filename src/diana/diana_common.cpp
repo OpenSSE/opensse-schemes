@@ -18,7 +18,7 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "diana_common.hpp"
+#include <sse/schemes/diana/diana_common.hpp>
 
 #include <cstring>
 

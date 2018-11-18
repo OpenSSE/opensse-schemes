@@ -18,6 +18,8 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#define SOPHOS_SERVER_RUNNER_CPP
+#include "sophos.grpc.pb.h"
 
 #include "sophos/sophos_server_runner.hpp"
 

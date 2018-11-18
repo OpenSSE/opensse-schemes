@@ -22,7 +22,6 @@
 #pragma once
 
 #include <sse/schemes/sophos/sophos_server.hpp>
-#include "sophos.grpc.pb.h"
 
 #include <string>
 #include <memory>
@@ -30,10 +29,27 @@
 
 #include <grpc++/server.h>
 #include <grpc++/server_context.h>
+#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 
 namespace sse {
 namespace sophos {
 
+// Forward declaration of some GRPC types
+
+// Because Stub is a nested class, we need to use a trick to forward-declare it
+// See https://stackoverflow.com/a/50619244
+#ifndef SOPHOS_SERVER_RUNNER_CPP
+namespace Sophos{
+    class Service;
+}
+#endif
+
+class SetupMessage;
+class SearchRequestMessage;
+class SearchReplyMessage;
+class UpdateRequestMessage;
+
+    #ifdef SOPHOS_SERVER_RUNNER_CPP 
     class SophosImpl final : public sophos::Sophos::Service {
     public:
         explicit SophosImpl(const std::string& path);
@@ -82,6 +98,7 @@ namespace sophos {
     
     SearchRequest message_to_request(const SearchRequestMessage* mes);
     UpdateRequest message_to_request(const UpdateRequestMessage* mes);
+    #endif
 
     void run_sophos_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
 } // namespace sophos

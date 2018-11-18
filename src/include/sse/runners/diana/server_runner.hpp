@@ -22,7 +22,6 @@
 #pragma once
 
 #include <sse/schemes/diana/diana_server.hpp>
-#include "diana.grpc.pb.h"
 
 #include <string>
 #include <memory>
@@ -33,7 +32,23 @@
 
 namespace sse {
     namespace diana {
-        
+
+        // Forward declaration of some GRPC types
+
+        // Because Stub is a nested class, we need to use a trick to forward-declare it
+        // See https://stackoverflow.com/a/50619244
+        #ifndef DIANA_SERVER_RUNNER_CPP
+        namespace Sophos{
+            class Service;
+        }
+        #endif
+
+        class SetupMessage;
+        class SearchRequestMessage;
+        class SearchReplyMessage;
+        class UpdateRequestMessage; 
+
+        #ifdef DIANA_SERVER_RUNNER_CPP 
         class DianaImpl final : public diana::Diana::Service {
         public:
             typedef uint64_t index_type;
@@ -85,7 +100,9 @@ namespace sse {
         
         SearchRequest message_to_request(const SearchRequestMessage* mes);
         UpdateRequest<DianaImpl::index_type> message_to_request(const UpdateRequestMessage* mes);
-        
+    
+        #endif
+
         void run_diana_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
     }
 }

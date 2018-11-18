@@ -18,6 +18,8 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#define DIANA_CLIENT_RUNNER_CPP
+#include "diana.grpc.pb.h"
 
 #include <sse/runners/diana/client_runner.hpp>
 

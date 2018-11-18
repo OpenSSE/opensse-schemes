@@ -74,8 +74,7 @@ add_library(
     ${GRPC_SRCS}
 )
 
-target_include_directories(runners SYSTEM PUBLIC ${PROTO_SRC_DIR})
-
+target_include_directories(runners SYSTEM PRIVATE ${PROTO_SRC_DIR})
 
 # Add an alias
 add_library(OpenSSE::runners ALIAS runners)

@@ -21,15 +21,15 @@
 
 #pragma once
 
-
 #include <sse/schemes/diana/diana_client.hpp>
 
-#include "diana.grpc.pb.h"
 
 #include <memory>
 #include <thread>
 #include <atomic>
 #include <grpc++/channel.h>
+#include <grpc++/completion_queue.h>
+#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 
 #include <mutex>
 #include <condition_variable>
@@ -37,6 +37,20 @@
 namespace sse {
     namespace diana {
         
+
+        // Forward declaration of some GRPC types
+
+        // Because Stub is a nested class, we need to use a trick to forward-declare it
+        // See https://stackoverflow.com/a/50619244
+        #ifndef DIANA_CLIENT_RUNNER_CPP
+        namespace Diana{
+            class Stub;
+        }
+        #endif
+
+        class SearchRequestMessage;
+        class UpdateRequestMessage;
+
         class DianaClientRunner {
         public:
             typedef uint64_t index_type;

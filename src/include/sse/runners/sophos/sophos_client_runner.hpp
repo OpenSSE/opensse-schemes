@@ -22,7 +22,6 @@
 #pragma once
 
 #include <sse/schemes/sophos/sophos_client.hpp>
-#include "sophos.grpc.pb.h"
 
 #include <memory>
 #include <thread>
@@ -39,11 +38,17 @@ namespace sse {
 namespace sophos {
 
 // Forward declaration of some GRPC types
-// class Sophos;
-// class Sophos::Stub;
 
-// class SearchRequestMessage;
-// class UpdateRequestMessage;
+// Because Stub is a nested class, we need to use a trick to forward-declare it
+// See https://stackoverflow.com/a/50619244
+#ifndef SOPHOS_CLIENT_RUNNER_CPP
+namespace Sophos{
+    class Stub;
+}
+#endif
+
+class SearchRequestMessage;
+class UpdateRequestMessage;
 
 class SophosClientRunner {
 public:

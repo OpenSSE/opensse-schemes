@@ -8,4 +8,5 @@
         ".clang-tidy": "yaml",
         "SConstruct": "python",
     },
+    "cmake.configureOnOpen": true,
 }

@@ -24,45 +24,54 @@
 #include <sse/schemes/sophos/sophos_common.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
 
-#include <string>
+#include <sse/crypto/prf.hpp>
+#include <sse/crypto/tdp.hpp>
+
 #include <array>
 #include <fstream>
 #include <functional>
-
-#include <sse/crypto/tdp.hpp>
-#include <sse/crypto/prf.hpp>
+#include <string>
 
 namespace sse {
 namespace sophos {
-        
 
-    class SophosServer {
-    public:
-        
-        
-        
-        SophosServer(const std::string& db_path, const std::string& tdp_pk);
-        
-        const std::string public_key() const;
 
-        std::list<index_type> search(SearchRequest& req);
-        void search_callback(SearchRequest& req, std::function<void(index_type)> post_callback);
-        
-        std::list<index_type> search_parallel_full(SearchRequest& req);
-        std::list<index_type> search_parallel(SearchRequest& req, uint8_t access_threads);
-        std::list<index_type> search_parallel_light(SearchRequest& req, uint8_t thread_count);
+class SophosServer
+{
+public:
+    SophosServer(const std::string& db_path, const std::string& tdp_pk);
 
-        void search_parallel_callback(SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count);
-        void search_parallel_light_callback(SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count);
+    const std::string public_key() const;
 
-        void update(const UpdateRequest& req);
-        
-        std::ostream& print_stats(std::ostream& out) const;
-    private:
-        RockDBWrapper edb_;
-        
-        sse::crypto::TdpMultPool public_tdp_;
-    };
+    std::list<index_type> search(SearchRequest& req);
+    void                  search_callback(SearchRequest&                  req,
+                                          std::function<void(index_type)> post_callback);
+
+    std::list<index_type> search_parallel_full(SearchRequest& req);
+    std::list<index_type> search_parallel(SearchRequest& req,
+                                          uint8_t        access_threads);
+    std::list<index_type> search_parallel_light(SearchRequest& req,
+                                                uint8_t        thread_count);
+
+    void search_parallel_callback(SearchRequest&                  req,
+                                  std::function<void(index_type)> post_callback,
+                                  uint8_t rsa_thread_count,
+                                  uint8_t access_thread_count,
+                                  uint8_t post_thread_count);
+    void search_parallel_light_callback(
+        SearchRequest&                  req,
+        std::function<void(index_type)> post_callback,
+        uint8_t                         thread_count);
+
+    void update(const UpdateRequest& req);
+
+    std::ostream& print_stats(std::ostream& out) const;
+
+private:
+    RockDBWrapper edb_;
+
+    sse::crypto::TdpMultPool public_tdp_;
+};
 
 } // namespace sophos
 } // namespace sse

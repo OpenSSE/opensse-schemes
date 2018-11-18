@@ -23,102 +23,114 @@
 
 #include <sse/schemes/diana/diana_client.hpp>
 
-
-#include <memory>
-#include <thread>
-#include <atomic>
+#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 #include <grpc++/channel.h>
 #include <grpc++/completion_queue.h>
-#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 
-#include <mutex>
 #include <condition_variable>
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <thread>
+
 namespace sse {
-    namespace diana {
-        
+namespace diana {
 
-        // Forward declaration of some GRPC types
 
-        // Because Stub is a nested class, we need to use a trick to forward-declare it
-        // See https://stackoverflow.com/a/50619244
-        #ifndef DIANA_CLIENT_RUNNER_CPP
-        namespace Diana{
-            class Stub;
-        }
-        #endif
+// Forward declaration of some GRPC types
 
-        class SearchRequestMessage;
-        class UpdateRequestMessage;
+// Because Stub is a nested class, we need to use a trick to forward-declare it
+// See https://stackoverflow.com/a/50619244
+#ifndef DIANA_CLIENT_RUNNER_CPP
+namespace Diana {
+class Stub;
+}
+#endif
 
-        class DianaClientRunner {
-        public:
-            typedef uint64_t index_type;
+class SearchRequestMessage;
+class UpdateRequestMessage;
 
-            DianaClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
-//            DianaClientRunner(const std::string& address, const std::string& db_path, const std::string& json_path);
-            ~DianaClientRunner();
-            
-            const DianaClient<index_type>& client() const;
-            
-            std::list<index_type> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const;
-            void update(const std::string& keyword, uint64_t index);
-            void async_update(const std::string& keyword, uint64_t index);
-            void async_update(const std::list<std::pair<std::string, uint64_t>> &update_list);
-            
-            void start_update_session();
-            void end_update_session();
-            void update_in_session(const std::string& keyword, uint64_t index);
-            void update_in_session(const std::list<std::pair<std::string, uint64_t>> &update_list);
+class DianaClientRunner
+{
+public:
+    typedef uint64_t index_type;
 
-            void wait_updates_completion();
-            
-            bool load_inverted_index(const std::string& path);
-            
-//            bool output_db(const std::string& out_path);
-            std::ostream& print_stats(std::ostream& out) const;
-            
-//            void random_search() const;
-//            void search_benchmark(size_t n_bench) const;
-        private:
-            void update_completion_loop();
-            
-            bool send_setup(const size_t setup_size) const;
-            
-            std::unique_ptr<diana::Diana::Stub> stub_;
-            std::unique_ptr<DianaClient<index_type>> client_;
-            
-            typedef struct
-            {
-                std::unique_ptr< google::protobuf::Empty > reply;
-                std::unique_ptr< grpc::Status > status;
-                std::unique_ptr< size_t > index;
-            } update_tag_type;
+    DianaClientRunner(const std::string& address,
+                      const std::string& path,
+                      size_t             setup_size = 1e5,
+                      uint32_t           n_keywords = 1e4);
+    //            DianaClientRunner(const std::string& address, const
+    //            std::string& db_path, const std::string& json_path);
+    ~DianaClientRunner();
 
-            struct {
-                std::unique_ptr<::grpc::ClientWriter<UpdateRequestMessage>> writer;
-                std::unique_ptr<::grpc::ClientContext> context;
-                ::google::protobuf::Empty response;
-                
-                std::mutex mtx;
-                bool is_up;
-            } bulk_update_state_;
-            
-            std::unique_ptr<grpc::ClientWriter<UpdateRequestMessage>> bulk_update_writer_;
-            
-            grpc::CompletionQueue update_cq_;
-            
-            std::atomic_size_t update_launched_count_, update_completed_count_;
-            std::thread* update_completion_thread_;
-            std::mutex update_completion_mtx_;
-            std::condition_variable update_completion_cv_;
-            bool stop_update_completion_thread_;
-            
-            std::mutex update_mtx_;
-        };
-        
-        SearchRequestMessage request_to_message(const SearchRequest& req);
-        UpdateRequestMessage request_to_message(const UpdateRequest<DianaClientRunner::index_type>& req);
-        
-    } // namespace diana
+    const DianaClient<index_type>& client() const;
+
+    std::list<index_type> search(const std::string&            keyword,
+                                 std::function<void(uint64_t)> receive_callback
+                                 = NULL) const;
+    void                  update(const std::string& keyword, uint64_t index);
+    void async_update(const std::string& keyword, uint64_t index);
+    void async_update(
+        const std::list<std::pair<std::string, uint64_t>>& update_list);
+
+    void start_update_session();
+    void end_update_session();
+    void update_in_session(const std::string& keyword, uint64_t index);
+    void update_in_session(
+        const std::list<std::pair<std::string, uint64_t>>& update_list);
+
+    void wait_updates_completion();
+
+    bool load_inverted_index(const std::string& path);
+
+    //            bool output_db(const std::string& out_path);
+    std::ostream& print_stats(std::ostream& out) const;
+
+    //            void random_search() const;
+    //            void search_benchmark(size_t n_bench) const;
+private:
+    void update_completion_loop();
+
+    bool send_setup(const size_t setup_size) const;
+
+    std::unique_ptr<diana::Diana::Stub>      stub_;
+    std::unique_ptr<DianaClient<index_type>> client_;
+
+    typedef struct
+    {
+        std::unique_ptr<google::protobuf::Empty> reply;
+        std::unique_ptr<grpc::Status>            status;
+        std::unique_ptr<size_t>                  index;
+    } update_tag_type;
+
+    struct
+    {
+        std::unique_ptr<::grpc::ClientWriter<UpdateRequestMessage>> writer;
+        std::unique_ptr<::grpc::ClientContext>                      context;
+        ::google::protobuf::Empty                                   response;
+
+        std::mutex mtx;
+        bool       is_up;
+    } bulk_update_state_;
+
+    std::unique_ptr<grpc::ClientWriter<UpdateRequestMessage>>
+        bulk_update_writer_;
+
+    grpc::CompletionQueue update_cq_;
+
+    std::atomic_size_t      update_launched_count_, update_completed_count_;
+    std::thread*            update_completion_thread_;
+    std::mutex              update_completion_mtx_;
+    std::condition_variable update_completion_cv_;
+    bool                    stop_update_completion_thread_;
+
+    std::mutex update_mtx_;
+};
+
+SearchRequestMessage request_to_message(const SearchRequest& req);
+UpdateRequestMessage request_to_message(
+    const UpdateRequest<DianaClientRunner::index_type>& req);
+
+} // namespace diana
 } // namespace sse

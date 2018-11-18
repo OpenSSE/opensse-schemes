@@ -23,13 +23,16 @@
 
 #include <sse/schemes/diana/diana_server.hpp>
 
-#include <string>
-#include <mutex>
-
 #include <grpc++/server.h>
 
+#include <mutex>
+#include <string>
+
 namespace sse {
-    namespace diana {
-        void run_diana_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
-    }
+namespace diana {
+void run_diana_server(const std::string& address,
+                      const std::string& server_db_path,
+                      grpc::Server**     server_ptr,
+                      bool               async_search);
 }
+} // namespace sse

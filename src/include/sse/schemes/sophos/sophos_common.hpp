@@ -20,42 +20,42 @@
 
 #pragma once
 
-#include <string>
-#include <array>
-
 #include <sse/crypto/key.hpp>
-#include <sse/crypto/tdp.hpp>
 #include <sse/crypto/prf.hpp>
+#include <sse/crypto/tdp.hpp>
+
+#include <array>
+#include <string>
 
 namespace sse {
-    namespace sophos {
+namespace sophos {
 
-        constexpr size_t kSearchTokenSize = crypto::Tdp::kMessageSize;
-        constexpr size_t kDerivationKeySize = 32;
-        constexpr size_t kUpdateTokenSize = 16;
-        
-        typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
-        typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
-        typedef uint64_t index_type;
-        
-        
-        struct SearchRequest
-        {
-            search_token_type                               token;
-            std::array<uint8_t, kDerivationKeySize>         derivation_key;
-            uint32_t                                        add_count;
-        };
-        
-        
-        struct UpdateRequest
-        {
-            update_token_type   token;
-            index_type          index;
-        };
-        
-        void gen_update_token_masks(const crypto::Prf<kUpdateTokenSize> &derivation_prf,
-                                    const uint8_t* search_token,
-                                    update_token_type &update_token,
-                                    std::array<uint8_t, kUpdateTokenSize> &mask);
-    }
-}
+constexpr size_t kSearchTokenSize   = crypto::Tdp::kMessageSize;
+constexpr size_t kDerivationKeySize = 32;
+constexpr size_t kUpdateTokenSize   = 16;
+
+typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
+typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
+typedef uint64_t                              index_type;
+
+
+struct SearchRequest
+{
+    search_token_type                       token;
+    std::array<uint8_t, kDerivationKeySize> derivation_key;
+    uint32_t                                add_count;
+};
+
+
+struct UpdateRequest
+{
+    update_token_type token;
+    index_type        index;
+};
+
+void gen_update_token_masks(const crypto::Prf<kUpdateTokenSize>& derivation_prf,
+                            const uint8_t*                       search_token,
+                            update_token_type&                   update_token,
+                            std::array<uint8_t, kUpdateTokenSize>& mask);
+} // namespace sophos
+} // namespace sse

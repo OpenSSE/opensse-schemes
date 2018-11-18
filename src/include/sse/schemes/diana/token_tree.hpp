@@ -25,45 +25,69 @@
 #include <sse/crypto/prg.hpp>
 
 #include <array>
+#include <functional>
 #include <list>
 #include <utility>
-#include <functional>
 
 namespace sse {
-    namespace diana {
-        
-        class TokenTree
-        {
-        public:
-            static constexpr uint8_t kTokenSize = crypto::Prg::kKeySize;
-            
-            typedef std::array<uint8_t, kTokenSize> token_type;
-            typedef crypto::Key<kTokenSize>         inner_token_type;
+namespace diana {
 
-            // secure derivation of a single token
-            static inner_token_type derive_inner_node(inner_token_type&& K, uint64_t node_index, uint8_t depth);
-            static token_type derive_node(inner_token_type&& K, uint64_t node_index, uint8_t depth);
+class TokenTree
+{
+public:
+    static constexpr uint8_t kTokenSize = crypto::Prg::kKeySize;
 
-            static token_type derive_leftmost_node(const token_type& K, uint8_t depth, std::function<void(token_type, uint8_t)> right_node_callback);
-            
-            static inline std::list<std::pair<token_type, uint8_t>> covering_list(const token_type& root, uint64_t node_count, uint8_t depth);
-            
-            static void derive_all_leaves(token_type& K, const uint8_t depth, const std::function<void(uint8_t *)> &callback);
-            
-            static void derive_leaves(token_type& K, const uint8_t depth, const uint64_t start_index, const uint64_t end_index, const std::function<void(uint8_t *)> &callback);
+    typedef std::array<uint8_t, kTokenSize> token_type;
+    typedef crypto::Key<kTokenSize>         inner_token_type;
 
-        private:
-            static void covering_list_aux(const token_type& root, uint64_t node_count, uint8_t depth, std::list<std::pair<token_type, uint8_t>> &list);
-        };
-        
-        
-        std::list<std::pair<TokenTree::token_type, uint8_t>> TokenTree::covering_list(const token_type& root, uint64_t node_count, uint8_t depth)
-        {
-            std::list<std::pair<TokenTree::token_type, uint8_t>> l;
-            covering_list_aux(root, node_count, depth, l);
-            
-            return l;
-        }
+    // secure derivation of a single token
+    static inner_token_type derive_inner_node(inner_token_type&& K,
+                                              uint64_t           node_index,
+                                              uint8_t            depth);
+    static token_type       derive_node(inner_token_type&& K,
+                                        uint64_t           node_index,
+                                        uint8_t            depth);
 
-    }
+    static token_type derive_leftmost_node(
+        const token_type&                        K,
+        uint8_t                                  depth,
+        std::function<void(token_type, uint8_t)> right_node_callback);
+
+    static inline std::list<std::pair<token_type, uint8_t>> covering_list(
+        const token_type& root,
+        uint64_t          node_count,
+        uint8_t           depth);
+
+    static void derive_all_leaves(
+        token_type&                          K,
+        const uint8_t                        depth,
+        const std::function<void(uint8_t*)>& callback);
+
+    static void derive_leaves(token_type&                          K,
+                              const uint8_t                        depth,
+                              const uint64_t                       start_index,
+                              const uint64_t                       end_index,
+                              const std::function<void(uint8_t*)>& callback);
+
+private:
+    static void covering_list_aux(
+        const token_type&                          root,
+        uint64_t                                   node_count,
+        uint8_t                                    depth,
+        std::list<std::pair<token_type, uint8_t>>& list);
+};
+
+
+std::list<std::pair<TokenTree::token_type, uint8_t>> TokenTree::covering_list(
+    const token_type& root,
+    uint64_t          node_count,
+    uint8_t           depth)
+{
+    std::list<std::pair<TokenTree::token_type, uint8_t>> l;
+    covering_list_aux(root, node_count, depth, l);
+
+    return l;
 }
+
+} // namespace diana
+} // namespace sse

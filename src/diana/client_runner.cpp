@@ -22,509 +22,553 @@
 #include "diana.grpc.pb.h"
 
 #include <sse/runners/diana/client_runner.hpp>
-
-#include <sse/schemes/diana/types.hpp>
 #include <sse/schemes/diana/diana_client.hpp>
-
+#include <sse/schemes/diana/types.hpp>
+#include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/thread_pool.hpp>
 #include <sse/schemes/utils/utils.hpp>
-#include <sse/schemes/utils/logger.hpp>
 
 #include <sse/dbparser/json/DBParserJSON.h>
 
+#include <grpc++/client_context.h>
+#include <grpc++/create_channel.h>
+#include <grpc++/security/credentials.h>
+#include <grpc/grpc.h>
+
 #include <chrono>
+
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <random>
 #include <string>
 #include <thread>
-#include <fstream>
-
-#include <grpc/grpc.h>
-#include <grpc++/client_context.h>
-#include <grpc++/create_channel.h>
-#include <grpc++/security/credentials.h>
 
 #define MASTER_KEY_FILE "master_derivation.key"
 #define KW_TOKEN_MASTER_KEY_FILE "kw_token_master.key"
 #define COUNTER_MAP_FILE "counters.dat"
 
 namespace sse {
-    namespace diana {
-        
-        typedef DianaClient<DianaClientRunner::index_type> DC;
-        
-        static std::unique_ptr<DC> construct_client_from_directory(const std::string& dir_path)
-        {
-            // try to initialize everything from this directory
-            if (!is_directory(dir_path)) {
-                throw std::runtime_error(dir_path + ": not a directory");
-            }
-            
-            std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
-            std::string kw_token_master_key_path = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
-            std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
-            
-            if (!is_file(master_key_path)) {
-                // error, the derivation key file is not there
-                throw std::runtime_error("Missing master derivation key file");
-            }
-            if (!is_file(kw_token_master_key_path)) {
-                // error, the rsa prg key file is not there
-                throw std::runtime_error("Missing keyword token key file");
-            }
-            if (!is_directory(counter_map_path)) {
-                // error, the token map data is not there
-                throw std::runtime_error("Missing token data");
-            }
-            
-            std::ifstream master_key_in(master_key_path.c_str());
-            std::ifstream kw_token_key_in(kw_token_master_key_path.c_str());
-            std::stringstream master_key_buf, kw_token_key_buf;
-            
-            master_key_buf << master_key_in.rdbuf();
-            kw_token_key_buf << master_key_in.rdbuf();
-            
-            std::array<uint8_t, 32> client_master_key_array,  client_kw_token_key_array;
-            
-            assert(master_key_buf.str().size() == client_master_key_array.size());
-            assert(kw_token_key_buf.str().size() == client_kw_token_key_array.size());
-            
-            std::copy(master_key_buf.str().begin(), master_key_buf.str().end(), client_master_key_array.begin());
-            std::copy(kw_token_key_buf.str().begin(), kw_token_key_buf.str().end(), client_kw_token_key_array.begin());
+namespace diana {
 
-            return std::unique_ptr<DC>(new  DC(counter_map_path,
-                                               sse::crypto::Key<DC::kKeySize>(client_master_key_array.data()),
-                                               sse::crypto::Key<DC::kKeySize>(client_kw_token_key_array.data())));
-        }
-        
-        std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
-        {
-            // try to initialize everything in this directory
-            if (!is_directory(dir_path)) {
-                throw std::runtime_error(dir_path + ": not a directory");
-            }
-            
-            std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
-            std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
-            std::string kw_token_master_key_path = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
+typedef DianaClient<DianaClientRunner::index_type> DC;
 
-            
-            // generate the keys
-            std::array<uint8_t, DC::kKeySize> master_derivation_key = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
-            std::array<uint8_t, DC::kKeySize> kw_token_master_key = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+static std::unique_ptr<DC> construct_client_from_directory(
+    const std::string& dir_path)
+{
+    // try to initialize everything from this directory
+    if (!is_directory(dir_path)) {
+        throw std::runtime_error(dir_path + ": not a directory");
+    }
 
-            std::ofstream master_key_out(master_key_path.c_str());
-            if (!master_key_out.is_open()) {
-                throw std::runtime_error(master_key_path + ": unable to write the master derivation key");
-            }
-            
-            master_key_out << std::string(master_derivation_key.begin(), master_derivation_key.end());
-            master_key_out.close();
+    std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
+    std::string kw_token_master_key_path
+        = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
+    std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
 
-            std::ofstream kw_token_key_out(kw_token_master_key_path.c_str());
-            if (!kw_token_key_out.is_open()) {
-                throw std::runtime_error(kw_token_master_key_path + ": unable to write the master derivation key");
-            }
-            
-            kw_token_key_out << std::string(kw_token_master_key.begin(), kw_token_master_key.end());
-            kw_token_key_out.close();
+    if (!is_file(master_key_path)) {
+        // error, the derivation key file is not there
+        throw std::runtime_error("Missing master derivation key file");
+    }
+    if (!is_file(kw_token_master_key_path)) {
+        // error, the rsa prg key file is not there
+        throw std::runtime_error("Missing keyword token key file");
+    }
+    if (!is_directory(counter_map_path)) {
+        // error, the token map data is not there
+        throw std::runtime_error("Missing token data");
+    }
 
-            return std::unique_ptr<DC>(new DC(counter_map_path,
-                                              sse::crypto::Key<DC::kKeySize>(master_derivation_key.data()),
-                                              sse::crypto::Key<DC::kKeySize>(kw_token_master_key.data())));
+    std::ifstream     master_key_in(master_key_path.c_str());
+    std::ifstream     kw_token_key_in(kw_token_master_key_path.c_str());
+    std::stringstream master_key_buf, kw_token_key_buf;
+
+    master_key_buf << master_key_in.rdbuf();
+    kw_token_key_buf << master_key_in.rdbuf();
+
+    std::array<uint8_t, 32> client_master_key_array, client_kw_token_key_array;
+
+    assert(master_key_buf.str().size() == client_master_key_array.size());
+    assert(kw_token_key_buf.str().size() == client_kw_token_key_array.size());
+
+    std::copy(master_key_buf.str().begin(),
+              master_key_buf.str().end(),
+              client_master_key_array.begin());
+    std::copy(kw_token_key_buf.str().begin(),
+              kw_token_key_buf.str().end(),
+              client_kw_token_key_array.begin());
+
+    return std::unique_ptr<DC>(new DC(
+        counter_map_path,
+        sse::crypto::Key<DC::kKeySize>(client_master_key_array.data()),
+        sse::crypto::Key<DC::kKeySize>(client_kw_token_key_array.data())));
+}
+
+std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
+{
+    // try to initialize everything in this directory
+    if (!is_directory(dir_path)) {
+        throw std::runtime_error(dir_path + ": not a directory");
+    }
+
+    std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
+    std::string master_key_path  = dir_path + "/" + MASTER_KEY_FILE;
+    std::string kw_token_master_key_path
+        = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
+
+
+    // generate the keys
+    std::array<uint8_t, DC::kKeySize> master_derivation_key
+        = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+    std::array<uint8_t, DC::kKeySize> kw_token_master_key
+        = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+
+    std::ofstream master_key_out(master_key_path.c_str());
+    if (!master_key_out.is_open()) {
+        throw std::runtime_error(
+            master_key_path + ": unable to write the master derivation key");
+    }
+
+    master_key_out << std::string(master_derivation_key.begin(),
+                                  master_derivation_key.end());
+    master_key_out.close();
+
+    std::ofstream kw_token_key_out(kw_token_master_key_path.c_str());
+    if (!kw_token_key_out.is_open()) {
+        throw std::runtime_error(
+            kw_token_master_key_path
+            + ": unable to write the master derivation key");
+    }
+
+    kw_token_key_out << std::string(kw_token_master_key.begin(),
+                                    kw_token_master_key.end());
+    kw_token_key_out.close();
+
+    return std::unique_ptr<DC>(
+        new DC(counter_map_path,
+               sse::crypto::Key<DC::kKeySize>(master_derivation_key.data()),
+               sse::crypto::Key<DC::kKeySize>(kw_token_master_key.data())));
+}
+
+
+DianaClientRunner::DianaClientRunner(const std::string& address,
+                                     const std::string& path,
+                                     size_t             setup_size,
+                                     uint32_t           n_keywords)
+    : bulk_update_state_{0}, update_launched_count_(0),
+      update_completed_count_(0)
+{
+    std::shared_ptr<grpc::Channel> channel(
+        grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
+    stub_ = Diana::NewStub(channel);
+
+    if (is_directory(path)) {
+        // try to initialize everything from this directory
+
+        client_ = construct_client_from_directory(path);
+
+    } else if (exists(path)) {
+        // there should be nothing else than a directory at path, but we found
+        // something  ...
+        throw std::runtime_error(path + ": not a directory");
+    } else {
+        // initialize a brand new Diana client
+
+        // start by creating a new directory
+
+        if (!create_directory(path, (mode_t)0700)) {
+            throw std::runtime_error(path + ": unable to create directory");
         }
 
-        
-        DianaClientRunner::DianaClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
-        : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
-        {
-            std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
-                                                                       grpc::InsecureChannelCredentials()));
-            stub_ = Diana::NewStub(channel);
-            
-            if (is_directory(path)) {
-                // try to initialize everything from this directory
-                
-                client_ = construct_client_from_directory(path);
-                
-            }else if (exists(path)){
-                // there should be nothing else than a directory at path, but we found something  ...
-                throw std::runtime_error(path + ": not a directory");
-            }else{
-                // initialize a brand new Diana client
-                
-                // start by creating a new directory
-                
-                if (!create_directory(path, (mode_t)0700)) {
-                    throw std::runtime_error(path + ": unable to create directory");
-                }
-                
-                client_ = init_client_in_directory(path);
-                
-                // send a setup message to the server
-                bool success = send_setup(setup_size);
-                
-                if (!success) {
-                    throw std::runtime_error("Unsuccessful server setup");
-                }
-            }
-            
-            // start the thread that will look for completed updates
-            update_completion_thread_ = new std::thread(&DianaClientRunner::update_completion_loop, this);
-        }
-                
-        DianaClientRunner::~DianaClientRunner()
-        {
-            update_cq_.Shutdown();
-            wait_updates_completion();
-            update_completion_thread_->join();
-        }
-        
-        bool DianaClientRunner::send_setup(const size_t setup_size) const
-        {
-            grpc::ClientContext context;
-            SetupMessage message;
-            google::protobuf::Empty e;
-                        
-            grpc::Status status = stub_->setup(&context, message, &e);
-            
-            if (status.ok()) {
-                logger::log(logger::TRACE) << "Setup succeeded." << std::endl;
-            } else {
-                logger::log(logger::ERROR) << "Setup failed: " << std::endl;
-                logger::log(logger::ERROR) << status.error_message() << std::endl;
-                return false;
-            }
-            
-            return true;
-        }
-        
-        
-        const DC& DianaClientRunner::client() const
-        {
-            if (!client_) {
-                throw std::logic_error("Invalid state");
-            }
-            return *client_;
-        }
-        
-        std::list<uint64_t> DianaClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
-        {
-            logger::log(logger::TRACE) << "Search " << keyword << std::endl;
-            
-            grpc::ClientContext context;
-            SearchRequestMessage message;
-            SearchReply reply;
-            
-            message = request_to_message(client_->search_request(keyword));
-            
-            if (message.add_count() == 0) {
-                return {};
-            }
-            
-            std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
-            std::list<uint64_t> results;
-            
-            
-            while (reader->Read(&reply)) {
-                //        logger::log(logger::TRACE) << "New result received: "
-                //        << std::dec << reply.result() << std::endl;
-                results.push_back(reply.result());
-                
-                if (receive_callback != NULL) {
-                    receive_callback(reply.result());
-                }
-            }
-            grpc::Status status = reader->Finish();
-            if (status.ok()) {
-                logger::log(logger::TRACE) << "Search succeeded." << std::endl;
-            } else {
-                logger::log(logger::ERROR) << "Search failed:" << std::endl;
-                logger::log(logger::ERROR) << status.error_message() << std::endl;
-            }
-            
-            return results;
-        }
-        
-        void DianaClientRunner::update(const std::string& keyword, uint64_t index)
-        {
-            grpc::ClientContext context;
-            UpdateRequestMessage message;
-            google::protobuf::Empty e;
-            
-            
-            if (bulk_update_state_.writer) { // an update session is running, use it
-                update_in_session(keyword, index);
-            }else{
-                message = request_to_message(client_->update_request(keyword, index));
-                
-                grpc::Status status = stub_->update(&context, message, &e);
-                
-                if (status.ok()) {
-                    logger::log(logger::TRACE) << "Update succeeded." << std::endl;
-                } else {
-                    logger::log(logger::ERROR) << "Update failed:" << std::endl;
-                    logger::log(logger::ERROR) << status.error_message() << std::endl;
-                }
-            }
-        }
-        
-        void DianaClientRunner::async_update(const std::string& keyword, uint64_t index)
-        {
-            grpc::ClientContext context;
-            UpdateRequestMessage message;
-            
-            
-            
-            if (bulk_update_state_.is_up) { // an update session is running, use it
-                update_in_session(keyword, index);
-            }else{
-                
-                message = request_to_message(client_->update_request(keyword, index));
-                
-                update_tag_type *tag = new update_tag_type();
-                std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
-                                                                                               stub_->Asyncupdate(&context, message, &update_cq_));
-                
-                tag->reply.reset(new google::protobuf::Empty());
-                tag->status.reset(new grpc::Status());
-                tag->index.reset(new size_t(update_launched_count_++));
-                
-                rpc->Finish(tag->reply.get(), tag->status.get(), tag);
-            }
-        }
-        
-        void DianaClientRunner::async_update(const std::list<std::pair<std::string, uint64_t>> &update_list)
-        {
-            if (bulk_update_state_.is_up) { // an update session is running, use it
-                update_in_session(update_list);
-            }else{
-                grpc::ClientContext context;
-                UpdateRequestMessage message;
-            
-            
-                for(auto it = update_list.begin(); it != update_list.end(); ++it)
-                {
-                    message = request_to_message(client_->update_request(it->first, it->second));
-                    
-                    update_tag_type *tag = new update_tag_type();
-                    std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Empty> > rpc(
-                                                                                                   stub_->Asyncupdate(&context, message, &update_cq_));
-                    
-                    tag->reply.reset(new google::protobuf::Empty());
-                    tag->status.reset(new grpc::Status());
-                    tag->index.reset(new size_t(update_launched_count_++));
-                    
-                    rpc->Finish(tag->reply.get(), tag->status.get(), tag);
-                }
-            }
-        }
-        
-        void DianaClientRunner::update_in_session(const std::string& keyword, uint64_t index)
-        {
-            UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
-            
-            if(! bulk_update_state_.is_up)
-            {
-                throw std::runtime_error("Invalid state: the update session is not up");
-            }
-            
-            bulk_update_state_.mtx.lock();
-            if(! bulk_update_state_.writer->Write(message))
-            {
-                logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
-            }
-            bulk_update_state_.mtx.unlock();
-        }
-        
+        client_ = init_client_in_directory(path);
 
-        void DianaClientRunner::update_in_session(const std::list<std::pair<std::string, uint64_t>> &update_list)
-        {
-            if(! bulk_update_state_.is_up)
-            {
-                throw std::runtime_error("Invalid state: the update session is not up");
-            }
-            
+        // send a setup message to the server
+        bool success = send_setup(setup_size);
 
-//            std::list<UpdateRequestMessage> message_list;
-            
-//            for(auto it = update_list.begin(); it != update_list.end(); ++it)
-//            {
-//                message_list.push_back(request_to_message(client_->update_request(it->first, it->second)));
-//            }
+        if (!success) {
+            throw std::runtime_error("Unsuccessful server setup");
+        }
+    }
 
-            std::list<UpdateRequest<DianaClientRunner::index_type>> message_list = client_->bulk_update_request(update_list);
+    // start the thread that will look for completed updates
+    update_completion_thread_
+        = new std::thread(&DianaClientRunner::update_completion_loop, this);
+}
 
-            bulk_update_state_.mtx.lock();
-            
-            for(auto it = message_list.begin(); it != message_list.end(); ++it)
-            {
+DianaClientRunner::~DianaClientRunner()
+{
+    update_cq_.Shutdown();
+    wait_updates_completion();
+    update_completion_thread_->join();
+}
 
-                if(! bulk_update_state_.writer->Write(request_to_message(*it)))
-                {
-                    logger::log(logger::ERROR) << "Update session: broken stream." << std::endl;
-                    break;
-                }
-            }
-            bulk_update_state_.mtx.unlock();
+bool DianaClientRunner::send_setup(const size_t setup_size) const
+{
+    grpc::ClientContext     context;
+    SetupMessage            message;
+    google::protobuf::Empty e;
+
+    grpc::Status status = stub_->setup(&context, message, &e);
+
+    if (status.ok()) {
+        logger::log(logger::TRACE) << "Setup succeeded." << std::endl;
+    } else {
+        logger::log(logger::ERROR) << "Setup failed: " << std::endl;
+        logger::log(logger::ERROR) << status.error_message() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+
+const DC& DianaClientRunner::client() const
+{
+    if (!client_) {
+        throw std::logic_error("Invalid state");
+    }
+    return *client_;
+}
+
+std::list<uint64_t> DianaClientRunner::search(
+    const std::string&            keyword,
+    std::function<void(uint64_t)> receive_callback) const
+{
+    logger::log(logger::TRACE) << "Search " << keyword << std::endl;
+
+    grpc::ClientContext  context;
+    SearchRequestMessage message;
+    SearchReply          reply;
+
+    message = request_to_message(client_->search_request(keyword));
+
+    if (message.add_count() == 0) {
+        return {};
+    }
+
+    std::unique_ptr<grpc::ClientReader<SearchReply>> reader(
+        stub_->search(&context, message));
+    std::list<uint64_t> results;
+
+
+    while (reader->Read(&reply)) {
+        //        logger::log(logger::TRACE) << "New result received: "
+        //        << std::dec << reply.result() << std::endl;
+        results.push_back(reply.result());
+
+        if (receive_callback != NULL) {
+            receive_callback(reply.result());
         }
-        
-        void DianaClientRunner::wait_updates_completion()
-        {
-            stop_update_completion_thread_ = true;
-            std::unique_lock<std::mutex> lock(update_completion_mtx_);
-            update_completion_cv_.wait(lock, [this]{ return update_launched_count_ == update_completed_count_; });
+    }
+    grpc::Status status = reader->Finish();
+    if (status.ok()) {
+        logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+    } else {
+        logger::log(logger::ERROR) << "Search failed:" << std::endl;
+        logger::log(logger::ERROR) << status.error_message() << std::endl;
+    }
+
+    return results;
+}
+
+void DianaClientRunner::update(const std::string& keyword, uint64_t index)
+{
+    grpc::ClientContext     context;
+    UpdateRequestMessage    message;
+    google::protobuf::Empty e;
+
+
+    if (bulk_update_state_.writer) { // an update session is running, use it
+        update_in_session(keyword, index);
+    } else {
+        message = request_to_message(client_->update_request(keyword, index));
+
+        grpc::Status status = stub_->update(&context, message, &e);
+
+        if (status.ok()) {
+            logger::log(logger::TRACE) << "Update succeeded." << std::endl;
+        } else {
+            logger::log(logger::ERROR) << "Update failed:" << std::endl;
+            logger::log(logger::ERROR) << status.error_message() << std::endl;
         }
-        
-        void DianaClientRunner::start_update_session()
-        {
-            if (bulk_update_state_.writer) {
-                logger::log(logger::WARNING) << "Invalid client state: the bulk update session is already up" << std::endl;
-                return;
-            }
-            
-            bulk_update_state_.context.reset(new grpc::ClientContext());
-            bulk_update_state_.writer = stub_->bulk_update(bulk_update_state_.context.get(), &(bulk_update_state_.response));
-            bulk_update_state_.is_up = true;
-            
-            logger::log(logger::TRACE) << "Update session started." << std::endl;
+    }
+}
+
+void DianaClientRunner::async_update(const std::string& keyword, uint64_t index)
+{
+    grpc::ClientContext  context;
+    UpdateRequestMessage message;
+
+
+    if (bulk_update_state_.is_up) { // an update session is running, use it
+        update_in_session(keyword, index);
+    } else {
+        message = request_to_message(client_->update_request(keyword, index));
+
+        update_tag_type* tag = new update_tag_type();
+        std::unique_ptr<
+            grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
+            rpc(stub_->Asyncupdate(&context, message, &update_cq_));
+
+        tag->reply.reset(new google::protobuf::Empty());
+        tag->status.reset(new grpc::Status());
+        tag->index.reset(new size_t(update_launched_count_++));
+
+        rpc->Finish(tag->reply.get(), tag->status.get(), tag);
+    }
+}
+
+void DianaClientRunner::async_update(
+    const std::list<std::pair<std::string, uint64_t>>& update_list)
+{
+    if (bulk_update_state_.is_up) { // an update session is running, use it
+        update_in_session(update_list);
+    } else {
+        grpc::ClientContext  context;
+        UpdateRequestMessage message;
+
+
+        for (auto it = update_list.begin(); it != update_list.end(); ++it) {
+            message = request_to_message(
+                client_->update_request(it->first, it->second));
+
+            update_tag_type* tag = new update_tag_type();
+            std::unique_ptr<
+                grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
+                rpc(stub_->Asyncupdate(&context, message, &update_cq_));
+
+            tag->reply.reset(new google::protobuf::Empty());
+            tag->status.reset(new grpc::Status());
+            tag->index.reset(new size_t(update_launched_count_++));
+
+            rpc->Finish(tag->reply.get(), tag->status.get(), tag);
         }
-        
-        void DianaClientRunner::end_update_session()
-        {
-            if (!bulk_update_state_.writer) {
-                logger::log(logger::WARNING) << "Invalid client state: the bulk update session is not up" << std::endl;
-                return;
-            }
-            
-            bulk_update_state_.writer->WritesDone();
-            ::grpc::Status status = bulk_update_state_.writer->Finish();
-            
-            if (!status.ok()) {
-                logger::log(logger::ERROR) << "Status not OK at the end of update sessions. Status: " << status.error_message() << std::endl;
-            }
-            
-            bulk_update_state_.is_up = false;
-            bulk_update_state_.context.reset();
-            bulk_update_state_.writer.reset();
-            
-            logger::log(logger::TRACE) << "Update session terminated." << std::endl;
+    }
+}
+
+void DianaClientRunner::update_in_session(const std::string& keyword,
+                                          uint64_t           index)
+{
+    UpdateRequestMessage message
+        = request_to_message(client_->update_request(keyword, index));
+
+    if (!bulk_update_state_.is_up) {
+        throw std::runtime_error("Invalid state: the update session is not up");
+    }
+
+    bulk_update_state_.mtx.lock();
+    if (!bulk_update_state_.writer->Write(message)) {
+        logger::log(logger::ERROR)
+            << "Update session: broken stream." << std::endl;
+    }
+    bulk_update_state_.mtx.unlock();
+}
+
+
+void DianaClientRunner::update_in_session(
+    const std::list<std::pair<std::string, uint64_t>>& update_list)
+{
+    if (!bulk_update_state_.is_up) {
+        throw std::runtime_error("Invalid state: the update session is not up");
+    }
+
+
+    //            std::list<UpdateRequestMessage> message_list;
+
+    //            for(auto it = update_list.begin(); it != update_list.end();
+    //            ++it)
+    //            {
+    //                message_list.push_back(request_to_message(client_->update_request(it->first,
+    //                it->second)));
+    //            }
+
+    std::list<UpdateRequest<DianaClientRunner::index_type>> message_list
+        = client_->bulk_update_request(update_list);
+
+    bulk_update_state_.mtx.lock();
+
+    for (auto it = message_list.begin(); it != message_list.end(); ++it) {
+        if (!bulk_update_state_.writer->Write(request_to_message(*it))) {
+            logger::log(logger::ERROR)
+                << "Update session: broken stream." << std::endl;
+            break;
         }
-        
-        
-        void DianaClientRunner::update_completion_loop()
+    }
+    bulk_update_state_.mtx.unlock();
+}
+
+void DianaClientRunner::wait_updates_completion()
+{
+    stop_update_completion_thread_ = true;
+    std::unique_lock<std::mutex> lock(update_completion_mtx_);
+    update_completion_cv_.wait(lock, [this] {
+        return update_launched_count_ == update_completed_count_;
+    });
+}
+
+void DianaClientRunner::start_update_session()
+{
+    if (bulk_update_state_.writer) {
+        logger::log(logger::WARNING)
+            << "Invalid client state: the bulk update session is already up"
+            << std::endl;
+        return;
+    }
+
+    bulk_update_state_.context.reset(new grpc::ClientContext());
+    bulk_update_state_.writer = stub_->bulk_update(
+        bulk_update_state_.context.get(), &(bulk_update_state_.response));
+    bulk_update_state_.is_up = true;
+
+    logger::log(logger::TRACE) << "Update session started." << std::endl;
+}
+
+void DianaClientRunner::end_update_session()
+{
+    if (!bulk_update_state_.writer) {
+        logger::log(logger::WARNING)
+            << "Invalid client state: the bulk update session is not up"
+            << std::endl;
+        return;
+    }
+
+    bulk_update_state_.writer->WritesDone();
+    ::grpc::Status status = bulk_update_state_.writer->Finish();
+
+    if (!status.ok()) {
+        logger::log(logger::ERROR)
+            << "Status not OK at the end of update sessions. Status: "
+            << status.error_message() << std::endl;
+    }
+
+    bulk_update_state_.is_up = false;
+    bulk_update_state_.context.reset();
+    bulk_update_state_.writer.reset();
+
+    logger::log(logger::TRACE) << "Update session terminated." << std::endl;
+}
+
+
+void DianaClientRunner::update_completion_loop()
+{
+    update_tag_type* tag;
+    bool             ok = false;
+
+    for (; stop_update_completion_thread_ == false; ok = false) {
+        bool r = update_cq_.Next((void**)&tag, &ok);
+        if (!r) {
+            logger::log(logger::TRACE)
+                << "Close asynchronous update loop" << std::endl;
+            return;
+        }
+
+        logger::log(logger::TRACE)
+            << "Asynchronous update " << std::dec << *(tag->index)
+            << " succeeded." << std::endl;
+        delete tag;
+
+
         {
-            update_tag_type* tag;
-            bool ok = false;
-            
-            for (; stop_update_completion_thread_ == false ; ok = false) {
-                bool r = update_cq_.Next((void**)&tag, &ok);
-                if (!r) {
-                    logger::log(logger::TRACE) << "Close asynchronous update loop" << std::endl;
-                    return;
-                }
-                
-                logger::log(logger::TRACE) << "Asynchronous update " << std::dec << *(tag->index) << " succeeded." << std::endl;
-                delete tag;
-                
-                
-                {
-                    std::lock_guard<std::mutex> lock(update_completion_mtx_);
-                    update_completed_count_++;
-                    
-                    if (update_launched_count_ == update_completed_count_) {
-                        update_completion_cv_.notify_all();
+            std::lock_guard<std::mutex> lock(update_completion_mtx_);
+            update_completed_count_++;
+
+            if (update_launched_count_ == update_completed_count_) {
+                update_completion_cv_.notify_all();
+            }
+        }
+    }
+}
+
+bool DianaClientRunner::load_inverted_index(const std::string& path)
+{
+    try {
+        dbparser::DBParserJSON parser(path.c_str());
+        ThreadPool             pool(std::thread::hardware_concurrency());
+
+        std::atomic_size_t counter(0);
+
+        auto add_list_callback =
+            [this, &pool, &counter](const string         kw,
+                                    const list<unsigned> docs) {
+                auto work = [this, &counter](const string&         keyword,
+                                             const list<unsigned>& documents) {
+                    for (unsigned doc : documents) {
+                        this->async_update(keyword, doc);
                     }
-                }
-            }
-        }
-        
-        bool DianaClientRunner::load_inverted_index(const std::string& path)
-        {
-            try {
-                
-                dbparser::DBParserJSON parser(path.c_str());
-                ThreadPool pool(std::thread::hardware_concurrency());
-                
-                std::atomic_size_t counter(0);
-                
-                auto add_list_callback = [this,&pool,&counter](const string kw, const list<unsigned> docs)
-                {
-                    auto work = [this,&counter](const string& keyword, const list<unsigned> &documents)
-                    {
-                        for (unsigned doc : documents) {
-                            this->async_update(keyword, doc);
-                        }
-                        counter++;
-                        
-                        if ((counter % 100) == 0) {
-                            logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::flush;
-                        }
-                    };
-                    pool.enqueue(work,kw,docs);
-                    
+                    counter++;
+
+                    if ((counter % 100) == 0) {
+                        logger::log(sse::logger::INFO)
+                            << "\rLoading: " << counter << " keywords processed"
+                            << std::flush;
+                    }
                 };
-                
-                parser.addCallbackList(add_list_callback);
-                
-                start_update_session();
+                pool.enqueue(work, kw, docs);
+            };
 
-                parser.parse();
-                
-                pool.join();
-                logger::log(sse::logger::INFO) << "\rLoading: " << counter << " keywords processed" << std::endl;
-                
-                wait_updates_completion();
-                
-                end_update_session();
+        parser.addCallbackList(add_list_callback);
 
-                return true;
-            } catch (std::exception& e) {
-                logger::log(logger::ERROR) << "\nFailed to load file " << path << " : " << e.what() << std::endl;
-                return false;
-            }
-            return false;
-        }
-        
+        start_update_session();
+
+        parser.parse();
+
+        pool.join();
+        logger::log(sse::logger::INFO)
+            << "\rLoading: " << counter << " keywords processed" << std::endl;
+
+        wait_updates_completion();
+
+        end_update_session();
+
+        return true;
+    } catch (std::exception& e) {
+        logger::log(logger::ERROR) << "\nFailed to load file " << path << " : "
+                                   << e.what() << std::endl;
+        return false;
+    }
+    return false;
+}
+
 //        bool DianaClientRunner::output_db(const std::string& out_path)
 //        {
 //            std::ofstream os(out_path);
-//            
+//
 //            if (!os.is_open()) {
 //                os.close();
-//                
-//                logger::log(logger::ERROR) << "Unable to create output file " << out_path << std::endl;
-//                
+//
+//                logger::log(logger::ERROR) << "Unable to create output file "
+//                << out_path << std::endl;
+//
 //                return false;
 //            }
-//            
+//
 //            client_->db_to_json(os);
-//            
+//
 //            os.close();
-//            
+//
 //            return true;
 //        }
-        
-        std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
-        {
-            return client_->print_stats(out);
-        }
-        
+
+std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
+{
+    return client_->print_stats(out);
+}
+
 //        void DianaClientRunner::random_search() const
 //        {
 //            logger::log(logger::TRACE) << "Random Search " << std::endl;
-//            
+//
 //            grpc::ClientContext context;
 //            SearchRequestMessage message;
 //            SearchReply reply;
-//            
-//            message = request_to_message((client_.get())->random_search_request());
-//            
-//            std::unique_ptr<grpc::ClientReader<SearchReply> > reader( stub_->search(&context, message) );
-//            std::list<uint64_t> results;
-//            
-//            
+//
+//            message =
+//            request_to_message((client_.get())->random_search_request());
+//
+//            std::unique_ptr<grpc::ClientReader<SearchReply> > reader(
+//            stub_->search(&context, message) ); std::list<uint64_t> results;
+//
+//
 //            while (reader->Read(&reply)) {
 //                logger::log(logger::TRACE) << "New result: "
 //                << std::dec << reply.result() << std::endl;
@@ -532,49 +576,52 @@ namespace sse {
 //            }
 //            grpc::Status status = reader->Finish();
 //            if (status.ok()) {
-//                logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+//                logger::log(logger::TRACE) << "Search succeeded." <<
+//                std::endl;
 //            } else {
 //                logger::log(logger::ERROR) << "Search failed:" << std::endl;
-//                logger::log(logger::ERROR) << status.error_message() << std::endl;
+//                logger::log(logger::ERROR) << status.error_message() <<
+//                std::endl;
 //            }
-//            
+//
 //        }
-        
+
 //        void DianaClientRunner::search_benchmark(size_t n_bench) const
 //        {
 //            for (size_t i = 0; i < n_bench; i++) {
-//                logger::log(logger::INFO) << "\rBenchmark " << i+1 << std::flush;
-//                random_search();
+//                logger::log(logger::INFO) << "\rBenchmark " << i+1 <<
+//                std::flush; random_search();
 //            }
 //            logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
 //        }
-        
-        SearchRequestMessage request_to_message(const SearchRequest& req)
-        {
-            SearchRequestMessage mes;
-            
-            mes.set_add_count(req.add_count);
-            
-            for (auto it = req.token_list.begin(); it != req.token_list.end(); ++it) {
-                SearchToken *t = mes.add_token_list();
-                t->set_token(it->first.data(), it->first.size());
-                t->set_depth(it->second);
-            }
-            mes.set_kw_token(req.kw_token.data(), req.kw_token.size());
-            
-            return mes;
-        }
-        
-        UpdateRequestMessage request_to_message(const UpdateRequest<DianaClientRunner::index_type>& req)
-        {
-            UpdateRequestMessage mes;
-            
-            mes.set_update_token(req.token.data(), req.token.size());
-            mes.set_index(req.index);
-            
-            return mes;
-        }
-        
-        
-    } // namespace diana
+
+SearchRequestMessage request_to_message(const SearchRequest& req)
+{
+    SearchRequestMessage mes;
+
+    mes.set_add_count(req.add_count);
+
+    for (auto it = req.token_list.begin(); it != req.token_list.end(); ++it) {
+        SearchToken* t = mes.add_token_list();
+        t->set_token(it->first.data(), it->first.size());
+        t->set_depth(it->second);
+    }
+    mes.set_kw_token(req.kw_token.data(), req.kw_token.size());
+
+    return mes;
+}
+
+UpdateRequestMessage request_to_message(
+    const UpdateRequest<DianaClientRunner::index_type>& req)
+{
+    UpdateRequestMessage mes;
+
+    mes.set_update_token(req.token.data(), req.token.size());
+    mes.set_index(req.index);
+
+    return mes;
+}
+
+
+} // namespace diana
 } // namespace sse

@@ -21,11 +21,15 @@
 
 #pragma once
 
-#include <string>
 #include <grpc++/server.h>
+
+#include <string>
 
 namespace sse {
 namespace sophos {
-    void run_sophos_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
+void run_sophos_server(const std::string& address,
+                       const std::string& server_db_path,
+                       grpc::Server**     server_ptr,
+                       bool               async_search);
 } // namespace sophos
 } // namespace sse

@@ -24,69 +24,74 @@
 #include <sse/schemes/sophos/sophos_common.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
 
-#include <string>
+#include <sse/crypto/prf.hpp>
+#include <sse/crypto/tdp.hpp>
+
 #include <array>
 #include <fstream>
 #include <functional>
 #include <mutex>
-
-#include <sse/crypto/tdp.hpp>
-#include <sse/crypto/prf.hpp>
+#include <string>
 
 namespace sse {
-    namespace sophos {
-        
-        
-        
-        class SophosClient {
-        public:
-            static constexpr size_t kKeywordIndexSize = 16;
-            static constexpr size_t kKeySize = 32;
-            
-            //    typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
-            
-//            static std::unique_ptr<SophosClient> construct_from_directory(const std::string& dir_path);
-//            static std::unique_ptr<SophosClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);
-            
-//            SophosClient(const std::string& token_map_path);
-            SophosClient(const std::string& token_map_path, const std::string& tdp_private_key, crypto::Key<kKeySize>&& derivation_master_key, crypto::Key<kKeySize>&& rsa_prg_key);
-            
-            ~SophosClient();
-            
-            size_t keyword_count() const;
-            
-            const std::string private_key() const;
-            const std::string public_key() const;
-            
-//            void write_keys(const std::string& dir_path) const;
-            
-            SearchRequest   search_request(const std::string &keyword) const;
-            UpdateRequest   update_request(const std::string &keyword, const index_type index);
-            
-            std::ostream& print_stats(std::ostream& out) const;
-            
-            const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
-            const sse::crypto::TdpInverse& inverse_tdp() const;
-            
-            static const std::string tdp_sk_file__;
-            static const std::string derivation_key_file__;
-            
-        private:
-            static const std::string rsa_prg_key_file__;
-            static const std::string counter_map_file__;
-            
-            crypto::Prf<kDerivationKeySize> k_prf_;
-            sse::crypto::TdpInverse inverse_tdp_;
-            
-            
-            std::string get_keyword_index(const std::string &kw) const;
-            
-            crypto::Prf<crypto::Tdp::kRSAPrfSize> rsa_prg_;
-            
-            sophos::RocksDBCounter counter_map_;
-            std::mutex token_map_mtx_;
-            
-        };
-        
-    } // namespace sophos
+namespace sophos {
+
+
+class SophosClient
+{
+public:
+    static constexpr size_t kKeywordIndexSize = 16;
+    static constexpr size_t kKeySize          = 32;
+
+    //    typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
+
+    //            static std::unique_ptr<SophosClient>
+    //            construct_from_directory(const std::string& dir_path); static
+    //            std::unique_ptr<SophosClient> init_in_directory(const
+    //            std::string& dir_path, uint32_t n_keywords);
+
+    //            SophosClient(const std::string& token_map_path);
+    SophosClient(const std::string&      token_map_path,
+                 const std::string&      tdp_private_key,
+                 crypto::Key<kKeySize>&& derivation_master_key,
+                 crypto::Key<kKeySize>&& rsa_prg_key);
+
+    ~SophosClient();
+
+    size_t keyword_count() const;
+
+    const std::string private_key() const;
+    const std::string public_key() const;
+
+    //            void write_keys(const std::string& dir_path) const;
+
+    SearchRequest search_request(const std::string& keyword) const;
+    UpdateRequest update_request(const std::string& keyword,
+                                 const index_type   index);
+
+    std::ostream& print_stats(std::ostream& out) const;
+
+    const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
+    const sse::crypto::TdpInverse&         inverse_tdp() const;
+
+    static const std::string tdp_sk_file__;
+    static const std::string derivation_key_file__;
+
+private:
+    static const std::string rsa_prg_key_file__;
+    static const std::string counter_map_file__;
+
+    crypto::Prf<kDerivationKeySize> k_prf_;
+    sse::crypto::TdpInverse         inverse_tdp_;
+
+
+    std::string get_keyword_index(const std::string& kw) const;
+
+    crypto::Prf<crypto::Tdp::kRSAPrfSize> rsa_prg_;
+
+    sophos::RocksDBCounter counter_map_;
+    std::mutex             token_map_mtx_;
+};
+
+} // namespace sophos
 } // namespace sse

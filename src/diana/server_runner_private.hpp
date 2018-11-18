@@ -25,72 +25,74 @@
 
 #include <sse/schemes/diana/diana_server.hpp>
 
-#include <string>
-#include <memory>
-#include <mutex>
-
 #include <grpc++/server.h>
 #include <grpc++/server_context.h>
 
+#include <memory>
+#include <mutex>
+#include <string>
+
 namespace sse {
-    namespace diana {
+namespace diana {
 
 
-        class SetupMessage;
-        class SearchRequestMessage;
-        class SearchReplyMessage;
-        class UpdateRequestMessage; 
+class SetupMessage;
+class SearchRequestMessage;
+class SearchReplyMessage;
+class UpdateRequestMessage;
 
-        class DianaImpl final : public diana::Diana::Service {
-        public:
-            typedef uint64_t index_type;
+class DianaImpl final : public diana::Diana::Service
+{
+public:
+    typedef uint64_t index_type;
 
-            explicit DianaImpl(const std::string& path);
-            ~DianaImpl();
-            
-            grpc::Status setup(grpc::ServerContext* context,
-                               const SetupMessage* request,
-                               google::protobuf::Empty* e) override;
-            
-            grpc::Status search(grpc::ServerContext* context,
-                                const SearchRequestMessage* request,
-                                grpc::ServerWriter<SearchReply>* writer) override;
-            
-            grpc::Status sync_search(grpc::ServerContext* context,
-                                     const SearchRequestMessage* request,
-                                     grpc::ServerWriter<SearchReply>* writer);
-            
-            grpc::Status async_search(grpc::ServerContext* context,
-                                      const SearchRequestMessage* request,
-                                      grpc::ServerWriter<SearchReply>* writer);
-            
-            grpc::Status update(grpc::ServerContext* context,
-                                const UpdateRequestMessage* request,
-                                google::protobuf::Empty* e) override;
-            
-            grpc::Status bulk_update(grpc::ServerContext* context,
-                                     grpc::ServerReader<UpdateRequestMessage>* reader,
-                                     google::protobuf::Empty* e) override;
-            
-            std::ostream& print_stats(std::ostream& out) const;
-            
-            bool search_asynchronously() const;
-            void set_search_asynchronously(bool flag);
-            
-            void flush_server_storage();
-            
-        private:
-            static const std::string pairs_map_file;
-            
-            std::unique_ptr<DianaServer<index_type>> server_;
-            std::string storage_path_;
-            
-            std::mutex update_mtx_;
-            
-            bool async_search_;
-        };
-        
-        SearchRequest message_to_request(const SearchRequestMessage* mes);
-        UpdateRequest<DianaImpl::index_type> message_to_request(const UpdateRequestMessage* mes);
-    }
-}
+    explicit DianaImpl(const std::string& path);
+    ~DianaImpl();
+
+    grpc::Status setup(grpc::ServerContext*     context,
+                       const SetupMessage*      request,
+                       google::protobuf::Empty* e) override;
+
+    grpc::Status search(grpc::ServerContext*             context,
+                        const SearchRequestMessage*      request,
+                        grpc::ServerWriter<SearchReply>* writer) override;
+
+    grpc::Status sync_search(grpc::ServerContext*             context,
+                             const SearchRequestMessage*      request,
+                             grpc::ServerWriter<SearchReply>* writer);
+
+    grpc::Status async_search(grpc::ServerContext*             context,
+                              const SearchRequestMessage*      request,
+                              grpc::ServerWriter<SearchReply>* writer);
+
+    grpc::Status update(grpc::ServerContext*        context,
+                        const UpdateRequestMessage* request,
+                        google::protobuf::Empty*    e) override;
+
+    grpc::Status bulk_update(grpc::ServerContext*                      context,
+                             grpc::ServerReader<UpdateRequestMessage>* reader,
+                             google::protobuf::Empty* e) override;
+
+    std::ostream& print_stats(std::ostream& out) const;
+
+    bool search_asynchronously() const;
+    void set_search_asynchronously(bool flag);
+
+    void flush_server_storage();
+
+private:
+    static const std::string pairs_map_file;
+
+    std::unique_ptr<DianaServer<index_type>> server_;
+    std::string                              storage_path_;
+
+    std::mutex update_mtx_;
+
+    bool async_search_;
+};
+
+SearchRequest message_to_request(const SearchRequestMessage* mes);
+UpdateRequest<DianaImpl::index_type> message_to_request(
+    const UpdateRequestMessage* mes);
+} // namespace diana
+} // namespace sse

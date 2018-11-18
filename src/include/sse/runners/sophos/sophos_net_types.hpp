@@ -21,20 +21,21 @@
 
 #pragma once
 
-#include <utility>
-#include <memory>
-#include <grpc/grpc.h>
 #include <google/protobuf/empty.pb.h>
+#include <grpc/grpc.h>
+
+#include <memory>
+#include <utility>
 
 namespace sse {
-    namespace sophos {
-        
-        typedef struct
-        {
-            std::unique_ptr< google::protobuf::Empty > reply;
-            std::unique_ptr< grpc::Status > status;
-            std::unique_ptr< size_t > index;
-        } update_tag_type;
-        
-    }
-}
+namespace sophos {
+
+typedef struct
+{
+    std::unique_ptr<google::protobuf::Empty> reply;
+    std::unique_ptr<grpc::Status>            status;
+    std::unique_ptr<size_t>                  index;
+} update_tag_type;
+
+} // namespace sophos
+} // namespace sse

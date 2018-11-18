@@ -1,3 +1,11 @@
 {
-    "cmake.buildToolArgs": ["--config-file", "cmake-format.json"],
+    "cmake.buildToolArgs": [
+        "--config-file",
+        "cmake-format.json"
+    ],
+    "files.associations": {
+        ".clang-format": "yaml",
+        ".clang-tidy": "yaml",
+        "SConstruct": "python",
+    },
 }

@@ -25,64 +25,67 @@
 
 #include <sse/schemes/sophos/sophos_server.hpp>
 
-#include <string>
-#include <memory>
-#include <mutex>
-
+#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 #include <grpc++/server.h>
 #include <grpc++/server_context.h>
-#include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
+
+#include <memory>
+#include <mutex>
+#include <string>
 
 namespace sse {
 namespace sophos {
 
-    class SophosImpl final : public sophos::Sophos::Service {
-    public:
-        explicit SophosImpl(const std::string& path);
-        
-        grpc::Status setup(grpc::ServerContext* context,
-                           const sophos::SetupMessage* request,
-                           google::protobuf::Empty* e) override;
-        
-        grpc::Status search(grpc::ServerContext* context,
-                            const sophos::SearchRequestMessage* request,
-                            grpc::ServerWriter<sophos::SearchReply>* writer) override;
-        
-        grpc::Status sync_search(grpc::ServerContext* context,
-                            const sophos::SearchRequestMessage* request,
-                            grpc::ServerWriter<sophos::SearchReply>* writer);
-        
-        grpc::Status async_search(grpc::ServerContext* context,
-                                  const sophos::SearchRequestMessage* request,
-                                  grpc::ServerWriter<sophos::SearchReply>* writer);
-        
-        grpc::Status update(grpc::ServerContext* context,
-                            const sophos::UpdateRequestMessage* request,
-                            google::protobuf::Empty* e) override;
-        
-        grpc::Status bulk_update(grpc::ServerContext* context,
-                                 grpc::ServerReader<sophos::UpdateRequestMessage>* reader,
-                                 google::protobuf::Empty* e) override;
-        
-        std::ostream& print_stats(std::ostream& out) const;
+class SophosImpl final : public sophos::Sophos::Service
+{
+public:
+    explicit SophosImpl(const std::string& path);
 
-        bool search_asynchronously() const;
-        void set_search_asynchronously(bool flag);
-        
-        
-    private:
-        static const std::string pk_file;
-        static const std::string pairs_map_file;
+    grpc::Status setup(grpc::ServerContext*        context,
+                       const sophos::SetupMessage* request,
+                       google::protobuf::Empty*    e) override;
 
-        std::unique_ptr<SophosServer> server_;
-        std::string storage_path_;
-        
-        std::mutex update_mtx_;
-        
-        bool async_search_;
-    };
-    
-    SearchRequest message_to_request(const SearchRequestMessage* mes);
-    UpdateRequest message_to_request(const UpdateRequestMessage* mes);
+    grpc::Status search(
+        grpc::ServerContext*                     context,
+        const sophos::SearchRequestMessage*      request,
+        grpc::ServerWriter<sophos::SearchReply>* writer) override;
+
+    grpc::Status sync_search(grpc::ServerContext*                     context,
+                             const sophos::SearchRequestMessage*      request,
+                             grpc::ServerWriter<sophos::SearchReply>* writer);
+
+    grpc::Status async_search(grpc::ServerContext*                     context,
+                              const sophos::SearchRequestMessage*      request,
+                              grpc::ServerWriter<sophos::SearchReply>* writer);
+
+    grpc::Status update(grpc::ServerContext*                context,
+                        const sophos::UpdateRequestMessage* request,
+                        google::protobuf::Empty*            e) override;
+
+    grpc::Status bulk_update(
+        grpc::ServerContext*                              context,
+        grpc::ServerReader<sophos::UpdateRequestMessage>* reader,
+        google::protobuf::Empty*                          e) override;
+
+    std::ostream& print_stats(std::ostream& out) const;
+
+    bool search_asynchronously() const;
+    void set_search_asynchronously(bool flag);
+
+
+private:
+    static const std::string pk_file;
+    static const std::string pairs_map_file;
+
+    std::unique_ptr<SophosServer> server_;
+    std::string                   storage_path_;
+
+    std::mutex update_mtx_;
+
+    bool async_search_;
+};
+
+SearchRequest message_to_request(const SearchRequestMessage* mes);
+UpdateRequest message_to_request(const UpdateRequestMessage* mes);
 } // namespace sophos
 } // namespace sse

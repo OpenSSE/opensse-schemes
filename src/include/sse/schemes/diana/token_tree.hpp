@@ -49,9 +49,9 @@ public:
                                         uint8_t            depth);
 
     static token_type derive_leftmost_node(
-        const token_type&                        K,
-        uint8_t                                  depth,
-        std::function<void(token_type, uint8_t)> right_node_callback);
+        const token_type&                               K,
+        uint8_t                                         depth,
+        const std::function<void(token_type, uint8_t)>& right_node_callback);
 
     static inline std::list<std::pair<token_type, uint8_t>> covering_list(
         const token_type& root,
@@ -71,7 +71,7 @@ public:
 
 private:
     static void covering_list_aux(
-        const token_type&                          root,
+        const token_type&                          K,
         uint64_t                                   node_count,
         uint8_t                                    depth,
         std::list<std::pair<token_type, uint8_t>>& list);

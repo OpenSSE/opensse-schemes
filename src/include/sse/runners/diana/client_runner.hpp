@@ -54,22 +54,19 @@ class UpdateRequestMessage;
 class DianaClientRunner
 {
 public:
-    typedef uint64_t index_type;
+    using index_type = uint64_t;
 
-    DianaClientRunner(const std::string& address,
-                      const std::string& path,
-                      size_t             setup_size = 1e5,
-                      uint32_t           n_keywords = 1e4);
+    DianaClientRunner(const std::string& address, const std::string& path);
     //            DianaClientRunner(const std::string& address, const
     //            std::string& db_path, const std::string& json_path);
     ~DianaClientRunner();
 
     const DianaClient<index_type>& client() const;
 
-    std::list<index_type> search(const std::string&            keyword,
-                                 std::function<void(uint64_t)> receive_callback
-                                 = NULL) const;
-    void                  update(const std::string& keyword, uint64_t index);
+    std::list<index_type> search(
+        const std::string&                   keyword,
+        const std::function<void(uint64_t)>& receive_callback = nullptr) const;
+    void update(const std::string& keyword, uint64_t index);
     void async_update(const std::string& keyword, uint64_t index);
     void async_update(
         const std::list<std::pair<std::string, uint64_t>>& update_list);
@@ -92,17 +89,17 @@ public:
 private:
     void update_completion_loop();
 
-    bool send_setup(const size_t setup_size) const;
+    bool send_setup() const;
 
     std::unique_ptr<diana::Diana::Stub>      stub_;
     std::unique_ptr<DianaClient<index_type>> client_;
 
-    typedef struct
+    struct update_tag_type
     {
         std::unique_ptr<google::protobuf::Empty> reply;
         std::unique_ptr<grpc::Status>            status;
         std::unique_ptr<size_t>                  index;
-    } update_tag_type;
+    };
 
     struct
     {

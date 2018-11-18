@@ -103,8 +103,8 @@ int main(int argc, char** argv)
                      / (10 * std::thread::hardware_concurrency());
     }
 
-    client_runner.reset(new sse::diana::DianaClientRunner(
-        "localhost:4241", client_db, setup_size, n_keywords));
+    client_runner.reset(
+        new sse::diana::DianaClientRunner("localhost:4241", client_db));
 
     for (std::string& path : input_files) {
         sse::logger::log(sse::logger::LoggerSeverity::INFO)

@@ -34,15 +34,16 @@
 #include <atomic>
 #include <fstream>
 #include <thread>
+#include <utility>
 
 
 namespace sse {
 namespace diana {
 
-const std::string DianaImpl::pairs_map_file = "pairs.dat";
+const char* DianaImpl::pairs_map_file = "pairs.dat";
 
-DianaImpl::DianaImpl(const std::string& path)
-    : storage_path_(path), async_search_(true)
+DianaImpl::DianaImpl(std::string path)
+    : storage_path_(std::move(path)), async_search_(true)
 {
     if (is_directory(storage_path_)) {
         // try to initialize everything from this directory
@@ -70,8 +71,11 @@ DianaImpl::~DianaImpl()
     flush_server_storage();
 }
 
-grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
-                              const SetupMessage*      message,
+grpc::Status DianaImpl::setup(__attribute__((unused))
+                              grpc::ServerContext* context,
+                              __attribute__((unused))
+                              const SetupMessage* message,
+                              __attribute__((unused))
                               google::protobuf::Empty* e)
 {
     logger::log(logger::LoggerSeverity::TRACE) << "Setup!" << std::endl;
@@ -98,7 +102,7 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
                             "Unable to create the server's content directory");
     }
 
-    if (!create_directory(storage_path_, (mode_t)0700)) {
+    if (!create_directory(storage_path_, static_cast<mode_t>(0700))) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Error: Unable to create the server's content directory"
             << std::endl;
@@ -132,10 +136,10 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
 }
 
 #define PRINT_BENCH_SEARCH(t, c)                                               \
-    "SEARCH: "                                                                 \
-        + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, "               \
-                            + std::to_string((c)) + " pairs"                   \
-                      : std::to_string((t)) + " ms, no pair found")
+    ("SEARCH: "                                                                \
+     + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, "                  \
+                         + std::to_string((c)) + " pairs"                      \
+                   : std::to_string((t)) + " ms, no pair found"))
 
 //#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
         //"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (with RPC), " + std::to_string((c)) + " pairs" : \
@@ -171,12 +175,12 @@ grpc::Status DianaImpl::search(grpc::ServerContext*             context,
 {
     if (async_search_) {
         return async_search(context, mes, writer);
-    } else {
-        return sync_search(context, mes, writer);
     }
+    return sync_search(context, mes, writer);
 }
 
-grpc::Status DianaImpl::sync_search(grpc::ServerContext*             context,
+grpc::Status DianaImpl::sync_search(__attribute__((unused))
+                                    grpc::ServerContext*             context,
                                     const SearchRequestMessage*      mes,
                                     grpc::ServerWriter<SearchReply>* writer)
 {
@@ -224,7 +228,7 @@ grpc::Status DianaImpl::sync_search(grpc::ServerContext*             context,
 
         for (auto& i : res_list) {
             SearchReply reply;
-            reply.set_result((uint64_t)i);
+            reply.set_result(static_cast<uint64_t>(i));
 
             writer->Write(reply);
         }
@@ -236,7 +240,8 @@ grpc::Status DianaImpl::sync_search(grpc::ServerContext*             context,
 }
 
 
-grpc::Status DianaImpl::async_search(grpc::ServerContext*             context,
+grpc::Status DianaImpl::async_search(__attribute__((unused))
+                                     grpc::ServerContext*             context,
                                      const SearchRequestMessage*      mes,
                                      grpc::ServerWriter<SearchReply>* writer)
 {
@@ -254,7 +259,7 @@ grpc::Status DianaImpl::async_search(grpc::ServerContext*             context,
 
     auto post_callback = [&writer, &res_size, &writer_lock](index_type i) {
         SearchReply reply;
-        reply.set_result((uint64_t)i);
+        reply.set_result(static_cast<uint64_t>(i));
 
         writer_lock.lock();
         writer->Write(reply);
@@ -327,9 +332,11 @@ grpc::Status DianaImpl::async_search(grpc::ServerContext*             context,
 }
 
 
-grpc::Status DianaImpl::update(grpc::ServerContext*        context,
+grpc::Status DianaImpl::update(__attribute__((unused))
+                               grpc::ServerContext*        context,
                                const UpdateRequestMessage* mes,
-                               google::protobuf::Empty*    e)
+                               __attribute__((unused))
+                               google::protobuf::Empty* e)
 {
     std::unique_lock<std::mutex> lock(update_mtx_);
 
@@ -349,9 +356,9 @@ grpc::Status DianaImpl::update(grpc::ServerContext*        context,
 }
 
 grpc::Status DianaImpl::bulk_update(
-    grpc::ServerContext*                      context,
-    grpc::ServerReader<UpdateRequestMessage>* reader,
-    google::protobuf::Empty*                  e)
+    __attribute__((unused)) grpc::ServerContext*     context,
+    grpc::ServerReader<UpdateRequestMessage>*        reader,
+    __attribute__((unused)) google::protobuf::Empty* e)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -417,12 +424,11 @@ SearchRequest message_to_request(const SearchRequestMessage* mes)
     req.add_count = mes->add_count();
 
 
-    for (auto it = mes->token_list().begin(); it != mes->token_list().end();
-         ++it) {
+    for (const auto& it : mes->token_list()) {
         search_token_key_type st;
-        std::copy(it->token().begin(), it->token().end(), st.begin());
+        std::copy(it.token().begin(), it.token().end(), st.begin());
 
-        req.token_list.push_back(std::make_pair(st, it->depth()));
+        req.token_list.emplace_back(st, it.depth());
     }
 
     std::copy(
@@ -449,8 +455,8 @@ void run_diana_server(const std::string& address,
                       grpc::Server**     server_ptr,
                       bool               async_search)
 {
-    std::string server_address(address);
-    DianaImpl   service(server_db_path);
+    const std::string& server_address(address);
+    DianaImpl          service(server_db_path);
 
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

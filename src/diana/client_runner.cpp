@@ -51,7 +51,7 @@
 namespace sse {
 namespace diana {
 
-typedef DianaClient<DianaClientRunner::index_type> DC;
+using DC = DianaClient<DianaClientRunner::index_type>;
 
 static std::unique_ptr<DC> construct_client_from_directory(
     const std::string& dir_path)
@@ -150,13 +150,10 @@ std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
                sse::crypto::Key<DC::kKeySize>(kw_token_master_key.data())));
 }
 
-
+// NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
 DianaClientRunner::DianaClientRunner(const std::string& address,
-                                     const std::string& path,
-                                     size_t             setup_size,
-                                     uint32_t           n_keywords)
-    : bulk_update_state_{0}, update_launched_count_(0),
-      update_completed_count_(0)
+                                     const std::string& path)
+    : update_launched_count_(0), update_completed_count_(0)
 {
     std::shared_ptr<grpc::Channel> channel(
         grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
@@ -176,14 +173,14 @@ DianaClientRunner::DianaClientRunner(const std::string& address,
 
         // start by creating a new directory
 
-        if (!create_directory(path, (mode_t)0700)) {
+        if (!create_directory(path, static_cast<mode_t>(0700))) {
             throw std::runtime_error(path + ": unable to create directory");
         }
 
         client_ = init_client_in_directory(path);
 
         // send a setup message to the server
-        bool success = send_setup(setup_size);
+        bool success = send_setup();
 
         if (!success) {
             throw std::runtime_error("Unsuccessful server setup");
@@ -202,7 +199,7 @@ DianaClientRunner::~DianaClientRunner()
     update_completion_thread_->join();
 }
 
-bool DianaClientRunner::send_setup(const size_t setup_size) const
+bool DianaClientRunner::send_setup() const
 {
     grpc::ClientContext     context;
     SetupMessage            message;
@@ -234,8 +231,8 @@ const DC& DianaClientRunner::client() const
 }
 
 std::list<uint64_t> DianaClientRunner::search(
-    const std::string&            keyword,
-    std::function<void(uint64_t)> receive_callback) const
+    const std::string&                   keyword,
+    const std::function<void(uint64_t)>& receive_callback) const
 {
     logger::log(logger::LoggerSeverity::TRACE)
         << "Search " << keyword << std::endl;
@@ -261,7 +258,7 @@ std::list<uint64_t> DianaClientRunner::search(
         //        << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
 
-        if (receive_callback != NULL) {
+        if (receive_callback != nullptr) {
             receive_callback(reply.result());
         }
     }
@@ -339,9 +336,9 @@ void DianaClientRunner::async_update(
         UpdateRequestMessage message;
 
 
-        for (auto it = update_list.begin(); it != update_list.end(); ++it) {
+        for (const auto& it : update_list) {
             message = request_to_message(
-                client_->update_request(it->first, it->second));
+                client_->update_request(it.first, it.second));
 
             update_tag_type* tag = new update_tag_type();
             std::unique_ptr<
@@ -398,8 +395,8 @@ void DianaClientRunner::update_in_session(
 
     bulk_update_state_.mtx.lock();
 
-    for (auto it = message_list.begin(); it != message_list.end(); ++it) {
-        if (!bulk_update_state_.writer->Write(request_to_message(*it))) {
+    for (auto& it : message_list) {
+        if (!bulk_update_state_.writer->Write(request_to_message(it))) {
             logger::log(logger::LoggerSeverity::ERROR)
                 << "Update session: broken stream." << std::endl;
             break;
@@ -467,8 +464,8 @@ void DianaClientRunner::update_completion_loop()
     update_tag_type* tag;
     bool             ok = false;
 
-    for (; stop_update_completion_thread_ == false; ok = false) {
-        bool r = update_cq_.Next((void**)&tag, &ok);
+    for (; !stop_update_completion_thread_; ok = false) {
+        bool r = update_cq_.Next(reinterpret_cast<void**>(&tag), &ok);
         if (!r) {
             logger::log(logger::LoggerSeverity::TRACE)
                 << "Close asynchronous update loop" << std::endl;
@@ -521,6 +518,7 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
 
         parser.addCallbackList(add_list_callback);
 
+        // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
         start_update_session();
 
         parser.parse();
@@ -618,10 +616,10 @@ SearchRequestMessage request_to_message(const SearchRequest& req)
 
     mes.set_add_count(req.add_count);
 
-    for (auto it = req.token_list.begin(); it != req.token_list.end(); ++it) {
+    for (const auto& it : req.token_list) {
         SearchToken* t = mes.add_token_list();
-        t->set_token(it->first.data(), it->first.size());
-        t->set_depth(it->second);
+        t->set_token(it.first.data(), it.first.size());
+        t->set_depth(it.second);
     }
     mes.set_kw_token(req.kw_token.data(), req.kw_token.size());
 

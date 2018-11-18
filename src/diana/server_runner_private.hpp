@@ -46,27 +46,27 @@ class DianaImpl final : public diana::Diana::Service
 public:
     typedef uint64_t index_type;
 
-    explicit DianaImpl(const std::string& path);
+    explicit DianaImpl(std::string path);
     ~DianaImpl();
 
     grpc::Status setup(grpc::ServerContext*     context,
-                       const SetupMessage*      request,
+                       const SetupMessage*      message,
                        google::protobuf::Empty* e) override;
 
     grpc::Status search(grpc::ServerContext*             context,
-                        const SearchRequestMessage*      request,
+                        const SearchRequestMessage*      mes,
                         grpc::ServerWriter<SearchReply>* writer) override;
 
     grpc::Status sync_search(grpc::ServerContext*             context,
-                             const SearchRequestMessage*      request,
+                             const SearchRequestMessage*      mes,
                              grpc::ServerWriter<SearchReply>* writer);
 
     grpc::Status async_search(grpc::ServerContext*             context,
-                              const SearchRequestMessage*      request,
+                              const SearchRequestMessage*      mes,
                               grpc::ServerWriter<SearchReply>* writer);
 
     grpc::Status update(grpc::ServerContext*        context,
-                        const UpdateRequestMessage* request,
+                        const UpdateRequestMessage* mes,
                         google::protobuf::Empty*    e) override;
 
     grpc::Status bulk_update(grpc::ServerContext*                      context,
@@ -81,7 +81,7 @@ public:
     void flush_server_storage();
 
 private:
-    static const std::string pairs_map_file;
+    static const char* pairs_map_file;
 
     std::unique_ptr<DianaServer<index_type>> server_;
     std::string                              storage_path_;

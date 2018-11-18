@@ -91,9 +91,9 @@ TokenTree::token_type TokenTree::derive_node(inner_token_type&& K,
 }
 
 TokenTree::token_type TokenTree::derive_leftmost_node(
-    const token_type&                        K,
-    uint8_t                                  depth,
-    std::function<void(token_type, uint8_t)> right_node_callback)
+    const token_type&                               K,
+    uint8_t                                         depth,
+    const std::function<void(token_type, uint8_t)>& right_node_callback)
 {
     if (depth >= 64) {
         throw std::invalid_argument("Invalid depth >= 64. Depth is too big.");
@@ -132,7 +132,7 @@ void TokenTree::covering_list_aux(
     uint64_t siblings_count = 1UL << depth;
 
     if (node_count == siblings_count) {
-        list.push_back(std::make_pair(K, depth));
+        list.emplace_back(K, depth);
         return;
     }
 
@@ -142,7 +142,7 @@ void TokenTree::covering_list_aux(
     prg.derive(0, kTokenSize, K_left.data());
 
     if (node_count > (siblings_count >> 1)) {
-        list.push_back(std::make_pair(K_left, depth - 1));
+        list.emplace_back(K_left, depth - 1);
         token_type K_right;
 
         prg.derive(kTokenSize, kTokenSize, K_right.data());
@@ -232,8 +232,8 @@ static void derive_leaves_aux(uint8_t*                             K,
     bool need_left  = (start_index <= (half_node_count - 1));
     bool need_right = (end_index >= half_node_count);
 
-    uint8_t* left_node  = NULL;
-    uint8_t* right_node = NULL;
+    uint8_t* left_node  = nullptr;
+    uint8_t* right_node = nullptr;
 
 
     if (need_left && need_right) {

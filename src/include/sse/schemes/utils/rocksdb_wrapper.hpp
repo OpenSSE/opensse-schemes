@@ -405,9 +405,7 @@ RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
 template<typename T, class Serializer>
 RockDBListStore<T, Serializer>::~RockDBListStore()
 {
-    
-        delete db_;
-    
+    delete db_;
 }
 
 template<typename T, class Serializer>

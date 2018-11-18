@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <list>
+#include <memory>
 
 namespace sse {
 namespace sophos {
@@ -38,7 +39,7 @@ class RockDBWrapper
 {
 public:
     RockDBWrapper() = delete;
-    inline RockDBWrapper(const std::string& path);
+    inline explicit RockDBWrapper(const std::string& path);
     inline ~RockDBWrapper();
 
     inline bool get(const std::string& key, std::string& data) const;
@@ -66,7 +67,7 @@ private:
     rocksdb::DB* db_;
 };
 
-RockDBWrapper::RockDBWrapper(const std::string& path) : db_(NULL)
+RockDBWrapper::RockDBWrapper(const std::string& path) : db_(nullptr)
 {
     rocksdb::Options options;
     options.create_if_missing = true;
@@ -86,7 +87,7 @@ RockDBWrapper::RockDBWrapper(const std::string& path) : db_(NULL)
 
     options.table_factory.reset(rocksdb::NewCuckooTableFactory(cuckoo_options));
 
-    options.memtable_factory.reset(new rocksdb::VectorRepFactory());
+    options.memtable_factory = std::make_shared<rocksdb::VectorRepFactory>();
 
     options.compression            = rocksdb::kNoCompression;
     options.bottommost_compression = rocksdb::kDisableCompressionOption;
@@ -121,18 +122,16 @@ RockDBWrapper::RockDBWrapper(const std::string& path) : db_(NULL)
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
 
     if (!status.ok()) {
-        logger::log(logger::CRITICAL)
+        logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
-        db_ = NULL;
+        db_ = nullptr;
     }
 }
 
 RockDBWrapper::~RockDBWrapper()
 {
-    if (db_) {
-        delete db_;
-    }
+    delete db_;
 }
 
 bool RockDBWrapper::get(const std::string& key, std::string& data) const
@@ -186,10 +185,10 @@ bool RockDBWrapper::put(const std::array<uint8_t, N>& key, const V& data)
     rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), k_s, k_v);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert pair in the database: " << s.ToString()
             << std::endl;
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Failed on pair: key=" << hex_string(key)
             << ", data=" << hex_string(data) << std::endl;
     }
@@ -226,7 +225,7 @@ void RockDBWrapper::flush(bool blocking)
     rocksdb::Status s = db_->Flush(options);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "DB Flush failed: " << s.ToString() << std::endl;
     }
 }
@@ -247,12 +246,10 @@ class RocksDBCounter
 {
 public:
     RocksDBCounter() = delete;
-    RocksDBCounter(const std::string& path);
+    explicit RocksDBCounter(const std::string& path);
     inline ~RocksDBCounter()
     {
-        if (db_) {
-            delete db_;
-        }
+        delete db_;
     };
 
     bool get(const std::string& key, uint32_t& val) const;
@@ -296,10 +293,10 @@ template<typename T, class Serializer = serialization<T>>
 class RockDBListStore
 {
 public:
-    typedef Serializer serializer;
+    using serializer = Serializer;
 
     RockDBListStore() = delete;
-    inline RockDBListStore(const std::string& path);
+    inline explicit RockDBListStore(const std::string& path);
     inline ~RockDBListStore();
 
     // find the list associated to key and append elements to data
@@ -398,7 +395,7 @@ RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
 
     if (!status.ok()) {
-        logger::log(logger::CRITICAL)
+        logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
         db_ = NULL;
@@ -501,12 +498,12 @@ bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
     rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), k_s, k_v);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert key in the database: " << s.ToString()
             << std::endl;
-        //            logger::log(logger::ERROR) << "Failed on pair: key=" <<
-        //            hex_string(key) << ", data=" << hex_string(data) <<
-        //            std::endl;
+        //            logger::log(logger::LoggerSeverity::ERROR) << "Failed on
+        //            pair: key=" << hex_string(key) << ", data=" <<
+        //            hex_string(data) << std::endl;
     }
 
     return s.ok();
@@ -523,7 +520,7 @@ void RockDBListStore<T, Serializer>::flush(bool blocking)
     rocksdb::Status s = db_->Flush(options);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "DB Flush failed: " << s.ToString() << std::endl;
     }
 }

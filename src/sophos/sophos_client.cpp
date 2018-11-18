@@ -92,7 +92,7 @@ SearchRequest SophosClient::search_request(const std::string& keyword) const
     found = counter_map_.get(keyword, kw_counter);
 
     if (!found) {
-        logger::log(logger::INFO)
+        logger::log(logger::LoggerSeverity::INFO)
             << "No matching counter found for keyword " << keyword << " (index "
             << hex_string(seed) << ")" << std::endl;
     } else {
@@ -130,12 +130,13 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
     st = inverse_tdp().generate_array(rsa_prg_, seed);
 
     if (kw_counter == 0) {
-        logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
+        logger::log(logger::LoggerSeverity::DBG)
+            << "ST0 " << hex_string(st) << std::endl;
     } else {
         st = inverse_tdp().invert_mult(st, kw_counter);
 
-        if (logger::severity() <= logger::DBG) {
-            logger::log(logger::DBG)
+        if (logger::severity() <= logger::LoggerSeverity::DBG) {
+            logger::log(logger::LoggerSeverity::DBG)
                 << "New ST " << hex_string(st) << std::endl;
         }
     }
@@ -144,8 +145,8 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
     auto deriv_key = derivation_prf().prf(
         reinterpret_cast<const uint8_t*>(seed.data()), kKeywordIndexSize);
 
-    if (logger::severity() <= logger::DBG) {
-        logger::log(logger::DBG)
+    if (logger::severity() <= logger::LoggerSeverity::DBG) {
+        logger::log(logger::LoggerSeverity::DBG)
             << "Derivation key: " << hex_string(deriv_key) << std::endl;
     }
 
@@ -158,8 +159,8 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
         mask);
     req.index = xor_mask(index, mask);
 
-    if (logger::severity() <= logger::DBG) {
-        logger::log(logger::DBG)
+    if (logger::severity() <= logger::LoggerSeverity::DBG) {
+        logger::log(logger::LoggerSeverity::DBG)
             << "Update token: (" << hex_string(req.token) << ", " << std::hex
             << req.index << ")" << std::endl;
     }

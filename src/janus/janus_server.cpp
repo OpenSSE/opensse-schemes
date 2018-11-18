@@ -20,7 +20,7 @@ struct serialization<JanusServer::cached_result_type>
 {
     std::string serialize(const JanusServer::cached_result_type& elt)
     {
-        logger::log(logger::DBG)
+        logger::log(logger::LoggerSeverity::DBG)
             << "Serializing pair (" << hex_string(elt.first) << ", "
             << hex_string(elt.second) << ")\n";
 
@@ -35,13 +35,13 @@ struct serialization<JanusServer::cached_result_type>
         if (end - begin
             < sizeof(janus::index_type) + sizeof(crypto::punct::kTagSize)) {
             if (end != begin) {
-                logger::log(logger::ERROR)
+                logger::log(logger::LoggerSeverity::ERROR)
                     << "Unable to deserialize" << std::endl;
             }
 
             return false;
         }
-        logger::log(logger::DBG)
+        logger::log(logger::LoggerSeverity::DBG)
             << "Deserialized string: "
             << hex_string(std::string(begin,
                                       begin + sizeof(janus::index_type)
@@ -60,7 +60,7 @@ struct serialization<JanusServer::cached_result_type>
 
         out = std::make_pair(ind, std::move(tag));
 
-        logger::log(logger::DBG)
+        logger::log(logger::LoggerSeverity::DBG)
             << "Deserializing pair (" << hex_string(out.first) << ", "
             << hex_string(out.second) << ")\n";
 
@@ -117,7 +117,7 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
     ++sk_it; // skip the first element
     for (; sk_it != key_shares.end(); ++sk_it) {
         auto tag = crypto::punct::extract_tag(*sk_it);
-        logger::log(logger::DBG)
+        logger::log(logger::LoggerSeverity::DBG)
             << "tag " << hex_string(tag) << " is removed" << std::endl;
         removed_tags.insert(std::move(tag));
     }
@@ -252,7 +252,7 @@ void JanusServer::search_parallel(
         ++sk_it; // skip the first element
         for (; sk_it != key_shares.end(); ++sk_it) {
             auto tag = crypto::punct::extract_tag(*sk_it);
-            logger::log(logger::DBG)
+            logger::log(logger::LoggerSeverity::DBG)
                 << "tag " << hex_string(tag) << " is removed" << std::endl;
             removed_tags.insert(std::move(tag));
         }

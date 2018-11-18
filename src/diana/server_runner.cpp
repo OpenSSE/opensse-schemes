@@ -74,11 +74,11 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
                               const SetupMessage*      message,
                               google::protobuf::Empty* e)
 {
-    logger::log(logger::TRACE) << "Setup!" << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE) << "Setup!" << std::endl;
 
     if (server_) {
         // problem, the server is already set up
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Info: server received a setup message but is already set up"
             << std::endl;
 
@@ -90,7 +90,7 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
     // there
 
     if (exists(storage_path_)) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Error: Unable to create the server's content directory"
             << std::endl;
 
@@ -99,7 +99,7 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
     }
 
     if (!create_directory(storage_path_, (mode_t)0700)) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Error: Unable to create the server's content directory"
             << std::endl;
 
@@ -114,10 +114,10 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
     std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
 
     try {
-        logger::log(logger::INFO) << "Seting up" << std::endl;
+        logger::log(logger::LoggerSeverity::INFO) << "Seting up" << std::endl;
         server_.reset(new DianaServer<index_type>(pairs_map_path));
     } catch (std::exception& e) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Error when setting up the server's core" << std::endl;
 
         server_.reset();
@@ -125,7 +125,8 @@ grpc::Status DianaImpl::setup(grpc::ServerContext*     context,
                             "Unable to create the server's core.");
     }
 
-    logger::log(logger::TRACE) << "Successful setup" << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Successful setup" << std::endl;
 
     return grpc::Status::OK;
 }
@@ -185,18 +186,18 @@ grpc::Status DianaImpl::sync_search(grpc::ServerContext*             context,
                             "The server is not set up");
     }
 
-    logger::log(logger::TRACE) << "Searching ..." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE) << "Searching ..." << std::endl;
     //            std::list<uint64_t> res_list;
 
     SearchRequest req = message_to_request(mes);
 
     std::vector<uint64_t> res_list(req.add_count);
 
-    logger::log(logger::TRACE)
+    logger::log(logger::LoggerSeverity::TRACE)
         << req.add_count << " expected matches" << std::endl;
 
     if (req.add_count == 0) {
-        logger::log(logger::INFO)
+        logger::log(logger::LoggerSeverity::INFO)
             << "Empty request (no expected match)" << std::endl;
     } else {
         //                BENCHMARK_Q((res_list =
@@ -228,7 +229,7 @@ grpc::Status DianaImpl::sync_search(grpc::ServerContext*             context,
             writer->Write(reply);
         }
     }
-    logger::log(logger::TRACE) << "Done searching" << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE) << "Done searching" << std::endl;
 
 
     return grpc::Status::OK;
@@ -245,7 +246,7 @@ grpc::Status DianaImpl::async_search(grpc::ServerContext*             context,
                             "The server is not set up");
     }
 
-    logger::log(logger::TRACE) << "Searching ...";
+    logger::log(logger::LoggerSeverity::TRACE) << "Searching ...";
 
     std::atomic_uint res_size(0);
 
@@ -319,7 +320,7 @@ grpc::Status DianaImpl::async_search(grpc::ServerContext*             context,
     }
 
 
-    logger::log(logger::TRACE) << " done" << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
 
 
     return grpc::Status::OK;
@@ -338,11 +339,11 @@ grpc::Status DianaImpl::update(grpc::ServerContext*        context,
                             "The server is not set up");
     }
 
-    logger::log(logger::TRACE) << "Updating ..." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE) << "Updating ..." << std::endl;
 
     server_->update(message_to_request(mes));
 
-    logger::log(logger::TRACE) << " done" << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
 
     return grpc::Status::OK;
 }
@@ -358,7 +359,8 @@ grpc::Status DianaImpl::bulk_update(
                             "The server is not set up");
     }
 
-    logger::log(logger::TRACE) << "Updating (bulk)..." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Updating (bulk)..." << std::endl;
 
     UpdateRequestMessage mes;
 
@@ -366,7 +368,8 @@ grpc::Status DianaImpl::bulk_update(
         server_->update(message_to_request(&mes));
     }
 
-    logger::log(logger::TRACE) << "Updating (bulk)... done" << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Updating (bulk)... done" << std::endl;
 
 
     flush_server_storage();
@@ -397,11 +400,12 @@ void DianaImpl::set_search_asynchronously(bool flag)
 void DianaImpl::flush_server_storage()
 {
     if (server_) {
-        logger::log(logger::TRACE) << "Flush server storage..." << std::endl;
+        logger::log(logger::LoggerSeverity::TRACE)
+            << "Flush server storage..." << std::endl;
 
         server_->flush_edb();
 
-        logger::log(logger::TRACE)
+        logger::log(logger::LoggerSeverity::TRACE)
             << "Flush server storage... done" << std::endl;
     }
 }
@@ -452,12 +456,12 @@ void run_diana_server(const std::string& address,
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-    logger::log(logger::INFO)
+    logger::log(logger::LoggerSeverity::INFO)
         << "Server listening on " << server_address << std::endl;
 
     *server_ptr = server.get();
 
-    service.print_stats(sse::logger::log(sse::logger::INFO));
+    service.print_stats(sse::logger::log(sse::logger::LoggerSeverity::INFO));
     service.set_search_asynchronously(async_search);
 
     server->Wait();

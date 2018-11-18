@@ -211,10 +211,13 @@ bool DianaClientRunner::send_setup(const size_t setup_size) const
     grpc::Status status = stub_->setup(&context, message, &e);
 
     if (status.ok()) {
-        logger::log(logger::TRACE) << "Setup succeeded." << std::endl;
+        logger::log(logger::LoggerSeverity::TRACE)
+            << "Setup succeeded." << std::endl;
     } else {
-        logger::log(logger::ERROR) << "Setup failed: " << std::endl;
-        logger::log(logger::ERROR) << status.error_message() << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Setup failed: " << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << status.error_message() << std::endl;
         return false;
     }
 
@@ -234,7 +237,8 @@ std::list<uint64_t> DianaClientRunner::search(
     const std::string&            keyword,
     std::function<void(uint64_t)> receive_callback) const
 {
-    logger::log(logger::TRACE) << "Search " << keyword << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Search " << keyword << std::endl;
 
     grpc::ClientContext  context;
     SearchRequestMessage message;
@@ -252,7 +256,8 @@ std::list<uint64_t> DianaClientRunner::search(
 
 
     while (reader->Read(&reply)) {
-        //        logger::log(logger::TRACE) << "New result received: "
+        //        logger::log(logger::LoggerSeverity::TRACE) << "New result
+        //        received: "
         //        << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
 
@@ -262,10 +267,13 @@ std::list<uint64_t> DianaClientRunner::search(
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {
-        logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+        logger::log(logger::LoggerSeverity::TRACE)
+            << "Search succeeded." << std::endl;
     } else {
-        logger::log(logger::ERROR) << "Search failed:" << std::endl;
-        logger::log(logger::ERROR) << status.error_message() << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Search failed:" << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << status.error_message() << std::endl;
     }
 
     return results;
@@ -286,10 +294,13 @@ void DianaClientRunner::update(const std::string& keyword, uint64_t index)
         grpc::Status status = stub_->update(&context, message, &e);
 
         if (status.ok()) {
-            logger::log(logger::TRACE) << "Update succeeded." << std::endl;
+            logger::log(logger::LoggerSeverity::TRACE)
+                << "Update succeeded." << std::endl;
         } else {
-            logger::log(logger::ERROR) << "Update failed:" << std::endl;
-            logger::log(logger::ERROR) << status.error_message() << std::endl;
+            logger::log(logger::LoggerSeverity::ERROR)
+                << "Update failed:" << std::endl;
+            logger::log(logger::LoggerSeverity::ERROR)
+                << status.error_message() << std::endl;
         }
     }
 }
@@ -358,7 +369,7 @@ void DianaClientRunner::update_in_session(const std::string& keyword,
 
     bulk_update_state_.mtx.lock();
     if (!bulk_update_state_.writer->Write(message)) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Update session: broken stream." << std::endl;
     }
     bulk_update_state_.mtx.unlock();
@@ -389,7 +400,7 @@ void DianaClientRunner::update_in_session(
 
     for (auto it = message_list.begin(); it != message_list.end(); ++it) {
         if (!bulk_update_state_.writer->Write(request_to_message(*it))) {
-            logger::log(logger::ERROR)
+            logger::log(logger::LoggerSeverity::ERROR)
                 << "Update session: broken stream." << std::endl;
             break;
         }
@@ -409,7 +420,7 @@ void DianaClientRunner::wait_updates_completion()
 void DianaClientRunner::start_update_session()
 {
     if (bulk_update_state_.writer) {
-        logger::log(logger::WARNING)
+        logger::log(logger::LoggerSeverity::WARNING)
             << "Invalid client state: the bulk update session is already up"
             << std::endl;
         return;
@@ -420,13 +431,14 @@ void DianaClientRunner::start_update_session()
         bulk_update_state_.context.get(), &(bulk_update_state_.response));
     bulk_update_state_.is_up = true;
 
-    logger::log(logger::TRACE) << "Update session started." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Update session started." << std::endl;
 }
 
 void DianaClientRunner::end_update_session()
 {
     if (!bulk_update_state_.writer) {
-        logger::log(logger::WARNING)
+        logger::log(logger::LoggerSeverity::WARNING)
             << "Invalid client state: the bulk update session is not up"
             << std::endl;
         return;
@@ -436,7 +448,7 @@ void DianaClientRunner::end_update_session()
     ::grpc::Status status = bulk_update_state_.writer->Finish();
 
     if (!status.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Status not OK at the end of update sessions. Status: "
             << status.error_message() << std::endl;
     }
@@ -445,7 +457,8 @@ void DianaClientRunner::end_update_session()
     bulk_update_state_.context.reset();
     bulk_update_state_.writer.reset();
 
-    logger::log(logger::TRACE) << "Update session terminated." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Update session terminated." << std::endl;
 }
 
 
@@ -457,12 +470,12 @@ void DianaClientRunner::update_completion_loop()
     for (; stop_update_completion_thread_ == false; ok = false) {
         bool r = update_cq_.Next((void**)&tag, &ok);
         if (!r) {
-            logger::log(logger::TRACE)
+            logger::log(logger::LoggerSeverity::TRACE)
                 << "Close asynchronous update loop" << std::endl;
             return;
         }
 
-        logger::log(logger::TRACE)
+        logger::log(logger::LoggerSeverity::TRACE)
             << "Asynchronous update " << std::dec << *(tag->index)
             << " succeeded." << std::endl;
         delete tag;
@@ -498,7 +511,7 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
                     counter++;
 
                     if ((counter % 100) == 0) {
-                        logger::log(sse::logger::INFO)
+                        logger::log(sse::logger::LoggerSeverity::INFO)
                             << "\rLoading: " << counter << " keywords processed"
                             << std::flush;
                     }
@@ -513,7 +526,7 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
         parser.parse();
 
         pool.join();
-        logger::log(sse::logger::INFO)
+        logger::log(sse::logger::LoggerSeverity::INFO)
             << "\rLoading: " << counter << " keywords processed" << std::endl;
 
         wait_updates_completion();
@@ -522,8 +535,9 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
 
         return true;
     } catch (std::exception& e) {
-        logger::log(logger::ERROR) << "\nFailed to load file " << path << " : "
-                                   << e.what() << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "\nFailed to load file " << path << " : " << e.what()
+            << std::endl;
         return false;
     }
     return false;
@@ -536,7 +550,8 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
 //            if (!os.is_open()) {
 //                os.close();
 //
-//                logger::log(logger::ERROR) << "Unable to create output file "
+//                logger::log(logger::LoggerSeverity::ERROR) << "Unable to
+//                create output file "
 //                << out_path << std::endl;
 //
 //                return false;
@@ -556,7 +571,8 @@ std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
 
 //        void DianaClientRunner::random_search() const
 //        {
-//            logger::log(logger::TRACE) << "Random Search " << std::endl;
+//            logger::log(logger::LoggerSeverity::TRACE) << "Random Search " <<
+//            std::endl;
 //
 //            grpc::ClientContext context;
 //            SearchRequestMessage message;
@@ -570,18 +586,18 @@ std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
 //
 //
 //            while (reader->Read(&reply)) {
-//                logger::log(logger::TRACE) << "New result: "
+//                logger::log(logger::LoggerSeverity::TRACE) << "New result: "
 //                << std::dec << reply.result() << std::endl;
 //                results.push_back(reply.result());
 //            }
 //            grpc::Status status = reader->Finish();
 //            if (status.ok()) {
-//                logger::log(logger::TRACE) << "Search succeeded." <<
-//                std::endl;
+//                logger::log(logger::LoggerSeverity::TRACE) << "Search
+//                succeeded." << std::endl;
 //            } else {
-//                logger::log(logger::ERROR) << "Search failed:" << std::endl;
-//                logger::log(logger::ERROR) << status.error_message() <<
-//                std::endl;
+//                logger::log(logger::LoggerSeverity::ERROR) << "Search failed:"
+//                << std::endl; logger::log(logger::LoggerSeverity::ERROR) <<
+//                status.error_message() << std::endl;
 //            }
 //
 //        }
@@ -589,10 +605,11 @@ std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
 //        void DianaClientRunner::search_benchmark(size_t n_bench) const
 //        {
 //            for (size_t i = 0; i < n_bench; i++) {
-//                logger::log(logger::INFO) << "\rBenchmark " << i+1 <<
-//                std::flush; random_search();
+//                logger::log(logger::LoggerSeverity::INFO) << "\rBenchmark " <<
+//                i+1 << std::flush; random_search();
 //            }
-//            logger::log(logger::INFO) << "\nBenchmarks done" << std::endl;
+//            logger::log(logger::LoggerSeverity::INFO) << "\nBenchmarks done"
+//            << std::endl;
 //        }
 
 SearchRequestMessage request_to_message(const SearchRequest& req)

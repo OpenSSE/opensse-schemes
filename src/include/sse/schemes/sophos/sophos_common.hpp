@@ -34,9 +34,9 @@ constexpr size_t kSearchTokenSize   = crypto::Tdp::kMessageSize;
 constexpr size_t kDerivationKeySize = 32;
 constexpr size_t kUpdateTokenSize   = 16;
 
-typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
-typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
-typedef uint64_t                              index_type;
+using search_token_type = std::array<uint8_t, kSearchTokenSize>;
+using update_token_type = std::array<uint8_t, kUpdateTokenSize>;
+using index_type        = uint64_t;
 
 
 struct SearchRequest

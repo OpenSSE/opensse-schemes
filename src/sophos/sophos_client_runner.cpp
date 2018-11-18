@@ -175,6 +175,8 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
                              client_tdp_prg_key_array.data())));
 }
 
+// De-activate clang-tidy because of a false positive in gRPC
+// NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
 SophosClientRunner::SophosClientRunner(const std::string& address,
                                        const std::string& path)
     : update_launched_count_(0), update_completed_count_(0)
@@ -235,10 +237,13 @@ bool SophosClientRunner::send_setup() const
     grpc::Status status = stub_->setup(&context, message, &e);
 
     if (status.ok()) {
-        logger::log(logger::TRACE) << "Setup succeeded." << std::endl;
+        logger::log(logger::LoggerSeverity::TRACE)
+            << "Setup succeeded." << std::endl;
     } else {
-        logger::log(logger::ERROR) << "Setup failed: " << std::endl;
-        logger::log(logger::ERROR) << status.error_message() << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Setup failed: " << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << status.error_message() << std::endl;
         return false;
     }
 
@@ -258,7 +263,8 @@ std::list<uint64_t> SophosClientRunner::search(
     const std::string&                   keyword,
     const std::function<void(uint64_t)>& receive_callback) const
 {
-    logger::log(logger::TRACE) << "Search " << keyword << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Search " << keyword << std::endl;
 
     grpc::ClientContext          context;
     sophos::SearchRequestMessage message;
@@ -272,7 +278,8 @@ std::list<uint64_t> SophosClientRunner::search(
 
 
     while (reader->Read(&reply)) {
-        //        logger::log(logger::TRACE) << "New result received: "
+        //        logger::log(logger::LoggerSeverity::TRACE) << "New result
+        //        received: "
         //        << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
 
@@ -282,10 +289,13 @@ std::list<uint64_t> SophosClientRunner::search(
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {
-        logger::log(logger::TRACE) << "Search succeeded." << std::endl;
+        logger::log(logger::LoggerSeverity::TRACE)
+            << "Search succeeded." << std::endl;
     } else {
-        logger::log(logger::ERROR) << "Search failed:" << std::endl;
-        logger::log(logger::ERROR) << status.error_message() << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Search failed:" << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << status.error_message() << std::endl;
     }
 
     return results;
@@ -306,10 +316,13 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
         grpc::Status status = stub_->update(&context, message, &e);
 
         if (status.ok()) {
-            logger::log(logger::TRACE) << "Update succeeded." << std::endl;
+            logger::log(logger::LoggerSeverity::TRACE)
+                << "Update succeeded." << std::endl;
         } else {
-            logger::log(logger::ERROR) << "Update failed:" << std::endl;
-            logger::log(logger::ERROR) << status.error_message() << std::endl;
+            logger::log(logger::LoggerSeverity::ERROR)
+                << "Update failed:" << std::endl;
+            logger::log(logger::LoggerSeverity::ERROR)
+                << status.error_message() << std::endl;
         }
     }
 }
@@ -324,9 +337,10 @@ void SophosClientRunner::async_update(const std::string& keyword,
     if (bulk_update_state_.is_up) { // an update session is running, use it
         update_in_session(keyword, index);
     } else {
-        logger::log(logger::WARNING) << "This is dangerous: you should not use "
-                                        "async_updates, they are still buggy..."
-                                     << std::endl;
+        logger::log(logger::LoggerSeverity::WARNING)
+            << "This is dangerous: you should not use "
+               "async_updates, they are still buggy..."
+            << std::endl;
 
         message = request_to_message(client_->update_request(keyword, index));
 
@@ -355,7 +369,7 @@ void SophosClientRunner::update_in_session(const std::string& keyword,
 
     bulk_update_state_.mtx.lock();
     if (!bulk_update_state_.writer->Write(message)) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Update session: broken stream." << std::endl;
     }
     bulk_update_state_.mtx.unlock();
@@ -373,7 +387,7 @@ void SophosClientRunner::wait_updates_completion()
 void SophosClientRunner::start_update_session()
 {
     if (bulk_update_state_.writer) {
-        logger::log(logger::WARNING)
+        logger::log(logger::LoggerSeverity::WARNING)
             << "Invalid client state: the bulk update session is already up"
             << std::endl;
         return;
@@ -384,13 +398,14 @@ void SophosClientRunner::start_update_session()
         bulk_update_state_.context.get(), &(bulk_update_state_.response));
     bulk_update_state_.is_up = true;
 
-    logger::log(logger::TRACE) << "Update session started." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Update session started." << std::endl;
 }
 
 void SophosClientRunner::end_update_session()
 {
     if (!bulk_update_state_.writer) {
-        logger::log(logger::WARNING)
+        logger::log(logger::LoggerSeverity::WARNING)
             << "Invalid client state: the bulk update session is not up"
             << std::endl;
         return;
@@ -400,7 +415,7 @@ void SophosClientRunner::end_update_session()
     ::grpc::Status status = bulk_update_state_.writer->Finish();
 
     if (!status.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Status not OK at the end of update sessions. Status: "
             << status.error_message() << std::endl;
     }
@@ -409,7 +424,8 @@ void SophosClientRunner::end_update_session()
     bulk_update_state_.context.reset();
     bulk_update_state_.writer.reset();
 
-    logger::log(logger::TRACE) << "Update session terminated." << std::endl;
+    logger::log(logger::LoggerSeverity::TRACE)
+        << "Update session terminated." << std::endl;
 }
 
 
@@ -421,12 +437,12 @@ void SophosClientRunner::update_completion_loop()
     for (; !stop_update_completion_thread_; ok = false) {
         bool r = update_cq_.Next(reinterpret_cast<void**>(&tag), &ok);
         if (!r) {
-            logger::log(logger::TRACE)
+            logger::log(logger::LoggerSeverity::TRACE)
                 << "Close asynchronous update loop" << std::endl;
             return;
         }
 
-        logger::log(logger::TRACE)
+        logger::log(logger::LoggerSeverity::TRACE)
             << "Asynchronous update " << std::dec << *(tag->index)
             << " succeeded." << std::endl;
         delete tag;
@@ -462,7 +478,7 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
                     counter++;
 
                     if ((counter % 100) == 0) {
-                        logger::log(sse::logger::INFO)
+                        logger::log(sse::logger::LoggerSeverity::INFO)
                             << "\rLoading: " << counter << " keywords processed"
                             << std::flush;
                     }
@@ -473,12 +489,14 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
 
         parser.addCallbackList(add_list_callback);
 
+        // De-activate clang-tidy because of a false positive in gRPC
+        // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
         start_update_session();
 
         parser.parse();
 
         pool.join();
-        logger::log(sse::logger::INFO)
+        logger::log(sse::logger::LoggerSeverity::INFO)
             << "\rLoading: " << counter << " keywords processed" << std::endl;
 
         wait_updates_completion();
@@ -487,8 +505,9 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
 
         return true;
     } catch (std::exception& e) {
-        logger::log(logger::ERROR) << "\nFailed to load file " << path << " : "
-                                   << e.what() << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "\nFailed to load file " << path << " : " << e.what()
+            << std::endl;
         return false;
     }
     return false;

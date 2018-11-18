@@ -72,7 +72,7 @@ RocksDBCounter::RocksDBCounter(const std::string& path) : db_(nullptr)
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
 
     if (!status.ok()) {
-        logger::log(logger::CRITICAL)
+        logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
         db_ = nullptr;
@@ -85,7 +85,7 @@ bool RocksDBCounter::get(const std::string& key, uint32_t& val) const
 
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
 
-    logger::log(logger::DBG)
+    logger::log(logger::LoggerSeverity::DBG)
         << "Get: " << key << " Status: " << s.ToString() << std::endl;
 
     if (s.ok()) {
@@ -101,7 +101,7 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
 
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
 
-    logger::log(logger::DBG)
+    logger::log(logger::LoggerSeverity::DBG)
         << "Get and inc: " << key << " Status: " << s.ToString() << std::endl;
 
     if (s.ok()) {
@@ -117,11 +117,12 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
     s = db_->Put(rocksdb::WriteOptions(), key, k_v);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert pair in the database: " << s.ToString()
             << std::endl;
-        logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key)
-                                   << ", value=" << val << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Failed on pair: key=" << hex_string(key) << ", value=" << val
+            << std::endl;
     }
 
     return s.ok();
@@ -134,8 +135,8 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
 
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
 
-    //            logger::log(logger::DBG) << "Get and inc: " << key << "
-    //            Status: " << s.ToString() << std::endl;
+    //            logger::log(logger::LoggerSeverity::DBG) << "Get and inc: " <<
+    //            key << " Status: " << s.ToString() << std::endl;
 
     if (s.ok()) {
         // the key has been found
@@ -151,11 +152,12 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
     s = db_->Put(rocksdb::WriteOptions(), key, k_v);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to increment value in the database: " << s.ToString()
             << std::endl;
-        logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key)
-                                   << ", value=" << val << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Failed on pair: key=" << hex_string(key) << ", value=" << val
+            << std::endl;
     }
 
     return s.ok();
@@ -168,11 +170,12 @@ bool RocksDBCounter::set(const std::string& key, uint32_t val)
     rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), key, k_v);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert pair in the database: " << s.ToString()
             << std::endl;
-        logger::log(logger::ERROR) << "Failed on pair: key=" << hex_string(key)
-                                   << ", value=" << val << std::endl;
+        logger::log(logger::LoggerSeverity::ERROR)
+            << "Failed on pair: key=" << hex_string(key) << ", value=" << val
+            << std::endl;
     }
 
     return s.ok();
@@ -195,7 +198,7 @@ inline void RocksDBCounter::flush(bool blocking)
     rocksdb::Status s = db_->Flush(options);
 
     if (!s.ok()) {
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "DB Flush failed: " << s.ToString() << std::endl;
     }
 }

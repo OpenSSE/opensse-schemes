@@ -29,7 +29,7 @@
 
 namespace sse {
 namespace logger {
-typedef enum
+enum class LoggerSeverity : uint8_t
 {
     DBG      = 00,
     TRACE    = 10,
@@ -37,7 +37,7 @@ typedef enum
     WARNING  = 30,
     ERROR    = 40,
     CRITICAL = 50
-} LoggerSeverity;
+};
 
 LoggerSeverity severity();
 void           set_severity(LoggerSeverity s);

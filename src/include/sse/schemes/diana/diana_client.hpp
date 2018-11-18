@@ -148,7 +148,7 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
 
     if (!found) {
         if (log_not_found) {
-            logger::log(logger::INFO)
+            logger::log(logger::LoggerSeverity::INFO)
                 << "No matching counter found for keyword "
                 << hex_string(std::string(kw_index.begin(), kw_index.end()))
                 << std::endl;
@@ -195,18 +195,19 @@ UpdateRequest<T> DianaClient<T>::update_request(const std::string& keyword,
 
     st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
-    if (logger::severity() <= logger::DBG) {
-        logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
+    if (logger::severity() <= logger::LoggerSeverity::DBG) {
+        logger::log(logger::LoggerSeverity::DBG)
+            << "New ST " << hex_string(st) << std::endl;
     }
 
     gen_update_token_mask(st, req.token, mask);
 
     req.index = xor_mask(index, mask);
 
-    //            if (logger::severity() <= logger::DBG) {
-    //                logger::log(logger::DBG) << "Update Request: (" <<
-    //                hex_string(ut) << ", " << std::hex << req.index << ")" <<
-    //                std::endl;
+    //            if (logger::severity() <= logger::LoggerSeverity::DBG) {
+    //                logger::log(logger::LoggerSeverity::DBG) << "Update
+    //                Request: (" << hex_string(ut) << ", " << std::hex <<
+    //                req.index << ")" << std::endl;
     //            }
 
     return req;
@@ -243,8 +244,8 @@ std::list<UpdateRequest<T>> DianaClient<T>::bulk_update_request(
 
         st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
-        if (logger::severity() <= logger::DBG) {
-            logger::log(logger::DBG)
+        if (logger::severity() <= logger::LoggerSeverity::DBG) {
+            logger::log(logger::LoggerSeverity::DBG)
                 << "New ST " << hex_string(st) << std::endl;
         }
 

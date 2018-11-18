@@ -35,10 +35,14 @@ uint64_t xor_mask(const uint64_t in, const std::array<uint8_t, N>& mask)
     static_assert(N >= 8, "Input array is too small.");
 
     // Defined for LITTLE ENDIAN arch
-    return in ^ (((uint64_t)mask[0]) << 56) ^ (((uint64_t)mask[1]) << 48)
-           ^ (((uint64_t)mask[2]) << 40) ^ (((uint64_t)mask[3]) << 32)
-           ^ (((uint64_t)mask[4]) << 24) ^ (((uint64_t)mask[5]) << 16)
-           ^ (((uint64_t)mask[6]) << 8) ^ (mask[7]);
+    return in ^ (static_cast<uint64_t>(mask[0]) << 56)
+           ^ (static_cast<uint64_t>(mask[1]) << 48)
+           ^ (static_cast<uint64_t>(mask[2]) << 40)
+           ^ (static_cast<uint64_t>(mask[3]) << 32)
+           ^ (static_cast<uint64_t>(mask[4]) << 24)
+           ^ (static_cast<uint64_t>(mask[5]) << 16)
+           ^ (static_cast<uint64_t>(mask[6]) << 8)
+           ^ (static_cast<uint64_t>(mask[7]));
 }
 
 
@@ -54,7 +58,8 @@ std::string hex_string(const std::array<uint8_t, N>& in)
 {
     std::ostringstream out;
     for (unsigned char c : in) {
-        out << std::hex << std::setw(2) << std::setfill('0') << (uint)c;
+        out << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<uint>(c);
     }
     return out.str();
 }
@@ -64,7 +69,8 @@ template<size_t N>
 std::ostream& print_hex(std::ostream& out, const std::array<uint8_t, N>& a)
 {
     for (unsigned char c : a) {
-        out << std::hex << std::setw(2) << std::setfill('0') << (uint)c;
+        out << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<uint>(c);
     }
     return out;
 }
@@ -98,7 +104,8 @@ bool parse_keyword_map(std::istream& in, MapClass& kw_map)
         if (!std::getline(line_stream, index_string)) {
             return false;
         }
-        kw_map.insert(std::make_pair(kw, std::stoul(index_string, NULL, 16)));
+        kw_map.insert(
+            std::make_pair(kw, std::stoul(index_string, nullptr, 16)));
     }
     return true;
 }

@@ -243,8 +243,8 @@ static void generation_job(
                 std::to_string(counter_10_1));
 
             if ((i + 1) % 10 == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: "
                         << kw_10_1 << std::endl;
                 }
@@ -257,8 +257,8 @@ static void generation_job(
                 std::to_string(counter_20));
 
             if ((i + 1) % 20 == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: " << kw_20
                         << std::endl;
                 }
@@ -271,8 +271,8 @@ static void generation_job(
                 std::to_string(counter_30));
 
             if ((i + 1) % 30 == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: " << kw_30
                         << std::endl;
                 }
@@ -285,8 +285,8 @@ static void generation_job(
                 std::to_string(counter_60));
 
             if ((i + 1) % 60 == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: " << kw_60
                         << std::endl;
                 }
@@ -299,8 +299,8 @@ static void generation_job(
                 std::to_string(counter_10_2));
 
             if ((i + 1) % 100 == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: "
                         << kw_10_2 << std::endl;
                 }
@@ -325,8 +325,8 @@ static void generation_job(
                 std::to_string(counter_10_3));
 
             if ((i + 1) % (static_cast<size_t>(1e3)) == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: "
                         << kw_10_3 << std::endl;
                 }
@@ -350,8 +350,8 @@ static void generation_job(
                 std::to_string(counter_10_4));
 
             if ((i + 1) % (static_cast<size_t>(1e4)) == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: "
                         << kw_10_4 << std::endl;
                 }
@@ -374,8 +374,8 @@ static void generation_job(
                 std::to_string(counter_10_5));
 
             if ((i + 1) % (static_cast<size_t>(1e5)) == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: "
                         << kw_10_5 << std::endl;
                 }
@@ -400,8 +400,8 @@ static void generation_job(
                 std::to_string(counter_10_6));
 
             if ((i + 1) % (static_cast<size_t>(1e6)) == 0) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG)
+                if (logger::severity() <= logger::LoggerSeverity::DBG) {
+                    logger::log(logger::LoggerSeverity::DBG)
                         << "Random DB generation: completed keyword: "
                         << kw_10_6 << std::endl;
                 }
@@ -423,7 +423,7 @@ static void generation_job(
 
         (*docs_counter)++;
         if (((*docs_counter) % 1000) == 0) {
-            logger::log(sse::logger::INFO)
+            logger::log(sse::logger::LoggerSeverity::INFO)
                 << "Random DB generation: " << (*docs_counter)
                 << " documents generated (" << (*entries_counter)
                 << " entries)\r" << std::flush;
@@ -555,7 +555,7 @@ static void generation_job(
     }
     log += ")";
 
-    logger::log(logger::INFO) << log << std::endl;
+    logger::log(logger::LoggerSeverity::INFO) << log << std::endl;
 }
 
 
@@ -588,7 +588,7 @@ void gen_db(size_t                                          N_entries,
           + " new documents generated, representing "
           + std::to_string(entries_counter.load()) + " entries";
 
-    logger::log(logger::INFO) << log << std::endl;
+    logger::log(logger::LoggerSeverity::INFO) << log << std::endl;
 }
 
 } // namespace sophos

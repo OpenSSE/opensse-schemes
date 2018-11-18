@@ -38,7 +38,7 @@
 class ThreadPool
 {
 public:
-    ThreadPool(uint32_t);
+    explicit ThreadPool(uint32_t /*threads*/);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
         -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -65,12 +65,12 @@ private:
 class IdentifiedThreadPool : public ThreadPool
 {
 public:
-    IdentifiedThreadPool(uint32_t threads);
+    explicit IdentifiedThreadPool(uint32_t threads);
 
     uint32_t get_thread_index() const;
 
 private:
-    virtual void register_thread(uint32_t id_pool);
+    void register_thread(uint32_t id_pool) override;
 
     std::mutex                                    setup_mutex_;
     std::unordered_map<std::thread::id, uint32_t> thread_indexes_;
@@ -80,7 +80,7 @@ private:
 inline ThreadPool::ThreadPool(uint32_t threads)
     : max_tasks_size_(0), stop(false)
 {
-    for (uint32_t i = 0; i < threads; ++i)
+    for (uint32_t i = 0; i < threads; ++i) {
         workers.emplace_back([this, &i] {
             register_thread(i);
             for (;;) {
@@ -91,8 +91,9 @@ inline ThreadPool::ThreadPool(uint32_t threads)
                     this->condition.wait(lock, [this] {
                         return this->stop || !this->tasks.empty();
                     });
-                    if (this->stop && this->tasks.empty())
+                    if (this->stop && this->tasks.empty()) {
                         return;
+                    }
 
                     max_tasks_size_ = std::max(max_tasks_size_, tasks.size());
                     task            = std::move(this->tasks.front());
@@ -102,9 +103,10 @@ inline ThreadPool::ThreadPool(uint32_t threads)
                 task();
             }
         });
+    }
 }
 
-inline void ThreadPool::register_thread(uint32_t id_pool)
+inline void ThreadPool::register_thread(uint32_t /*id_pool*/)
 {
 }
 
@@ -123,8 +125,9 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
         std::unique_lock<std::mutex> lock(queue_mutex);
 
         // don't allow enqueueing after stopping the pool
-        if (stop)
+        if (stop) {
             throw std::runtime_error("enqueue on stopped ThreadPool");
+        }
 
         tasks.emplace([task]() { (*task)(); });
     }

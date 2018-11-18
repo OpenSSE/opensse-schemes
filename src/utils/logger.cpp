@@ -27,7 +27,7 @@
 
 namespace sse {
 namespace logger {
-LoggerSeverity severity__ = INFO;
+LoggerSeverity severity__ = LoggerSeverity::INFO;
 // NOLINTNEXTLINE(cert-err58-cpp)
 std::ostream null_stream__(nullptr);
 
@@ -54,7 +54,7 @@ bool set_benchmark_file(const std::string& path)
     if (!stream_ptr->is_open()) {
         benchmark_stream__.reset();
 
-        logger::log(logger::ERROR)
+        logger::log(logger::LoggerSeverity::ERROR)
             << "Failed to set benchmark file: " << path << std::endl;
 
         return false;
@@ -83,27 +83,27 @@ std::ostream& log_benchmark()
 std::string severity_string(LoggerSeverity s)
 {
     switch (s) {
-    case DBG:
+    case LoggerSeverity::DBG:
         return "[DEBUG] - ";
         break;
 
-    case TRACE:
+    case LoggerSeverity::TRACE:
         return "[TRACE] - ";
         break;
 
-    case INFO:
+    case LoggerSeverity::INFO:
         return "[INFO] - ";
         break;
 
-    case WARNING:
+    case LoggerSeverity::WARNING:
         return "[WARNING] - ";
         break;
 
-    case ERROR:
+    case LoggerSeverity::ERROR:
         return "[ERROR] - ";
         break;
 
-    case CRITICAL:
+    case LoggerSeverity::CRITICAL:
         return "[CRITICAL] - ";
         break;
 

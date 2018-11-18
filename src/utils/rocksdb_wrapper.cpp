@@ -24,7 +24,7 @@ namespace sse {
 namespace sophos {
 
 
-RocksDBCounter::RocksDBCounter(const std::string& path) : db_(NULL)
+RocksDBCounter::RocksDBCounter(const std::string& path) : db_(nullptr)
 {
     rocksdb::Options options;
     options.create_if_missing = true;
@@ -75,7 +75,7 @@ RocksDBCounter::RocksDBCounter(const std::string& path) : db_(NULL)
         logger::log(logger::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
-        db_ = NULL;
+        db_ = nullptr;
     }
 }
 

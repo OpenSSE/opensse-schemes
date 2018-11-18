@@ -63,6 +63,8 @@ set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR})
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
 grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
+add_custom_target(grpc_gen DEPENDS ${PROTO_SRCS} ${PROTO_HDRS} ${GRPC_SRCS} ${GRPC_HDRS})
+
 add_library(
     runners
     SHARED

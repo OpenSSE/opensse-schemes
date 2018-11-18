@@ -28,7 +28,8 @@
 namespace sse {
 namespace logger {
 LoggerSeverity severity__ = INFO;
-std::ostream   null_stream__(0);
+// NOLINTNEXTLINE(cert-err58-cpp)
+std::ostream null_stream__(nullptr);
 
 std::unique_ptr<std::ofstream> benchmark_stream__;
 
@@ -48,7 +49,7 @@ bool set_benchmark_file(const std::string& path)
         benchmark_stream__->close();
     }
 
-    std::ofstream* stream_ptr = new std::ofstream(path);
+    std::unique_ptr<std::ofstream> stream_ptr(new std::ofstream(path));
 
     if (!stream_ptr->is_open()) {
         benchmark_stream__.reset();
@@ -58,7 +59,7 @@ bool set_benchmark_file(const std::string& path)
 
         return false;
     }
-    benchmark_stream__.reset(stream_ptr);
+    benchmark_stream__ = std::move(stream_ptr);
 
     return true;
 }
@@ -67,18 +68,16 @@ std::ostream& log(LoggerSeverity s)
 {
     if (s >= severity__) {
         return (std::cout << severity_string(s));
-    } else {
-        return null_stream__;
     }
+    return null_stream__;
 }
 
 std::ostream& log_benchmark()
 {
     if (benchmark_stream__) {
         return *benchmark_stream__;
-    } else {
-        return std::cout;
     }
+    return std::cout;
 }
 
 std::string severity_string(LoggerSeverity s)

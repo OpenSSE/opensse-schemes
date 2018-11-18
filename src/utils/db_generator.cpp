@@ -46,26 +46,27 @@ static uint64_t optimal_num_group(size_t N_entries,
                                   size_t step,
                                   size_t group_size)
 {
-    return floorl(((long double)N_entries) / (1.2 * step * group_size));
+    return floorl((static_cast<long double>(N_entries))
+                  / (1.2 * step * group_size));
 }
 
-const std::string kKeyword01PercentBase = "0.1";
-const std::string kKeyword1PercentBase  = "1";
-const std::string kKeyword10PercentBase = "10";
+const char* kKeyword01PercentBase = "0.1";
+const char* kKeyword1PercentBase  = "1";
+const char* kKeyword10PercentBase = "10";
 
-const std::string kKeywordGroupBase       = "Group-";
-const std::string kKeyword10GroupBase     = kKeywordGroupBase + "10^";
-const std::string kKeywordRand10GroupBase = kKeywordGroupBase + "rand-10^";
+const char* kKeywordGroupBase       = "Group-";
+const char* kKeyword10GroupBase     = "Group-10^";
+const char* kKeywordRand10GroupBase = "Group-rand-10^";
 
 constexpr uint32_t max_10_counter = ~0;
 
 static void generation_job(
-    unsigned int                                    thread_id,
-    size_t                                          N_entries,
-    size_t                                          step,
-    std::atomic_size_t*                             entries_counter,
-    std::atomic_size_t*                             docs_counter,
-    std::function<void(const std::string&, size_t)> callback)
+    unsigned int                                           thread_id,
+    size_t                                                 N_entries,
+    size_t                                                 step,
+    std::atomic_size_t*                                    entries_counter,
+    std::atomic_size_t*                                    docs_counter,
+    const std::function<void(const std::string&, size_t)>& callback)
 {
     std::random_device rd;
     std::mt19937 rng(rd()); // Standard mersenne_twister_engine seeded with rd()
@@ -108,32 +109,37 @@ static void generation_job(
         = optimal_num_group(N_entries, step, size_group_6);
 
 
-    use_rnd_group_2
-        = true || (1.5 * N_entries >= n_groups_2 * size_group_2 * step);
-    use_rnd_group_3
-        = true || (1.5 * N_entries >= n_groups_3 * size_group_3 * step);
-    use_rnd_group_4
-        = true || (1.5 * N_entries >= n_groups_4 * size_group_4 * step);
-    use_rnd_group_5
-        = true || (1.5 * N_entries >= n_groups_5 * size_group_5 * step);
-    use_rnd_group_6
-        = true || (1.5 * N_entries >= n_groups_6 * size_group_6 * step);
+    use_rnd_group_2 = true;
+    use_rnd_group_3 = true;
+    use_rnd_group_4 = true;
+    use_rnd_group_5 = true;
+    use_rnd_group_6 = true;
+    // use_rnd_group_2
+    //     = true || (1.5 * N_entries >= n_groups_2 * size_group_2 * step);
+    // use_rnd_group_3
+    //     = true || (1.5 * N_entries >= n_groups_3 * size_group_3 * step);
+    // use_rnd_group_4
+    //     = true || (1.5 * N_entries >= n_groups_4 * size_group_4 * step);
+    // use_rnd_group_5
+    //     = true || (1.5 * N_entries >= n_groups_5 * size_group_5 * step);
+    // use_rnd_group_6
+    //     = true || (1.5 * N_entries >= n_groups_6 * size_group_6 * step);
 
-    const double r_threshold_2 = 1.4
-                                 * ((double)n_groups_2 * size_group_2 * step)
-                                 / ((double)N_entries);
-    const double r_threshold_3 = 1.2
-                                 * ((double)n_groups_3 * size_group_3 * step)
-                                 / ((double)N_entries);
-    const double r_threshold_4 = 1.2
-                                 * ((double)n_groups_4 * size_group_4 * step)
-                                 / ((double)N_entries);
-    const double r_threshold_5 = 1.2
-                                 * ((double)n_groups_5 * size_group_5 * step)
-                                 / ((double)N_entries);
-    const double r_threshold_6 = 1.2
-                                 * ((double)n_groups_6 * size_group_6 * step)
-                                 / ((double)N_entries);
+    const double r_threshold_2
+        = 1.4 * (static_cast<double>(n_groups_2) * size_group_2 * step)
+          / (static_cast<double>(N_entries));
+    const double r_threshold_3
+        = 1.2 * (static_cast<double>(n_groups_3) * size_group_3 * step)
+          / (static_cast<double>(N_entries));
+    const double r_threshold_4
+        = 1.2 * (static_cast<double>(n_groups_4) * size_group_4 * step)
+          / (static_cast<double>(N_entries));
+    const double r_threshold_5
+        = 1.2 * (static_cast<double>(n_groups_5) * size_group_5 * step)
+          / (static_cast<double>(N_entries));
+    const double r_threshold_6
+        = 1.2 * (static_cast<double>(n_groups_6) * size_group_6 * step)
+          / (static_cast<double>(N_entries));
 
     std::vector<uint64_t> group_rand_10_2(n_groups_2, 0);
     std::vector<uint64_t> group_rand_10_3(n_groups_3, 0);
@@ -176,18 +182,19 @@ static void generation_job(
         size_t ind  = dist(rng);
         new_entries = 0;
 
-        double                 w_d = ((double)ind) / ((uint64_t)~0);
+        double w_d = (static_cast<double>(ind)) / (static_cast<uint64_t>(~0));
         std::list<std::string> insertions;
 
         uint32_t ind_01 = ind % 1000;
         uint32_t ind_1  = ind_01 % 100;
         uint32_t ind_10 = ind_1 % 10;
 
-        keyword_01
-            = kKeyword01PercentBase + "_" + std::to_string(ind_01) + "_1";
-        keyword_1 = kKeyword1PercentBase + "_" + std::to_string(ind_1) + "_1";
-        keyword_10
-            = kKeyword10PercentBase + "_" + std::to_string(ind_10) + "_1";
+        keyword_01 = kKeyword01PercentBase;
+        keyword_01.append("_").append(std::to_string(ind_01)).append("_1");
+        keyword_1 = kKeyword1PercentBase;
+        keyword_1.append("_").append(std::to_string(ind_1)).append("_1");
+        keyword_10 = kKeyword10PercentBase;
+        keyword_1.append("_").append(std::to_string(ind_10)).append("_1");
 
         callback(keyword_01, ind);
         callback(keyword_1, ind);
@@ -199,11 +206,12 @@ static void generation_job(
         ind_1  = ind_01 % 100;
         ind_10 = ind_1 % 10;
 
-        keyword_01
-            = kKeyword01PercentBase + "_" + std::to_string(ind_01) + "_2";
-        keyword_1 = kKeyword1PercentBase + "_" + std::to_string(ind_1) + "_2";
-        keyword_10
-            = kKeyword10PercentBase + "_" + std::to_string(ind_10) + "_2";
+        keyword_01 = kKeyword01PercentBase;
+        keyword_01.append("_").append(std::to_string(ind_01)).append("_2");
+        keyword_1 = kKeyword1PercentBase;
+        keyword_1.append("_").append(std::to_string(ind_1)).append("_2");
+        keyword_10 = kKeyword10PercentBase;
+        keyword_1.append("_").append(std::to_string(ind_10)).append("_2");
 
         callback(keyword_01, ind);
         callback(keyword_1, ind);
@@ -211,15 +219,17 @@ static void generation_job(
 
         new_entries += 3;
 
-        ind_01 = (ind / ((unsigned int)1e6)) % 1000;
+        ind_01 = (ind / (static_cast<unsigned int>(1e6))) % 1000;
         ind_1  = ind_01 % 100;
         ind_10 = ind_1 % 10;
 
-        keyword_01
-            = kKeyword01PercentBase + "_" + std::to_string(ind_01) + "_3";
-        keyword_1 = kKeyword1PercentBase + "_" + std::to_string(ind_1) + "_3";
-        keyword_10
-            = kKeyword10PercentBase + "_" + std::to_string(ind_10) + "_3";
+        keyword_01 = kKeyword01PercentBase;
+        keyword_01.append("_").append(std::to_string(ind_01)).append("_3");
+        keyword_1 = kKeyword1PercentBase;
+        keyword_1.append("_").append(std::to_string(ind_1)).append("_3");
+        keyword_10 = kKeyword10PercentBase;
+        keyword_1.append("_").append(std::to_string(ind_10)).append("_3");
+
 
         //                client->async_update(keyword_01, ind);
         //                client->async_update(keyword_1, ind);
@@ -228,8 +238,9 @@ static void generation_job(
 
 
         if (counter_10_1 < max_10_counter) {
-            kw_10_1 = kKeyword10GroupBase + "1_" + id_string + "_"
-                      + std::to_string(counter_10_1);
+            kw_10_1 = kKeyword10GroupBase;
+            kw_10_1.append("1_").append(id_string).append("_").append(
+                std::to_string(counter_10_1));
 
             if ((i + 1) % 10 == 0) {
                 if (logger::severity() <= logger::DBG) {
@@ -241,8 +252,9 @@ static void generation_job(
             }
         }
         if (counter_20 < max_10_counter) {
-            kw_20 = kKeywordGroupBase + "20_" + id_string + "_"
-                    + std::to_string(counter_20);
+            kw_20 = kKeywordGroupBase;
+            kw_20.append("20_").append(id_string).append("_").append(
+                std::to_string(counter_20));
 
             if ((i + 1) % 20 == 0) {
                 if (logger::severity() <= logger::DBG) {
@@ -254,8 +266,9 @@ static void generation_job(
             }
         }
         if (counter_30 < max_10_counter) {
-            kw_30 = kKeywordGroupBase + "30_" + id_string + "_"
-                    + std::to_string(counter_30);
+            kw_30 = kKeywordGroupBase;
+            kw_30.append("30_").append(id_string).append("_").append(
+                std::to_string(counter_30));
 
             if ((i + 1) % 30 == 0) {
                 if (logger::severity() <= logger::DBG) {
@@ -267,8 +280,9 @@ static void generation_job(
             }
         }
         if (counter_60 < max_10_counter) {
-            kw_60 = kKeywordGroupBase + "60_" + id_string + "_"
-                    + std::to_string(counter_60);
+            kw_60 = kKeywordGroupBase;
+            kw_60.append("60_").append(id_string).append("_").append(
+                std::to_string(counter_60));
 
             if ((i + 1) % 60 == 0) {
                 if (logger::severity() <= logger::DBG) {
@@ -280,8 +294,9 @@ static void generation_job(
             }
         }
         if (counter_10_2 < max_10_counter) {
-            kw_10_2 = kKeyword10GroupBase + "2_" + id_string + "_"
-                      + std::to_string(counter_10_2);
+            kw_10_2 = kKeyword10GroupBase;
+            kw_10_2.append("2_").append(id_string).append("_").append(
+                std::to_string(counter_10_2));
 
             if ((i + 1) % 100 == 0) {
                 if (logger::severity() <= logger::DBG) {
@@ -297,17 +312,19 @@ static void generation_job(
                 uint16_t g = ind % n_groups_2;
                 if (group_rand_10_2[g] < size_group_2) {
                     group_rand_10_2[g]++;
-                    kw = kKeywordRand10GroupBase + "2_" + id_string + "_"
-                         + std::to_string(g);
+                    kw = kKeywordRand10GroupBase;
+                    kw.append("3_").append(id_string).append("_").append(
+                        std::to_string(g));
                     insertions.push_back(kw);
                 }
             }
         }
         if (counter_10_3 < max_10_counter) {
-            kw_10_3 = kKeyword10GroupBase + "3_" + id_string + "_"
-                      + std::to_string(counter_10_3);
+            kw_10_3 = kKeyword10GroupBase;
+            kw_10_3.append("3_").append(id_string).append("_").append(
+                std::to_string(counter_10_3));
 
-            if ((i + 1) % ((size_t)(1e3)) == 0) {
+            if ((i + 1) % (static_cast<size_t>(1e3)) == 0) {
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG)
                         << "Random DB generation: completed keyword: "
@@ -320,17 +337,19 @@ static void generation_job(
                 uint16_t g = ind % n_groups_3;
                 if (group_rand_10_3[g] < size_group_3) {
                     group_rand_10_3[g]++;
-                    kw = kKeywordRand10GroupBase + "3_" + id_string + "_"
-                         + std::to_string(g);
+                    kw = kKeywordRand10GroupBase;
+                    kw.append("3_").append(id_string).append("_").append(
+                        std::to_string(g));
                     insertions.push_back(kw);
                 }
             }
         }
         if (counter_10_4 < max_10_counter) {
-            kw_10_4 = kKeyword10GroupBase + "4_" + id_string + "_"
-                      + std::to_string(counter_10_4);
+            kw_10_4 = kKeyword10GroupBase;
+            kw_10_4.append("4_").append(id_string).append("_").append(
+                std::to_string(counter_10_4));
 
-            if ((i + 1) % ((size_t)(1e4)) == 0) {
+            if ((i + 1) % (static_cast<size_t>(1e4)) == 0) {
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG)
                         << "Random DB generation: completed keyword: "
@@ -342,17 +361,19 @@ static void generation_job(
                 uint16_t g = ind % n_groups_4;
                 if (group_rand_10_4[g] < size_group_4) {
                     group_rand_10_4[g]++;
-                    kw = kKeywordRand10GroupBase + "4_" + id_string + "_"
-                         + std::to_string(g);
+                    kw = kKeywordRand10GroupBase;
+                    kw.append("4_").append(id_string).append("_").append(
+                        std::to_string(g));
                     insertions.push_back(kw);
                 }
             }
         }
         if (counter_10_5 < max_10_counter) {
-            kw_10_5 = kKeyword10GroupBase + "5_" + id_string + "_"
-                      + std::to_string(counter_10_5);
+            kw_10_5 = kKeyword10GroupBase;
+            kw_10_5.append("5_").append(id_string).append("_").append(
+                std::to_string(counter_10_5));
 
-            if ((i + 1) % ((size_t)(1e5)) == 0) {
+            if ((i + 1) % (static_cast<size_t>(1e5)) == 0) {
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG)
                         << "Random DB generation: completed keyword: "
@@ -365,18 +386,20 @@ static void generation_job(
                 uint16_t g = ind % n_groups_5;
                 if (group_rand_10_5[g] < size_group_5) {
                     group_rand_10_5[g]++;
-                    kw = kKeywordRand10GroupBase + "5_" + id_string + "_"
-                         + std::to_string(g);
+                    kw = kKeywordRand10GroupBase;
+                    kw.append("5_").append(id_string).append("_").append(
+                        std::to_string(g));
                     insertions.push_back(kw);
                 }
             }
         }
 
         if (counter_10_6 < max_10_counter) {
-            kw_10_6 = kKeyword10GroupBase + "6_" + id_string + "_"
-                      + std::to_string(counter_10_6);
+            kw_10_6 = kKeyword10GroupBase;
+            kw_10_6.append("6_").append(id_string).append("_").append(
+                std::to_string(counter_10_6));
 
-            if ((i + 1) % ((size_t)(1e6)) == 0) {
+            if ((i + 1) % (static_cast<size_t>(1e6)) == 0) {
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG)
                         << "Random DB generation: completed keyword: "
@@ -389,8 +412,9 @@ static void generation_job(
                 uint16_t g = ind % n_groups_6;
                 if (group_rand_10_6[g] < size_group_6) {
                     group_rand_10_6[g]++;
-                    kw = kKeywordRand10GroupBase + "6_" + id_string + "_"
-                         + std::to_string(g);
+                    kw = kKeywordRand10GroupBase;
+                    kw.append("6_").append(id_string).append("_").append(
+                        std::to_string(g));
                     insertions.push_back(kw);
                 }
             }
@@ -417,7 +441,7 @@ static void generation_job(
         callback(kw_60, ind);
 
 
-        for (auto k : insertions) {
+        for (const auto& k : insertions) {
             callback(k, ind);
         }
 
@@ -546,13 +570,13 @@ void gen_db(size_t                                          N_entries,
     std::mutex               rpc_mutex;
 
     for (unsigned int i = 0; i < n_threads; i++) {
-        threads.push_back(std::thread(generation_job,
-                                      i,
-                                      N_entries,
-                                      n_threads,
-                                      &entries_counter,
-                                      &docs_counter,
-                                      callback));
+        threads.emplace_back(std::thread(generation_job,
+                                         i,
+                                         N_entries,
+                                         n_threads,
+                                         &entries_counter,
+                                         &docs_counter,
+                                         callback));
     }
 
     for (unsigned int i = 0; i < n_threads; i++) {

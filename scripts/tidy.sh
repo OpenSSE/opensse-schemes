@@ -15,12 +15,13 @@ if [ ! -f $STATIC_ANALYSIS_DIR/compile_commands.json ]; then
     cd $STATIC_ANALYSIS_DIR
     # For the static analysis, only focus on an AES NI-enabled target
     CFLAGS="-maes -DWITH_OPENSSL" CXXFLAGS="-maes -DWITH_OPENSSL" cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    make grpc_gen
     cd ..
 fi
 
 set +e
 
-EXCLUDE_PATTERN="a^" # The 'a^' regexp matches nothing
+EXCLUDE_PATTERN="*.pb.(h|cc)" # The 'a^' regexp matches nothing
 
 FILES=`find src -name '*.cpp' -or -name '*.c' | grep -ve $EXCLUDE_PATTERN | tr '\n' ' '`
 

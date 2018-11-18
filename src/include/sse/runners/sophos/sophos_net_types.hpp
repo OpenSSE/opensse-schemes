@@ -30,12 +30,12 @@
 namespace sse {
 namespace sophos {
 
-typedef struct
+struct update_tag_type
 {
     std::unique_ptr<google::protobuf::Empty> reply;
     std::unique_ptr<grpc::Status>            status;
     std::unique_ptr<size_t>                  index;
-} update_tag_type;
+};
 
 } // namespace sophos
 } // namespace sse

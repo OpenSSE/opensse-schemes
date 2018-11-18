@@ -467,24 +467,25 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
 
         std::atomic_size_t counter(0);
 
-        auto add_list_callback =
-            [this, &pool, &counter](const string         kw,
-                                    const list<unsigned> docs) {
-                auto work = [this, &counter](const string&         keyword,
-                                             const list<unsigned>& documents) {
-                    for (unsigned doc : documents) {
-                        this->async_update(keyword, doc);
-                    }
-                    counter++;
+        auto add_list_callback
+            = [this, &pool, &counter](const std::string         kw,
+                                      const std::list<unsigned> docs) {
+                  auto work
+                      = [this, &counter](const std::string&         keyword,
+                                         const std::list<unsigned>& documents) {
+                            for (unsigned doc : documents) {
+                                this->async_update(keyword, doc);
+                            }
+                            counter++;
 
-                    if ((counter % 100) == 0) {
-                        logger::log(sse::logger::LoggerSeverity::INFO)
-                            << "\rLoading: " << counter << " keywords processed"
-                            << std::flush;
-                    }
-                };
-                pool.enqueue(work, kw, docs);
-            };
+                            if ((counter % 100) == 0) {
+                                logger::log(sse::logger::LoggerSeverity::INFO)
+                                    << "\rLoading: " << counter
+                                    << " keywords processed" << std::flush;
+                            }
+                        };
+                  pool.enqueue(work, kw, docs);
+              };
 
 
         parser.addCallbackList(add_list_callback);

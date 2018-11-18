@@ -29,5 +29,5 @@ namespace sse {
 namespace sophos {
 void gen_db(size_t                                          N_entries,
             std::function<void(const std::string&, size_t)> callback);
-}
+} // namespace sophos
 } // namespace sse

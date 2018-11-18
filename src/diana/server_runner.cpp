@@ -18,10 +18,9 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#define DIANA_SERVER_RUNNER_CPP
-#include "diana.grpc.pb.h"
-
+#include "diana/server_runner_private.hpp"
 #include "diana/server_runner.hpp"
+
 
 #include <sse/schemes/utils/utils.hpp>
 #include <sse/schemes/utils/logger.hpp>

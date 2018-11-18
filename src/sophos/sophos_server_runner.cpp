@@ -39,11 +39,11 @@
 namespace sse {
 namespace sophos {
 
-const std::string SophosImpl::pk_file        = "tdp_pk.key";
-const std::string SophosImpl::pairs_map_file = "pairs.dat";
+const char* SophosImpl::pk_file        = "tdp_pk.key";
+const char* SophosImpl::pairs_map_file = "pairs.dat";
 
-SophosImpl::SophosImpl(const std::string& path)
-    : storage_path_(path), async_search_(true)
+SophosImpl::SophosImpl(std::string path)
+    : storage_path_(std::move(path)), async_search_(true)
 {
     if (is_directory(storage_path_)) {
         // try to initialize everything from this directory
@@ -75,9 +75,11 @@ SophosImpl::SophosImpl(const std::string& path)
     }
 }
 
-grpc::Status SophosImpl::setup(grpc::ServerContext*        context,
+grpc::Status SophosImpl::setup(__attribute__((unused))
+                               grpc::ServerContext*        context,
                                const sophos::SetupMessage* message,
-                               google::protobuf::Empty*    e)
+                               __attribute__((unused))
+                               google::protobuf::Empty* e)
 {
     logger::log(logger::TRACE) << "Setup!" << std::endl;
 
@@ -103,7 +105,7 @@ grpc::Status SophosImpl::setup(grpc::ServerContext*        context,
                             "Unable to create the server's content directory");
     }
 
-    if (!create_directory(storage_path_, (mode_t)0700)) {
+    if (!create_directory(storage_path_, static_cast<mode_t>(0700))) {
         logger::log(logger::ERROR)
             << "Error: Unable to create the server's content directory"
             << std::endl;
@@ -152,10 +154,10 @@ grpc::Status SophosImpl::setup(grpc::ServerContext*        context,
 }
 
 #define PRINT_BENCH_SEARCH(t, c)                                               \
-    "SEARCH: "                                                                 \
-        + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, "               \
-                            + std::to_string((c)) + " pairs"                   \
-                      : std::to_string((t)) + " ms, no pair found")
+    ("SEARCH: "                                                                \
+     + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, "                  \
+                         + std::to_string((c)) + " pairs"                      \
+                   : std::to_string((t)) + " ms, no pair found"))
 
 //#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
 //"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (with RPC), " + std::to_string((c)) + " pairs" : \
@@ -191,15 +193,14 @@ grpc::Status SophosImpl::search(grpc::ServerContext*                context,
 {
     if (async_search_) {
         return async_search(context, mes, writer);
-    } else {
-        return sync_search(context, mes, writer);
     }
+    return sync_search(context, mes, writer);
 }
 
 grpc::Status SophosImpl::sync_search(
-    grpc::ServerContext*                     context,
-    const sophos::SearchRequestMessage*      mes,
-    grpc::ServerWriter<sophos::SearchReply>* writer)
+    __attribute__((unused)) grpc::ServerContext* context,
+    const sophos::SearchRequestMessage*          mes,
+    grpc::ServerWriter<sophos::SearchReply>*     writer)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -227,7 +228,7 @@ grpc::Status SophosImpl::sync_search(
 
     for (auto& i : res_list) {
         sophos::SearchReply reply;
-        reply.set_result((uint64_t)i);
+        reply.set_result(static_cast<uint64_t>(i));
 
         writer->Write(reply);
     }
@@ -240,9 +241,9 @@ grpc::Status SophosImpl::sync_search(
 
 
 grpc::Status SophosImpl::async_search(
-    grpc::ServerContext*                     context,
-    const sophos::SearchRequestMessage*      mes,
-    grpc::ServerWriter<sophos::SearchReply>* writer)
+    __attribute__((unused)) grpc::ServerContext* context,
+    const sophos::SearchRequestMessage*          mes,
+    grpc::ServerWriter<sophos::SearchReply>*     writer)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -259,7 +260,7 @@ grpc::Status SophosImpl::async_search(
 
     auto post_callback = [&writer, &res_size, &writer_lock](index_type i) {
         sophos::SearchReply reply;
-        reply.set_result((uint64_t)i);
+        reply.set_result(static_cast<uint64_t>(i));
 
         writer_lock.lock();
         writer->Write(reply);
@@ -300,9 +301,11 @@ grpc::Status SophosImpl::async_search(
 }
 
 
-grpc::Status SophosImpl::update(grpc::ServerContext*                context,
+grpc::Status SophosImpl::update(__attribute__((unused))
+                                grpc::ServerContext*                context,
                                 const sophos::UpdateRequestMessage* mes,
-                                google::protobuf::Empty*            e)
+                                __attribute__((unused))
+                                google::protobuf::Empty* e)
 {
     std::unique_lock<std::mutex> lock(update_mtx_);
 
@@ -322,9 +325,9 @@ grpc::Status SophosImpl::update(grpc::ServerContext*                context,
 }
 
 grpc::Status SophosImpl::bulk_update(
-    grpc::ServerContext*                              context,
+    __attribute__((unused)) grpc::ServerContext*      context,
     grpc::ServerReader<sophos::UpdateRequestMessage>* reader,
-    google::protobuf::Empty*                          e)
+    __attribute__((unused)) google::protobuf::Empty*  e)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -394,13 +397,12 @@ UpdateRequest message_to_request(const UpdateRequestMessage* mes)
     return req;
 }
 
-void run_sophos_server(const std::string& address,
+void run_sophos_server(const std::string& server_address,
                        const std::string& server_db_path,
                        grpc::Server**     server_ptr,
                        bool               async_search)
 {
-    std::string server_address(address);
-    SophosImpl  service(server_db_path);
+    SophosImpl service(server_db_path);
 
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

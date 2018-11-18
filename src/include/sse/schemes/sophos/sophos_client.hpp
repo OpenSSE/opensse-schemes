@@ -74,12 +74,12 @@ public:
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
     const sse::crypto::TdpInverse&         inverse_tdp() const;
 
-    static const std::string tdp_sk_file__;
-    static const std::string derivation_key_file__;
+    static const char* tdp_sk_file__;
+    static const char* derivation_key_file__;
 
 private:
-    static const std::string rsa_prg_key_file__;
-    static const std::string counter_map_file__;
+    static const char* rsa_prg_key_file__;
+    static const char* counter_map_file__;
 
     crypto::Prf<kDerivationKeySize> k_prf_;
     sse::crypto::TdpInverse         inverse_tdp_;

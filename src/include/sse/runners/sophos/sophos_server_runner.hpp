@@ -27,7 +27,7 @@
 
 namespace sse {
 namespace sophos {
-void run_sophos_server(const std::string& address,
+void run_sophos_server(const std::string& server_address,
                        const std::string& server_db_path,
                        grpc::Server**     server_ptr,
                        bool               async_search);

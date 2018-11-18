@@ -49,12 +49,12 @@
 namespace sse {
 namespace sophos {
 
-const std::string tdp_sk_file__         = "tdp_sk.key";
-const std::string derivation_key_file__ = "derivation_master.key";
+const char* tdp_sk_file__         = "tdp_sk.key";
+const char* derivation_key_file__ = "derivation_master.key";
 
 
-const std::string rsa_prg_key_file__ = "rsa_prg.key";
-const std::string counter_map_file__ = "counters.dat";
+const char* rsa_prg_key_file__ = "rsa_prg.key";
+const char* counter_map_file__ = "counters.dat";
 
 static std::unique_ptr<SophosClient> init_client_in_directory(
     const std::string& dir_path)
@@ -177,8 +177,7 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
 
 SophosClientRunner::SophosClientRunner(const std::string& address,
                                        const std::string& path)
-    : bulk_update_state_{0}, update_launched_count_(0),
-      update_completed_count_(0)
+    : update_launched_count_(0), update_completed_count_(0)
 {
     std::shared_ptr<grpc::Channel> channel(
         grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
@@ -198,7 +197,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address,
 
         // start by creating a new directory
 
-        if (!create_directory(path, (mode_t)0700)) {
+        if (!create_directory(path, static_cast<mode_t>(0700))) {
             throw std::runtime_error(path + ": unable to create directory");
         }
 
@@ -256,8 +255,8 @@ const SophosClient& SophosClientRunner::client() const
 }
 
 std::list<uint64_t> SophosClientRunner::search(
-    const std::string&            keyword,
-    std::function<void(uint64_t)> receive_callback) const
+    const std::string&                   keyword,
+    const std::function<void(uint64_t)>& receive_callback) const
 {
     logger::log(logger::TRACE) << "Search " << keyword << std::endl;
 
@@ -277,7 +276,7 @@ std::list<uint64_t> SophosClientRunner::search(
         //        << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
 
-        if (receive_callback != NULL) {
+        if (receive_callback != nullptr) {
             receive_callback(reply.result());
         }
     }
@@ -419,8 +418,8 @@ void SophosClientRunner::update_completion_loop()
     update_tag_type* tag;
     bool             ok = false;
 
-    for (; stop_update_completion_thread_ == false; ok = false) {
-        bool r = update_cq_.Next((void**)&tag, &ok);
+    for (; !stop_update_completion_thread_; ok = false) {
+        bool r = update_cq_.Next(reinterpret_cast<void**>(&tag), &ok);
         if (!r) {
             logger::log(logger::TRACE)
                 << "Close asynchronous update loop" << std::endl;

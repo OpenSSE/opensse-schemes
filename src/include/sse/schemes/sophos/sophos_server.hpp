@@ -44,8 +44,8 @@ public:
     const std::string public_key() const;
 
     std::list<index_type> search(SearchRequest& req);
-    void                  search_callback(SearchRequest&                  req,
-                                          std::function<void(index_type)> post_callback);
+    void                  search_callback(SearchRequest&                         req,
+                                          const std::function<void(index_type)>& post_callback);
 
     std::list<index_type> search_parallel_full(SearchRequest& req);
     std::list<index_type> search_parallel(SearchRequest& req,

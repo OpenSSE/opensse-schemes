@@ -39,27 +39,27 @@ namespace sophos {
 class SophosImpl final : public sophos::Sophos::Service
 {
 public:
-    explicit SophosImpl(const std::string& path);
+    explicit SophosImpl(std::string path);
 
     grpc::Status setup(grpc::ServerContext*        context,
-                       const sophos::SetupMessage* request,
+                       const sophos::SetupMessage* message,
                        google::protobuf::Empty*    e) override;
 
     grpc::Status search(
         grpc::ServerContext*                     context,
-        const sophos::SearchRequestMessage*      request,
+        const sophos::SearchRequestMessage*      mes,
         grpc::ServerWriter<sophos::SearchReply>* writer) override;
 
     grpc::Status sync_search(grpc::ServerContext*                     context,
-                             const sophos::SearchRequestMessage*      request,
+                             const sophos::SearchRequestMessage*      mes,
                              grpc::ServerWriter<sophos::SearchReply>* writer);
 
     grpc::Status async_search(grpc::ServerContext*                     context,
-                              const sophos::SearchRequestMessage*      request,
+                              const sophos::SearchRequestMessage*      mes,
                               grpc::ServerWriter<sophos::SearchReply>* writer);
 
     grpc::Status update(grpc::ServerContext*                context,
-                        const sophos::UpdateRequestMessage* request,
+                        const sophos::UpdateRequestMessage* mes,
                         google::protobuf::Empty*            e) override;
 
     grpc::Status bulk_update(
@@ -74,8 +74,8 @@ public:
 
 
 private:
-    static const std::string pk_file;
-    static const std::string pairs_map_file;
+    static const char* pk_file;
+    static const char* pairs_map_file;
 
     std::unique_ptr<SophosServer> server_;
     std::string                   storage_path_;

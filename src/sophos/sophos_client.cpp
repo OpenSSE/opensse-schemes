@@ -30,12 +30,12 @@
 namespace sse {
 namespace sophos {
 
-const std::string SophosClient::tdp_sk_file__         = "tdp_sk.key";
-const std::string SophosClient::derivation_key_file__ = "derivation_master.key";
+const char* SophosClient::tdp_sk_file__         = "tdp_sk.key";
+const char* SophosClient::derivation_key_file__ = "derivation_master.key";
 
 
-const std::string SophosClient::rsa_prg_key_file__ = "rsa_prg.key";
-const std::string SophosClient::counter_map_file__ = "counters.dat";
+const char* SophosClient::rsa_prg_key_file__ = "rsa_prg.key";
+const char* SophosClient::counter_map_file__ = "counters.dat";
 
 constexpr size_t SophosClient::kKeywordIndexSize;
 
@@ -48,9 +48,7 @@ SophosClient::SophosClient(const std::string&      token_map_path,
 {
 }
 
-SophosClient::~SophosClient()
-{
-}
+SophosClient::~SophosClient() = default;
 
 size_t SophosClient::keyword_count() const
 {

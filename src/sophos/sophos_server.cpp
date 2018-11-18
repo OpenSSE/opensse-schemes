@@ -99,8 +99,8 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
 }
 
 void SophosServer::search_callback(
-    SearchRequest&                  req,
-    std::function<void(index_type)> post_callback)
+    SearchRequest&                         req,
+    const std::function<void(index_type)>& post_callback)
 {
     search_token_type st = req.token;
 
@@ -178,8 +178,8 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
     };
 
     auto lookup_job
-        = [&derivation_prf, &decrypt_pool, &decrypt_job, this](
-              const std::string& st_string, const update_token_type& token) {
+        = [&decrypt_pool, &decrypt_job, this](const std::string& st_string,
+                                              const update_token_type& token) {
               index_type r;
 
               if (logger::severity() <= logger::DBG) {
@@ -242,8 +242,7 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
     unsigned n_threads = std::thread::hardware_concurrency() - 3;
 
     for (uint8_t t = 0; t < n_threads; t++) {
-        rsa_threads.push_back(
-            std::thread(rsa_job, t, req.add_count, n_threads));
+        rsa_threads.emplace_back(rsa_job, t, req.add_count, n_threads);
     }
 
     for (uint8_t t = 0; t < n_threads; t++) {
@@ -284,7 +283,10 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
         update_token_type                     token;
         std::array<uint8_t, kUpdateTokenSize> mask;
         gen_update_token_masks(
-            derivation_prf, (uint8_t*)st_string.data(), token, mask);
+            derivation_prf,
+            reinterpret_cast<const uint8_t*>(st_string.data()),
+            token,
+            mask);
 
         index_type r;
 
@@ -303,6 +305,7 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
         } else {
             logger::log(logger::ERROR)
                 << "We were supposed to find something!" << std::endl;
+            return;
         }
 
         index_type v = xor_mask(r, mask);
@@ -344,8 +347,7 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
     unsigned n_threads = std::thread::hardware_concurrency() - access_threads;
 
     for (uint8_t t = 0; t < n_threads; t++) {
-        rsa_threads.push_back(
-            std::thread(rsa_job, t, req.add_count, n_threads));
+        rsa_threads.emplace_back(rsa_job, t, req.add_count, n_threads);
     }
 
     for (uint8_t t = 0; t < n_threads; t++) {
@@ -444,7 +446,7 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req,
     //    std::thread::hardware_concurrency()-access_threads;
 
     for (uint8_t t = 0; t < thread_count; t++) {
-        rsa_threads.push_back(std::thread(job, t, req.add_count, thread_count));
+        rsa_threads.emplace_back(job, t, req.add_count, thread_count);
     }
 
     for (uint8_t t = 0; t < thread_count; t++) {
@@ -542,8 +544,7 @@ void SophosServer::search_parallel_callback(
     //    std::thread::hardware_concurrency()-access_threads;
 
     for (uint8_t t = 0; t < rsa_thread_count; t++) {
-        rsa_threads.push_back(
-            std::thread(rsa_job, t, req.add_count, rsa_thread_count));
+        rsa_threads.emplace_back(rsa_job, t, req.add_count, rsa_thread_count);
     }
 
     for (uint8_t t = 0; t < rsa_thread_count; t++) {
@@ -638,7 +639,7 @@ void SophosServer::search_parallel_light_callback(
     //    std::thread::hardware_concurrency()-access_threads;
 
     for (uint8_t t = 0; t < thread_count; t++) {
-        rsa_threads.push_back(std::thread(job, t, req.add_count, thread_count));
+        rsa_threads.emplace_back(job, t, req.add_count, thread_count);
     }
 
     for (uint8_t t = 0; t < thread_count; t++) {

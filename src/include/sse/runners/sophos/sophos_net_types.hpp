@@ -24,6 +24,7 @@
 #include <utility>
 #include <memory>
 #include <grpc/grpc.h>
+#include <google/protobuf/empty.pb.h>
 
 namespace sse {
     namespace sophos {

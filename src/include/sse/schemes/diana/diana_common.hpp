@@ -40,8 +40,10 @@ inline void gen_update_token_mask(search_token_key_type& search_token,
 {
     static_assert(crypto::Prg::kKeySize == kSearchTokenKeySize,
                   "Invalid search token size");
-    gen_update_token_mask(
-        search_token.data(), update_token, sizeof(T), (uint8_t*)&mask);
+    gen_update_token_mask(search_token.data(),
+                          update_token,
+                          sizeof(T),
+                          reinterpret_cast<uint8_t*>(&mask));
 }
 
 template<typename T>
@@ -49,8 +51,10 @@ inline void gen_update_token_mask(uint8_t*           search_token,
                                   update_token_type& update_token,
                                   T&                 mask)
 {
-    gen_update_token_mask(
-        search_token, update_token, sizeof(T), (uint8_t*)&mask);
+    gen_update_token_mask(search_token,
+                          update_token,
+                          sizeof(T),
+                          reinterpret_cast<uint8_t*>(&mask));
 }
 
 template<size_t N>

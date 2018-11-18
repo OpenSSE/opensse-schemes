@@ -398,16 +398,16 @@ RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
         logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
-        db_ = NULL;
+        db_ = nullptr;
     }
 }
 
 template<typename T, class Serializer>
 RockDBListStore<T, Serializer>::~RockDBListStore()
 {
-    if (db_) {
+    
         delete db_;
-    }
+    
 }
 
 template<typename T, class Serializer>

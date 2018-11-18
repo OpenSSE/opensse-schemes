@@ -30,12 +30,12 @@ constexpr size_t kSearchTokenKeySize = TokenTree::kTokenSize;
 constexpr size_t kUpdateTokenSize    = 16;
 constexpr size_t kKeywordTokenSize   = 32;
 
-typedef TokenTree::token_type                  search_token_key_type;
-typedef std::array<uint8_t, kKeywordTokenSize> keyword_token_type;
-typedef std::array<uint8_t, kUpdateTokenSize>  update_token_type;
+using search_token_key_type = TokenTree::token_type;
+using keyword_token_type    = std::array<uint8_t, kKeywordTokenSize>;
+using update_token_type     = std::array<uint8_t, kUpdateTokenSize>;
 //        typedef uint64_t index_type;
 
-typedef std::list<std::pair<TokenTree::token_type, uint8_t>> search_token_type;
+using search_token_type = std::list<std::pair<TokenTree::token_type, uint8_t>>;
 
 struct SearchRequest
 {
@@ -54,9 +54,9 @@ struct UpdateRequest
 template<typename T>
 T xor_mask(const T& index, std::array<uint8_t, sizeof(T)>& mask)
 {
-    T        res;
-    uint8_t* res_ptr   = (uint8_t*)&res;
-    uint8_t* index_ptr = (uint8_t*)&index;
+    T              res;
+    uint8_t*       res_ptr   = reinterpret_cast<uint8_t*>(&res);
+    const uint8_t* index_ptr = reinterpret_cast<const uint8_t*>(&index);
 
 
     for (size_t i = 0; i < sizeof(T); i++) {
@@ -69,10 +69,10 @@ T xor_mask(const T& index, std::array<uint8_t, sizeof(T)>& mask)
 template<typename T>
 T xor_mask(const T& index, const T& mask)
 {
-    T        res;
-    uint8_t* res_ptr   = (uint8_t*)&res;
-    uint8_t* index_ptr = (uint8_t*)&index;
-    uint8_t* mask_ptr  = (uint8_t*)&mask;
+    T              res;
+    uint8_t*       res_ptr   = reinterpret_cast<uint8_t*>(&res);
+    const uint8_t* index_ptr = reinterpret_cast<const uint8_t*>(&index);
+    const uint8_t* mask_ptr  = reinterpret_cast<const uint8_t*>(&mask);
 
 
     for (size_t i = 0; i < sizeof(T); i++) {

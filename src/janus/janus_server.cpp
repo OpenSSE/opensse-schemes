@@ -13,27 +13,26 @@
 namespace sse {
 namespace sophos {
 
-using namespace janus;
-
 template<>
-struct serialization<JanusServer::cached_result_type>
+struct serialization<janus::JanusServer::cached_result_type>
 {
-    std::string serialize(const JanusServer::cached_result_type& elt)
+    std::string serialize(const janus::JanusServer::cached_result_type& elt)
     {
         logger::log(logger::LoggerSeverity::DBG)
             << "Serializing pair (" << hex_string(elt.first) << ", "
             << hex_string(elt.second) << ")\n";
 
-        return std::string((char*)(&(elt.first)), sizeof(index_type))
+        return std::string(reinterpret_cast<const char*>(&(elt.first)),
+                           sizeof(janus::index_type))
                + std::string(elt.second.begin(), elt.second.end());
         ;
     }
-    bool deserialize(std::string::iterator&           begin,
-                     const std::string::iterator&     end,
-                     JanusServer::cached_result_type& out)
+    bool deserialize(std::string::iterator&                  begin,
+                     const std::string::iterator&            end,
+                     janus::JanusServer::cached_result_type& out)
     {
-        if (end - begin
-            < sizeof(janus::index_type) + sizeof(crypto::punct::kTagSize)) {
+        if (end < begin + sizeof(janus::index_type)
+                      + sizeof(crypto::punct::kTagSize)) {
             if (end != begin) {
                 logger::log(logger::LoggerSeverity::ERROR)
                     << "Unable to deserialize" << std::endl;
@@ -48,17 +47,17 @@ struct serialization<JanusServer::cached_result_type>
                                           + sizeof(crypto::punct::kTagSize)))
             << "\n";
 
-        index_type              ind;
+        janus::index_type       ind;
         crypto::punct::tag_type tag;
 
-        std::copy(begin, begin + sizeof(index_type), &ind);
-        std::copy(begin + sizeof(index_type),
-                  begin + sizeof(index_type) + tag.size(),
+        std::copy(begin, begin + sizeof(janus::index_type), &ind);
+        std::copy(begin + sizeof(janus::index_type),
+                  begin + sizeof(janus::index_type) + tag.size(),
                   tag.begin());
 
-        begin += sizeof(index_type) + tag.size();
+        begin += sizeof(janus::index_type) + tag.size();
 
-        out = std::make_pair(ind, std::move(tag));
+        out = std::make_pair(ind, tag);
 
         logger::log(logger::LoggerSeverity::DBG)
             << "Deserializing pair (" << hex_string(out.first) << ", "
@@ -119,7 +118,7 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
         auto tag = crypto::punct::extract_tag(*sk_it);
         logger::log(logger::LoggerSeverity::DBG)
             << "tag " << hex_string(tag) << " is removed" << std::endl;
-        removed_tags.insert(std::move(tag));
+        removed_tags.insert(tag);
     }
 
     crypto::PuncturableDecryption decryptor(crypto::punct::punctured_key_type{
@@ -151,8 +150,7 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
         index_type r;
         if (decryptor.decrypt(ct, r)) {
             results.push_back(r);
-            cached_res_list.push_back(
-                std::make_pair(r, crypto::punct::extract_tag(ct)));
+            cached_res_list.emplace_back(r, crypto::punct::extract_tag(ct));
         }
     }
 
@@ -195,8 +193,9 @@ void JanusServer::search_parallel(
     uint8_t                                threads_count,
     const std::function<void(index_type)>& post_callback)
 {
-    auto aux
-        = [&post_callback](index_type ind, uint8_t i) { post_callback(ind); };
+    auto aux = [&post_callback](index_type ind, uint8_t /*i*/) {
+        post_callback(ind);
+    };
     search_parallel(req, threads_count, aux);
 }
 
@@ -221,15 +220,14 @@ void JanusServer::search_parallel(
     std::mutex                    cache_mtx;
 
     auto decryption_callback
-        = [this, &req, &decryptor, &post_callback, &new_cache, &cache_mtx](
+        = [&decryptor, &post_callback, &new_cache, &cache_mtx](
               crypto::punct::ciphertext_type ct, uint8_t i) {
               index_type r;
               if (decryptor.decrypt(ct, r)) {
                   post_callback(r, i);
 
                   cache_mtx.lock();
-                  new_cache.push_back(
-                      std::make_pair(r, crypto::punct::extract_tag(ct)));
+                  new_cache.emplace_back(r, crypto::punct::extract_tag(ct));
                   cache_mtx.unlock();
               }
           };
@@ -254,7 +252,7 @@ void JanusServer::search_parallel(
             auto tag = crypto::punct::extract_tag(*sk_it);
             logger::log(logger::LoggerSeverity::DBG)
                 << "tag " << hex_string(tag) << " is removed" << std::endl;
-            removed_tags.insert(std::move(tag));
+            removed_tags.insert(tag);
         }
 
 

@@ -41,9 +41,9 @@ class DianaServer
 public:
     static constexpr size_t kKeySize = 32;
 
-    typedef T index_type;
+    using index_type = T;
 
-    DianaServer(const std::string& db_path);
+    explicit DianaServer(const std::string& db_path);
 
     std::list<index_type> search(SearchRequest& req,
                                  bool           delete_results = false);
@@ -120,7 +120,8 @@ bool DianaServer<T>::get_unmask(uint8_t*    key,
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
             << "Derived leaf token: "
-            << hex_string(std::string((const char*)key, kSearchTokenKeySize))
+            << hex_string(std::string(reinterpret_cast<const char*>(key),
+                                      kSearchTokenKeySize))
             << std::endl;
     }
 
@@ -188,20 +189,18 @@ void DianaServer<T>::search(
         }
     };
 
-    for (auto it_token = req.token_list.begin();
-         it_token != req.token_list.end();
-         ++it_token) {
+    for (auto& it_token : req.token_list) {
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Search token key: " << hex_string(it_token->first)
+                << "Search token key: " << hex_string(it_token.first)
                 << std::endl;
             logger::log(logger::LoggerSeverity::DBG)
                 << "Search token depth: " << std::dec
-                << (uint32_t)(it_token->second) << std::endl;
+                << static_cast<uint32_t>(it_token.second) << std::endl;
         }
 
         TokenTree::derive_all_leaves(
-            it_token->first, it_token->second, get_callback);
+            it_token.first, it_token.second, get_callback);
     }
 }
 
@@ -223,16 +222,14 @@ void DianaServer<T>::search_simple(
     crypto::Prf<kUpdateTokenSize> derivation_prf(
         crypto::Key<kKeySize>(req.kw_token.data()));
 
-    for (auto it_token = req.token_list.begin();
-         it_token != req.token_list.end();
-         ++it_token) {
+    for (auto& it_token : req.token_list) {
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Search token key: " << hex_string(it_token->first)
+                << "Search token key: " << hex_string(it_token.first)
                 << std::endl;
             logger::log(logger::LoggerSeverity::DBG)
                 << "Search token depth: " << std::dec
-                << (uint32_t)(it_token->second) << std::endl;
+                << static_cast<uint32_t>(it_token.second) << std::endl;
         }
 
         // for now we implement the search algorithm in a naive way:
@@ -241,18 +238,18 @@ void DianaServer<T>::search_simple(
         // times. we leave optimizations for later
 
 
-        uint64_t count = 1 << it_token->second;
+        uint64_t count = 1 << it_token.second;
 
         for (uint64_t i = 0; i < count; i++) {
             // because we are using the naive algorithm, we will call
             // derive_node many times with the same key if not copied, the key
             // will be set to 0 during the first call so, although this is
             // unsecure, we have to explicitely copy the key
-            auto node_copy = it_token->first;
+            auto node_copy = it_token.first;
             auto t         = TokenTree::derive_node(
                 crypto::Key<TokenTree::kTokenSize>(node_copy.data()),
                 i,
-                it_token->second);
+                it_token.second);
 
             if (logger::severity() <= logger::LoggerSeverity::DBG) {
                 logger::log(logger::LoggerSeverity::DBG)
@@ -338,7 +335,7 @@ void DianaServer<T>::search_simple_parallel(SearchRequest& req,
 
     std::atomic<uint64_t> r_index(0);
 
-    auto callback = [&results, &r_index](index_type i, uint8_t thread_id) {
+    auto callback = [&results, &r_index](index_type i, uint8_t /*thread_id*/) {
         results[r_index++] = i;
     };
 
@@ -352,8 +349,9 @@ void DianaServer<T>::search_simple_parallel(
     uint8_t                                threads_count,
     bool                                   delete_results)
 {
-    auto aux
-        = [&post_callback](index_type ind, uint8_t i) { post_callback(ind); };
+    auto aux = [&post_callback](index_type ind, uint8_t /*i*/) {
+        post_callback(ind);
+    };
     search_simple_parallel(req, aux, threads_count, delete_results);
 }
 

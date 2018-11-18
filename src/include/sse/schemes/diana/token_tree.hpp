@@ -37,8 +37,8 @@ class TokenTree
 public:
     static constexpr uint8_t kTokenSize = crypto::Prg::kKeySize;
 
-    typedef std::array<uint8_t, kTokenSize> token_type;
-    typedef crypto::Key<kTokenSize>         inner_token_type;
+    using token_type       = std::array<uint8_t, kTokenSize>;
+    using inner_token_type = crypto::Key<kTokenSize>;
 
     // secure derivation of a single token
     static inner_token_type derive_inner_node(inner_token_type&& K,

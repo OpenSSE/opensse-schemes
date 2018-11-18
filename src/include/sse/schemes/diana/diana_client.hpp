@@ -47,8 +47,8 @@ public:
     static constexpr size_t kKeywordIndexSize = 16;
     static constexpr size_t kKeySize          = 32;
 
-    typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
-    typedef T                                      index_type;
+    using keyword_index_type = std::array<uint8_t, kKeywordIndexSize>;
+    using index_type         = T;
 
     static constexpr size_t kTreeDepth = 48;
 
@@ -107,9 +107,7 @@ DianaClient<T>::DianaClient(const std::string&      token_map_path,
 }
 
 template<typename T>
-DianaClient<T>::~DianaClient()
-{
-}
+DianaClient<T>::~DianaClient() = default;
 
 template<typename T>
 typename DianaClient<T>::keyword_index_type DianaClient<T>::get_keyword_index(

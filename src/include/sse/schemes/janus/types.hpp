@@ -19,10 +19,10 @@ namespace janus {
 
 constexpr size_t kInsertionTokenPayloadSize = crypto::punct::kCiphertextSize;
 
-typedef uint64_t index_type;
+using index_type = uint64_t;
 
-constexpr size_t                               kKeywordTokenSize = 16;
-typedef std::array<uint8_t, kKeywordTokenSize> keyword_token_type;
+constexpr size_t kKeywordTokenSize = 16;
+using keyword_token_type           = std::array<uint8_t, kKeywordTokenSize>;
 
 struct SearchRequest
 {
@@ -34,9 +34,9 @@ struct SearchRequest
     crypto::punct::key_share_type first_key_share;
 };
 
-typedef diana::UpdateRequest<crypto::punct::ciphertext_type> InsertionRequest;
+using InsertionRequest = diana::UpdateRequest<crypto::punct::ciphertext_type>;
 
-typedef diana::UpdateRequest<crypto::punct::key_share_type> DeletionRequest;
+using DeletionRequest = diana::UpdateRequest<crypto::punct::key_share_type>;
 
 } // namespace janus
 } // namespace sse

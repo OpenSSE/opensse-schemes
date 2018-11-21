@@ -17,9 +17,9 @@ echo "Using $CPPCHECK"
 # legacy_cppcheck=true
 
 # if [ "$legacy_cppcheck" = true ] ; then
-    INCLUDES="-Isrc  -Isrc/include"
+    INCLUDES="-Ilib  -Ilib/include"
 
-    COMMAND="$CPPCHECK src $INCLUDES $CPPCHECK_OPTIONS"
+    COMMAND="$CPPCHECK lib $INCLUDES $CPPCHECK_OPTIONS"
 
 # else
 #     if [ ! -f $STATIC_ANALYSIS_DIR/compile_commands.json ]; then

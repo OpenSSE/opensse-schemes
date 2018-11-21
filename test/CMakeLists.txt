@@ -1,0 +1,6 @@
+add_executable(sophos_debug test_sophos.cpp)
+target_link_libraries(sophos_debug OpenSSE::schemes)
+add_executable(diana_debug test_diana.cpp)
+target_link_libraries(diana_debug OpenSSE::schemes)
+add_executable(janus_debug test_janus.cpp)
+target_link_libraries(janus_debug OpenSSE::schemes)

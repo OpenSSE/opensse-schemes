@@ -23,7 +23,7 @@ set +e
 
 EXCLUDE_PATTERN="*.pb.(h|cc)" # The 'a^' regexp matches nothing
 
-FILES=`find src -name '*.cpp' -or -name '*.c' | grep -ve $EXCLUDE_PATTERN | tr '\n' ' '`
+FILES="$(find lib src -name '*.cpp' -or -name '*.c' | grep -ve $EXCLUDE_PATTERN | tr '\n' ' ')"
 
 TIDY_COMMAND="$CLANG_TIDY -p=$STATIC_ANALYSIS_DIR $FILES"
 echo "$TIDY_COMMAND"	

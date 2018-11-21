@@ -57,21 +57,7 @@ find_package(GRPC)
 add_subdirectory(third_party/crypto/src)
 add_subdirectory(third_party/db-parser/src)
 
+add_subdirectory(lib)
 add_subdirectory(src)
+add_subdirectory(test)
 
-add_executable(sophos_debug test_sophos.cpp)
-target_link_libraries(sophos_debug OpenSSE::schemes)
-add_executable(diana_debug test_diana.cpp)
-target_link_libraries(diana_debug OpenSSE::schemes)
-add_executable(janus_debug test_janus.cpp)
-target_link_libraries(janus_debug OpenSSE::schemes)
-
-add_executable(sophos_client sophos_client.cpp)
-target_link_libraries(sophos_client OpenSSE::runners)
-add_executable(sophos_server sophos_server.cpp)
-target_link_libraries(sophos_server OpenSSE::runners)
-
-add_executable(diana_client diana_client.cpp)
-target_link_libraries(diana_client OpenSSE::runners)
-add_executable(diana_server diana_server.cpp)
-target_link_libraries(diana_server OpenSSE::runners)

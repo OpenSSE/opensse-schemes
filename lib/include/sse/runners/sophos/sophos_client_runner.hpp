@@ -44,7 +44,7 @@ namespace sophos {
 #ifndef SOPHOS_CLIENT_RUNNER_CPP
 namespace Sophos {
 class Stub;
-}
+} // namespace Sophos
 #endif
 
 class SearchRequestMessage;

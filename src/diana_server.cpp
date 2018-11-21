@@ -14,17 +14,17 @@
 #include <grpc++/server.h>
 
 #include <csignal>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 
-grpc::Server* server_ptr__ = NULL;
+grpc::Server* server_ptr__ = nullptr;
 
-void exit_handler(int signal)
+void exit_handler(__attribute__((unused)) int signal)
 {
     sse::logger::log(sse::logger::LoggerSeverity::INFO)
         << "\nExiting ... " << std::endl;
 
-    if (server_ptr__) {
+    if (server_ptr__ != nullptr) {
         server_ptr__->Shutdown();
     }
 };
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     bool async_search = true;
 
     std::string server_db;
-    while ((c = getopt(argc, argv, "b:s")) != -1)
+    while ((c = getopt(argc, argv, "b:s")) != -1) {
         switch (c) {
         case 'b':
             server_db = std::string(optarg);
@@ -57,16 +57,18 @@ int main(int argc, char** argv)
             break;
 
         case '?':
-            if (optopt == 'i')
+            if (optopt == 'i') {
                 fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint(optopt))
+            } else if (isprint(optopt) != 0) {
                 fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-            else
+            } else {
                 fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+            }
             return 1;
         default:
             exit(-1);
         }
+    }
 
     if (async_search) {
         sse::logger::log(sse::logger::LoggerSeverity::INFO)
@@ -76,7 +78,7 @@ int main(int argc, char** argv)
             << "Synchronous searches" << std::endl;
     }
 
-    if (server_db.size() == 0) {
+    if (server_db.empty()) {
         sse::logger::log(sse::logger::LoggerSeverity::WARNING)
             << "Server database not specified" << std::endl;
         sse::logger::log(sse::logger::LoggerSeverity::WARNING)

@@ -45,7 +45,7 @@ namespace diana {
 #ifndef DIANA_CLIENT_RUNNER_CPP
 namespace Diana {
 class Stub;
-}
+} // namespace Diana
 #endif
 
 class SearchRequestMessage;

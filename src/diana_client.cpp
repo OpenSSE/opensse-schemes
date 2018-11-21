@@ -12,14 +12,14 @@
 
 #include <sse/crypto/utils.hpp>
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 
 #include <iostream>
 #include <list>
 #include <mutex>
 
-__thread std::list<std::pair<std::string, uint64_t>>* buffer_list__ = NULL;
+__thread std::list<std::pair<std::string, uint64_t>>* buffer_list__ = nullptr;
 
 int main(int argc, char** argv)
 {
@@ -39,17 +39,17 @@ int main(int argc, char** argv)
 
     bool print_results = true;
 
-    while ((c = getopt(argc, argv, "l:b:dpr:q")) != -1)
+    while ((c = getopt(argc, argv, "l:b:dpr:q")) != -1) {
         switch (c) {
         case 'l':
-            input_files.push_back(std::string(optarg));
+            input_files.emplace_back(optarg);
             break;
         case 'b':
             client_db = std::string(optarg);
             break;
         case 'd': // load a default file, only for debugging
             //            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
-            input_files.push_back(
+            input_files.emplace_back(
                 "/Users/raphaelbost/Documents/inverted_index_1000.json");
             break;
         case 'p':
@@ -59,29 +59,31 @@ int main(int argc, char** argv)
             print_results = false;
             break;
         case 'r':
-            rnd_entries_count
-                = (uint32_t)std::stod(std::string(optarg), nullptr);
+            rnd_entries_count = static_cast<uint32_t>(
+                std::stod(std::string(optarg), nullptr));
             // atol(optarg);
             break;
         case '?':
             if (optopt == 'l' || optopt == 'b' || optopt == 'o' || optopt == 'i'
-                || optopt == 't' || optopt == 'r')
+                || optopt == 't' || optopt == 'r') {
                 fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint(optopt))
+            } else if (isprint(optopt) != 0) {
                 fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-            else
+            } else {
                 fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+            }
             return 1;
         default:
             exit(-1);
         }
+    }
 
 
     for (int index = optind; index < argc; index++) {
-        keywords.push_back(std::string(argv[index]));
+        keywords.emplace_back(argv[index]);
     }
 
-    if (client_db.size() == 0) {
+    if (client_db.empty()) {
         sse::logger::log(sse::logger::LoggerSeverity::WARNING)
             << "Client database not specified" << std::endl;
         sse::logger::log(sse::logger::LoggerSeverity::WARNING)
@@ -93,15 +95,6 @@ int main(int argc, char** argv)
     }
 
     std::unique_ptr<sse::diana::DianaClientRunner> client_runner;
-
-    size_t   setup_size = 1e5;
-    uint32_t n_keywords = 1e4;
-
-    if (rnd_entries_count > 0) {
-        setup_size = 11 * rnd_entries_count;
-        n_keywords = 1.4 * rnd_entries_count
-                     / (10 * std::thread::hardware_concurrency());
-    }
 
     client_runner.reset(
         new sse::diana::DianaClientRunner("localhost:4241", client_db));
@@ -122,7 +115,7 @@ int main(int argc, char** argv)
         std::mutex buffer_mtx;
 
         auto gen_callback = [&client_runner](const std::string& s, size_t i) {
-            if (buffer_list__ == NULL) {
+            if (buffer_list__ == nullptr) {
                 buffer_list__
                     = new std::list<std::pair<std::string, uint64_t>>();
             }

@@ -12,7 +12,7 @@
 
 #include <sse/crypto/utils.hpp>
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 
 #include <mutex>
@@ -31,52 +31,50 @@ int main(int argc, char** argv)
     std::list<std::string> keywords;
     std::string            client_db;
     bool                   print_stats       = false;
-    uint32_t               bench_count       = 0;
     uint32_t               rnd_entries_count = 0;
 
-    while ((c = getopt(argc, argv, "l:b:o:i:t:dpr:")) != -1)
+    while ((c = getopt(argc, argv, "l:b:o:i:dpr:")) != -1) {
         switch (c) {
         case 'l':
-            input_files.push_back(std::string(optarg));
+            input_files.emplace_back(optarg);
             break;
         case 'b':
             client_db = std::string(optarg);
             break;
-        case 't':
-            bench_count = atoi(optarg);
-            break;
         case 'd': // load a default file, only for debugging
             //            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
-            input_files.push_back(
+            input_files.emplace_back(
                 "/Users/raphaelbost/Documents/inverted_index_1000.json");
             break;
         case 'p':
             print_stats = true;
             break;
         case 'r':
-            rnd_entries_count
-                = (uint32_t)std::stod(std::string(optarg), nullptr);
+            rnd_entries_count = static_cast<uint32_t>(
+                std::stod(std::string(optarg), nullptr));
             // atol(optarg);
             break;
         case '?':
             if (optopt == 'l' || optopt == 'b' || optopt == 't'
-                || optopt == 'r')
+                || optopt == 'r') {
                 fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint(optopt))
+            } else if (isprint(optopt) != 0) {
                 fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-            else
+            } else {
                 fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+            }
             return 1;
         default:
             exit(-1);
         }
+    }
 
 
     for (int index = optind; index < argc; index++) {
-        keywords.push_back(std::string(argv[index]));
+        keywords.emplace_back(argv[index]);
     }
 
-    if (client_db.size() == 0) {
+    if (client_db.empty()) {
         sse::logger::log(sse::logger::LoggerSeverity::WARNING)
             << "Client database not specified" << std::endl;
         sse::logger::log(sse::logger::LoggerSeverity::WARNING)
@@ -88,16 +86,6 @@ int main(int argc, char** argv)
     }
 
     std::unique_ptr<sse::sophos::SophosClientRunner> client_runner;
-
-
-    size_t   setup_size = 1e5;
-    uint32_t n_keywords = 1e4;
-
-    if (rnd_entries_count > 0) {
-        setup_size = 11 * rnd_entries_count;
-        n_keywords = 1.4 * rnd_entries_count
-                     / (10 * std::thread::hardware_concurrency());
-    }
 
     client_runner.reset(
         new sse::sophos::SophosClientRunner("localhost:4240", client_db));

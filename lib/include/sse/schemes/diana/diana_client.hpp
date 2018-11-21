@@ -179,7 +179,6 @@ UpdateRequest<T> DianaClient<T>::update_request(const std::string& keyword,
 
     // get (and possibly construct) the keyword index
     keyword_index_type kw_index = get_keyword_index(keyword);
-    std::string        seed(kw_index.begin(), kw_index.end());
 
     // retrieve the counter
     uint32_t kw_counter;
@@ -232,7 +231,6 @@ std::list<UpdateRequest<T>> DianaClient<T>::bulk_update_request(
 
         // get (and possibly construct) the keyword index
         keyword_index_type kw_index = get_keyword_index(keyword);
-        std::string        seed(kw_index.begin(), kw_index.end());
 
         // retrieve the counter
         uint32_t kw_counter = std::get<2>(*it);

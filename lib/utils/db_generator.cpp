@@ -83,12 +83,13 @@ static void generation_job(
     std::string keyword_01, keyword_1, keyword_10;
     std::string kw_10_1, kw_10_2, kw_10_3, kw_10_4, kw_10_5, kw_10_6, kw_20,
         kw_30, kw_60;
-    std::string kw_rand_10_3;
 
 
-    bool use_rnd_group_2 = false, use_rnd_group_3 = false,
-         use_rnd_group_4 = false, use_rnd_group_5 = false,
-         use_rnd_group_6 = false;
+    bool use_rnd_group_2 = true;
+    bool use_rnd_group_3 = true;
+    bool use_rnd_group_4 = true;
+    bool use_rnd_group_5 = true;
+    bool use_rnd_group_6 = true;
 
     //            uint16_t n_groups_3 = (int)ceilf(96./step), n_groups_4 =
     //            (int)ceilf(100./step), n_groups_5 = (int)ceilf(10./step),
@@ -109,11 +110,6 @@ static void generation_job(
         = optimal_num_group(N_entries, step, size_group_6);
 
 
-    use_rnd_group_2 = true;
-    use_rnd_group_3 = true;
-    use_rnd_group_4 = true;
-    use_rnd_group_5 = true;
-    use_rnd_group_6 = true;
     // use_rnd_group_2
     //     = true || (1.5 * N_entries >= n_groups_2 * size_group_2 * step);
     // use_rnd_group_3
@@ -176,11 +172,10 @@ static void generation_job(
     //
 
     std::string kw;
-    uint32_t    new_entries;
 
     for (size_t i = 0; counter < N_entries; counter += step, i++) {
-        size_t ind  = dist(rng);
-        new_entries = 0;
+        size_t   ind         = dist(rng);
+        uint32_t new_entries = 0;
 
         double w_d = (static_cast<double>(ind)) / (static_cast<uint64_t>(~0));
         std::list<std::string> insertions;
@@ -567,7 +562,6 @@ void gen_db(size_t                                          N_entries,
 
     unsigned int             n_threads = std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
-    std::mutex               rpc_mutex;
 
     for (unsigned int i = 0; i < n_threads; i++) {
         threads.emplace_back(std::thread(generation_job,

@@ -80,7 +80,6 @@ static std::unique_ptr<DC> construct_client_from_directory(
     }
 
     std::ifstream     master_key_in(master_key_path.c_str());
-    std::ifstream     kw_token_key_in(kw_token_master_key_path.c_str());
     std::stringstream master_key_buf, kw_token_key_buf;
 
     master_key_buf << master_key_in.rdbuf();

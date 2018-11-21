@@ -62,8 +62,7 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
         crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     for (size_t i = 0; i < req.add_count; i++) {
-        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
-        index_type  r;
+        index_type                            r;
         update_token_type                     ut;
         std::array<uint8_t, kUpdateTokenSize> mask;
         gen_update_token_masks(derivation_prf, st.data(), ut, mask);
@@ -118,8 +117,7 @@ void SophosServer::search_callback(
         crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
 
     for (size_t i = 0; i < req.add_count; i++) {
-        std::string st_string(reinterpret_cast<char*>(st.data()), st.size());
-        index_type  r;
+        index_type                            r;
         update_token_type                     ut;
         std::array<uint8_t, kUpdateTokenSize> mask;
         gen_update_token_masks(derivation_prf, st.data(), ut, mask);
@@ -178,6 +176,7 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
     };
 
     auto lookup_job
+        // cppcheck-suppress variableScope
         = [&decrypt_pool, &decrypt_job, this](const std::string& st_string,
                                               const update_token_type& token) {
               index_type r;

@@ -82,7 +82,7 @@ inline ThreadPool::ThreadPool(uint32_t threads)
 {
     for (uint32_t i = 0; i < threads; ++i) {
         workers.emplace_back([this, &i] {
-            register_thread(i);
+            this->register_thread(i);
             for (;;) {
                 std::function<void()> task;
 

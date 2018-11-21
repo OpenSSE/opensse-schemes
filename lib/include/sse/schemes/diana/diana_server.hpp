@@ -82,9 +82,9 @@ public:
 private:
     bool get_unmask(uint8_t* key, index_type& index, bool delete_key);
 
-    inline bool retrieve_entry(const update_token_type key,
-                               index_type&             index,
-                               bool                    delete_key)
+    inline bool retrieve_entry(const update_token_type& key,
+                               index_type&              index,
+                               bool                     delete_key)
     {
         bool found = edb_.get(key, index);
         if (delete_key && found) {
@@ -182,6 +182,7 @@ void DianaServer<T>::search(
     crypto::Prf<kUpdateTokenSize> derivation_prf(
         crypto::Key<kKeySize>(req.kw_token.data()));
 
+    // cppcheck-suppress variableScope
     auto get_callback = [this, &post_callback, delete_results](uint8_t* key) {
         index_type index;
         if (get_unmask(key, index, delete_results)) {
@@ -373,6 +374,7 @@ void DianaServer<T>::search_simple_parallel(
                    const uint64_t       min_index,
                    const uint64_t       max_index) {
         auto get_callback
+            // cppcheck-suppress variableScope
             = [this, t_id, &post_callback, delete_results](uint8_t* key) {
                   index_type index;
                   if (get_unmask(key, index, delete_results)) {
@@ -383,14 +385,13 @@ void DianaServer<T>::search_simple_parallel(
         uint64_t loc_min_index = min_index;
         uint64_t loc_max_index = max_index;
 
-        // find the starting token
-        uint64_t leaf_count = 0;
 
         auto key_it = req.token_list.begin();
 
         do {
+            // find the starting token
             // this is the number of leafs for the current node
-            leaf_count = (1UL << key_it->second);
+            uint64_t leaf_count = (1UL << key_it->second);
 
             if ((leaf_count <= loc_min_index)) {
                 // the selected leaf does not cover the minimum index

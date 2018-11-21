@@ -57,8 +57,10 @@ public:
     using index_type = uint64_t;
 
     DianaClientRunner(const std::string& address, const std::string& path);
-    //            DianaClientRunner(const std::string& address, const
-    //            std::string& db_path, const std::string& json_path);
+
+    DianaClientRunner(const DianaClientRunner&) = delete; // not copyable
+    DianaClientRunner(DianaClientRunner&&)      = delete; // not movable
+
     ~DianaClientRunner();
 
     const DianaClient<index_type>& client() const;
@@ -86,6 +88,11 @@ public:
 
     //            void random_search() const;
     //            void search_benchmark(size_t n_bench) const;
+
+    // not copyable by any mean
+    DianaClientRunner& operator=(const DianaClientRunner& h) = delete;
+    DianaClientRunner& operator=(DianaClientRunner& h) = delete;
+
 private:
     void update_completion_loop();
 

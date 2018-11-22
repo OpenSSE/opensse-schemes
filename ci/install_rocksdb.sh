@@ -12,7 +12,7 @@ else
 	git clone https://github.com/facebook/rocksdb.git
 	cd rocksdb
 
-	make INSTALL_PATH=$INSTALL_DIR shared_lib -j
+	make INSTALL_PATH=$INSTALL_DIR shared_lib -j4
 	sudo make INSTALL_PATH=$INSTALL_DIR install
 	make clean
 fi

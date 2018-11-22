@@ -1,7 +1,3 @@
-branches:
-  except:
-  - cmake
-  
 language: cpp
 
 os: linux
@@ -28,6 +24,10 @@ addons:
        - liblz4-dev
        - autoconf
        - libtool
+env:
+  global:
+    - ENABLE_COVERAGE=Off
+    - BUILD_TYPE=Debug
 
 env:
 - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
@@ -44,11 +44,7 @@ before_install:
   - ./ci/install_crypto_tk_deps.sh
   - ./ci/install_grpc.sh
   - ./ci/install_rocksdb.sh
-  - (cd third_party/crypto; scons lib static_relic=1)
-  - (cd third_party/db-parser; scons lib)
   
   
 script:
-  - scons config_file=ci/ci_config.scons sophos
-  - scons config_file=ci/ci_config.scons diana
-  - scons config_file=ci/ci_config.scons janus
+  - ./scripts/ci_build.sh

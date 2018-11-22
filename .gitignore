@@ -85,8 +85,6 @@ janus_debug
 *.dsdb
 *.dcdb
 
-janus_client.*
-janus_server.*
 janus_master.key
 
 # Xcode

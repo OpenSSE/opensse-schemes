@@ -53,6 +53,8 @@ find_package(RocksDB REQUIRED)
 
 find_package(Protobuf)
 find_package(GRPC)
+message(STATUS "Protoc path: " ${Protobuf_PROTOC_EXECUTABLE})
+message(STATUS "GRPC plugin path: " ${GRPC_CPP_PLUGIN})
 
 add_subdirectory(third_party/crypto/src)
 add_subdirectory(third_party/db-parser/src)

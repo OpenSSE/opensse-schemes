@@ -3,7 +3,7 @@ set -ex
 
 INSTALL_DIR=$HOME/deps
 
-if [ -d "$INSTALL_DIR/include/rocksdb" ] && [ -f "$INSTALL_DIR/lib/librocksdb.a" ]; then
+if [ -d "$INSTALL_DIR/include/rocksdb" ] && ([ -f "$INSTALL_DIR/lib/librocksdb.a" ] || [ -f "$INSTALL_DIR/lib/librocksdb.so" ]); then
 	echo "RocksDB is already installed"
 else
 	

@@ -1,5 +1,4 @@
 #!/bin/sh
-set -ex
 
 cd third_party/crypto/install_dependencies
 

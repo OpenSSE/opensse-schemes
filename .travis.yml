@@ -47,4 +47,4 @@ before_install:
   
   
 script:
-  - ./scripts/ci_build.sh
+  - ./ci/build.sh

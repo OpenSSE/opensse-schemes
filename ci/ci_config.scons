@@ -1,7 +1,0 @@
-import os.path
-
-Import('*')
-
-env.Append(CPPPATH = [env['ENV']['HOME']+ "/deps/include"])
-env.Append(LIBPATH = [env['ENV']['HOME']+ "/deps/lib"])
-env.Append(RPATH = [env['ENV']['HOME']+ "/deps/lib"])

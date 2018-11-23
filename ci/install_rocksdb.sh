@@ -1,14 +1,19 @@
 #!/bin/sh
-set -ex
 
 INSTALL_DIR=$HOME/deps
 
+bold=$(tput bold)
+normal=$(tput sgr0)
+green=$(tput setaf 2)
+
 if [ -d "$INSTALL_DIR/include/rocksdb" ] && ([ -f "$INSTALL_DIR/lib/librocksdb.a" ] || [ -f "$INSTALL_DIR/lib/librocksdb.so" ]); then
-	echo "RocksDB is already installed"
+	echo "${bold}${green}RocksDB is already installed${normal}"
 else
 	
-	echo "Install RocksDB"
+	echo "${bold}${green}Install RocksDB${normal}"
 	
+	set -ex
+
 	git clone https://github.com/facebook/rocksdb.git
 	cd rocksdb
 

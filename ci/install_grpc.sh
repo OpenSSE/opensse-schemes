@@ -1,16 +1,22 @@
 #!/bin/sh
-set -ex
 
 INSTALL_DIR=$HOME/deps
 
+bold=$(tput bold)
+normal=$(tput sgr0)
+green=$(tput setaf 2)
+
+
 if [ -d "$INSTALL_DIR/include/google" ] && [ -d "$INSTALL_DIR/include/grpc" ] && [ -d "$INSTALL_DIR/include/grpc++" ]  && [ -f "$INSTALL_DIR/lib/libprotobuf.a" ] && [ -f "$INSTALL_DIR/lib/libgrpc.a" ]  && [ -f "$INSTALL_DIR/bin/protoc" ]; then
 	
-	echo "gRPC is already installed"
+	echo "${bold}${green}gRPC is already installed${normal}"
 
 else
 	
-	echo "Install gRPC"
-	
+	echo "${bold}${green}Install gRPC${normal}"
+
+set -ex
+
 git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
 
 cd grpc

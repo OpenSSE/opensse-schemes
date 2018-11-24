@@ -1,4 +1,5 @@
 # OpenSSE Schemes
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Build Status](https://travis-ci.org/OpenSSE/opensse-schemes.svg?branch=master)](https://travis-ci.org/OpenSSE/opensse-schemes)
 
 Implementation of SSE schemes. For now, the repo includes a C++ implementation of Sophos, Diana and Janus. Sophos has been described in *[Σoφoς – Forward Secure Searchable Encryption](https://eprint.iacr.org/2016/728.pdf)* by Bost, and Diana and Janus in *[Forward and Backward Private Searchable Encryption from Constrained Cryptographic Primitives](https://eprint.iacr.org/2017/805.pdf)* by Bost, Minaud and Ohrimenko.
@@ -8,11 +9,26 @@ Implementation of SSE schemes. For now, the repo includes a C++ implementation o
 ## All
 OpenSSE's schemes implementation dependencies need a compiler supporting C++14 (although the core codebase doesn't). It has been successfully built and tested on Ubuntu 14 LTS using both clang 3.6 and gcc 4.9.3 and on Mac OS X.10 using clang 7.0.0
 
+### The Cryptographic Toolkit
+
+This repository uses a cryptographic toolkit specially designed for searchable encryption applications: `crypto-tk`.
+This toolkit is integrated as a git submodule, and will be automatically compiled when building the schemes.
+However, it has its own set of dependencies, and you should make sure they are available on your computer.
+Take a look at the [build instructions](https://github.com/OpenSSE/crypto-tk#building) for detailed information.
+
 ## Linux
 
 ```sh
- $ [sudo] apt-get install build-essential autoconf libtool yasm openssl scons
+ $ [sudo] apt-get install build-essential autoconf libtool yasm openssl cmake
 ```
+
+### Installing gRPC
+OpenSSE uses Google's [gRPC](http://grpc.io) as its RPC machinery.
+On Linux, there is, for now, no other way than installing gRPC from source.
+The procedure is described [here](https://github.com/grpc/grpc/blob/master/BUILDING.md).
+
+### Installing RocksDB
+OpenSSE uses Facebook's [RocksDB](http://rocksdb.org) as its storage engine. See the [installation guide](https://github.com/facebook/rocksdb/blob/master/INSTALL.md).
 
 ## Mac OS X
 
@@ -20,25 +36,12 @@ OpenSSE's schemes implementation dependencies need a compiler supporting C++14 (
  $ [sudo] xcode-select --install
 ```
 
-If you still haven't, you should get [Homebrew](http://brew.sh/). 
-You will actually need it to install dependencies: 
-
+If you still haven't, you should get [Homebrew](http://brew.sh/).
+You can then directly install all the dependencies using Homebrew:
 ```sh
- $ brew install automake autoconf yasm openssl scons
+ $ brew install automake autoconf yasm openssl cmake grpc rocksdb
 ```
 
-## Installing gRPC
-OpenSSE uses Google's [gRPC](http://grpc.io) as its RPC machinery.
-Follow the instructions to install gRPC's C++ binding (see [here](https://github.com/grpc/grpc/tree/release-0_14/src/cpp) for the 0.14 release).
-
-## Installing RocksDB
-OpenSSE uses Facebook's [RocksDB](http://rocksdb.org) as its storage engine. OpenSSE has been tested with the 5.7 release. See the [installation guide](https://github.com/facebook/rocksdb/blob/master/INSTALL.md).
-
-Note that on OS X, RocksDB ca be installed *via* Homebrew:
-
-```sh
-brew install rocksdb
-```
 
 
 ## Getting the code
@@ -48,49 +51,35 @@ The code is available *via* git:
  $ git clone https://github.com/OpenSSE/opensse-schemes.git
 ```
 
-You will also need to fetch the submodules:
+You will also need to fetch the submodules (this might take a while):
 
 ```sh
- $ git submodule update --init
+ $ git submodule update --init --recursive
 ```
 
 
 # Building
 
-Building is done through [SConstruct](http://www.scons.org). 
-
-To build the submodules, you can either run
-
-```sh
- $ scons deps
-```
-or do it by hand:
-
-```sh
- $ (cd third_party/crypto; scons lib); (cd third_party/ssdmap; scons lib); (cd third_party/db-parser; scons lib); 
-```
+Building is done using CMake. The minimum required version is CMake 3.1.
 
 Then, to build the code itself, just enter in your terminal
 
 ```sh
- $ scons 
+$ mkdir build && cd build
+$ cmake ..
+$ make
 ```
 
-## Configuration
+## Build Configuration and Options
 
-The SConstruct files default values might not fit your system. For example, you might want to choose a specific C++ compiler.
-You can easily change these default values without modifying the SConstruct file itself. Instead, create a file called `config.scons` and change the values in this file. For example, say you want to use clang instead of your default gcc compiler and you placed the headers and shared library for gRPC in some directories that are not in the compiler's include path, say
-`~/grpc/include` and `~/grpc/lib`. Then you can use the following configuration file:
+As the library builds using CMake, the configuration is highly configurable.
+Like other CMake-based projects, options are set by passing `-DOPTION_NAME=value` to the `cmake` command.
+For example, for a debug build, use `-DCMAKE_BUILD_TYPE=Debug`.
+Also, you can change the compiler used for the project by setting the `CC` and `CXX` environment variables.
+For example, if you wish to use Clang, you can set the project up with the following command
+`CC=clang CXX=clang++ cmake ..`.
 
-```python
-Import('*')
-
-env['CC'] = 'clang'
-env['CXX'] = 'clang++'
-
-env.Append(CPPPATH=['~/grpc/include'])
-env.Append(LIBPATH=['~/grpc/lib'])
-```
+In this project, CMake can also be used to configure the cryptographic toolkit. Namely it supports the `RSA_IMPL_OPENSSL` and `OPENSSL_ROOT_DIR` options to switch between the trapdoor permutation implementations (see [`crypto-tk`'s documentation](https://github.com/OpenSSE/crypto-tk#options) for details).
 
 # Usage
 
@@ -105,7 +94,7 @@ The clients usage is as follows
 * `-b client.db` : use file as the client database (test.csdb by default)
 
 
-* `-l file.json` : load the reversed index file.json and add it to the database. file.json is a JSON file with the following structure : 
+* `-l file.json` : load the reversed index file.json and add it to the database. file.json is a JSON file with the following structure :
 ```json
 {
 	"keyword1" : [1,2,3,4],
@@ -115,7 +104,7 @@ The clients usage is as follows
 In the repo, `inverted_index.json` is an example of such file.
 * `-p` : print stats about the loaded database (number of keywords)
 * `-r count` : generate a database with count entries. Look at the aux/db_generator.* files to see how such databases are generated
-* `keyword1 … keywordn` : search queries with keyword1 … keywordn. 
+* `keyword1 … keywordn` : search queries with keyword1 … keywordn.
 
 
 ## Server
@@ -129,7 +118,7 @@ The servers usage is as follows
 
 # Contributors
 
-Unless otherwise stated, the code has been written by [Raphael Bost](http://people.irisa.fr/Raphael.Bost/).
+Unless otherwise stated, the code has been written by [Raphael Bost](https://raphael.bost.fyi).
 
 # Licensing
 

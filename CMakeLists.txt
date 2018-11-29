@@ -18,6 +18,9 @@ option(
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
+# We use CMake's integrated testing features
+enable_testing()
+
 if(opensse_ENABLE_WALL)
     check_cxx_compiler_flag("-Wall" COMPILER_OPT_WALL_SUPPORTED)
     if(COMPILER_OPT_WALL_SUPPORTED)

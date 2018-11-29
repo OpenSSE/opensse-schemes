@@ -57,7 +57,7 @@ static std::unique_ptr<DC> construct_client_from_directory(
     const std::string& dir_path)
 {
     // try to initialize everything from this directory
-    if (!is_directory(dir_path)) {
+    if (!utility::is_directory(dir_path)) {
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
@@ -66,15 +66,15 @@ static std::unique_ptr<DC> construct_client_from_directory(
         = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
     std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
 
-    if (!is_file(master_key_path)) {
+    if (!utility::is_file(master_key_path)) {
         // error, the derivation key file is not there
         throw std::runtime_error("Missing master derivation key file");
     }
-    if (!is_file(kw_token_master_key_path)) {
+    if (!utility::is_file(kw_token_master_key_path)) {
         // error, the rsa prg key file is not there
         throw std::runtime_error("Missing keyword token key file");
     }
-    if (!is_directory(counter_map_path)) {
+    if (!utility::is_directory(counter_map_path)) {
         // error, the token map data is not there
         throw std::runtime_error("Missing token data");
     }
@@ -106,7 +106,7 @@ static std::unique_ptr<DC> construct_client_from_directory(
 std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
 {
     // try to initialize everything in this directory
-    if (!is_directory(dir_path)) {
+    if (!utility::is_directory(dir_path)) {
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
@@ -158,12 +158,12 @@ DianaClientRunner::DianaClientRunner(const std::string& address,
         grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
     stub_ = Diana::NewStub(channel);
 
-    if (is_directory(path)) {
+    if (utility::is_directory(path)) {
         // try to initialize everything from this directory
 
         client_ = construct_client_from_directory(path);
 
-    } else if (exists(path)) {
+    } else if (utility::exists(path)) {
         // there should be nothing else than a directory at path, but we found
         // something  ...
         throw std::runtime_error(path + ": not a directory");
@@ -172,7 +172,7 @@ DianaClientRunner::DianaClientRunner(const std::string& address,
 
         // start by creating a new directory
 
-        if (!create_directory(path, static_cast<mode_t>(0700))) {
+        if (!utility::create_directory(path, static_cast<mode_t>(0700))) {
             throw std::runtime_error(path + ": unable to create directory");
         }
 

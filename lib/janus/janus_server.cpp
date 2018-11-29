@@ -19,8 +19,8 @@ struct serialization<janus::JanusServer::cached_result_type>
     std::string serialize(const janus::JanusServer::cached_result_type& elt)
     {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Serializing pair (" << hex_string(elt.first) << ", "
-            << hex_string(elt.second) << ")\n";
+            << "Serializing pair (" << utility::hex_string(elt.first) << ", "
+            << utility::hex_string(elt.second) << ")\n";
 
         return std::string(reinterpret_cast<const char*>(&(elt.first)),
                            sizeof(janus::index_type))
@@ -42,9 +42,10 @@ struct serialization<janus::JanusServer::cached_result_type>
         }
         logger::log(logger::LoggerSeverity::DBG)
             << "Deserialized string: "
-            << hex_string(std::string(begin,
-                                      begin + sizeof(janus::index_type)
-                                          + sizeof(crypto::punct::kTagSize)))
+            << utility::hex_string(
+                   std::string(begin,
+                               begin + sizeof(janus::index_type)
+                                   + sizeof(crypto::punct::kTagSize)))
             << "\n";
 
         janus::index_type       ind;
@@ -60,8 +61,8 @@ struct serialization<janus::JanusServer::cached_result_type>
         out = std::make_pair(ind, tag);
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Deserializing pair (" << hex_string(out.first) << ", "
-            << hex_string(out.second) << ")\n";
+            << "Deserializing pair (" << utility::hex_string(out.first) << ", "
+            << utility::hex_string(out.second) << ")\n";
 
         return true;
     }
@@ -117,7 +118,7 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
     for (; sk_it != key_shares.end(); ++sk_it) {
         auto tag = crypto::punct::extract_tag(*sk_it);
         logger::log(logger::LoggerSeverity::DBG)
-            << "tag " << hex_string(tag) << " is removed" << std::endl;
+            << "tag " << utility::hex_string(tag) << " is removed" << std::endl;
         removed_tags.insert(tag);
     }
 
@@ -251,7 +252,8 @@ void JanusServer::search_parallel(
         for (; sk_it != key_shares.end(); ++sk_it) {
             auto tag = crypto::punct::extract_tag(*sk_it);
             logger::log(logger::LoggerSeverity::DBG)
-                << "tag " << hex_string(tag) << " is removed" << std::endl;
+                << "tag " << utility::hex_string(tag) << " is removed"
+                << std::endl;
             removed_tags.insert(tag);
         }
 

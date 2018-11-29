@@ -121,8 +121,8 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
             << "Unable to insert pair in the database: " << s.ToString()
             << std::endl;
         logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << hex_string(key) << ", value=" << val
-            << std::endl;
+            << "Failed on pair: key=" << utility::hex_string(key)
+            << ", value=" << val << std::endl;
     }
 
     return s.ok();
@@ -156,8 +156,8 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
             << "Unable to increment value in the database: " << s.ToString()
             << std::endl;
         logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << hex_string(key) << ", value=" << val
-            << std::endl;
+            << "Failed on pair: key=" << utility::hex_string(key)
+            << ", value=" << val << std::endl;
     }
 
     return s.ok();
@@ -174,8 +174,8 @@ bool RocksDBCounter::set(const std::string& key, uint32_t val)
             << "Unable to insert pair in the database: " << s.ToString()
             << std::endl;
         logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << hex_string(key) << ", value=" << val
-            << std::endl;
+            << "Failed on pair: key=" << utility::hex_string(key)
+            << ", value=" << val << std::endl;
     }
 
     return s.ok();

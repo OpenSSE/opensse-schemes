@@ -60,7 +60,7 @@ static std::unique_ptr<SophosClient> init_client_in_directory(
     const std::string& dir_path)
 {
     // try to initialize everything in this directory
-    if (!is_directory(dir_path)) {
+    if (!utility::is_directory(dir_path)) {
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
@@ -118,7 +118,7 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
     const std::string& dir_path)
 {
     // try to initialize everything from this directory
-    if (!is_directory(dir_path)) {
+    if (!utility::is_directory(dir_path)) {
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
@@ -127,19 +127,19 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
     std::string counter_map_path = dir_path + "/" + counter_map_file__;
     std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
 
-    if (!is_file(sk_path)) {
+    if (!utility::is_file(sk_path)) {
         // error, the secret key file is not there
         throw std::runtime_error("Missing secret key file");
     }
-    if (!is_file(master_key_path)) {
+    if (!utility::is_file(master_key_path)) {
         // error, the derivation key file is not there
         throw std::runtime_error("Missing master derivation key file");
     }
-    if (!is_file(rsa_prg_key_path)) {
+    if (!utility::is_file(rsa_prg_key_path)) {
         // error, the rsa prg key file is not there
         throw std::runtime_error("Missing rsa prg key file");
     }
-    if (!is_directory(counter_map_path)) {
+    if (!utility::is_directory(counter_map_path)) {
         // error, the token map data is not there
         throw std::runtime_error("Missing token data");
     }
@@ -185,12 +185,12 @@ SophosClientRunner::SophosClientRunner(const std::string& address,
         grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
     stub_ = sophos::Sophos::NewStub(channel);
 
-    if (is_directory(path)) {
+    if (utility::is_directory(path)) {
         // try to initialize everything from this directory
 
         client_ = construct_client_from_directory(path);
 
-    } else if (exists(path)) {
+    } else if (utility::exists(path)) {
         // there should be nothing else than a directory at path, but we found
         // something  ...
         throw std::runtime_error(path + ": not a directory");
@@ -199,7 +199,7 @@ SophosClientRunner::SophosClientRunner(const std::string& address,
 
         // start by creating a new directory
 
-        if (!create_directory(path, static_cast<mode_t>(0700))) {
+        if (!utility::create_directory(path, static_cast<mode_t>(0700))) {
             throw std::runtime_error(path + ": unable to create directory");
         }
 

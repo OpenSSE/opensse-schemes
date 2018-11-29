@@ -45,19 +45,19 @@ const char* DianaImpl::pairs_map_file = "pairs.dat";
 DianaImpl::DianaImpl(std::string path)
     : storage_path_(std::move(path)), async_search_(true)
 {
-    if (is_directory(storage_path_)) {
+    if (utility::is_directory(storage_path_)) {
         // try to initialize everything from this directory
 
         std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
 
-        if (!is_directory(pairs_map_path)) {
+        if (!utility::is_directory(pairs_map_path)) {
             // error, the token map data is not there
             throw std::runtime_error("Missing data");
         }
 
 
         server_.reset(new DianaServer<index_type>(pairs_map_path));
-    } else if (exists(storage_path_)) {
+    } else if (utility::exists(storage_path_)) {
         // there should be nothing else than a directory at path, but we found
         // something  ...
         throw std::runtime_error(storage_path_ + ": not a directory");
@@ -93,7 +93,7 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
     // create the content directory but first check that nothing is already
     // there
 
-    if (exists(storage_path_)) {
+    if (utility::exists(storage_path_)) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Error: Unable to create the server's content directory"
             << std::endl;
@@ -102,7 +102,7 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
                             "Unable to create the server's content directory");
     }
 
-    if (!create_directory(storage_path_, static_cast<mode_t>(0700))) {
+    if (!utility::create_directory(storage_path_, static_cast<mode_t>(0700))) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Error: Unable to create the server's content directory"
             << std::endl;

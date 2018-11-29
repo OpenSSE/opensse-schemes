@@ -26,6 +26,8 @@
 #include <iomanip>
 #include <iostream>
 
+namespace sse {
+namespace utility {
 
 bool is_file(const std::string& path)
 {
@@ -93,3 +95,6 @@ void append_keyword_map(std::ostream&      out,
 {
     out << kw << "       " << std::hex << index << "\n";
 }
+
+} // namespace utility
+} // namespace sse

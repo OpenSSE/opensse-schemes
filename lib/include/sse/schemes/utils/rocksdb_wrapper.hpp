@@ -189,8 +189,8 @@ bool RockDBWrapper::put(const std::array<uint8_t, N>& key, const V& data)
             << "Unable to insert pair in the database: " << s.ToString()
             << std::endl;
         logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << hex_string(key)
-            << ", data=" << hex_string(data) << std::endl;
+            << "Failed on pair: key=" << utility::hex_string(key)
+            << ", data=" << utility::hex_string(data) << std::endl;
     }
     //        assert(s.ok());
 
@@ -500,8 +500,8 @@ bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
             << "Unable to insert key in the database: " << s.ToString()
             << std::endl;
         //            logger::log(logger::LoggerSeverity::ERROR) << "Failed on
-        //            pair: key=" << hex_string(key) << ", data=" <<
-        //            hex_string(data) << std::endl;
+        //            pair: key=" << utility::hex_string(key) << ", data=" <<
+        //            utility::hex_string(data) << std::endl;
     }
 
     return s.ok();

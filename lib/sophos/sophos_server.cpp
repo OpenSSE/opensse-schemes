@@ -51,10 +51,10 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -70,10 +70,10 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
                 << "ST" << std::to_string(req.add_count - i - 1) << ": "
-                << hex_string(st) << std::endl;
+                << utility::hex_string(st) << std::endl;
 
             logger::log(logger::LoggerSeverity::DBG)
-                << "Derived token: " << hex_string(ut) << std::endl;
+                << "Derived token: " << utility::hex_string(ut) << std::endl;
         }
 
         bool found = edb_.get(ut, r);
@@ -84,7 +84,7 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
                     << "Found: " << std::hex << r << std::endl;
             }
 
-            r = xor_mask(r, mask);
+            r = utility::xor_mask(r, mask);
             results.push_back(r);
         } else {
             logger::log(logger::LoggerSeverity::ERROR)
@@ -106,10 +106,10 @@ void SophosServer::search_callback(
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -124,7 +124,7 @@ void SophosServer::search_callback(
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Derived token: " << hex_string(ut) << std::endl;
+                << "Derived token: " << utility::hex_string(ut) << std::endl;
         }
 
         bool found = edb_.get(ut, r);
@@ -135,7 +135,7 @@ void SophosServer::search_callback(
                     << "Found: " << std::hex << r << std::endl;
             }
 
-            r = xor_mask(r, mask);
+            r = utility::xor_mask(r, mask);
             post_callback(r);
         } else {
             logger::log(logger::LoggerSeverity::ERROR)
@@ -158,10 +158,10 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -171,7 +171,8 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
 
     auto decrypt_job = [&derivation_prf, &results](
                            const index_type r, const std::string& st_string) {
-        index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
+        index_type v
+            = utility::xor_mask(r, derivation_prf.prf(st_string + '1'));
         results.push_back(v);
     };
 
@@ -183,7 +184,8 @@ std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
 
               if (logger::severity() <= logger::LoggerSeverity::DBG) {
                   logger::log(logger::LoggerSeverity::DBG)
-                      << "Derived token: " << hex_string(token) << std::endl;
+                      << "Derived token: " << utility::hex_string(token)
+                      << std::endl;
               }
 
               bool found = edb_.get(token, r);
@@ -268,10 +270,10 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -291,7 +293,7 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Derived token: " << hex_string(token) << std::endl;
+                << "Derived token: " << utility::hex_string(token) << std::endl;
         }
 
         bool found = edb_.get(token, r);
@@ -307,7 +309,7 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
             return;
         }
 
-        index_type v = xor_mask(r, mask);
+        index_type v = utility::xor_mask(r, mask);
 
         res_mutex.lock();
         results.push_back(v);
@@ -367,10 +369,10 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req,
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -388,7 +390,7 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req,
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Derived token: " << hex_string(token) << std::endl;
+                << "Derived token: " << utility::hex_string(token) << std::endl;
         }
 
         bool found = edb_.get(token, r);
@@ -399,7 +401,7 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req,
                     << "Found: " << std::hex << r << std::endl;
             }
 
-            index_type v = xor_mask(r, mask);
+            index_type v = utility::xor_mask(r, mask);
 
             res_mutex.lock();
             results.push_back(v);
@@ -408,10 +410,10 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req,
         } else {
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find a value mapped to key "
-                << hex_string(token);
+                << utility::hex_string(token);
             logger::log(logger::LoggerSeverity::ERROR)
                 << " (" << i << "-th derived key from search token "
-                << hex_string(st) << ")" << std::endl;
+                << utility::hex_string(st) << ")" << std::endl;
         }
     };
 
@@ -469,10 +471,10 @@ void SophosServer::search_parallel_callback(
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -489,7 +491,7 @@ void SophosServer::search_parallel_callback(
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Derived token: " << hex_string(token) << std::endl;
+                << "Derived token: " << utility::hex_string(token) << std::endl;
         }
 
         bool found = edb_.get(token, r);
@@ -500,17 +502,17 @@ void SophosServer::search_parallel_callback(
                     << "Found: " << std::hex << r << std::endl;
             }
 
-            index_type v = xor_mask(r, mask);
+            index_type v = utility::xor_mask(r, mask);
 
             post_pool.enqueue(post_callback, v);
 
         } else {
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find a value mapped to key "
-                << hex_string(token);
+                << utility::hex_string(token);
             logger::log(logger::LoggerSeverity::ERROR)
                 << " (" << i << "-th derived key from search token "
-                << hex_string(st) << ")" << std::endl;
+                << utility::hex_string(st) << ")" << std::endl;
         }
     };
 
@@ -563,10 +565,10 @@ void SophosServer::search_parallel_light_callback(
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << hex_string(req.token) << std::endl;
+            << "Search token: " << utility::hex_string(req.token) << std::endl;
 
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(req.derivation_key)
+            << "Derivation key: " << utility::hex_string(req.derivation_key)
             << std::endl;
     }
 
@@ -583,7 +585,7 @@ void SophosServer::search_parallel_light_callback(
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "Derived token: " << hex_string(token) << std::endl;
+                << "Derived token: " << utility::hex_string(token) << std::endl;
         }
 
         bool found = edb_.get(token, r);
@@ -594,17 +596,17 @@ void SophosServer::search_parallel_light_callback(
                     << "Found: " << std::hex << r << std::endl;
             }
 
-            index_type v = xor_mask(r, mask);
+            index_type v = utility::xor_mask(r, mask);
 
             post_callback(v);
 
         } else {
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find a value mapped to key "
-                << hex_string(token);
+                << utility::hex_string(token);
             logger::log(logger::LoggerSeverity::ERROR)
                 << " (" << i << "-th derived key from search token "
-                << hex_string(st) << ")" << std::endl;
+                << utility::hex_string(st) << ")" << std::endl;
         }
     };
 
@@ -650,7 +652,7 @@ void SophosServer::update(const UpdateRequest& req)
 {
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Update: (" << hex_string(req.token) << ", " << std::hex
+            << "Update: (" << utility::hex_string(req.token) << ", " << std::hex
             << req.index << ")" << std::endl;
     }
 

@@ -13,7 +13,7 @@ namespace janus {
 
 inline std::string keyword_doc_string(const std::string& kw, index_type ind)
 {
-    return hex_string(ind) + "||" + kw;
+    return utility::hex_string(ind) + "||" + kw;
 }
 
 crypto::Key<JanusClient::kPRFKeySize> JanusClient::tag_derivation_key() const
@@ -74,7 +74,7 @@ JanusClient::JanusClient(const std::string&         search_counter_map_path,
 std::string JanusClient::meta_keyword(const std::string& kw,
                                       uint32_t           search_counter) const
 {
-    return hex_string(search_counter) + kw;
+    return utility::hex_string(search_counter) + kw;
 }
 
 

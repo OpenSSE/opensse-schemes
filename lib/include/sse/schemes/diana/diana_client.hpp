@@ -148,7 +148,8 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
         if (log_not_found) {
             logger::log(logger::LoggerSeverity::INFO)
                 << "No matching counter found for keyword "
-                << hex_string(std::string(kw_index.begin(), kw_index.end()))
+                << utility::hex_string(
+                       std::string(kw_index.begin(), kw_index.end()))
                 << std::endl;
         }
     } else {
@@ -194,7 +195,7 @@ UpdateRequest<T> DianaClient<T>::update_request(const std::string& keyword,
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "New ST " << hex_string(st) << std::endl;
+            << "New ST " << utility::hex_string(st) << std::endl;
     }
 
     gen_update_token_mask(st, req.token, mask);
@@ -203,8 +204,8 @@ UpdateRequest<T> DianaClient<T>::update_request(const std::string& keyword,
 
     //            if (logger::severity() <= logger::LoggerSeverity::DBG) {
     //                logger::log(logger::LoggerSeverity::DBG) << "Update
-    //                Request: (" << hex_string(ut) << ", " << std::hex <<
-    //                req.index << ")" << std::endl;
+    //                Request: (" << utility::hex_string(ut) << ", " << std::hex
+    //                << req.index << ")" << std::endl;
     //            }
 
     return req;
@@ -242,7 +243,7 @@ std::list<UpdateRequest<T>> DianaClient<T>::bulk_update_request(
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "New ST " << hex_string(st) << std::endl;
+                << "New ST " << utility::hex_string(st) << std::endl;
         }
 
         gen_update_token_mask(st, req.token, mask);

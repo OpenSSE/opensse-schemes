@@ -94,7 +94,7 @@ SearchRequest SophosClient::search_request(const std::string& keyword) const
     if (!found) {
         logger::log(logger::LoggerSeverity::INFO)
             << "No matching counter found for keyword " << keyword << " (index "
-            << hex_string(seed) << ")" << std::endl;
+            << utility::hex_string(seed) << ")" << std::endl;
     } else {
         // Now derive the original search token from the kw_index (as seed)
         req.token = inverse_tdp().generate_array(rsa_prg_, seed);
@@ -131,13 +131,13 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
 
     if (kw_counter == 0) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "ST0 " << hex_string(st) << std::endl;
+            << "ST0 " << utility::hex_string(st) << std::endl;
     } else {
         st = inverse_tdp().invert_mult(st, kw_counter);
 
         if (logger::severity() <= logger::LoggerSeverity::DBG) {
             logger::log(logger::LoggerSeverity::DBG)
-                << "New ST " << hex_string(st) << std::endl;
+                << "New ST " << utility::hex_string(st) << std::endl;
         }
     }
 
@@ -147,7 +147,8 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << hex_string(deriv_key) << std::endl;
+            << "Derivation key: " << utility::hex_string(deriv_key)
+            << std::endl;
     }
 
     std::array<uint8_t, kUpdateTokenSize> mask;
@@ -157,12 +158,12 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
         st.data(),
         req.token,
         mask);
-    req.index = xor_mask(index, mask);
+    req.index = utility::xor_mask(index, mask);
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
-            << "Update token: (" << hex_string(req.token) << ", " << std::hex
-            << req.index << ")" << std::endl;
+            << "Update token: (" << utility::hex_string(req.token) << ", "
+            << std::hex << req.index << ")" << std::endl;
     }
 
     return req;

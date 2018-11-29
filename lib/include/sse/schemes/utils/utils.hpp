@@ -29,6 +29,9 @@
 #include <sstream>
 #include <string>
 
+namespace sse {
+namespace utility {
+
 template<size_t N>
 uint64_t xor_mask(const uint64_t in, const std::array<uint8_t, N>& mask)
 {
@@ -78,34 +81,5 @@ std::ostream& print_hex(std::ostream& out, const std::array<uint8_t, N>& a)
 std::string hex_string(const uint64_t& a);
 std::string hex_string(const uint32_t& a);
 
-template<class MapClass>
-void write_keyword_map(std::ostream& out, MapClass& kw_map)
-{
-    for (auto p : kw_map) {
-        out << p.first << "       " << std::hex << p.second << "\n";
-    }
-}
-
-void append_keyword_map(std::ostream&      out,
-                        const std::string& kw,
-                        uint32_t           index);
-
-template<class MapClass>
-bool parse_keyword_map(std::istream& in, MapClass& kw_map)
-{
-    std::string line, kw, index_string;
-
-    while (std::getline(in, line)) {
-        std::stringstream line_stream(line);
-
-        if (!std::getline(line_stream, kw, ' ')) {
-            return false;
-        }
-        if (!std::getline(line_stream, index_string)) {
-            return false;
-        }
-        kw_map.insert(
-            std::make_pair(kw, std::stoul(index_string, nullptr, 16)));
-    }
-    return true;
-}
+} // namespace utility
+} // namespace sse

@@ -61,5 +61,8 @@ add_subdirectory(third_party/db-parser/src)
 
 add_subdirectory(lib)
 add_subdirectory(src)
+
+# Build googletest for the tests
+add_subdirectory(externals/googletest)
 add_subdirectory(test)
 

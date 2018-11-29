@@ -93,10 +93,6 @@ void test_client_server()
         server.reset(new SophosServer("sophos_server_test/server.dat",
                                       server_pk_buf.str()));
 
-        SearchRequest         s_req;
-        std::list<index_type> res;
-        string                key;
-
     } else {
         cout << "Create new client-server instances" << endl;
 

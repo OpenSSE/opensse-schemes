@@ -1,3 +1,4 @@
+#include "utility.hpp"
 
 #include <sse/schemes/sophos/sophos_client.hpp>
 #include <sse/schemes/sophos/sophos_server.hpp>
@@ -7,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -163,6 +165,27 @@ TEST(sophos, create_reload)
     restart_client_server(client, server);
 }
 
+TEST(sophos, insertion_search)
+{
+    std::unique_ptr<sophos::SophosClient> client;
+    std::unique_ptr<sophos::SophosServer> server;
+
+    // start by cleaning up the test directory
+    sse::test::cleanup_directory(sophos_test_dir);
+
+    // first, create a client and a server from scratch
+    create_client_server(client, server);
+
+    sse::test::insert_entry(client, server, "kw_1", 0);
+    sse::test::insert_entry(client, server, "kw_2", 0);
+    sse::test::insert_entry(client, server, "kw_1", 1);
+    sse::test::insert_entry(client, server, "kw_3", 0);
+
+    auto list_1 = sse::test::search_keyword(client, server, "kw_1");
+
+    ASSERT_NE(std::find(list_1.begin(), list_1.end(), 0), list_1.end());
+    ASSERT_NE(std::find(list_1.begin(), list_1.end(), 1), list_1.end());
+}
 } // namespace test
 } // namespace sophos
 } // namespace sse

@@ -15,13 +15,16 @@ namespace sse {
 namespace sophos {
 namespace test {
 
-constexpr char* client_sk_path          = "test_sophos/tdp_sk.key";
-constexpr char* client_master_key_path  = "test_sophos/derivation_master.key";
-constexpr char* client_tdp_prg_key_path = "test_sophos/tdp_prg.key";
-constexpr char* server_pk_path          = "test_sophos/tdp_pk.key";
+constexpr auto client_sk_path          = "test_sophos/tdp_sk.key";
+constexpr auto client_master_key_path  = "test_sophos/derivation_master.key";
+constexpr auto client_tdp_prg_key_path = "test_sophos/tdp_prg.key";
+constexpr auto server_pk_path          = "test_sophos/tdp_pk.key";
 
-constexpr char* client_data_path = "test_sophos/client.dat";
-constexpr char* server_data_path = "test_sophos/server.dat";
+#define SSE_SOPHOS_TEST_DIR "test_sophos"
+
+constexpr auto sophos_test_dir  = SSE_SOPHOS_TEST_DIR;
+constexpr auto client_data_path = SSE_SOPHOS_TEST_DIR "/client.dat";
+constexpr auto server_data_path = SSE_SOPHOS_TEST_DIR "/server.dat";
 
 void create_client_server(std::unique_ptr<sophos::SophosClient>& client,
                           std::unique_ptr<sophos::SophosServer>& server)
@@ -141,13 +144,29 @@ void restart_client_server(std::unique_ptr<sophos::SophosClient>& client,
     server_pk_in.close();
 }
 
-TEST(sophos, create)
+TEST(sophos, create_reload)
 {
     std::unique_ptr<sophos::SophosClient> client;
     std::unique_ptr<sophos::SophosServer> server;
 
+    // start by cleaning up the test directory
+    utility::remove_directory(sophos_test_dir);
+
+    // create an empty directory
+    int result = mkdir(sophos_test_dir, 0777);
+    ASSERT_NE(result, -1);
+
+    // first, create a client and a server from scratch
     create_client_server(client, server);
+
+    // destroy them
+    client.reset(nullptr);
+    server.reset(nullptr);
+
+    // reload them from the disk
+    restart_client_server(client, server);
 }
+
 } // namespace test
 } // namespace sophos
 } // namespace sse

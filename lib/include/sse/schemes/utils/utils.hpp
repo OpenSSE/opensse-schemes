@@ -53,6 +53,7 @@ bool is_file(const std::string& path);
 bool is_directory(const std::string& path);
 bool exists(const std::string& path);
 bool create_directory(const std::string& path, mode_t mode);
+bool remove_directory(const std::string& path);
 
 std::string hex_string(const std::string& in);
 

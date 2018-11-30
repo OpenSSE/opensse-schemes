@@ -21,7 +21,9 @@
 
 #include <sse/schemes/utils/utils.hpp>
 
+#include <fts.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <iomanip>
 #include <iostream>
@@ -53,6 +55,96 @@ bool exists(const std::string& path)
 bool create_directory(const std::string& path, mode_t mode)
 {
     return mkdir(path.data(), mode) == 0;
+}
+
+// the implementation of this function was inspired from
+// https://stackoverflow.com/a/27808574
+bool remove_directory(const std::string& path)
+{
+    if (!exists(path)) {
+        return true;
+    }
+
+    const char* dir = path.c_str();
+
+    // bool    ret  = true;
+    FTS*    ftsp = NULL;
+    FTSENT* curr;
+
+    // Cast needed (in C) because fts_open() takes a "char * const *",
+    // instead of a "const char * const *", which is only allowed in C++.
+    // fts_open() does not modify the argument.
+    char* files[] = {(char*)dir, NULL};
+
+    // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected
+    // behavior
+    //                in multithreaded programs
+    // FTS_PHYSICAL - Don't follow symlinks. Prevents deletion of files
+    // outside
+    //                of the specified directory
+    // FTS_XDEV     - Don't cross filesystem boundaries
+    ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+    if (!ftsp) {
+        std::string message = "When deleting directory " + path;
+        message += ": fts_open failed: ";
+        message += strerror(errno);
+        throw std::runtime_error(message);
+    }
+
+    while ((curr = fts_read(ftsp))) {
+        switch (curr->fts_info) {
+        case FTS_NS:
+        case FTS_DNR:
+        case FTS_ERR: {
+            std::string message = "When deleting directory " + path;
+            message += ": ";
+            message += curr->fts_accpath;
+            message += "fts_read error: ";
+            message += strerror(curr->fts_errno);
+
+            // gracefully close the fts before throwing
+            fts_close(ftsp);
+
+            throw std::runtime_error(message);
+            break;
+        }
+        case FTS_DC:
+        case FTS_DOT:
+        case FTS_NSOK:
+            // Not reached unless FTS_LOGICAL, FTS_SEEDOT, or FTS_NOSTAT
+            // were passed to fts_open()
+            break;
+
+        case FTS_D:
+            // Do nothing. Need depth-first search, so directories are
+            // deleted in FTS_DP
+            break;
+
+        case FTS_DP:
+        case FTS_F:
+        case FTS_SL:
+        case FTS_SLNONE:
+        case FTS_DEFAULT: {
+            if (remove(curr->fts_accpath) < 0) {
+                std::string message = "When deleting directory " + path;
+                message += ": ";
+                message += curr->fts_accpath;
+                message += "Failed to remove: ";
+                message += strerror(errno);
+
+                // gracefully close the fts before throwing
+                fts_close(ftsp);
+
+                throw std::runtime_error(message);
+            }
+            break;
+        }
+        }
+    }
+
+    fts_close(ftsp);
+
+    return true;
 }
 
 std::string hex_string(const std::string& in)

@@ -21,6 +21,8 @@
 
 #include <sse/schemes/utils/utils.hpp>
 
+#include <cerrno>
+#include <cstring>
 #include <fts.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -67,14 +69,11 @@ bool remove_directory(const std::string& path)
 
     const char* dir = path.c_str();
 
-    // bool    ret  = true;
-    FTS*    ftsp = NULL;
-    FTSENT* curr;
 
     // Cast needed (in C) because fts_open() takes a "char * const *",
     // instead of a "const char * const *", which is only allowed in C++.
     // fts_open() does not modify the argument.
-    char* files[] = {(char*)dir, NULL};
+    char* files[] = {const_cast<char*>(dir), nullptr};
 
     // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected
     // behavior
@@ -83,15 +82,17 @@ bool remove_directory(const std::string& path)
     // outside
     //                of the specified directory
     // FTS_XDEV     - Don't cross filesystem boundaries
-    ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
-    if (!ftsp) {
+    FTS* ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, nullptr);
+    if (ftsp == nullptr) {
         std::string message = "When deleting directory " + path;
         message += ": fts_open failed: ";
         message += strerror(errno);
         throw std::runtime_error(message);
     }
 
-    while ((curr = fts_read(ftsp))) {
+    FTSENT* curr;
+
+    while ((curr = fts_read(ftsp)) != nullptr) {
         switch (curr->fts_info) {
         case FTS_NS:
         case FTS_DNR:
@@ -106,7 +107,6 @@ bool remove_directory(const std::string& path)
             fts_close(ftsp);
 
             throw std::runtime_error(message);
-            break;
         }
         case FTS_DC:
         case FTS_DOT:

@@ -30,10 +30,13 @@ env:
     - BUILD_TYPE=Debug
 
 env:
-- MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+  - STATIC_ANALYSIS=false
+  - RUN_CHECKS=true
+  - COMPILER=gcc
+  - ENABLE_COVERAGE=On
+
 
 before_install:
-  - eval "${MATRIX_EVAL}"
   - INSTALL_DIR=$HOME/deps
   - CPATH=$CPATH:$INSTALL_DIR/include
   - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib
@@ -41,10 +44,17 @@ before_install:
   - echo $CPATH
   - echo $LD_LIBRARY_PATH
   - echo $PATH
+
+install:
   - ./ci/install_crypto_tk_deps.sh
   - ./ci/install_grpc.sh
   - ./ci/install_rocksdb.sh
-
+  - gem install coveralls-lcov
 
 script:
   - ./ci/build.sh
+  - if [ "${RUN_CHECKS}" == "true" ]; then ./build/test/check; fi
+
+after_success:
+  - ./coverage/gen_coverage.sh # get the code coverage
+  - ./coverage/upload_report.sh # upload the report to coveralls

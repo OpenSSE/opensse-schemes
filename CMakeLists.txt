@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/CMake-codecov/cmake")
+
 # Build in Debug mode by default
 set(default_build_type "Debug")
 
@@ -17,6 +19,10 @@ option(
 
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
+
+# enable code coverage
+find_package(codecov)
+list(APPEND LCOV_REMOVE_PATTERNS '${CMAKE_CURRENT_SOURCE_DIR}/test/*' '${CMAKE_CURRENT_SOURCE_DIR}/externals/*' '${CMAKE_CURRENT_SOURCE_DIR}/third_party/*' '*.pb.h')
 
 # We use CMake's integrated testing features
 enable_testing()
@@ -63,9 +69,16 @@ add_subdirectory(third_party/crypto/src)
 add_subdirectory(third_party/db-parser/src)
 
 add_subdirectory(lib)
+add_coverage(schemes)
+add_coverage(runners)
+
+
 add_subdirectory(src)
 
 # Build googletest for the tests
 add_subdirectory(externals/googletest)
 add_subdirectory(test)
+add_coverage(check)
+
+coverage_evaluate()
 

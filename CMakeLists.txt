@@ -101,5 +101,8 @@ add_subdirectory(externals/googletest)
 add_subdirectory(test)
 add_coverage(check)
 add_sanitizers(check)
+add_sanitizers(sophos_debug)
+add_sanitizers(diana_debug)
+add_sanitizers(janus_debug)
 
 coverage_evaluate()

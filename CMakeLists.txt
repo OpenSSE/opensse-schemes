@@ -91,9 +91,10 @@ add_sanitizers(schemes)
 add_sanitizers(runners)
 
 add_subdirectory(src)
-foreach(runner IN LISTS ${runner_bins})
-    add_sanitizers(runner)
-endforeach(runner IN LISTS ${runner_bins})
+
+foreach(runner ${runner_bins})
+    add_sanitizers(${runner})
+endforeach(runner ${runner_bins})
 
 # Build googletest for the tests
 add_subdirectory(externals/googletest)

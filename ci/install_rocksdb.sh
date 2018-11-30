@@ -14,7 +14,7 @@ else
 	
 	set -ex
 
-	git clone https://github.com/facebook/rocksdb.git
+	git clone -b v5.17.2 --single-branch --depth 1 https://github.com/facebook/rocksdb.git
 	cd rocksdb
 
 	make INSTALL_PATH=$INSTALL_DIR shared_lib -j4

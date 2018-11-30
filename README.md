@@ -79,6 +79,26 @@ Also, you can change the compiler used for the project by setting the `CC` and `
 For example, if you wish to use Clang, you can set the project up with the following command
 `CC=clang CXX=clang++ cmake ..`.
 
+### Options
+
+*  `ENABLE_COVERAGE=On|Off`: Respectively enables and disable the code coverage functionalities. Disabled by default.
+
+*  `SANITIZE_ADDRESS=On|Off`: Compiles the library with [AddressSanitizer (ASan)](https://github.com/google/sanitizers/wiki/AddressSanitizer) when set to `On`. Great to check for stack/heap buffer overflows, memory leaks, ... Disabled by default.
+
+*  `SANITIZE_UNDEFINED=On|Off`: When set to `On`, compiles the library with [UndefinedBehaviorSanitizer (UBSan)](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html). UBSan detects undefined behavior at runtime in your code. Disabled by default. 
+
+*  `opensse_ENABLE_WALL=On|Off`: Toggles the `-Wall` compiler option. On by default
+
+*  `opensse_ENABLE_WEXTRA=On|Off`: Toggles the `-Wextra` compiler option. On by default
+
+*  `opensse_ENABLE_WERROR=On|Off`: Toggles the `-Werror` compiler option to turn all warnings into errors. Off by default
+
+*  `CMAKE_BUILD_TYPE`: Sets the build type. See [CMake's documentation](https://cmake.org/cmake/help/v3.12/variable/CMAKE_BUILD_TYPE.html) for more details. The `Debug` build type is used by default. Use `Release` for an optimized build.
+
+To see all the available options, and interactively edit them, you can also use the `ccmake` tool.
+
+For more information about how to use CMake, take a look at [CMake's FAQ](https://gitlab.kitware.com/cmake/community/wikis/FAQ), or at the [documentation](https://cmake.org/cmake/help/v3.0/index.html).
+
 In this project, CMake can also be used to configure the cryptographic toolkit. Namely it supports the `RSA_IMPL_OPENSSL` and `OPENSSL_ROOT_DIR` options to switch between the trapdoor permutation implementations (see [`crypto-tk`'s documentation](https://github.com/OpenSSE/crypto-tk#options) for details).
 
 # Usage

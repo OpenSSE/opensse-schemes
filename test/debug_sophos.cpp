@@ -188,36 +188,6 @@ void test_client_server()
     server_pk_in.close();
 }
 
-void test_kw_indexer()
-{
-    map<string, uint32_t> m, n;
-
-    m["toto"] = 0;
-    m["titi"] = 1;
-    m["tata"] = 2;
-    m["tutu"] = 34;
-
-    ofstream out("test.csv");
-
-    write_keyword_map(out, m);
-
-    out.close();
-
-    ifstream in("test.csv");
-
-    bool ret = parse_keyword_map(in, n);
-
-    if (ret) {
-        cout << "Success" << endl;
-    } else {
-        cout << "Failed" << endl;
-    }
-
-    for (auto p : n) {
-        cout << p.first << "| , |" << p.second << endl;
-    }
-}
-
 int main(int argc, const char* argv[])
 {
     sse::crypto::init_crypto_lib();

@@ -150,11 +150,7 @@ TEST(sophos, create_reload)
     std::unique_ptr<sophos::SophosServer> server;
 
     // start by cleaning up the test directory
-    utility::remove_directory(sophos_test_dir);
-
-    // create an empty directory
-    int result = mkdir(sophos_test_dir, 0777);
-    ASSERT_NE(result, -1);
+    sse::test::cleanup_directory(sophos_test_dir);
 
     // first, create a client and a server from scratch
     create_client_server(client, server);

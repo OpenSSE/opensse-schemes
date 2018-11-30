@@ -9,7 +9,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     include(GoogleTest)
 endif()
 
-add_executable(check test.cpp sophos.cpp)
+add_executable(check test.cpp utility.cpp sophos.cpp)
 target_link_libraries(check gtest OpenSSE::schemes)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")

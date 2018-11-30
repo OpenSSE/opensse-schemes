@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.1)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/CMake-codecov/cmake")
+list(
+    APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/CMake-codecov/cmake"
+)
+list(
+    APPEND
+        CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/sanitizers-cmake/cmake"
+)
 
 # Build in Debug mode by default
 set(default_build_type "Debug")
@@ -22,7 +28,17 @@ include(CheckCXXCompilerFlag)
 
 # enable code coverage
 find_package(codecov)
-list(APPEND LCOV_REMOVE_PATTERNS '${CMAKE_CURRENT_SOURCE_DIR}/test/*' '${CMAKE_CURRENT_SOURCE_DIR}/externals/*' '${CMAKE_CURRENT_SOURCE_DIR}/third_party/*' '*.pb.h')
+list(
+    APPEND
+        LCOV_REMOVE_PATTERNS
+        '${CMAKE_CURRENT_SOURCE_DIR}/test/*'
+        '${CMAKE_CURRENT_SOURCE_DIR}/externals/*'
+        '${CMAKE_CURRENT_SOURCE_DIR}/third_party/*'
+        '*.pb.h'
+)
+
+# Find Sanitizers
+find_package(Sanitizers)
 
 # We use CMake's integrated testing features
 enable_testing()
@@ -71,14 +87,18 @@ add_subdirectory(third_party/db-parser/src)
 add_subdirectory(lib)
 add_coverage(schemes)
 add_coverage(runners)
-
+add_sanitizers(schemes)
+add_sanitizers(runners)
 
 add_subdirectory(src)
+foreach(runner IN LISTS ${runner_bins})
+    add_sanitizers(runner)
+endforeach(runner IN LISTS ${runner_bins})
 
 # Build googletest for the tests
 add_subdirectory(externals/googletest)
 add_subdirectory(test)
 add_coverage(check)
+add_sanitizers(check)
 
 coverage_evaluate()
-

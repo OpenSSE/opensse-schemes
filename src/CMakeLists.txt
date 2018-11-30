@@ -7,3 +7,5 @@ add_executable(diana_client diana_client.cpp)
 target_link_libraries(diana_client OpenSSE::runners)
 add_executable(diana_server diana_server.cpp)
 target_link_libraries(diana_server OpenSSE::runners)
+
+set(runner_bins sophos_client sophos_server diana_client diana_server PARENT_SCOPE)

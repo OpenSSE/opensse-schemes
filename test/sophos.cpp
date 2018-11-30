@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 
 namespace sse {
@@ -176,15 +177,11 @@ TEST(sophos, insertion_search)
     // first, create a client and a server from scratch
     create_client_server(client, server);
 
-    sse::test::insert_entry(client, server, "kw_1", 0);
-    sse::test::insert_entry(client, server, "kw_2", 0);
-    sse::test::insert_entry(client, server, "kw_1", 1);
-    sse::test::insert_entry(client, server, "kw_3", 0);
+    const std::map<std::string, std::list<uint64_t>> test_db
+        = {{"kw_1", {0, 1}}, {"kw_2", {0}}, {"kw_3", {0}}};
 
-    auto list_1 = sse::test::search_keyword(client, server, "kw_1");
-
-    ASSERT_NE(std::find(list_1.begin(), list_1.end(), 0), list_1.end());
-    ASSERT_NE(std::find(list_1.begin(), list_1.end(), 1), list_1.end());
+    sse::test::insert_database(client, server, test_db);
+    sse::test::test_search_correctness(client, server, test_db);
 }
 } // namespace test
 } // namespace sophos

@@ -121,12 +121,14 @@ RockDBWrapper::RockDBWrapper(const std::string& path) : db_(nullptr)
 
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
 
+    /* LCOV_EXCL_START */
     if (!status.ok()) {
         logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
         db_ = nullptr;
     }
+    /* LCOV_EXCL_STOP */
 }
 
 RockDBWrapper::~RockDBWrapper()
@@ -184,6 +186,7 @@ bool RockDBWrapper::put(const std::array<uint8_t, N>& key, const V& data)
 
     rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), k_s, k_v);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert pair in the database: " << s.ToString()
@@ -192,7 +195,7 @@ bool RockDBWrapper::put(const std::array<uint8_t, N>& key, const V& data)
             << "Failed on pair: key=" << utility::hex_string(key)
             << ", data=" << utility::hex_string(data) << std::endl;
     }
-    //        assert(s.ok());
+    /* LCOV_EXCL_STOP */
 
     return s.ok();
 }
@@ -224,10 +227,12 @@ void RockDBWrapper::flush(bool blocking)
 
     rocksdb::Status s = db_->Flush(options);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "DB Flush failed: " << s.ToString() << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 }
 
 uint64_t RockDBWrapper::approximate_size() const
@@ -266,11 +271,8 @@ public:
 
     inline uint64_t approximate_size() const
     {
-        uint64_t v;
-        bool     flag = db_->GetIntProperty(
-            rocksdb::DB::Properties::kEstimateNumKeys, &v);
-
-        assert(flag);
+        uint64_t v = 0;
+        db_->GetIntProperty(rocksdb::DB::Properties::kEstimateNumKeys, &v);
 
         return v;
     }
@@ -394,12 +396,14 @@ RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
 
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
 
+    /* LCOV_EXCL_START */
     if (!status.ok()) {
         logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
         db_ = nullptr;
     }
+    /* LCOV_EXCL_STOP */
 }
 
 template<typename T, class Serializer>
@@ -427,29 +431,6 @@ bool RockDBListStore<T, Serializer>::get(const std::string& key,
     }
     return s.ok();
 }
-
-//    template <typename T, class Serializer>
-//    template <size_t N>
-//    bool RockDBListStore<T, Serializer>::get(const std::array<uint8_t, N>
-//    &key, std::list<T> &data, serializer& deser) const
-//    {
-//        rocksdb::Slice k_s(reinterpret_cast<const char*>( key.data() ),N);
-//        std::string raw_string;
-//
-//        rocksdb::Status s = db_->Get(rocksdb::ReadOptions(false,true), k_s,
-//        &raw_string);
-//
-//        if(s.ok()){
-//            auto it = raw_string.begin();
-//            const auto end = raw_string.end();
-//            T elt;
-//
-//            while (deser.deserialize(it, end, elt)) {
-//                data.push_back(std::move<T>(elt));
-//            }
-//        }
-//        return s.ok();
-//    }
 
 template<typename T, class Serializer>
 bool RockDBListStore<T, Serializer>::get(const uint8_t* key,
@@ -495,6 +476,7 @@ bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
 
     rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), k_s, k_v);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert key in the database: " << s.ToString()
@@ -503,6 +485,7 @@ bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
         //            pair: key=" << utility::hex_string(key) << ", data=" <<
         //            utility::hex_string(data) << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 
     return s.ok();
 }
@@ -517,10 +500,12 @@ void RockDBListStore<T, Serializer>::flush(bool blocking)
 
     rocksdb::Status s = db_->Flush(options);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "DB Flush failed: " << s.ToString() << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 }
 
 } // namespace sophos

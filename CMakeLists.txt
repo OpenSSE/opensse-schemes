@@ -34,6 +34,8 @@ list(
         '${CMAKE_CURRENT_SOURCE_DIR}/test/*'
         '${CMAKE_CURRENT_SOURCE_DIR}/externals/*'
         '${CMAKE_CURRENT_SOURCE_DIR}/third_party/*'
+        '*/deps/*' # For Travis
+        '*/usr/*' # For Travis
         '*.pb.h'
 )
 

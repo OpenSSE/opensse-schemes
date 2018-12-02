@@ -51,7 +51,9 @@ struct serialization<janus::JanusServer::cached_result_type>
         janus::index_type       ind;
         crypto::punct::tag_type tag;
 
-        std::copy(begin, begin + sizeof(janus::index_type), &ind);
+        std::copy(begin,
+                  begin + sizeof(janus::index_type),
+                  reinterpret_cast<uint8_t*>(&ind));
         std::copy(begin + sizeof(janus::index_type),
                   begin + sizeof(janus::index_type) + tag.size(),
                   tag.begin());

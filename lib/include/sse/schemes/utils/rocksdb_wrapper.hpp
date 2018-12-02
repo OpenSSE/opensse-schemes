@@ -417,6 +417,9 @@ bool RockDBListStore<T, Serializer>::get(const std::string& key,
                                          std::list<T>&      data,
                                          serializer&        deser) const
 {
+    // empty the list first
+    data.clear();
+
     std::string     raw_string;
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &raw_string);
 
@@ -426,7 +429,7 @@ bool RockDBListStore<T, Serializer>::get(const std::string& key,
         T          elt;
 
         while (deser.deserialize(it, end, elt)) {
-            data.push_back(std::move<T>(elt));
+            data.emplace_back(std::move(elt));
         }
     }
     return s.ok();
@@ -440,6 +443,9 @@ bool RockDBListStore<T, Serializer>::get(const uint8_t* key,
 {
     rocksdb::Slice k_s(reinterpret_cast<const char*>(key), key_length);
     std::string    raw_string;
+
+    // empty the list first
+    data.clear();
 
     rocksdb::Status s
         = db_->Get(rocksdb::ReadOptions(false, true), k_s, &raw_string);

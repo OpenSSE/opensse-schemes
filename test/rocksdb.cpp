@@ -119,5 +119,99 @@ TEST(rocksdb, entry_persistence)
     ASSERT_EQ(v1, v_get);
 }
 
+
+TEST(rocksdb, counters)
+{
+    cleanup_directory(rocksdb_test_dir);
+
+    std::unique_ptr<sophos::RocksDBCounter> db(
+        new sophos::RocksDBCounter(rocksdb_test_dir));
+
+    std::string key1 = "key1";
+    std::string key2 = "key2";
+    std::string key3 = "key3";
+
+    std::string key_no_insert = "key_no_insert";
+
+    uint32_t v1 = 1789;
+    uint64_t v2 = 31416;
+    uint32_t v3 = 8080;
+
+    uint32_t v_get = 0xFFFF;
+
+    ASSERT_TRUE(db->set(key1, v1));
+    ASSERT_TRUE(db->increment(key2, v2));
+    ASSERT_TRUE(db->get_and_increment(key3, v_get));
+    ASSERT_EQ(v_get, 0);
+
+    // If we do this later, we will have an error
+    EXPECT_EQ(db->approximate_size(), 3);
+
+    std::string v_string;
+
+    ASSERT_TRUE(db->get(key1, v_get));
+    ASSERT_EQ(v1, v_get);
+
+    ASSERT_TRUE(db->get(key2, v_get));
+    ASSERT_EQ(v2, v_get);
+
+    ASSERT_TRUE(db->increment(key2, v2));
+    ASSERT_TRUE(db->get(key2, v_get));
+    ASSERT_EQ(v2 + 1, v_get);
+
+    ASSERT_TRUE(db->get(key3, v_get));
+    ASSERT_EQ(0, v_get);
+
+    ASSERT_TRUE(db->get_and_increment(key3, v_get));
+    ASSERT_EQ(1, v_get);
+
+    ASSERT_TRUE(db->remove_key(key3));
+    ASSERT_FALSE(db->get(key3, v_get));
+}
+
+
+TEST(rocksdb, counters_persistence)
+{
+    cleanup_directory(rocksdb_test_dir);
+
+    std::unique_ptr<sophos::RocksDBCounter> db(
+        new sophos::RocksDBCounter(rocksdb_test_dir));
+
+    std::string key1 = "key1";
+    std::string key2 = "key2";
+    std::string key3 = "key3";
+
+    std::string key_no_insert = "key_no_insert";
+
+    uint32_t v1 = 1789;
+    uint64_t v2 = 31416;
+    uint32_t v3 = 8080;
+
+    uint32_t v_get = 0xFFFF;
+
+    ASSERT_TRUE(db->set(key1, v1));
+    ASSERT_TRUE(db->increment(key2, v2));
+    ASSERT_TRUE(db->get_and_increment(key3, v_get));
+    ASSERT_EQ(v_get, 0);
+
+    // probably useless, but increases the coverage
+    db->flush(true);
+
+    // close the database
+    db.reset();
+
+    // re-open the database
+    db.reset(new sophos::RocksDBCounter(rocksdb_test_dir));
+
+    ASSERT_TRUE(db->get(key1, v_get));
+    ASSERT_EQ(v1, v_get);
+
+    ASSERT_TRUE(db->get(key2, v_get));
+    ASSERT_EQ(v2, v_get);
+
+    ASSERT_TRUE(db->get(key3, v_get));
+    ASSERT_EQ(0, v_get);
+}
+
 } // namespace test
 } // namespace sse

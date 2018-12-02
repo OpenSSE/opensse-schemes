@@ -70,13 +70,14 @@ RocksDBCounter::RocksDBCounter(const std::string& path) : db_(nullptr)
 
 
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
-
+    /* LCOV_EXCL_START */
     if (!status.ok()) {
         logger::log(logger::LoggerSeverity::CRITICAL)
             << "Unable to open the database: " << status.ToString()
             << std::endl;
         db_ = nullptr;
     }
+    /* LCOV_EXCL_STOP */
 }
 
 bool RocksDBCounter::get(const std::string& key, uint32_t& val) const
@@ -116,6 +117,7 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
 
     s = db_->Put(rocksdb::WriteOptions(), key, k_v);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert pair in the database: " << s.ToString()
@@ -124,6 +126,7 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
             << "Failed on pair: key=" << utility::hex_string(key)
             << ", value=" << val << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 
     return s.ok();
 }
@@ -151,6 +154,7 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
 
     s = db_->Put(rocksdb::WriteOptions(), key, k_v);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to increment value in the database: " << s.ToString()
@@ -159,6 +163,7 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
             << "Failed on pair: key=" << utility::hex_string(key)
             << ", value=" << val << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 
     return s.ok();
 }
@@ -169,6 +174,7 @@ bool RocksDBCounter::set(const std::string& key, uint32_t val)
 
     rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), key, k_v);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "Unable to insert pair in the database: " << s.ToString()
@@ -177,6 +183,7 @@ bool RocksDBCounter::set(const std::string& key, uint32_t val)
             << "Failed on pair: key=" << utility::hex_string(key)
             << ", value=" << val << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 
     return s.ok();
 }
@@ -189,7 +196,7 @@ bool RocksDBCounter::remove_key(const std::string& key)
     return s.ok();
 }
 
-inline void RocksDBCounter::flush(bool blocking)
+void RocksDBCounter::flush(bool blocking)
 {
     rocksdb::FlushOptions options;
 
@@ -197,10 +204,12 @@ inline void RocksDBCounter::flush(bool blocking)
 
     rocksdb::Status s = db_->Flush(options);
 
+    /* LCOV_EXCL_START */
     if (!s.ok()) {
         logger::log(logger::LoggerSeverity::ERROR)
             << "DB Flush failed: " << s.ToString() << std::endl;
     }
+    /* LCOV_EXCL_STOP */
 }
 } // namespace sophos
 } // namespace sse

@@ -267,7 +267,7 @@ public:
 
     bool remove_key(const std::string& key);
 
-    inline void flush(bool blocking = true);
+    void flush(bool blocking = true);
 
     inline uint64_t approximate_size() const
     {

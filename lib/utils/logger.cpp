@@ -32,6 +32,17 @@ LoggerSeverity severity__ = LoggerSeverity::INFO;
 std::ostream null_stream__(nullptr);
 
 std::unique_ptr<std::ofstream> benchmark_stream__;
+std::ostream*                  log_stream__ = &std::cout;
+
+std::ostream* logger_stream()
+{
+    return log_stream__;
+}
+
+void set_logger_stream(std::ostream* stream)
+{
+    log_stream__ = stream;
+}
 
 LoggerSeverity severity()
 {
@@ -67,7 +78,7 @@ bool set_benchmark_file(const std::string& path)
 std::ostream& log(LoggerSeverity s)
 {
     if (s >= severity__) {
-        return (std::cout << severity_string(s));
+        return ((*log_stream__) << severity_string(s));
     }
     return null_stream__;
 }
@@ -77,7 +88,7 @@ std::ostream& log_benchmark()
     if (benchmark_stream__) {
         return *benchmark_stream__;
     }
-    return std::cout;
+    return (*log_stream__);
 }
 
 std::string severity_string(LoggerSeverity s)

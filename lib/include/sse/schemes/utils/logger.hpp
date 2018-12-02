@@ -39,6 +39,9 @@ enum class LoggerSeverity : uint8_t
     CRITICAL = 50
 };
 
+std::ostream* logger_stream();
+void          set_logger_stream(std::ostream* stream);
+
 LoggerSeverity severity();
 void           set_severity(LoggerSeverity s);
 std::ostream&  log(LoggerSeverity s);

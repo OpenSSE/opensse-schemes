@@ -21,12 +21,14 @@ namespace sse {
 namespace sophos {
 namespace test {
 
-constexpr auto client_sk_path          = "test_sophos/tdp_sk.key";
-constexpr auto client_master_key_path  = "test_sophos/derivation_master.key";
-constexpr auto client_tdp_prg_key_path = "test_sophos/tdp_prg.key";
-constexpr auto server_pk_path          = "test_sophos/tdp_pk.key";
-
 #define SSE_SOPHOS_TEST_DIR "test_sophos"
+
+constexpr auto client_sk_path = SSE_SOPHOS_TEST_DIR "/tdp_sk.key";
+constexpr auto client_master_key_path
+    = SSE_SOPHOS_TEST_DIR "/derivation_master.key";
+constexpr auto client_tdp_prg_key_path = SSE_SOPHOS_TEST_DIR "/tdp_prg.key";
+constexpr auto server_pk_path          = SSE_SOPHOS_TEST_DIR "/tdp_pk.key";
+
 
 constexpr auto sophos_test_dir  = SSE_SOPHOS_TEST_DIR;
 constexpr auto client_data_path = SSE_SOPHOS_TEST_DIR "/client.dat";
@@ -35,17 +37,11 @@ constexpr auto server_data_path = SSE_SOPHOS_TEST_DIR "/server.dat";
 void create_client_server(std::unique_ptr<sophos::SophosClient>& client,
                           std::unique_ptr<sophos::SophosServer>& server)
 {
-    std::ifstream client_sk_in(client_sk_path);
-    std::ifstream client_master_key_in(client_master_key_path);
-    std::ifstream client_tdp_prg_key_in(client_tdp_prg_key_path);
-    std::ifstream server_pk_in(server_pk_path);
-
-    // check that all the streams are in an invalid state:
-    // good() returns true if the file exists, false o/w
-    ASSERT_FALSE(client_sk_in.good());
-    ASSERT_FALSE(client_master_key_in.good());
-    ASSERT_FALSE(client_tdp_prg_key_in.good());
-    ASSERT_FALSE(server_pk_in.good());
+    // check that the key files do not already exist
+    ASSERT_FALSE(utility::exists(client_sk_path));
+    ASSERT_FALSE(utility::exists(client_master_key_path));
+    ASSERT_FALSE(utility::exists(client_tdp_prg_key_path));
+    ASSERT_FALSE(utility::exists(server_pk_path));
 
     // start the client and the server from scratch
 
@@ -85,10 +81,6 @@ void create_client_server(std::unique_ptr<sophos::SophosClient>& client,
         sse::crypto::Key<SophosClient::kKeySize>(rsa_prg_key.data())));
 
     server.reset(new sophos::SophosServer(server_data_path, tdp.public_key()));
-
-    client_sk_in.close();
-    client_master_key_in.close();
-    server_pk_in.close();
 }
 
 void restart_client_server(std::unique_ptr<sophos::SophosClient>& client,
@@ -280,6 +272,7 @@ TEST(sophos, search_algorithms)
                                                      &res_par_light_callback,
                                                      std::placeholders::_1),
                                            1);
+    check_same_results(long_list, res_par_light_callback);
 }
 } // namespace test
 } // namespace sophos

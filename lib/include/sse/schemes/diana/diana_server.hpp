@@ -333,7 +333,7 @@ void DianaServer<T>::search_simple_parallel(SearchRequest& req,
 {
     if (results.size() < req.add_count) {
         // resize the vector if needed
-        results.reserve(req.add_count);
+        results.resize(req.add_count);
     }
 
     std::atomic<uint64_t> r_index(0);

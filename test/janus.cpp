@@ -151,8 +151,8 @@ TEST(janus, insertion_search)
     sse::test::test_search_correctness(client, server, test_db);
 }
 
-
-TEST(janus, insertion_removal_search)
+template<class SearchFun>
+static void test_search_removal(SearchFun search_fun)
 {
     std::unique_ptr<Client> client;
     std::unique_ptr<Server> server;
@@ -181,7 +181,12 @@ TEST(janus, insertion_removal_search)
     test_db["kw_5"].remove(5);
 
     // search
-    sse::test::test_search_correctness(client, server, test_db);
+    // sse::test::test_search_correctness(client, server, test_db);
+    auto search_req_fun = [](Client& client, const std::string& kw) {
+        return client.search_request(kw);
+    };
+    sse::test::test_search_correctness(
+        client, server, test_db, search_req_fun, search_fun);
 
     // remove additional entries
     r_request = client->removal_request("kw_1", 0);
@@ -197,6 +202,24 @@ TEST(janus, insertion_removal_search)
     // do it twice to test the cache
     sse::test::test_search_correctness(client, server, test_db);
 }
+
+
+TEST(janus, insertion_removal_search)
+{
+    auto search_fun = [](Server& server, janus::SearchRequest& req) {
+        return server.search(req);
+    };
+    test_search_removal(search_fun);
+}
+
+TEST(janus, insertion_removal_parallel_search)
+{
+    auto search_fun = [](Server& server, janus::SearchRequest& req) {
+        return server.search_parallel(req, 1);
+    };
+    test_search_removal(search_fun);
+}
+
 } // namespace test
 } // namespace janus
 } // namespace sse

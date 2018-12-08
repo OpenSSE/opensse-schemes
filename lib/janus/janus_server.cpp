@@ -167,12 +167,8 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
 std::list<index_type> JanusServer::search_parallel(SearchRequest& req,
                                                    uint8_t        threads_count)
 {
-    assert(threads_count > 1);
-
-
     // use one result list per thread so to avoid using locks
-    std::list<index_type>* result_lists
-        = new std::list<index_type>[threads_count];
+    std::vector<std::list<index_type>> result_lists(threads_count);
 
     auto callback = [&result_lists](index_type i, uint8_t thread_id) {
         result_lists[thread_id].push_back(i);
@@ -185,8 +181,6 @@ std::list<index_type> JanusServer::search_parallel(SearchRequest& req,
     for (uint8_t i = 1; i < threads_count; i++) {
         results.splice(results.end(), result_lists[i]);
     }
-
-    delete[] result_lists;
 
     return results;
 }
@@ -237,7 +231,7 @@ void JanusServer::search_parallel(
 
     auto decryption_callback_unique
         = [&decryption_callback](crypto::punct::ciphertext_type ct) {
-              decryption_callback(ct, 1);
+              decryption_callback(ct, 0);
           };
 
     // this job will be used to retrieve cached results and filter them

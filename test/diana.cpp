@@ -257,6 +257,46 @@ TEST(diana, search_algorithms)
     server->search_simple_parallel(u_req, thread_local_callback, 1, false);
     check_same_results(long_list, res_simple_par_callback);
 }
+
+TEST(diana, bulk_update)
+{
+    std::unique_ptr<TestDianaClient> client;
+    std::unique_ptr<TestDianaServer> server;
+
+    // start by cleaning up the test directory
+    sse::test::cleanup_directory(diana_test_dir);
+
+    // first, create a client and a server from scratch
+    create_client_server(client, server);
+
+    std::list<std::pair<std::string, uint64_t>> update_list;
+    constexpr size_t                            n_test_entries = 1000;
+
+    for (size_t i = 0; i < n_test_entries; i++) {
+        uint8_t kw_index = static_cast<uint8_t>(i);
+        update_list.push_back(
+            std::make_pair("kw_" + std::to_string(kw_index), i));
+    }
+
+    auto bulk_up_req = client->bulk_update_request(update_list);
+    for (auto it = bulk_up_req.begin(); it != bulk_up_req.end(); ++it) {
+        server->update(*it);
+    }
+
+    // test the results
+    for (uint16_t kw_index = 0; kw_index <= 0xFF; kw_index++) {
+        auto req = client->search_request(
+            "kw_" + std::to_string(static_cast<uint16_t>(kw_index)));
+        auto response = server->search_simple_parallel(req, 1);
+
+        std::list<uint64_t> expected;
+        for (size_t i = kw_index; i < n_test_entries; i += 0xFF + 1) {
+            expected.push_back(i);
+        }
+
+        check_same_results(expected, response);
+    }
+}
 } // namespace test
 } // namespace diana
 } // namespace sse

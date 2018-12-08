@@ -165,20 +165,20 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
 }
 
 std::list<index_type> JanusServer::search_parallel(SearchRequest& req,
-                                                   uint8_t        threads_count)
+                                                   uint8_t diana_threads_count)
 {
     // use one result list per thread so to avoid using locks
-    std::vector<std::list<index_type>> result_lists(threads_count);
+    std::vector<std::list<index_type>> result_lists(diana_threads_count + 1);
 
     auto callback = [&result_lists](index_type i, uint8_t thread_id) {
         result_lists[thread_id].push_back(i);
     };
 
-    search_parallel(req, threads_count, callback);
+    search_parallel(req, diana_threads_count, callback);
 
     // merge the result lists
     std::list<index_type> results(std::move(result_lists[0]));
-    for (uint8_t i = 1; i < threads_count; i++) {
+    for (uint8_t i = 1; i < result_lists.size(); i++) {
         results.splice(results.end(), result_lists[i]);
     }
 
@@ -187,24 +187,24 @@ std::list<index_type> JanusServer::search_parallel(SearchRequest& req,
 
 void JanusServer::search_parallel(
     SearchRequest&                         req,
-    uint8_t                                threads_count,
+    uint8_t                                diana_threads_count,
     const std::function<void(index_type)>& post_callback)
 {
     auto aux = [&post_callback](index_type ind, uint8_t /*i*/) {
         post_callback(ind);
     };
-    search_parallel(req, threads_count, aux);
+    search_parallel(req, diana_threads_count, aux);
 }
 
 void JanusServer::search_parallel(
     SearchRequest&                                  req,
-    uint8_t                                         threads_count,
+    uint8_t                                         diana_threads_count,
     const std::function<void(index_type, uint8_t)>& post_callback)
 {
     // start by retrieving the key shares
     std::list<crypto::punct::key_share_type> key_shares
         = deletion_server_.search_simple_parallel(
-            req.deletion_search_request, threads_count, true);
+            req.deletion_search_request, diana_threads_count, true);
 
     key_shares.push_front(req.first_key_share);
 
@@ -239,7 +239,7 @@ void JanusServer::search_parallel(
                            &req,
                            &key_shares,
                            &post_callback,
-                           &threads_count,
+                           &diana_threads_count,
                            &filtered_cache]() {
         // construct a set of newly removed tags
         std::set<crypto::punct::tag_type> removed_tags;
@@ -258,16 +258,15 @@ void JanusServer::search_parallel(
         cached_results_edb_.get(req.keyword_token, filtered_cache);
 
         // filter the previously cached elements to remove newly removed entries
-        // filter the previously cached elements to remove newly removed entries
         auto it = filtered_cache.begin();
 
         while (it != filtered_cache.end()) {
             if (removed_tags.count(it->second) > 0) {
                 it = filtered_cache.erase(it);
             } else {
-                post_callback(it->first,
-                              threads_count
-                                  - 1); // this job has id threads_count-1
+                post_callback(
+                    it->first,
+                    diana_threads_count); // this job has id diana_threads_count
                 ++it;
             }
         }

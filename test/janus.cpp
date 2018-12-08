@@ -197,10 +197,12 @@ static void test_search_removal(SearchFun search_fun)
     server->remove(r_request);
     test_db["kw_2"].remove(0);
 
-    sse::test::test_search_correctness(client, server, test_db);
+    sse::test::test_search_correctness(
+        client, server, test_db, search_req_fun, search_fun);
 
     // do it twice to test the cache
-    sse::test::test_search_correctness(client, server, test_db);
+    sse::test::test_search_correctness(
+        client, server, test_db, search_req_fun, search_fun);
 }
 
 

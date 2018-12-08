@@ -32,13 +32,13 @@ public:
 
     std::list<index_type> search(SearchRequest& req);
     std::list<index_type> search_parallel(SearchRequest& req,
-                                          uint8_t        threads_count);
-    void                  search_parallel(SearchRequest&                         req,
-                                          uint8_t                                threads_count,
+                                          uint8_t        diana_threads_count);
+    void                  search_parallel(SearchRequest& req,
+                                          uint8_t        diana_threads_count,
                                           const std::function<void(index_type)>& post_callback);
     void                  search_parallel(
                          SearchRequest&                                  req,
-                         uint8_t                                         threads_count,
+                         uint8_t                                         diana_threads_count,
                          const std::function<void(index_type, uint8_t)>& post_callback);
 
     //            void search(const SearchRequest& req, const

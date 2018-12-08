@@ -62,7 +62,7 @@ public:
         std::function<void(index_type)> post_callback,
         uint8_t                         thread_count);
 
-    void update(const UpdateRequest& req);
+    void insert(const UpdateRequest& req);
 
 private:
     RockDBWrapper edb_;

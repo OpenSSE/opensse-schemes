@@ -65,9 +65,9 @@ public:
 
     SearchRequest               search_request(const std::string& keyword,
                                                bool               log_not_found = true) const;
-    UpdateRequest<T>            update_request(const std::string& keyword,
-                                               const index_type   index);
-    std::list<UpdateRequest<T>> bulk_update_request(
+    UpdateRequest<T>            insertion_request(const std::string& keyword,
+                                                  const index_type   index);
+    std::list<UpdateRequest<T>> bulk_insertion_request(
         const std::list<std::pair<std::string, index_type>>& update_list);
 
     bool remove_keyword(const std::string& kw);
@@ -169,8 +169,8 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
 }
 
 template<typename T>
-UpdateRequest<T> DianaClient<T>::update_request(const std::string& keyword,
-                                                const index_type   index)
+UpdateRequest<T> DianaClient<T>::insertion_request(const std::string& keyword,
+                                                   const index_type   index)
 {
     UpdateRequest<T>      req;
     search_token_key_type st;
@@ -210,7 +210,7 @@ UpdateRequest<T> DianaClient<T>::update_request(const std::string& keyword,
 }
 
 template<typename T>
-std::list<UpdateRequest<T>> DianaClient<T>::bulk_update_request(
+std::list<UpdateRequest<T>> DianaClient<T>::bulk_insertion_request(
     const std::list<std::pair<std::string, index_type>>& update_list)
 {
     std::string keyword;

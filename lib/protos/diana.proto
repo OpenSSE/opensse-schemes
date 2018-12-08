@@ -14,8 +14,8 @@ rpc setup (SetupMessage) returns (google.protobuf.Empty) {}
 rpc search (SearchRequestMessage) returns (stream SearchReply) {}
 
 // Update
-rpc update (UpdateRequestMessage) returns (google.protobuf.Empty) {}
-rpc bulk_update (stream UpdateRequestMessage) returns (google.protobuf.Empty) {}
+rpc insert (UpdateRequestMessage) returns (google.protobuf.Empty) {}
+rpc bulk_insert (stream UpdateRequestMessage) returns (google.protobuf.Empty) {}
 
 }
 

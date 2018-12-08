@@ -278,9 +278,9 @@ TEST(diana, bulk_update)
             std::make_pair("kw_" + std::to_string(kw_index), i));
     }
 
-    auto bulk_up_req = client->bulk_update_request(update_list);
+    auto bulk_up_req = client->bulk_insertion_request(update_list);
     for (auto it = bulk_up_req.begin(); it != bulk_up_req.end(); ++it) {
-        server->update(*it);
+        server->insert(*it);
     }
 
     // test the results

@@ -150,11 +150,11 @@ InsertionRequest JanusClient::insertion_request(const std::string& keyword,
         = tag_prf_.prf(keyword_doc_string(keyword, index));
     crypto::punct::ciphertext_type ct = punct_encryption.encrypt(index, tag);
 
-    return insertion_client_.update_request(m_kw, ct);
+    return insertion_client_.insertion_request(m_kw, ct);
 }
 
-DeletionRequest JanusClient::deletion_request(const std::string& keyword,
-                                              const index_type   index)
+DeletionRequest JanusClient::removal_request(const std::string& keyword,
+                                             const index_type   index)
 {
     uint32_t search_counter = 0;
     if (!search_counter_map_.get(keyword, search_counter)) {
@@ -174,7 +174,7 @@ DeletionRequest JanusClient::deletion_request(const std::string& keyword,
     crypto::punct::key_share_type ks
         = punct_encryption.inc_puncture(n_del + 1, tag);
 
-    return deletion_client_.update_request(m_kw, ks);
+    return deletion_client_.insertion_request(m_kw, ks);
 }
 
 

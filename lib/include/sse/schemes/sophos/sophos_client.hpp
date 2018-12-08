@@ -66,8 +66,8 @@ public:
     //            void write_keys(const std::string& dir_path) const;
 
     SearchRequest search_request(const std::string& keyword) const;
-    UpdateRequest update_request(const std::string& keyword,
-                                 const index_type   index);
+    UpdateRequest insertion_request(const std::string& keyword,
+                                    const index_type   index);
 
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
     const sse::crypto::TdpInverse&         inverse_tdp() const;

@@ -226,9 +226,9 @@ static void generation_job(
         keyword_1.append("_").append(std::to_string(ind_10)).append("_3");
 
 
-        //                client->async_update(keyword_01, ind);
-        //                client->async_update(keyword_1, ind);
-        //                client->async_update(keyword_10, ind);
+        //                client->async_insert(keyword_01, ind);
+        //                client->async_insert(keyword_1, ind);
+        //                client->async_insert(keyword_10, ind);
         //                new_entries += 3;
 
 

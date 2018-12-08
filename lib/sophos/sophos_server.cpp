@@ -549,7 +549,7 @@ void SophosServer::search_parallel_light_callback(
     }
 }
 
-void SophosServer::update(const UpdateRequest& req)
+void SophosServer::insert(const UpdateRequest& req)
 {
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)

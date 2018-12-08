@@ -354,12 +354,12 @@ void test_client_server()
         cout << "]" << endl;
 
         DeletionRequest del_req;
-        del_req = client->deletion_request("toto", 2);
-        server->delete_entry(del_req);
+        del_req = client->removal_request("toto", 2);
+        server->remove(del_req);
 
         InsertionRequest add_req;
         add_req = client->insertion_request("tata", 6);
-        server->insert_entry(add_req);
+        server->insert(add_req);
 
     } else {
         cout << "Create new Janus client-server instances" << endl;
@@ -389,27 +389,27 @@ void test_client_server()
         InsertionRequest add_req;
 
         add_req = client->insertion_request("toto", 0);
-        server->insert_entry(add_req);
+        server->insert(add_req);
 
         add_req = client->insertion_request("titi", 0);
-        server->insert_entry(add_req);
+        server->insert(add_req);
 
         add_req = client->insertion_request("toto", 1);
-        server->insert_entry(add_req);
+        server->insert(add_req);
 
         add_req = client->insertion_request("toto", 2);
-        server->insert_entry(add_req);
+        server->insert(add_req);
 
         add_req = client->insertion_request("tata", 0);
-        server->insert_entry(add_req);
+        server->insert(add_req);
         add_req = client->insertion_request("tata", 3);
-        server->insert_entry(add_req);
+        server->insert(add_req);
         add_req = client->insertion_request("tata", 5);
-        server->insert_entry(add_req);
+        server->insert(add_req);
 
         DeletionRequest del_req;
-        del_req = client->deletion_request("tata", 3);
-        server->delete_entry(del_req);
+        del_req = client->removal_request("tata", 3);
+        server->remove(del_req);
     }
 
     SearchRequest s_req;

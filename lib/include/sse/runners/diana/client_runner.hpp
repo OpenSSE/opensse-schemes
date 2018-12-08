@@ -68,15 +68,15 @@ public:
     std::list<index_type> search(
         const std::string&                   keyword,
         const std::function<void(uint64_t)>& receive_callback = nullptr) const;
-    void update(const std::string& keyword, uint64_t index);
-    void async_update(const std::string& keyword, uint64_t index);
-    void async_update(
+    void insert(const std::string& keyword, uint64_t index);
+    void async_insert(const std::string& keyword, uint64_t index);
+    void async_insert(
         const std::list<std::pair<std::string, uint64_t>>& update_list);
 
     void start_update_session();
     void end_update_session();
-    void update_in_session(const std::string& keyword, uint64_t index);
-    void update_in_session(
+    void insert_in_session(const std::string& keyword, uint64_t index);
+    void insert_in_session(
         const std::list<std::pair<std::string, uint64_t>>& update_list);
 
     void wait_updates_completion();

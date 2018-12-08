@@ -138,17 +138,17 @@ void test_client_server()
 
         // make a few requests
 
-        u_req = client->update_request("toto", 0);
-        server->update(u_req);
+        u_req = client->insertion_request("toto", 0);
+        server->insert(u_req);
 
-        u_req = client->update_request("titi", 0);
-        server->update(u_req);
+        u_req = client->insertion_request("titi", 0);
+        server->insert(u_req);
 
-        u_req = client->update_request("toto", 1);
-        server->update(u_req);
+        u_req = client->insertion_request("toto", 1);
+        server->insert(u_req);
 
-        u_req = client->update_request("tata", 0);
-        server->update(u_req);
+        u_req = client->insertion_request("tata", 0);
+        server->insert(u_req);
     }
 
 

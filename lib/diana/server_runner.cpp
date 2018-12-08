@@ -332,7 +332,7 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
 }
 
 
-grpc::Status DianaImpl::update(__attribute__((unused))
+grpc::Status DianaImpl::insert(__attribute__((unused))
                                grpc::ServerContext*        context,
                                const UpdateRequestMessage* mes,
                                __attribute__((unused))
@@ -348,14 +348,14 @@ grpc::Status DianaImpl::update(__attribute__((unused))
 
     logger::log(logger::LoggerSeverity::TRACE) << "Updating ..." << std::endl;
 
-    server_->update(message_to_request(mes));
+    server_->insert(message_to_request(mes));
 
     logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
 
     return grpc::Status::OK;
 }
 
-grpc::Status DianaImpl::bulk_update(
+grpc::Status DianaImpl::bulk_insert(
     __attribute__((unused)) grpc::ServerContext*     context,
     grpc::ServerReader<UpdateRequestMessage>*        reader,
     __attribute__((unused)) google::protobuf::Empty* e)
@@ -372,7 +372,7 @@ grpc::Status DianaImpl::bulk_update(
     UpdateRequestMessage mes;
 
     while (reader->Read(&mes)) {
-        server_->update(message_to_request(&mes));
+        server_->insert(message_to_request(&mes));
     }
 
     logger::log(logger::LoggerSeverity::TRACE)

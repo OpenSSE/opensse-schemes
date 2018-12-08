@@ -73,7 +73,7 @@ public:
         bool                                            delete_results = false);
 
 
-    void update(const UpdateRequest<index_type>& req);
+    void insert(const UpdateRequest<index_type>& req);
 
     void flush_edb();
 
@@ -471,7 +471,7 @@ void DianaServer<T>::search_simple_parallel(
 }
 
 template<typename T>
-void DianaServer<T>::update(const UpdateRequest<T>& req)
+void DianaServer<T>::insert(const UpdateRequest<T>& req)
 {
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)

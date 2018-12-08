@@ -303,7 +303,7 @@ grpc::Status SophosImpl::async_search(
 }
 
 
-grpc::Status SophosImpl::update(__attribute__((unused))
+grpc::Status SophosImpl::insert(__attribute__((unused))
                                 grpc::ServerContext*                context,
                                 const sophos::UpdateRequestMessage* mes,
                                 __attribute__((unused))
@@ -319,14 +319,14 @@ grpc::Status SophosImpl::update(__attribute__((unused))
 
     logger::log(logger::LoggerSeverity::TRACE) << "Updating ..." << std::endl;
 
-    server_->update(message_to_request(mes));
+    server_->insert(message_to_request(mes));
 
     logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
 
     return grpc::Status::OK;
 }
 
-grpc::Status SophosImpl::bulk_update(
+grpc::Status SophosImpl::bulk_insert(
     __attribute__((unused)) grpc::ServerContext*      context,
     grpc::ServerReader<sophos::UpdateRequestMessage>* reader,
     __attribute__((unused)) google::protobuf::Empty*  e)
@@ -343,7 +343,7 @@ grpc::Status SophosImpl::bulk_update(
     sophos::UpdateRequestMessage mes;
 
     while (reader->Read(&mes)) {
-        server_->update(message_to_request(&mes));
+        server_->insert(message_to_request(&mes));
     }
 
     logger::log(logger::LoggerSeverity::TRACE)

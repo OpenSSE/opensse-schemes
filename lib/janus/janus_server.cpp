@@ -303,14 +303,14 @@ void JanusServer::search_parallel(
 }
 
 
-void JanusServer::insert_entry(const InsertionRequest& req)
+void JanusServer::insert(const InsertionRequest& req)
 {
-    insertion_server_.update(req);
+    insertion_server_.insert(req);
 }
 
-void JanusServer::delete_entry(const DeletionRequest& req)
+void JanusServer::remove(const DeletionRequest& req)
 {
-    deletion_server_.update(req);
+    deletion_server_.insert(req);
 }
 
 void JanusServer::flush_edb()

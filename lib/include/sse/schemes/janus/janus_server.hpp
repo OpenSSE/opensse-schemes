@@ -64,8 +64,8 @@ public:
     //            uint8_t)> &post_callback, uint8_t threads_count);
     //
 
-    void insert_entry(const InsertionRequest& req);
-    void delete_entry(const DeletionRequest& req);
+    void insert(const InsertionRequest& req);
+    void remove(const DeletionRequest& req);
 
     void flush_edb();
 

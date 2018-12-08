@@ -65,11 +65,11 @@ public:
                               const SearchRequestMessage*      mes,
                               grpc::ServerWriter<SearchReply>* writer);
 
-    grpc::Status update(grpc::ServerContext*        context,
+    grpc::Status insert(grpc::ServerContext*        context,
                         const UpdateRequestMessage* mes,
                         google::protobuf::Empty*    e) override;
 
-    grpc::Status bulk_update(grpc::ServerContext*                      context,
+    grpc::Status bulk_insert(grpc::ServerContext*                      context,
                              grpc::ServerReader<UpdateRequestMessage>* reader,
                              google::protobuf::Empty* e) override;
 

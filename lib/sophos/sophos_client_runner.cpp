@@ -301,7 +301,7 @@ std::list<uint64_t> SophosClientRunner::search(
     return results;
 }
 
-void SophosClientRunner::update(const std::string& keyword, uint64_t index)
+void SophosClientRunner::insert(const std::string& keyword, uint64_t index)
 {
     grpc::ClientContext          context;
     sophos::UpdateRequestMessage message;
@@ -309,11 +309,12 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
 
 
     if (bulk_update_state_.writer) { // an update session is running, use it
-        update_in_session(keyword, index);
+        insert_in_session(keyword, index);
     } else {
-        message = request_to_message(client_->update_request(keyword, index));
+        message
+            = request_to_message(client_->insertion_request(keyword, index));
 
-        grpc::Status status = stub_->update(&context, message, &e);
+        grpc::Status status = stub_->insert(&context, message, &e);
 
         if (status.ok()) {
             logger::log(logger::LoggerSeverity::TRACE)
@@ -327,7 +328,7 @@ void SophosClientRunner::update(const std::string& keyword, uint64_t index)
     }
 }
 
-void SophosClientRunner::async_update(const std::string& keyword,
+void SophosClientRunner::async_insert(const std::string& keyword,
                                       uint64_t           index)
 {
     grpc::ClientContext          context;
@@ -335,19 +336,20 @@ void SophosClientRunner::async_update(const std::string& keyword,
 
 
     if (bulk_update_state_.is_up) { // an update session is running, use it
-        update_in_session(keyword, index);
+        insert_in_session(keyword, index);
     } else {
         logger::log(logger::LoggerSeverity::WARNING)
             << "This is dangerous: you should not use "
                "async_updates, they are still buggy..."
             << std::endl;
 
-        message = request_to_message(client_->update_request(keyword, index));
+        message
+            = request_to_message(client_->insertion_request(keyword, index));
 
         update_tag_type* tag = new update_tag_type();
         std::unique_ptr<
             grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
-            rpc(stub_->Asyncupdate(&context, message, &update_cq_));
+            rpc(stub_->Asyncinsert(&context, message, &update_cq_));
 
         tag->reply.reset(new google::protobuf::Empty());
         tag->status.reset(new grpc::Status());
@@ -357,11 +359,11 @@ void SophosClientRunner::async_update(const std::string& keyword,
     }
 }
 
-void SophosClientRunner::update_in_session(const std::string& keyword,
+void SophosClientRunner::insert_in_session(const std::string& keyword,
                                            uint64_t           index)
 {
     sophos::UpdateRequestMessage message
-        = request_to_message(client_->update_request(keyword, index));
+        = request_to_message(client_->insertion_request(keyword, index));
 
     if (!bulk_update_state_.is_up) {
         throw std::runtime_error("Invalid state: the update session is not up");
@@ -394,7 +396,7 @@ void SophosClientRunner::start_update_session()
     }
 
     bulk_update_state_.context.reset(new grpc::ClientContext());
-    bulk_update_state_.writer = stub_->bulk_update(
+    bulk_update_state_.writer = stub_->bulk_insert(
         bulk_update_state_.context.get(), &(bulk_update_state_.response));
     bulk_update_state_.is_up = true;
 
@@ -474,7 +476,7 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
                       = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                             for (unsigned doc : documents) {
-                                this->async_update(keyword, doc);
+                                this->async_insert(keyword, doc);
                             }
                             counter++;
 

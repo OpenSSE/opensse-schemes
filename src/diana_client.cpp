@@ -118,11 +118,11 @@ int main(int argc, char** argv)
             buffer_list__->push_back(std::make_pair(s, i));
 
             if (buffer_list__->size() >= 50) {
-                client_runner->async_update(*buffer_list__);
+                client_runner->async_insert(*buffer_list__);
 
                 buffer_list__->clear();
             }
-            //            client_runner->async_update(s, i);
+            //            client_runner->async_insert(s, i);
         };
 
         client_runner->start_update_session();

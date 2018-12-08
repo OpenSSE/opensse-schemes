@@ -110,8 +110,8 @@ SearchRequest SophosClient::search_request(const std::string& keyword) const
 }
 
 
-UpdateRequest SophosClient::update_request(const std::string& keyword,
-                                           const index_type   index)
+UpdateRequest SophosClient::insertion_request(const std::string& keyword,
+                                              const index_type   index)
 {
     UpdateRequest     req;
     search_token_type st;

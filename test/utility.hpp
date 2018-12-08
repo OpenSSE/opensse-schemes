@@ -19,8 +19,8 @@ void insert_entry(const std::unique_ptr<Client>& client,
                   const std::string&             keyword,
                   const uint64_t                 index)
 {
-    auto u_req = client->update_request(keyword, index);
-    server->update(u_req);
+    auto u_req = client->insertion_request(keyword, index);
+    server->insert(u_req);
 }
 
 template<class Client, class Server>

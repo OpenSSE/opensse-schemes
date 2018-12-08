@@ -61,12 +61,12 @@ public:
     std::list<uint64_t> search(
         const std::string&                   keyword,
         const std::function<void(uint64_t)>& receive_callback = nullptr) const;
-    void update(const std::string& keyword, uint64_t index);
-    void async_update(const std::string& keyword, uint64_t index);
+    void insert(const std::string& keyword, uint64_t index);
+    void async_insert(const std::string& keyword, uint64_t index);
 
     void start_update_session();
     void end_update_session();
-    void update_in_session(const std::string& keyword, uint64_t index);
+    void insert_in_session(const std::string& keyword, uint64_t index);
 
     void wait_updates_completion();
 

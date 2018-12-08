@@ -275,7 +275,7 @@ std::list<uint64_t> DianaClientRunner::search(
     return results;
 }
 
-void DianaClientRunner::update(const std::string& keyword, uint64_t index)
+void DianaClientRunner::insert(const std::string& keyword, uint64_t index)
 {
     grpc::ClientContext     context;
     UpdateRequestMessage    message;
@@ -283,11 +283,12 @@ void DianaClientRunner::update(const std::string& keyword, uint64_t index)
 
 
     if (bulk_update_state_.writer) { // an update session is running, use it
-        update_in_session(keyword, index);
+        insert_in_session(keyword, index);
     } else {
-        message = request_to_message(client_->update_request(keyword, index));
+        message
+            = request_to_message(client_->insertion_request(keyword, index));
 
-        grpc::Status status = stub_->update(&context, message, &e);
+        grpc::Status status = stub_->insert(&context, message, &e);
 
         if (status.ok()) {
             logger::log(logger::LoggerSeverity::TRACE)
@@ -301,21 +302,22 @@ void DianaClientRunner::update(const std::string& keyword, uint64_t index)
     }
 }
 
-void DianaClientRunner::async_update(const std::string& keyword, uint64_t index)
+void DianaClientRunner::async_insert(const std::string& keyword, uint64_t index)
 {
     grpc::ClientContext  context;
     UpdateRequestMessage message;
 
 
     if (bulk_update_state_.is_up) { // an update session is running, use it
-        update_in_session(keyword, index);
+        insert_in_session(keyword, index);
     } else {
-        message = request_to_message(client_->update_request(keyword, index));
+        message
+            = request_to_message(client_->insertion_request(keyword, index));
 
         update_tag_type* tag = new update_tag_type();
         std::unique_ptr<
             grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
-            rpc(stub_->Asyncupdate(&context, message, &update_cq_));
+            rpc(stub_->Asyncinsert(&context, message, &update_cq_));
 
         tag->reply.reset(new google::protobuf::Empty());
         tag->status.reset(new grpc::Status());
@@ -325,11 +327,11 @@ void DianaClientRunner::async_update(const std::string& keyword, uint64_t index)
     }
 }
 
-void DianaClientRunner::async_update(
+void DianaClientRunner::async_insert(
     const std::list<std::pair<std::string, uint64_t>>& update_list)
 {
     if (bulk_update_state_.is_up) { // an update session is running, use it
-        update_in_session(update_list);
+        insert_in_session(update_list);
     } else {
         grpc::ClientContext  context;
         UpdateRequestMessage message;
@@ -337,12 +339,12 @@ void DianaClientRunner::async_update(
 
         for (const auto& it : update_list) {
             message = request_to_message(
-                client_->update_request(it.first, it.second));
+                client_->insertion_request(it.first, it.second));
 
             update_tag_type* tag = new update_tag_type();
             std::unique_ptr<
                 grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
-                rpc(stub_->Asyncupdate(&context, message, &update_cq_));
+                rpc(stub_->Asyncinsert(&context, message, &update_cq_));
 
             tag->reply.reset(new google::protobuf::Empty());
             tag->status.reset(new grpc::Status());
@@ -353,11 +355,11 @@ void DianaClientRunner::async_update(
     }
 }
 
-void DianaClientRunner::update_in_session(const std::string& keyword,
+void DianaClientRunner::insert_in_session(const std::string& keyword,
                                           uint64_t           index)
 {
     UpdateRequestMessage message
-        = request_to_message(client_->update_request(keyword, index));
+        = request_to_message(client_->insertion_request(keyword, index));
 
     if (!bulk_update_state_.is_up) {
         throw std::runtime_error("Invalid state: the update session is not up");
@@ -372,7 +374,7 @@ void DianaClientRunner::update_in_session(const std::string& keyword,
 }
 
 
-void DianaClientRunner::update_in_session(
+void DianaClientRunner::insert_in_session(
     const std::list<std::pair<std::string, uint64_t>>& update_list)
 {
     if (!bulk_update_state_.is_up) {
@@ -385,12 +387,12 @@ void DianaClientRunner::update_in_session(
     //            for(auto it = update_list.begin(); it != update_list.end();
     //            ++it)
     //            {
-    //                message_list.push_back(request_to_message(client_->update_request(it->first,
+    //                message_list.push_back(request_to_message(client_->insertion_request(it->first,
     //                it->second)));
     //            }
 
     std::list<UpdateRequest<DianaClientRunner::index_type>> message_list
-        = client_->bulk_update_request(update_list);
+        = client_->bulk_insertion_request(update_list);
 
     bulk_update_state_.mtx.lock();
 
@@ -423,7 +425,7 @@ void DianaClientRunner::start_update_session()
     }
 
     bulk_update_state_.context.reset(new grpc::ClientContext());
-    bulk_update_state_.writer = stub_->bulk_update(
+    bulk_update_state_.writer = stub_->bulk_insert(
         bulk_update_state_.context.get(), &(bulk_update_state_.response));
     bulk_update_state_.is_up = true;
 
@@ -503,7 +505,7 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
                       = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                             for (unsigned doc : documents) {
-                                this->async_update(keyword, doc);
+                                this->async_insert(keyword, doc);
                             }
                             counter++;
 

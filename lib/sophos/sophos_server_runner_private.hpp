@@ -58,11 +58,11 @@ public:
                               const sophos::SearchRequestMessage*      mes,
                               grpc::ServerWriter<sophos::SearchReply>* writer);
 
-    grpc::Status update(grpc::ServerContext*                context,
+    grpc::Status insert(grpc::ServerContext*                context,
                         const sophos::UpdateRequestMessage* mes,
                         google::protobuf::Empty*            e) override;
 
-    grpc::Status bulk_update(
+    grpc::Status bulk_insert(
         grpc::ServerContext*                              context,
         grpc::ServerReader<sophos::UpdateRequestMessage>* reader,
         google::protobuf::Empty*                          e) override;

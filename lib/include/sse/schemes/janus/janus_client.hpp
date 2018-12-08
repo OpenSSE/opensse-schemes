@@ -34,10 +34,10 @@ public:
     SearchRequest    search_request(const std::string& keyword);
     InsertionRequest insertion_request(const std::string& keyword,
                                        const index_type   index);
-    DeletionRequest  deletion_request(const std::string& keyword,
-                                      const index_type   index);
+    DeletionRequest  removal_request(const std::string& keyword,
+                                     const index_type   index);
 
-    //            std::list<UpdateRequest<T>>   bulk_update_request(const
+    //            std::list<UpdateRequest<T>>   bulk_insertion_request(const
     //            std::list<std::pair<std::string, index_type>> &update_list);
     //
     //

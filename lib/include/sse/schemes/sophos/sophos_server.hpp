@@ -47,7 +47,6 @@ public:
     void                  search_callback(SearchRequest&                         req,
                                           const std::function<void(index_type)>& post_callback);
 
-    std::list<index_type> search_parallel_full(SearchRequest& req);
     std::list<index_type> search_parallel(SearchRequest& req,
                                           uint8_t        access_threads);
     std::list<index_type> search_parallel_light(SearchRequest& req,

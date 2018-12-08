@@ -87,8 +87,10 @@ std::list<index_type> SophosServer::search(SearchRequest& req)
             r = utility::xor_mask(r, mask);
             results.push_back(r);
         } else {
+            /* LCOV_EXCL_START */
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find something!" << std::endl;
+            /* LCOV_EXCL_STOP */
         }
 
         st = public_tdp_.eval(st);
@@ -138,123 +140,14 @@ void SophosServer::search_callback(
             r = utility::xor_mask(r, mask);
             post_callback(r);
         } else {
+            /* LCOV_EXCL_START */
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find something!" << std::endl;
+            /* LCOV_EXCL_STOP */
         }
 
         st = public_tdp_.eval(st);
     }
-}
-
-
-std::list<index_type> SophosServer::search_parallel_full(SearchRequest& req)
-{
-    std::list<index_type> results;
-
-    search_token_type st = req.token;
-
-    crypto::Prf<kUpdateTokenSize> derivation_prf(
-        crypto::Key<kDerivationKeySize>(req.derivation_key.data()));
-
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Search token: " << utility::hex_string(req.token) << std::endl;
-
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << utility::hex_string(req.derivation_key)
-            << std::endl;
-    }
-
-    ThreadPool prf_pool(1);
-    ThreadPool token_map_pool(1);
-    ThreadPool decrypt_pool(1);
-
-    auto decrypt_job = [&derivation_prf, &results](
-                           const index_type r, const std::string& st_string) {
-        index_type v
-            = utility::xor_mask(r, derivation_prf.prf(st_string + '1'));
-        results.push_back(v);
-    };
-
-    auto lookup_job
-        // cppcheck-suppress variableScope
-        = [&decrypt_pool, &decrypt_job, this](const std::string& st_string,
-                                              const update_token_type& token) {
-              index_type r;
-
-              if (logger::severity() <= logger::LoggerSeverity::DBG) {
-                  logger::log(logger::LoggerSeverity::DBG)
-                      << "Derived token: " << utility::hex_string(token)
-                      << std::endl;
-              }
-
-              bool found = edb_.get(token, r);
-
-              if (found) {
-                  if (logger::severity() <= logger::LoggerSeverity::DBG) {
-                      logger::log(logger::LoggerSeverity::DBG)
-                          << "Found: " << std::hex << r << std::endl;
-                  }
-
-                  decrypt_pool.enqueue(decrypt_job, r, st_string);
-
-              } else {
-                  logger::log(logger::LoggerSeverity::ERROR)
-                      << "We were supposed to find something!" << std::endl;
-              }
-          };
-
-
-    auto derive_job = [&derivation_prf, &token_map_pool, &lookup_job](
-                          const std::string& input_string) {
-        update_token_type ut = derivation_prf.prf(input_string + '0');
-
-        token_map_pool.enqueue(lookup_job, input_string, ut);
-    };
-
-    // the rsa job launched with input index,max computes all the RSA tokens of
-    // order i + kN up to max
-    auto rsa_job = [this, &st, &derive_job, &prf_pool](
-                       const uint8_t index, const size_t max, const uint8_t N) {
-        search_token_type local_st = st;
-        if (index != 0) {
-            local_st = public_tdp_.eval(local_st, index);
-        }
-
-        if (index < max) {
-            // this is a valid search token, we have to derive it and do a
-            // lookup
-            std::string st_string(reinterpret_cast<char*>(local_st.data()),
-                                  local_st.size());
-            prf_pool.enqueue(derive_job, st_string);
-        }
-
-        for (size_t i = index + N; i < max; i += N) {
-            local_st = public_tdp_.eval(local_st, N);
-
-            std::string st_string(reinterpret_cast<char*>(local_st.data()),
-                                  local_st.size());
-            prf_pool.enqueue(derive_job, st_string);
-        }
-    };
-
-    std::vector<std::thread> rsa_threads;
-
-    unsigned n_threads = std::thread::hardware_concurrency() - 3;
-
-    for (uint8_t t = 0; t < n_threads; t++) {
-        rsa_threads.emplace_back(rsa_job, t, req.add_count, n_threads);
-    }
-
-    for (uint8_t t = 0; t < n_threads; t++) {
-        rsa_threads[t].join();
-    }
-
-    prf_pool.join();
-    token_map_pool.join();
-
-
-    return results;
 }
 
 std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
@@ -304,9 +197,11 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
                     << "Found: " << std::hex << r << std::endl;
             }
         } else {
+            /* LCOV_EXCL_START */
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find something!" << std::endl;
             return;
+            /* LCOV_EXCL_STOP */
         }
 
         index_type v = utility::xor_mask(r, mask);
@@ -408,12 +303,14 @@ std::list<index_type> SophosServer::search_parallel_light(SearchRequest& req,
             res_mutex.unlock();
 
         } else {
+            /* LCOV_EXCL_START */
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find a value mapped to key "
                 << utility::hex_string(token);
             logger::log(logger::LoggerSeverity::ERROR)
                 << " (" << i << "-th derived key from search token "
                 << utility::hex_string(st) << ")" << std::endl;
+            /* LCOV_EXCL_STOP */
         }
     };
 
@@ -507,12 +404,14 @@ void SophosServer::search_parallel_callback(
             post_pool.enqueue(post_callback, v);
 
         } else {
+            /* LCOV_EXCL_START */
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find a value mapped to key "
                 << utility::hex_string(token);
             logger::log(logger::LoggerSeverity::ERROR)
                 << " (" << i << "-th derived key from search token "
                 << utility::hex_string(st) << ")" << std::endl;
+            /* LCOV_EXCL_STOP */
         }
     };
 
@@ -601,12 +500,14 @@ void SophosServer::search_parallel_light_callback(
             post_callback(v);
 
         } else {
+            /* LCOV_EXCL_START */
             logger::log(logger::LoggerSeverity::ERROR)
                 << "We were supposed to find a value mapped to key "
                 << utility::hex_string(token);
             logger::log(logger::LoggerSeverity::ERROR)
                 << " (" << i << "-th derived key from search token "
                 << utility::hex_string(st) << ")" << std::endl;
+            /* LCOV_EXCL_STOP */
         }
     };
 

@@ -81,7 +81,7 @@ inline ThreadPool::ThreadPool(uint32_t threads)
     : max_tasks_size_(0), stop(false)
 {
     for (uint32_t i = 0; i < threads; ++i) {
-        workers.emplace_back([this, &i] {
+        workers.emplace_back([this, i] {
             this->register_thread(i);
             for (;;) {
                 std::function<void()> task;

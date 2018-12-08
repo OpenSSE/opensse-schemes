@@ -168,45 +168,5 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
 
     return req;
 }
-
-/*
-void SophosClient::write_keys(const std::string& dir_path) const
-{
-    if (!is_directory(dir_path)) {
-        throw std::runtime_error(dir_path + ": not a directory");
-    }
-
-    std::string sk_path = dir_path + "/" + tdp_sk_file__;
-    std::string master_key_path = dir_path + "/" + derivation_key_file__;
-
-    std::ofstream sk_out(sk_path.c_str());
-    if (!sk_out.is_open()) {
-        throw std::runtime_error(sk_path + ": unable to write the secret key");
-    }
-
-    sk_out << private_key();
-    sk_out.close();
-
-    std::ofstream master_key_out(master_key_path.c_str());
-    if (!master_key_out.is_open()) {
-        throw std::runtime_error(master_key_path + ": unable to write the master
-derivation key");
-    }
-
-    master_key_out << master_derivation_key();
-    master_key_out.close();
-
-    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
-
-    std::ofstream rsa_prg_key_out(rsa_prg_key_path.c_str());
-    if (!rsa_prg_key_out.is_open()) {
-        throw std::runtime_error(rsa_prg_key_path + ": unable to write the rsa
-prg key");
-    }
-
-    rsa_prg_key_out << rsa_prg_key();
-    rsa_prg_key_out.close();
-}
- */
 } // namespace sophos
 } // namespace sse

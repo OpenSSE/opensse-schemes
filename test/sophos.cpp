@@ -218,6 +218,10 @@ TEST(sophos, search_algorithms)
 
     sophos::SearchRequest u_req;
 
+    // first check that a search request on a non-existent keyword has an
+    // add_count set to 0
+    u_req = client->search_request("??");
+    ASSERT_EQ(u_req.add_count, 0);
 
     std::mutex res_list_mutex;
 
@@ -238,14 +242,9 @@ TEST(sophos, search_algorithms)
     auto res_par_light = server->search_parallel_light(u_req, 1);
     // u_req, std::thread::hardware_concurrency());
 
-    // u_req             = client->search_request(keyword);
-    // auto res_par_full = server->search_parallel_full(u_req);
-
     check_same_results(long_list, res);
     check_same_results(long_list, res_par);
     check_same_results(long_list, res_par_light);
-    // check_same_results(long_list, res_par_full);
-
 
     std::list<uint64_t> res_callback;
     std::list<uint64_t> res_par_callback;

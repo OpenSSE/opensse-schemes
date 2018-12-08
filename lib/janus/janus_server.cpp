@@ -97,19 +97,19 @@ JanusServer::JanusServer(const std::string& db_add_path,
 
 std::list<index_type> JanusServer::search(SearchRequest& req)
 {
-    //            std::list<crypto::punct::ciphertext_type> insertions =
-    //            insertion_server_.search(req.insertion_search_request, true);
-    //
-    //            std::list<crypto::punct::key_share_type> key_shares =
-    //            deletion_server_.search(req.deletion_search_request, true);
-
     std::list<crypto::punct::ciphertext_type> insertions
-        = insertion_server_.search_simple_parallel(
-            req.insertion_search_request, 8, true);
+        = insertion_server_.search(req.insertion_search_request, true);
 
     std::list<crypto::punct::key_share_type> key_shares
-        = deletion_server_.search_simple_parallel(
-            req.deletion_search_request, 8, true);
+        = deletion_server_.search(req.deletion_search_request, true);
+
+    // std::list<crypto::punct::ciphertext_type> insertions
+    //     = insertion_server_.search_simple_parallel(
+    //         req.insertion_search_request, 8, true);
+
+    // std::list<crypto::punct::key_share_type> key_shares
+    //     = deletion_server_.search_simple_parallel(
+    //         req.deletion_search_request, 8, true);
 
     key_shares.push_front(req.first_key_share);
 

@@ -83,12 +83,6 @@ public:
 
     bool load_inverted_index(const std::string& path);
 
-    //            bool output_db(const std::string& out_path);
-    std::ostream& print_stats(std::ostream& out) const;
-
-    //            void random_search() const;
-    //            void search_benchmark(size_t n_bench) const;
-
     // not copyable by any mean
     DianaClientRunner& operator=(const DianaClientRunner& h) = delete;
     DianaClientRunner& operator=(DianaClientRunner& h) = delete;

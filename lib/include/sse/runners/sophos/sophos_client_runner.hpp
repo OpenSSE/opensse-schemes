@@ -72,7 +72,6 @@ public:
 
     bool load_inverted_index(const std::string& path);
 
-    std::ostream& print_stats(std::ostream& out) const;
 
 private:
     void update_completion_loop();

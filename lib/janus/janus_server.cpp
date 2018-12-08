@@ -313,13 +313,6 @@ void JanusServer::delete_entry(const DeletionRequest& req)
     deletion_server_.update(req);
 }
 
-std::ostream& JanusServer::print_stats(std::ostream& out) const
-{
-    insertion_server_.print_stats(out);
-    deletion_server_.print_stats(out);
-    return out;
-}
-
 void JanusServer::flush_edb()
 {
     insertion_server_.flush_edb();

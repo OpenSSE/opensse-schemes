@@ -169,13 +169,6 @@ UpdateRequest SophosClient::update_request(const std::string& keyword,
     return req;
 }
 
-std::ostream& SophosClient::print_stats(std::ostream& out) const
-{
-    out << "Number of keywords: " << keyword_count() << std::endl;
-
-    return out;
-}
-
 /*
 void SophosClient::write_keys(const std::string& dir_path) const
 {

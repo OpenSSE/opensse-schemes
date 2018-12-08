@@ -72,8 +72,6 @@ public:
 
     bool remove_keyword(const std::string& kw);
 
-    std::ostream& print_stats(std::ostream& out) const;
-
     const crypto::Prf<kSearchTokenKeySize>& root_prf() const;
     const crypto::Prf<kKeywordTokenSize>&   kw_token_prf() const;
 
@@ -286,14 +284,6 @@ template<typename T>
 bool DianaClient<T>::remove_keyword(const std::string& kw)
 {
     return counter_map_.remove_key(kw);
-}
-
-template<typename T>
-std::ostream& DianaClient<T>::print_stats(std::ostream& out) const
-{
-    out << "Number of keywords: " << keyword_count() << std::endl;
-
-    return out;
 }
 
 template<typename T>

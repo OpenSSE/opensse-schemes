@@ -67,8 +67,6 @@ public:
     void insert_entry(const InsertionRequest& req);
     void delete_entry(const DeletionRequest& req);
 
-    std::ostream& print_stats(std::ostream& out) const;
-
     void flush_edb();
 
 private:

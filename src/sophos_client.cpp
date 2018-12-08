@@ -30,10 +30,9 @@ int main(int argc, char** argv)
     std::list<std::string> input_files;
     std::list<std::string> keywords;
     std::string            client_db;
-    bool                   print_stats       = false;
     uint32_t               rnd_entries_count = 0;
 
-    while ((c = getopt(argc, argv, "l:b:o:i:dpr:")) != -1) {
+    while ((c = getopt(argc, argv, "l:b:o:i:dr:")) != -1) {
         switch (c) {
         case 'l':
             input_files.emplace_back(optarg);
@@ -45,9 +44,6 @@ int main(int argc, char** argv)
             //            input_files.push_back("/Volumes/Storage/WP_Inverted/inverted_index_all_sizes/inverted_index_10000.json");
             input_files.emplace_back(
                 "/Users/raphaelbost/Documents/inverted_index_1000.json");
-            break;
-        case 'p':
-            print_stats = true;
             break;
         case 'r':
             rnd_entries_count = static_cast<uint32_t>(
@@ -146,11 +142,6 @@ int main(int argc, char** argv)
     //        std::cout << "-------------- Search Benchmarks --------------" <<
     //        std::endl; client_runner->search_benchmark(bench_count);
     //    }
-
-    if (print_stats) {
-        client_runner->print_stats(
-            sse::logger::log(sse::logger::LoggerSeverity::INFO));
-    }
 
     client_runner.reset();
 

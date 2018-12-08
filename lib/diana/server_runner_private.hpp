@@ -73,8 +73,6 @@ public:
                              grpc::ServerReader<UpdateRequestMessage>* reader,
                              google::protobuf::Empty* e) override;
 
-    std::ostream& print_stats(std::ostream& out) const;
-
     bool search_asynchronously() const;
     void set_search_asynchronously(bool flag);
 

@@ -659,16 +659,5 @@ void SophosServer::update(const UpdateRequest& req)
     //    edb_.add(req.token, req.index);
     edb_.put(req.token, req.index);
 }
-
-std::ostream& SophosServer::print_stats(std::ostream& out) const
-{
-    //    out << "Number of tokens: " << edb_.size();
-    //    out << "; Load: " << edb_.load();
-    //    out << "; Overflow bucket size: " << edb_.overflow_size() <<
-    //    std::endl;
-
-    return out;
-}
-
 } // namespace sophos
 } // namespace sse

@@ -514,11 +514,6 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
     return false;
 }
 
-std::ostream& SophosClientRunner::print_stats(std::ostream& out) const
-{
-    return client_->print_stats(out);
-}
-
 SearchRequestMessage request_to_message(const SearchRequest& req)
 {
     SearchRequestMessage mes;

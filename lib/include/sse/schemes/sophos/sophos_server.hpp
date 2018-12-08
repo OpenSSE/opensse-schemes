@@ -65,8 +65,6 @@ public:
 
     void update(const UpdateRequest& req);
 
-    std::ostream& print_stats(std::ostream& out) const;
-
 private:
     RockDBWrapper edb_;
 

@@ -69,8 +69,6 @@ public:
     UpdateRequest update_request(const std::string& keyword,
                                  const index_type   index);
 
-    std::ostream& print_stats(std::ostream& out) const;
-
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
     const sse::crypto::TdpInverse&         inverse_tdp() const;
 

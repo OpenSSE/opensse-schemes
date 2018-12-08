@@ -384,15 +384,6 @@ grpc::Status DianaImpl::bulk_update(
     return grpc::Status::OK;
 }
 
-
-std::ostream& DianaImpl::print_stats(std::ostream& out) const
-{
-    if (server_) {
-        return server_->print_stats(out);
-    }
-    return out;
-}
-
 bool DianaImpl::search_asynchronously() const
 {
     return async_search_;
@@ -467,7 +458,6 @@ void run_diana_server(const std::string& address,
 
     *server_ptr = server.get();
 
-    service.print_stats(sse::logger::log(sse::logger::LoggerSeverity::INFO));
     service.set_search_asynchronously(async_search);
 
     server->Wait();

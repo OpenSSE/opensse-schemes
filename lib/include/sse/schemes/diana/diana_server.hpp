@@ -75,8 +75,6 @@ public:
 
     void update(const UpdateRequest<index_type>& req);
 
-    std::ostream& print_stats(std::ostream& out) const;
-
     void flush_edb();
 
 private:
@@ -145,8 +143,10 @@ bool DianaServer<T>::get_unmask(uint8_t*    key,
 
         index = xor_mask(index, mask);
     } else {
+        /* LCOV_EXCL_START */
         logger::log(logger::LoggerSeverity::ERROR)
             << "We were supposed to find something!" << std::endl;
+        /* LCOV_EXCL_STOP */
     }
 
     return found;
@@ -288,8 +288,10 @@ void DianaServer<T>::search_simple(
 
                 post_callback(r);
             } else {
+                /* LCOV_EXCL_START */
                 logger::log(logger::LoggerSeverity::ERROR)
                     << "We were supposed to find something!" << std::endl;
+                /* LCOV_EXCL_STOP */
             }
         }
     }
@@ -478,12 +480,6 @@ void DianaServer<T>::update(const UpdateRequest<T>& req)
     }
 
     edb_.put(req.token, req.index);
-}
-
-template<typename T>
-std::ostream& DianaServer<T>::print_stats(std::ostream& out) const
-{
-    return out;
 }
 
 template<typename T>

@@ -561,12 +561,6 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
 //
 //            return true;
 //        }
-
-std::ostream& DianaClientRunner::print_stats(std::ostream& out) const
-{
-    return client_->print_stats(out);
-}
-
 //        void DianaClientRunner::random_search() const
 //        {
 //            logger::log(logger::LoggerSeverity::TRACE) << "Random Search " <<

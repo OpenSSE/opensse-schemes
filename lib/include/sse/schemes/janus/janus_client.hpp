@@ -45,7 +45,6 @@ public:
     //            keyword_index_type &kw_index) const;
     //            //            SearchRequest   random_search_request() const;
     //
-    //            std::ostream& print_stats(std::ostream& out) const;
     //
     //            const crypto::Prf<kSearchTokenKeySize>& root_prf() const;
     //            const crypto::Prf<kKeywordTokenSize>& kw_token_prf() const;

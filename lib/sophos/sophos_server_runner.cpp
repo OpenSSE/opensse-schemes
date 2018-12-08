@@ -353,15 +353,6 @@ grpc::Status SophosImpl::bulk_update(
     return grpc::Status::OK;
 }
 
-
-std::ostream& SophosImpl::print_stats(std::ostream& out) const
-{
-    if (server_) {
-        return server_->print_stats(out);
-    }
-    return out;
-}
-
 bool SophosImpl::search_asynchronously() const
 {
     return async_search_;
@@ -417,7 +408,6 @@ void run_sophos_server(const std::string& server_address,
 
     *server_ptr = server.get();
 
-    service.print_stats(sse::logger::log(sse::logger::LoggerSeverity::INFO));
     service.set_search_asynchronously(async_search);
 
     server->Wait();

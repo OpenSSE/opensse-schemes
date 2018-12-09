@@ -103,6 +103,9 @@ SearchRequest SophosClient::search_request(const std::string& keyword) const
 
         req.derivation_key = derivation_prf().prf(
             reinterpret_cast<const uint8_t*>(seed.data()), kKeywordIndexSize);
+        logger::log(logger::LoggerSeverity::DBG)
+            << "Sent derivation key: "
+            << utility::hex_string(req.derivation_key) << std::endl;
         req.add_count = kw_counter + 1;
     }
 

@@ -397,21 +397,44 @@ void run_sophos_server(const std::string& server_address,
                        grpc::Server**     server_ptr,
                        bool               async_search)
 {
-    SophosImpl service(server_db_path);
-
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&service);
-    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-    logger::log(logger::LoggerSeverity::INFO)
-        << "Server listening on " << server_address << std::endl;
+
+    run_sophos_server(
+        builder, server_db_path, server_ptr, async_search, []() {});
+}
+
+void run_sophos_server(grpc::ServerBuilder&         builder,
+                       const std::string&           server_db_path,
+                       grpc::Server**               server_ptr,
+                       bool                         async_search,
+                       const std::function<void()>& server_started_callback)
+{
+    std::unique_ptr<grpc::Service> service;
+
+    auto server
+        = build_sophos_server(builder, server_db_path, async_search, service);
 
     *server_ptr = server.get();
 
-    service.set_search_asynchronously(async_search);
+    server_started_callback();
 
     server->Wait();
 }
 
+std::unique_ptr<grpc::Server> build_sophos_server(
+    grpc::ServerBuilder&            builder,
+    const std::string&              server_db_path,
+    bool                            async_search,
+    std::unique_ptr<grpc::Service>& service)
+{
+    service.reset(new SophosImpl(server_db_path));
+
+    reinterpret_cast<SophosImpl*>(service.get())
+        ->set_search_asynchronously(async_search);
+
+    builder.RegisterService(service.get());
+    return builder.BuildAndStart();
+}
 } // namespace sophos
 } // namespace sse

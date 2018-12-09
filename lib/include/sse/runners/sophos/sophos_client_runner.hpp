@@ -53,7 +53,8 @@ class UpdateRequestMessage;
 class SophosClientRunner
 {
 public:
-    SophosClientRunner(const std::string& address, const std::string& path);
+    SophosClientRunner(const std::shared_ptr<grpc::Channel>& channel,
+                       const std::string&                    path);
     ~SophosClientRunner();
 
     const SophosClient& client() const;
@@ -98,7 +99,7 @@ private:
     std::thread*            update_completion_thread_;
     std::mutex              update_completion_mtx_;
     std::condition_variable update_completion_cv_;
-    bool                    stop_update_completion_thread_;
+    std::atomic<bool>       stop_update_completion_thread_{false};
 
     std::mutex update_mtx_;
 };

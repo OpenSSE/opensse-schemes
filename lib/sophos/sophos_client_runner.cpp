@@ -33,7 +33,6 @@
 #include <sse/dbparser/json/DBParserJSON.h>
 
 #include <grpc++/client_context.h>
-#include <grpc++/create_channel.h>
 #include <grpc++/security/credentials.h>
 #include <grpc/grpc.h>
 
@@ -177,12 +176,11 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
 
 // De-activate clang-tidy because of a false positive in gRPC
 // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
-SophosClientRunner::SophosClientRunner(const std::string& address,
-                                       const std::string& path)
+SophosClientRunner::SophosClientRunner(
+    const std::shared_ptr<grpc::Channel>& channel,
+    const std::string&                    path)
     : update_launched_count_(0), update_completed_count_(0)
 {
-    std::shared_ptr<grpc::Channel> channel(
-        grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
     stub_ = sophos::Sophos::NewStub(channel);
 
     if (utility::is_directory(path)) {

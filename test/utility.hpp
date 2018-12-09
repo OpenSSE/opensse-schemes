@@ -52,6 +52,14 @@ void insert_database(const std::unique_ptr<Client>&                    client,
                      });
 }
 
+template<class CientRunner>
+void insert_database(const std::unique_ptr<CientRunner>&               client,
+                     const std::map<std::string, std::list<uint64_t>>& db)
+{
+    iterate_database(db, [&client](const std::string& kw, uint64_t index) {
+        client->insert(kw, index);
+    });
+}
 
 template<class Client, class Server>
 void test_search_correctness(
@@ -87,6 +95,25 @@ void test_search_correctness(
                              const std::list<uint64_t>& expected_list) {
         auto                     req      = search_req_fun(*client, kw);
         const auto               res_list = search_fun(*server, req);
+        const std::set<uint64_t> res_set(res_list.begin(), res_list.end());
+        const std::set<uint64_t> expected_set(expected_list.begin(),
+                                              expected_list.end());
+
+        ASSERT_EQ(res_set, expected_set);
+    };
+    iterate_database_keywords(db, test_callback);
+}
+
+
+template<class ClientRunner>
+void test_search_correctness(
+    const std::unique_ptr<ClientRunner>&              client,
+    const std::map<std::string, std::list<uint64_t>>& db)
+
+{
+    auto test_callback = [&client](const std::string&         kw,
+                                   const std::list<uint64_t>& expected_list) {
+        const auto               res_list = client->search(kw);
         const std::set<uint64_t> res_set(res_list.begin(), res_list.end());
         const std::set<uint64_t> expected_set(expected_list.begin(),
                                               expected_list.end());

@@ -9,8 +9,8 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     include(GoogleTest)
 endif()
 
-add_executable(check test.cpp utility.cpp rocksdb.cpp sophos.cpp diana.cpp janus.cpp)
-target_link_libraries(check gtest OpenSSE::schemes)
+add_executable(check test.cpp utility.cpp rocksdb.cpp sophos.cpp diana.cpp janus.cpp sophos_runner.cpp)
+target_link_libraries(check gtest OpenSSE::schemes OpenSSE::runners)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     gtest_discover_tests(check)

@@ -22,14 +22,30 @@
 #pragma once
 
 #include <grpc++/server.h>
+#include <grpc++/server_builder.h>
 
 #include <string>
 
 namespace sse {
 namespace sophos {
+
+class SophosImpl;
+
+std::unique_ptr<grpc::Server> build_sophos_server(
+    grpc::ServerBuilder&            builder,
+    const std::string&              server_db_path,
+    bool                            async_search,
+    std::unique_ptr<grpc::Service>& service);
+
 void run_sophos_server(const std::string& server_address,
                        const std::string& server_db_path,
                        grpc::Server**     server_ptr,
                        bool               async_search);
+
+void run_sophos_server(grpc::ServerBuilder&         builder,
+                       const std::string&           server_db_path,
+                       grpc::Server**               server_ptr,
+                       bool                         async_search,
+                       const std::function<void()>& server_started_callback);
 } // namespace sophos
 } // namespace sse

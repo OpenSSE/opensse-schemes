@@ -12,6 +12,8 @@
 
 #include <sse/crypto/utils.hpp>
 
+#include <grpc++/create_channel.h>
+
 #include <cstdio>
 #include <unistd.h>
 
@@ -82,9 +84,11 @@ int main(int argc, char** argv)
     }
 
     std::unique_ptr<sse::sophos::SophosClientRunner> client_runner;
+    std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(
+        "localhost:4240", grpc::InsecureChannelCredentials()));
 
     client_runner.reset(
-        new sse::sophos::SophosClientRunner("localhost:4240", client_db));
+        new sse::sophos::SophosClientRunner(channel, client_db));
 
     for (std::string& path : input_files) {
         sse::logger::log(sse::logger::LoggerSeverity::INFO)

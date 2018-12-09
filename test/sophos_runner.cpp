@@ -63,7 +63,7 @@ TEST(sophos_runner, insertion_search)
     sse::test::insert_database(client, test_db);
     sse::test::test_search_correctness(client, test_db);
 
-    server->Shutdown()
+    server->Shutdown();
 }
 
 } // namespace test

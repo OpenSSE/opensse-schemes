@@ -83,7 +83,11 @@ find_package(GRPC)
 message(STATUS "Protoc path: " ${Protobuf_PROTOC_EXECUTABLE})
 message(STATUS "GRPC plugin path: " ${GRPC_CPP_PLUGIN})
 
+
+#  Disable memory locks because of race conditions.
+set(ENABLE_MEMORY_LOCK OFF CACHE BOOL "Disable Memory Lock" FORCE)
 add_subdirectory(third_party/crypto/src)
+
 add_subdirectory(third_party/db-parser/src)
 
 add_subdirectory(lib)

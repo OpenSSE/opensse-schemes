@@ -237,9 +237,11 @@ TEST(sophos, search_algorithms)
 
     u_req        = client->search_request(keyword);
     auto res_par = server->search_parallel(u_req, 1);
+    // = server->search_parallel(u_req, std::thread::hardware_concurrency());
 
     u_req              = client->search_request(keyword);
-    auto res_par_light = server->search_parallel_light(u_req, 1);
+    auto res_par_light = server->search_parallel_light(
+        u_req, std::thread::hardware_concurrency());
     // u_req, std::thread::hardware_concurrency());
 
     check_same_results(long_list, res);
@@ -260,7 +262,7 @@ TEST(sophos, search_algorithms)
     server->search_parallel_callback(
         u_req,
         std::bind(search_callback, &res_par_callback, std::placeholders::_1),
-        1,
+        std::thread::hardware_concurrency() - 2,
         1,
         1);
     check_same_results(long_list, res_par_callback);
@@ -270,7 +272,7 @@ TEST(sophos, search_algorithms)
                                            std::bind(search_callback,
                                                      &res_par_light_callback,
                                                      std::placeholders::_1),
-                                           1);
+                                           std::thread::hardware_concurrency());
     check_same_results(long_list, res_par_light_callback);
 }
 } // namespace test

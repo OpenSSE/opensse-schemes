@@ -8,6 +8,7 @@
 
 #include <sse/crypto/utils.hpp>
 
+#include <grpc++/create_channel.h>
 #include <grpc++/impl/codegen/service_type.h>
 #include <grpc++/server_builder.h>
 
@@ -45,14 +46,14 @@ TEST(sophos_runner, insertion_search)
 {
     sse::test::cleanup_directory(sophos_test_dir);
 
-    grpc::ServerBuilder            builder;
     std::unique_ptr<grpc::Service> service;
 
-    auto server = build_sophos_server(builder, server_db_path, false, service);
+    auto server
+        = build_sophos_server("127.0.0.1:4242", server_db_path, false, service);
 
-    // Get the in-process channel
-    std::shared_ptr<grpc::Channel> channel
-        = server->InProcessChannel(grpc::ChannelArguments());
+    // Create the channel
+    std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(
+        "localhost:4242", grpc::InsecureChannelCredentials()));
     // Create the client
     std::unique_ptr<SophosClientRunner> client(
         new SophosClientRunner(channel, client_db_path));

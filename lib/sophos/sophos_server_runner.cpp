@@ -436,5 +436,17 @@ std::unique_ptr<grpc::Server> build_sophos_server(
     builder.RegisterService(service.get());
     return builder.BuildAndStart();
 }
+
+std::unique_ptr<grpc::Server> build_sophos_server(
+    const std::string&              server_address,
+    const std::string&              server_db_path,
+    bool                            async_search,
+    std::unique_ptr<grpc::Service>& service)
+{
+    grpc::ServerBuilder builder;
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+
+    return build_sophos_server(builder, server_db_path, async_search, service);
+}
 } // namespace sophos
 } // namespace sse

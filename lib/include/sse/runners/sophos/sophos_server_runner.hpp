@@ -37,6 +37,12 @@ std::unique_ptr<grpc::Server> build_sophos_server(
     bool                            async_search,
     std::unique_ptr<grpc::Service>& service);
 
+std::unique_ptr<grpc::Server> build_sophos_server(
+    const std::string&              server_address,
+    const std::string&              server_db_path,
+    bool                            async_search,
+    std::unique_ptr<grpc::Service>& service);
+
 void run_sophos_server(const std::string& server_address,
                        const std::string& server_db_path,
                        grpc::Server**     server_ptr,

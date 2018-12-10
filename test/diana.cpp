@@ -25,6 +25,9 @@ namespace test {
 using TestDianaClient = sse::diana::DianaClient<uint64_t>;
 using TestDianaServer = sse::diana::DianaServer<uint64_t>;
 
+const unsigned concurrency_level
+    = std::max<unsigned>(3, std::thread::hardware_concurrency());
+
 
 #define SSE_DIANA_TEST_DIR "test_diana"
 
@@ -168,10 +171,10 @@ inline void check_same_results(const U& l1, const V& l2)
     ASSERT_EQ(s1, s2);
 }
 
+
 // To test all the different search algorithms
-// We do not try to find any kind of concurrency bug here:
-// this is kept for an other test, so the concurrency level is often set to 1
-TEST(diana, search_algorithms)
+template<class SearchFun>
+static void test_search_function(SearchFun search_fun)
 {
     std::unique_ptr<TestDianaClient> client;
     std::unique_ptr<TestDianaServer> server;
@@ -192,110 +195,116 @@ TEST(diana, search_algorithms)
 
     sse::test::insert_database(client, server, test_db);
 
-    diana::SearchRequest u_req;
-
-
-    std::mutex res_list_mutex;
-
-
-    // Search requests can only be used once
-    u_req    = client->search_request(keyword);
-    auto res = server->search(u_req);
-
-    u_req        = client->search_request(keyword);
-    auto res_par = server->search_simple_parallel(u_req, 1);
-
-    std::vector<uint64_t> res_par_vec;
-    u_req = client->search_request(keyword);
-    server->search_simple_parallel(u_req, 1, res_par_vec);
-    // u_req, std::thread::hardware_concurrency());
-
-    // u_req             = client->search_request(keyword);
-    // auto res_par_full = server->search_parallel_full(u_req);
-
-    check_same_results(long_list, res);
-    check_same_results(long_list, res_par);
-    check_same_results(long_list, res_par_vec);
-    // check_same_results(long_list, res_par_full);
-
-
-    auto search_callback
-        = [&res_list_mutex](std::list<uint64_t>* res_list, uint64_t index) {
-              std::lock_guard<std::mutex> lock(res_list_mutex);
-              res_list->push_back(index);
-          };
-    std::function<void(uint64_t)> cb;
-
-    std::list<uint64_t> res_callback;
-    std::list<uint64_t> res_simple_callback;
-    std::list<uint64_t> res_simple_par_callback;
-
-    u_req = client->search_request(keyword);
-    cb    = std::bind(search_callback, &res_callback, std::placeholders::_1);
-    server->search(u_req, cb);
-    check_same_results(long_list, res_callback);
-
-    u_req = client->search_request(keyword);
-    cb    = std::bind(
-        search_callback, &res_simple_callback, std::placeholders::_1);
-    server->search_simple(u_req, cb);
-    check_same_results(long_list, res_simple_callback);
-
-    u_req = client->search_request(keyword);
-    cb    = std::bind(
-        search_callback, &res_simple_par_callback, std::placeholders::_1);
-    server->search_simple_parallel(u_req, cb, 1, false);
-    check_same_results(long_list, res_simple_par_callback);
-
-    res_simple_par_callback.clear();
-    auto thread_local_callback
-        = [&res_list_mutex, &res_simple_par_callback](uint64_t index, uint8_t) {
-              std::lock_guard<std::mutex> lock(res_list_mutex);
-              res_simple_par_callback.push_back(index);
-          };
-    u_req = client->search_request(keyword);
-    server->search_simple_parallel(u_req, thread_local_callback, 1, false);
-    check_same_results(long_list, res_simple_par_callback);
+    // search
+    auto search_req_fun = [](TestDianaClient& client, const std::string& kw) {
+        return client.search_request(kw);
+    };
+    sse::test::test_search_correctness(
+        client, server, test_db, search_req_fun, search_fun);
 }
 
-TEST(diana, bulk_update)
+
+TEST(diana, search)
 {
-    std::unique_ptr<TestDianaClient> client;
-    std::unique_ptr<TestDianaServer> server;
+    auto search_fun = [](TestDianaServer& server, SearchRequest& req) {
+        return server.search(req);
+    };
+    test_search_function(search_fun);
+}
 
-    // start by cleaning up the test directory
-    sse::test::cleanup_directory(diana_test_dir);
+TEST(diana, search_simple_parallel)
+{
+    auto search_fun = [](TestDianaServer& server, SearchRequest& req) {
+        return server.search_simple_parallel(req, 2); // only 2 access threads
+    };
+    test_search_function(search_fun);
+}
 
-    // first, create a client and a server from scratch
-    create_client_server(client, server);
+TEST(diana, search_simple_parallel_vec)
+{
+    auto search_fun = [](TestDianaServer& server, SearchRequest& req) {
+        std::vector<uint64_t> res_par_vec;
 
-    std::list<std::pair<std::string, uint64_t>> update_list;
-    constexpr size_t                            n_test_entries = 1000;
+        server.search_simple_parallel(req, concurrency_level, res_par_vec);
 
-    for (size_t i = 0; i < n_test_entries; i++) {
-        uint8_t kw_index = static_cast<uint8_t>(i);
-        update_list.push_back(
-            std::make_pair("kw_" + std::to_string(kw_index), i));
-    }
+        return std::list<uint64_t>(res_par_vec.begin(), res_par_vec.end());
+    };
+    test_search_function(search_fun);
+}
 
-    auto bulk_up_req = client->bulk_insertion_request(update_list);
-    for (auto it = bulk_up_req.begin(); it != bulk_up_req.end(); ++it) {
-        server->insert(*it);
-    }
+TEST(diana, search_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
 
-    // test the results
-    for (uint16_t kw_index = 0; kw_index <= 0xFF; kw_index++) {
-        auto req = client->search_request(
-            "kw_" + std::to_string(static_cast<uint16_t>(kw_index)));
-        auto response = server->search_simple_parallel(req, 1);
+    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
 
-        std::list<uint64_t> expected;
-        for (size_t i = kw_index; i < n_test_entries; i += 0xFF + 1) {
-            expected.push_back(i);
-        }
+    auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
+                                                    SearchRequest&   req) {
+        server.search(req, search_callback);
+        return res_list;
+    };
+    test_search_function(search_fun);
+}
 
-        check_same_results(expected, response);
-    }
+
+TEST(diana, search_simple_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
+
+    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
+
+    auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
+                                                    SearchRequest&   req) {
+        server.search_simple(req, search_callback);
+        return res_list;
+    };
+    test_search_function(search_fun);
+}
+
+TEST(diana, search_simple_parallel_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
+
+    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
+
+    auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
+                                                    SearchRequest&   req) {
+        server.search_simple_parallel(
+            req, search_callback, concurrency_level, false);
+        return res_list;
+    };
+    test_search_function(search_fun);
+}
+
+TEST(diana, search_simple_parallel_thread_local_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
+
+    auto search_callback
+        = [&res_list_mutex, &res_list](uint64_t index, uint8_t) {
+              std::lock_guard<std::mutex> lock(res_list_mutex);
+              res_list.push_back(index);
+          };
+    auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
+                                                    SearchRequest&   req) {
+        server.search_simple_parallel(
+            req, search_callback, concurrency_level, false);
+        return res_list;
+    };
+    test_search_function(search_fun);
 }
 } // namespace test
 } // namespace diana

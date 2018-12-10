@@ -331,7 +331,7 @@ TEST(sophos, search)
 TEST(sophos, search_parallel)
 {
     auto search_fun = [](SophosServer& server, SearchRequest& req) {
-        return server.search_parallel(req, std::thread::hardware_concurrency());
+        return server.search_parallel(req, 1); // only 1 access thread
     };
     test_search_function(search_fun);
 }

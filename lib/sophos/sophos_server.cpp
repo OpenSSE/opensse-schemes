@@ -158,6 +158,10 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
 
     search_token_type st = req.token;
 
+    if (access_threads >= std::thread::hardware_concurrency()) {
+        throw std::runtime_error("Invalid number of access threads: "
+                                 "access_threads >= hardware_concurrency");
+    }
 
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)

@@ -181,6 +181,11 @@ TEST(sophos, insertion_search)
 
     sse::test::insert_database(client, server, test_db);
     sse::test::test_search_correctness(client, server, test_db);
+
+    // check that a search request on a non-existent keyword has an
+    // add_count set to 0
+    auto s_req = client->search_request("??");
+    EXPECT_EQ(s_req.add_count, 0);
 }
 
 inline void check_same_results(const std::list<uint64_t>& l1,
@@ -192,10 +197,96 @@ inline void check_same_results(const std::list<uint64_t>& l1,
     EXPECT_EQ(s1, s2);
 }
 
+// // To test all the different search algorithms
+// // We do not try to find any kind of concurrency bug here:
+// // this is kept for an other test, so the concurrency level is often set to 1
+// TEST(sophos, search_algorithms)
+// {
+//     std::unique_ptr<sophos::SophosClient> client;
+//     std::unique_ptr<sophos::SophosServer> server;
+
+//     // start by cleaning up the test directory
+//     sse::test::cleanup_directory(sophos_test_dir);
+
+//     // first, create a client and a server from scratch
+//     create_client_server(client, server);
+
+//     std::list<uint64_t> long_list;
+//     for (size_t i = 0; i < 1000; i++) {
+//         long_list.push_back(i);
+//     }
+//     const std::string                                keyword = "kw_1";
+//     const std::map<std::string, std::list<uint64_t>> test_db
+//         = {{keyword, long_list}};
+
+//     sse::test::insert_database(client, server, test_db);
+
+//     sophos::SearchRequest u_req;
+
+//     // first check that a search request on a non-existent keyword has an
+//     // add_count set to 0
+//     u_req = client->search_request("??");
+//     EXPECT_EQ(u_req.add_count, 0);
+
+//     std::mutex res_list_mutex;
+
+//     auto search_callback
+//         = [&res_list_mutex](std::list<uint64_t>* res_list, uint64_t index) {
+//               std::lock_guard<std::mutex> lock(res_list_mutex);
+//               res_list->push_back(index);
+//           };
+
+//     // Search requests can only be used once
+//     u_req    = client->search_request(keyword);
+//     auto res = server->search(u_req);
+
+//     u_req        = client->search_request(keyword);
+//     auto res_par = server->search_parallel(u_req, 1);
+//     // = server->search_parallel(u_req, std::thread::hardware_concurrency());
+
+//     u_req              = client->search_request(keyword);
+//     auto res_par_light = server->search_parallel_light(
+//         u_req, std::thread::hardware_concurrency());
+//     // u_req, std::thread::hardware_concurrency());
+
+//     check_same_results(long_list, res);
+//     check_same_results(long_list, res_par);
+//     check_same_results(long_list, res_par_light);
+
+//     std::list<uint64_t> res_callback;
+//     std::list<uint64_t> res_par_callback;
+//     std::list<uint64_t> res_par_light_callback;
+
+//     u_req = client->search_request(keyword);
+//     server->search_callback(
+//         u_req,
+//         std::bind(search_callback, &res_callback, std::placeholders::_1));
+//     check_same_results(long_list, res_callback);
+
+//     u_req = client->search_request(keyword);
+//     server->search_parallel_callback(
+//         u_req,
+//         std::bind(search_callback, &res_par_callback, std::placeholders::_1),
+//         std::thread::hardware_concurrency() - 2,
+//         1,
+//         1);
+//     check_same_results(long_list, res_par_callback);
+
+//     u_req = client->search_request(keyword);
+//     server->search_parallel_light_callback(u_req,
+//                                            std::bind(search_callback,
+//                                                      &res_par_light_callback,
+//                                                      std::placeholders::_1),
+//                                            std::thread::hardware_concurrency());
+//     check_same_results(long_list, res_par_light_callback);
+// }
+
+
 // To test all the different search algorithms
 // We do not try to find any kind of concurrency bug here:
 // this is kept for an other test, so the concurrency level is often set to 1
-TEST(sophos, search_algorithms)
+template<class SearchFun>
+static void test_search_function(SearchFun search_fun)
 {
     std::unique_ptr<sophos::SophosClient> client;
     std::unique_ptr<sophos::SophosServer> server;
@@ -216,64 +307,99 @@ TEST(sophos, search_algorithms)
 
     sse::test::insert_database(client, server, test_db);
 
-    sophos::SearchRequest u_req;
+    // search
+    auto search_req_fun = [](SophosClient& client, const std::string& kw) {
+        return client.search_request(kw);
+    };
+    sse::test::test_search_correctness(
+        client, server, test_db, search_req_fun, search_fun);
+}
 
-    // first check that a search request on a non-existent keyword has an
-    // add_count set to 0
-    u_req = client->search_request("??");
-    EXPECT_EQ(u_req.add_count, 0);
 
-    std::mutex res_list_mutex;
+// To test all the different search algorithms
+// We do not try to find any kind of concurrency bug here:
+// this is kept for an other test, so the concurrency level is often set to 1
 
-    auto search_callback
-        = [&res_list_mutex](std::list<uint64_t>* res_list, uint64_t index) {
-              std::lock_guard<std::mutex> lock(res_list_mutex);
-              res_list->push_back(index);
-          };
+TEST(sophos, search)
+{
+    auto search_fun = [](SophosServer& server, SearchRequest& req) {
+        return server.search(req);
+    };
+    test_search_function(search_fun);
+}
 
-    // Search requests can only be used once
-    u_req    = client->search_request(keyword);
-    auto res = server->search(u_req);
+TEST(sophos, search_parallel)
+{
+    auto search_fun = [](SophosServer& server, SearchRequest& req) {
+        return server.search_parallel(req, std::thread::hardware_concurrency());
+    };
+    test_search_function(search_fun);
+}
 
-    u_req        = client->search_request(keyword);
-    auto res_par = server->search_parallel(u_req, 1);
-    // = server->search_parallel(u_req, std::thread::hardware_concurrency());
+TEST(sophos, search_parallel_light)
+{
+    auto search_fun = [](SophosServer& server, SearchRequest& req) {
+        return server.search_parallel_light(
+            req, std::thread::hardware_concurrency());
+    };
+    test_search_function(search_fun);
+}
 
-    u_req              = client->search_request(keyword);
-    auto res_par_light = server->search_parallel_light(
-        u_req, std::thread::hardware_concurrency());
-    // u_req, std::thread::hardware_concurrency());
+TEST(sophos, search_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
 
-    check_same_results(long_list, res);
-    check_same_results(long_list, res_par);
-    check_same_results(long_list, res_par_light);
+    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
 
-    std::list<uint64_t> res_callback;
-    std::list<uint64_t> res_par_callback;
-    std::list<uint64_t> res_par_light_callback;
+    auto search_fun = [&search_callback, &res_list](SophosServer&  server,
+                                                    SearchRequest& req) {
+        server.search_callback(req, search_callback);
+        return res_list;
+    };
+    test_search_function(search_fun);
+}
 
-    u_req = client->search_request(keyword);
-    server->search_callback(
-        u_req,
-        std::bind(search_callback, &res_callback, std::placeholders::_1));
-    check_same_results(long_list, res_callback);
 
-    u_req = client->search_request(keyword);
-    server->search_parallel_callback(
-        u_req,
-        std::bind(search_callback, &res_par_callback, std::placeholders::_1),
-        std::thread::hardware_concurrency() - 2,
-        1,
-        1);
-    check_same_results(long_list, res_par_callback);
+TEST(sophos, search_parallel_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
 
-    u_req = client->search_request(keyword);
-    server->search_parallel_light_callback(u_req,
-                                           std::bind(search_callback,
-                                                     &res_par_light_callback,
-                                                     std::placeholders::_1),
-                                           std::thread::hardware_concurrency());
-    check_same_results(long_list, res_par_light_callback);
+    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
+
+    auto search_fun = [&search_callback, &res_list](SophosServer&  server,
+                                                    SearchRequest& req) {
+        server.search_parallel_callback(
+            req, search_callback, std::thread::hardware_concurrency(), 1, 1);
+        return res_list;
+    };
+    test_search_function(search_fun);
+}
+
+TEST(sophos, search_parallel_light_callback)
+{
+    std::mutex          res_list_mutex;
+    std::list<uint64_t> res_list;
+
+    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
+
+    auto search_fun = [&search_callback, &res_list](SophosServer&  server,
+                                                    SearchRequest& req) {
+        server.search_parallel_light_callback(
+            req, search_callback, std::thread::hardware_concurrency());
+        return res_list;
+    };
+    test_search_function(search_fun);
 }
 } // namespace test
 } // namespace sophos

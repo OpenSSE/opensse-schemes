@@ -158,11 +158,6 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
 
     search_token_type st = req.token;
 
-    if (access_threads >= std::thread::hardware_concurrency()) {
-        throw std::runtime_error("Invalid number of access threads: "
-                                 "access_threads >= hardware_concurrency");
-    }
-
     if (logger::severity() <= logger::LoggerSeverity::DBG) {
         logger::log(logger::LoggerSeverity::DBG)
             << "Search token: " << utility::hex_string(req.token) << std::endl;
@@ -245,13 +240,15 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
 
     std::vector<std::thread> rsa_threads;
 
-    unsigned n_threads = std::thread::hardware_concurrency() - access_threads;
+    // use at least two threads to make the RSA computations
+    unsigned n_rsa_threads
+        = std::max<unsigned>(std::thread::hardware_concurrency(), 2);
 
-    for (uint8_t t = 0; t < n_threads; t++) {
-        rsa_threads.emplace_back(rsa_job, t, req.add_count, n_threads);
+    for (uint8_t t = 0; t < n_rsa_threads; t++) {
+        rsa_threads.emplace_back(rsa_job, t, req.add_count, n_rsa_threads);
     }
 
-    for (uint8_t t = 0; t < n_threads; t++) {
+    for (uint8_t t = 0; t < n_rsa_threads; t++) {
         rsa_threads[t].join();
     }
 

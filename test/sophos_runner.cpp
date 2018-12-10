@@ -60,6 +60,9 @@ TEST(sophos_runner, insertion_search)
     const std::map<std::string, std::list<uint64_t>> test_db
         = {{"kw_1", {0, 1}}, {"kw_2", {0}}, {"kw_3", {0}}};
 
+    // for debugging purposes
+    sse::logger::set_logger_stream(&std::cout);
+
     sse::test::insert_database(client, test_db);
     sse::test::test_search_correctness(client, test_db);
 

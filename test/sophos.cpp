@@ -189,7 +189,7 @@ inline void check_same_results(const std::list<uint64_t>& l1,
     std::set<uint64_t> s1(l1.begin(), l1.end());
     std::set<uint64_t> s2(l2.begin(), l2.end());
 
-    ASSERT_EQ(s1, s2);
+    EXPECT_EQ(s1, s2);
 }
 
 // To test all the different search algorithms
@@ -221,7 +221,7 @@ TEST(sophos, search_algorithms)
     // first check that a search request on a non-existent keyword has an
     // add_count set to 0
     u_req = client->search_request("??");
-    ASSERT_EQ(u_req.add_count, 0);
+    EXPECT_EQ(u_req.add_count, 0);
 
     std::mutex res_list_mutex;
 

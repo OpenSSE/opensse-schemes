@@ -76,7 +76,7 @@ void test_search_correctness(
         const std::set<uint64_t> expected_set(expected_list.begin(),
                                               expected_list.end());
 
-        ASSERT_EQ(res_set, expected_set);
+        EXPECT_EQ(res_set, expected_set);
     };
     iterate_database_keywords(db, test_callback);
 }
@@ -99,7 +99,7 @@ void test_search_correctness(
         const std::set<uint64_t> expected_set(expected_list.begin(),
                                               expected_list.end());
 
-        ASSERT_EQ(res_set, expected_set);
+        EXPECT_EQ(res_set, expected_set);
     };
     iterate_database_keywords(db, test_callback);
 }
@@ -118,7 +118,7 @@ void test_search_correctness(
         const std::set<uint64_t> expected_set(expected_list.begin(),
                                               expected_list.end());
 
-        ASSERT_EQ(res_set, expected_set);
+        EXPECT_EQ(res_set, expected_set);
     };
     iterate_database_keywords(db, test_callback);
 }

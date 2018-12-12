@@ -235,12 +235,11 @@ static void derive_leaves_aux(uint8_t*                             K,
     uint8_t* left_node  = nullptr;
     uint8_t* right_node = nullptr;
 
+    uint8_t derived_tokens[2 * TokenTree::kTokenSize];
 
     if (need_left && need_right) {
         // generate  both children
-
-        uint8_t derived_tokens[2 * TokenTree::kTokenSize];
-
+        
         crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K),
                             0,
                             2 * TokenTree::kTokenSize,
@@ -249,23 +248,21 @@ static void derive_leaves_aux(uint8_t*                             K,
         left_node  = derived_tokens;
         right_node = derived_tokens + TokenTree::kTokenSize;
     } else if (need_left) {
-        uint8_t derived_token[TokenTree::kTokenSize];
 
         crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K),
                             0,
                             TokenTree::kTokenSize,
-                            derived_token);
+                            derived_tokens);
 
-        left_node = derived_token;
+        left_node = derived_tokens;
     } else if (need_right) {
-        uint8_t derived_token[TokenTree::kTokenSize];
 
         crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K),
                             TokenTree::kTokenSize,
                             TokenTree::kTokenSize,
-                            derived_token);
+                            derived_tokens);
 
-        right_node = derived_token;
+        right_node = derived_tokens;
     } else {
         // both flags are set to false
         // this should not have happened

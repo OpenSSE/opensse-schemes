@@ -408,7 +408,8 @@ void DianaServer<T>::search_simple_parallel(
 
             } else if ((leaf_count > loc_max_index)) {
                 // this is the last node for us
-                auto token = key_it->first; // copy the node as it will be
+                search_token_key_type token
+                    = key_it->first; // copy the node as it will be
                                             // erased by the next function
                 TokenTree::derive_leaves(token,
                                          key_it->second,
@@ -422,7 +423,8 @@ void DianaServer<T>::search_simple_parallel(
                 // leaf_count > loc_min_index and leaf_count <= loc_max_index
 
 
-                auto token = key_it->first; // copy the node as it will be
+                search_token_key_type token
+                    = key_it->first; // copy the node as it will be
                                             // erased by the next function
                 TokenTree::derive_leaves(token,
                                          key_it->second,

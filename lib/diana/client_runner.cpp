@@ -79,22 +79,41 @@ static std::unique_ptr<DC> construct_client_from_directory(
         throw std::runtime_error("Missing token data");
     }
 
-    std::ifstream     master_key_in(master_key_path.c_str());
+    // TODO: This is a *very* ugly way to read the key files. This needs a
+    // massive overhaul
+    std::ifstream master_key_in(master_key_path.c_str());
+    std::ifstream kw_token_key_in(kw_token_master_key_path.c_str());
+
     std::stringstream master_key_buf, kw_token_key_buf;
 
     master_key_buf << master_key_in.rdbuf();
-    kw_token_key_buf << master_key_in.rdbuf();
+    kw_token_key_buf << kw_token_key_in.rdbuf();
 
-    std::array<uint8_t, 32> client_master_key_array, client_kw_token_key_array;
+    std::array<uint8_t, DC::kKeySize> client_master_key_array,
+        client_kw_token_key_array;
 
-    assert(master_key_buf.str().size() == client_master_key_array.size());
-    assert(kw_token_key_buf.str().size() == client_kw_token_key_array.size());
 
-    std::copy(master_key_buf.str().begin(),
-              master_key_buf.str().end(),
+    if (master_key_buf.str().size() != client_master_key_array.size()) {
+        throw std::runtime_error(
+            "Invalid master key size when constructing the Diana client: "
+            + std::to_string(master_key_buf.str().size())
+            + " bytes instead of 32");
+    }
+    if (kw_token_key_buf.str().size() != client_kw_token_key_array.size()) {
+        throw std::runtime_error("Invalid keyword token key size when "
+                                 "constructing the Diana client: "
+                                 + std::to_string(kw_token_key_buf.str().size())
+                                 + " bytes instead of 32");
+    }
+
+    auto master_key_str   = master_key_buf.str();
+    auto kw_token_key_str = kw_token_key_buf.str();
+
+    std::copy(master_key_str.begin(),
+              master_key_str.end(),
               client_master_key_array.begin());
-    std::copy(kw_token_key_buf.str().begin(),
-              kw_token_key_buf.str().end(),
+    std::copy(kw_token_key_str.begin(),
+              kw_token_key_str.end(),
               client_kw_token_key_array.begin());
 
     return std::unique_ptr<DC>(new DC(

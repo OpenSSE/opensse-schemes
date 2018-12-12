@@ -143,6 +143,9 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
         throw std::runtime_error("Missing token data");
     }
 
+
+    // TODO: This is a *very* ugly way to read the key files. This needs a
+    // massive overhaul
     std::ifstream     sk_in(sk_path.c_str());
     std::ifstream     master_key_in(master_key_path.c_str());
     std::ifstream     rsa_prg_key_in(rsa_prg_key_path.c_str());
@@ -154,14 +157,26 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
 
     std::array<uint8_t, 32> client_master_key_array, client_tdp_prg_key_array;
 
-    assert(master_key_buf.str().size() == client_master_key_array.size());
-    assert(rsa_prg_key_buf.str().size() == client_tdp_prg_key_array.size());
+    if (master_key_buf.str().size() != client_master_key_array.size()) {
+        throw std::runtime_error(
+            "Invalid master key size when constructing the Sophos client: "
+            + std::to_string(master_key_buf.str().size())
+            + " bytes instead of 32");
+    }
+    if (rsa_prg_key_buf.str().size() != client_tdp_prg_key_array.size()) {
+        throw std::runtime_error(
+            "Invalid PRG key size when constructing the Sophos client: "
+            + std::to_string(rsa_prg_key_buf.str().size())
+            + " bytes instead of 32");
+    }
+    auto master_key_str  = master_key_buf.str();
+    auto rsa_prg_key_str = rsa_prg_key_buf.str();
 
-    std::copy(master_key_buf.str().begin(),
-              master_key_buf.str().end(),
+    std::copy(master_key_str.begin(),
+              master_key_str.end(),
               client_master_key_array.begin());
-    std::copy(rsa_prg_key_buf.str().begin(),
-              rsa_prg_key_buf.str().end(),
+    std::copy(rsa_prg_key_str.begin(),
+              rsa_prg_key_str.end(),
               client_tdp_prg_key_array.begin());
 
 

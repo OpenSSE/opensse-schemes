@@ -55,7 +55,7 @@ static void create_client_server(const std::string& client_db_path,
 
     // Create the channel
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(
-        "localhost:4242", grpc::InsecureChannelCredentials()));
+        server_address, grpc::InsecureChannelCredentials()));
     // Create the client
     client.reset(new SophosClientRunner(channel, client_db_path));
 }

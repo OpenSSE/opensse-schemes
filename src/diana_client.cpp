@@ -12,6 +12,8 @@
 
 #include <sse/crypto/utils.hpp>
 
+#include <grpc++/create_channel.h>
+
 #include <cstdio>
 #include <unistd.h>
 
@@ -92,8 +94,9 @@ int main(int argc, char** argv)
 
     std::unique_ptr<sse::diana::DianaClientRunner> client_runner;
 
-    client_runner.reset(
-        new sse::diana::DianaClientRunner("localhost:4241", client_db));
+    std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(
+        "localhost:4240", grpc::InsecureChannelCredentials()));
+    client_runner.reset(new sse::diana::DianaClientRunner(channel, client_db));
 
     for (std::string& path : input_files) {
         sse::logger::log(sse::logger::LoggerSeverity::INFO)

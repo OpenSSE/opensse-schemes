@@ -150,12 +150,11 @@ std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
 }
 
 // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
-DianaClientRunner::DianaClientRunner(const std::string& address,
-                                     const std::string& path)
+DianaClientRunner::DianaClientRunner(
+    const std::shared_ptr<grpc::Channel>& channel,
+    const std::string&                    path)
     : update_launched_count_(0), update_completed_count_(0)
 {
-    std::shared_ptr<grpc::Channel> channel(
-        grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
     stub_ = Diana::NewStub(channel);
 
     if (utility::is_directory(path)) {

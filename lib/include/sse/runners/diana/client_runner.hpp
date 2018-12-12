@@ -56,7 +56,8 @@ class DianaClientRunner
 public:
     using index_type = uint64_t;
 
-    DianaClientRunner(const std::string& address, const std::string& path);
+    DianaClientRunner(const std::shared_ptr<grpc::Channel>& channel,
+                      const std::string&                    path);
 
     DianaClientRunner(const DianaClientRunner&) = delete; // not copyable
     DianaClientRunner(DianaClientRunner&&)      = delete; // not movable

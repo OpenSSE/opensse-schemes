@@ -215,7 +215,8 @@ TEST(diana, search)
 TEST(diana, search_simple_parallel)
 {
     auto search_fun = [](TestDianaServer& server, SearchRequest& req) {
-        return server.search_simple_parallel(req, 2); // only 2 access threads
+        return server.search_simple_parallel(
+            req, concurrency_level); // only 2 access threads
     };
     test_search_function(search_fun);
 }

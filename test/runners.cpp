@@ -113,7 +113,22 @@ TYPED_TEST(RunnerTest, start_stop)
     sse::test::test_search_correctness(this->client_, test_db);
 }
 
-// REGISTER_TYPED_TEST_CASE_P(RunnerTest, insertion_search, start_stop);
 
+TYPED_TEST(RunnerTest, search_async)
+{
+    this->server_->set_async_search(true);
+
+    std::list<uint64_t> long_list;
+    for (size_t i = 0; i < 1000; i++) {
+        long_list.push_back(i);
+    }
+    const std::string                                keyword = "kw_1";
+    const std::map<std::string, std::list<uint64_t>> test_db
+        = {{keyword, long_list}};
+
+
+    sse::test::insert_database(this->client_, test_db);
+    sse::test::test_search_correctness(this->client_, test_db);
+}
 } // namespace test
 } // namespace sse

@@ -392,61 +392,46 @@ UpdateRequest message_to_request(const UpdateRequestMessage* mes)
     return req;
 }
 
-void run_sophos_server(const std::string& server_address,
-                       const std::string& server_db_path,
-                       grpc::Server**     server_ptr,
-                       bool               async_search)
+SophosServerRunner::SophosServerRunner(grpc::ServerBuilder& builder,
+                                       const std::string&   server_db_path)
+{
+    service_.reset(new SophosImpl(server_db_path));
+
+    builder.RegisterService(service_.get());
+    server_ = builder.BuildAndStart();
+}
+
+
+SophosServerRunner::SophosServerRunner(const std::string& server_address,
+                                       const std::string& server_db_path)
 {
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
 
-    run_sophos_server(
-        builder, server_db_path, server_ptr, async_search, []() {});
+    service_.reset(new SophosImpl(server_db_path));
+
+    builder.RegisterService(service_.get());
+    server_ = builder.BuildAndStart();
 }
 
-void run_sophos_server(grpc::ServerBuilder&         builder,
-                       const std::string&           server_db_path,
-                       grpc::Server**               server_ptr,
-                       bool                         async_search,
-                       const std::function<void()>& server_started_callback)
+SophosServerRunner::~SophosServerRunner()
 {
-    std::unique_ptr<grpc::Service> service;
-
-    auto server
-        = build_sophos_server(builder, server_db_path, async_search, service);
-
-    *server_ptr = server.get();
-
-    server_started_callback();
-
-    server->Wait();
 }
 
-std::unique_ptr<grpc::Server> build_sophos_server(
-    grpc::ServerBuilder&            builder,
-    const std::string&              server_db_path,
-    bool                            async_search,
-    std::unique_ptr<grpc::Service>& service)
+void SophosServerRunner::set_async_search(bool flag)
 {
-    service.reset(new SophosImpl(server_db_path));
-
-    reinterpret_cast<SophosImpl*>(service.get())
-        ->set_search_asynchronously(async_search);
-
-    builder.RegisterService(service.get());
-    return builder.BuildAndStart();
+    service_->set_search_asynchronously(flag);
 }
 
-std::unique_ptr<grpc::Server> build_sophos_server(
-    const std::string&              server_address,
-    const std::string&              server_db_path,
-    bool                            async_search,
-    std::unique_ptr<grpc::Service>& service)
+void SophosServerRunner::wait()
 {
-    grpc::ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-
-    return build_sophos_server(builder, server_db_path, async_search, service);
+    server_->Wait();
 }
+
+void SophosServerRunner::shutdown()
+{
+    server_->Shutdown();
+}
+
 } // namespace sophos
 } // namespace sse

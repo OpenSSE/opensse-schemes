@@ -41,10 +41,10 @@ static void create_client_server(const std::string& client_db_path,
                                  const std::string& server_db_path,
                                  const std::string& server_address,
                                  std::unique_ptr<DianaClientRunner>& client,
-                                 std::unique_ptr<grpc::Service>&     service,
-                                 std::unique_ptr<grpc::Server>&      server)
+                                 std::unique_ptr<DianaServerRunner>& server)
 {
-    server = build_diana_server(server_address, server_db_path, false, service);
+    server.reset(new DianaServerRunner(server_address, server_db_path));
+    server->set_async_search(false);
 
     // Create the channel
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(
@@ -58,14 +58,12 @@ TEST(diana_runner, insertion_search)
     sse::test::cleanup_directory(diana_test_dir);
 
     std::unique_ptr<DianaClientRunner> client;
-    std::unique_ptr<grpc::Service>     service;
-    std::unique_ptr<grpc::Server>      server;
+    std::unique_ptr<DianaServerRunner> server;
 
     create_client_server(diana_client_db_path,
                          diana_server_db_path,
                          diana_server_address,
                          client,
-                         service,
                          server);
 
     const std::map<std::string, std::list<uint64_t>> test_db
@@ -74,7 +72,7 @@ TEST(diana_runner, insertion_search)
     sse::test::insert_database(client, test_db);
     sse::test::test_search_correctness(client, test_db);
 
-    server->Shutdown();
+    server->shutdown();
 }
 
 TEST(diana_runner, start_stop)
@@ -82,14 +80,12 @@ TEST(diana_runner, start_stop)
     sse::test::cleanup_directory(diana_test_dir);
 
     std::unique_ptr<DianaClientRunner> client;
-    std::unique_ptr<grpc::Service>     service;
-    std::unique_ptr<grpc::Server>      server;
+    std::unique_ptr<DianaServerRunner> server;
 
     create_client_server(diana_client_db_path,
                          diana_server_db_path,
                          diana_server_address,
                          client,
-                         service,
                          server);
     const std::map<std::string, std::list<uint64_t>> test_db
         = {{"kw_1", {0, 1}}, {"kw_2", {0}}, {"kw_3", {0}}};
@@ -99,21 +95,20 @@ TEST(diana_runner, start_stop)
     // close/destroy the client
     client.reset(nullptr);
     // shutdown the server
-    server->Shutdown();
-    // close the service
-    service.reset(nullptr);
+    server->shutdown();
+    // destroy the server
+    server.reset(nullptr);
 
     create_client_server(diana_client_db_path,
                          diana_server_db_path,
                          diana_server_address,
                          client,
-                         service,
                          server);
 
     // do the tests
     sse::test::test_search_correctness(client, test_db);
 
-    server->Shutdown();
+    server->shutdown();
 }
 } // namespace test
 } // namespace diana

@@ -31,27 +31,32 @@ namespace sophos {
 
 class SophosImpl;
 
-std::unique_ptr<grpc::Server> build_sophos_server(
-    grpc::ServerBuilder&            builder,
-    const std::string&              server_db_path,
-    bool                            async_search,
-    std::unique_ptr<grpc::Service>& service);
 
-std::unique_ptr<grpc::Server> build_sophos_server(
-    const std::string&              server_address,
-    const std::string&              server_db_path,
-    bool                            async_search,
-    std::unique_ptr<grpc::Service>& service);
+class SophosServerRunner
+{
+public:
+    SophosServerRunner()                          = delete;
+    SophosServerRunner(const SophosServerRunner&) = delete;
+    SophosServerRunner(SophosServerRunner&&)      = default;
 
-void run_sophos_server(const std::string& server_address,
-                       const std::string& server_db_path,
-                       grpc::Server**     server_ptr,
-                       bool               async_search);
+    SophosServerRunner(grpc::ServerBuilder& builder,
+                       const std::string&   server_db_path);
+    SophosServerRunner(const std::string& server_address,
+                       const std::string& server_db_path);
 
-void run_sophos_server(grpc::ServerBuilder&         builder,
-                       const std::string&           server_db_path,
-                       grpc::Server**               server_ptr,
-                       bool                         async_search,
-                       const std::function<void()>& server_started_callback);
+
+    // as we forward-declare SophosImpl, we cannot use the default destructor
+    ~SophosServerRunner();
+
+    void set_async_search(bool flag);
+
+    void wait();
+    void shutdown();
+
+private:
+    std::unique_ptr<SophosImpl>   service_;
+    std::unique_ptr<grpc::Server> server_;
+};
+
 } // namespace sophos
 } // namespace sse

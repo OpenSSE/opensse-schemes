@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <unistd.h>
 
-grpc::Server* server_ptr__ = nullptr;
+sse::diana::DianaServerRunner* server_ptr__ = nullptr;
 
 void exit_handler(__attribute__((unused)) int signal)
 {
@@ -25,7 +25,7 @@ void exit_handler(__attribute__((unused)) int signal)
         << "\nExiting ... " << std::endl;
 
     if (server_ptr__ != nullptr) {
-        server_ptr__->Shutdown();
+        server_ptr__->shutdown();
     }
 };
 
@@ -88,9 +88,10 @@ int main(int argc, char** argv)
         sse::logger::log(sse::logger::LoggerSeverity::INFO)
             << "Running client with database " << server_db << std::endl;
     }
+    server_ptr__ = new sse::diana::DianaServerRunner("0.0.0.0:4241", server_db);
+    server_ptr__->set_async_search(async_search);
 
-    sse::diana::run_diana_server(
-        "0.0.0.0:4241", server_db, &server_ptr__, async_search);
+    server_ptr__->wait();
 
     sse::crypto::cleanup_crypto_lib();
 

@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <unistd.h>
 
-grpc::Server* server_ptr__ = nullptr;
+sse::sophos::SophosServerRunner* server_ptr__ = nullptr;
 
 void exit_handler(__attribute__((unused)) int signal)
 {
@@ -23,7 +23,7 @@ void exit_handler(__attribute__((unused)) int signal)
         << "\nExiting ... " << std::endl;
 
     if (server_ptr__ != nullptr) {
-        server_ptr__->Shutdown();
+        server_ptr__->shutdown();
     }
 };
 
@@ -87,10 +87,13 @@ int main(int argc, char** argv)
             << "Running client with database " << server_db << std::endl;
     }
 
-    sse::sophos::run_sophos_server(
-        "0.0.0.0:4240", server_db, &server_ptr__, async_search);
+    server_ptr__
+        = new sse::sophos::SophosServerRunner("0.0.0.0:4240", server_db);
+    server_ptr__->set_async_search(async_search);
     //    sse::sophos::run_sophos_server("0.0.0.0:4242",
     //    "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
+
+    server_ptr__->wait();
 
     sse::crypto::cleanup_crypto_lib();
 

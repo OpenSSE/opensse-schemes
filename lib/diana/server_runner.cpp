@@ -441,62 +441,45 @@ UpdateRequest<DianaImpl::index_type> message_to_request(
     return req;
 }
 
+DianaServerRunner::DianaServerRunner(grpc::ServerBuilder& builder,
+                                     const std::string&   server_db_path)
+{
+    service_.reset(new DianaImpl(server_db_path));
 
-void run_diana_server(const std::string& server_address,
-                      const std::string& server_db_path,
-                      grpc::Server**     server_ptr,
-                      bool               async_search)
+    builder.RegisterService(service_.get());
+    server_ = builder.BuildAndStart();
+}
+
+
+DianaServerRunner::DianaServerRunner(const std::string& server_address,
+                                     const std::string& server_db_path)
 {
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
 
-    run_diana_server(
-        builder, server_db_path, server_ptr, async_search, []() {});
+    service_.reset(new DianaImpl(server_db_path));
+
+    builder.RegisterService(service_.get());
+    server_ = builder.BuildAndStart();
 }
 
-void run_diana_server(grpc::ServerBuilder&         builder,
-                      const std::string&           server_db_path,
-                      grpc::Server**               server_ptr,
-                      bool                         async_search,
-                      const std::function<void()>& server_started_callback)
+DianaServerRunner::~DianaServerRunner()
 {
-    std::unique_ptr<grpc::Service> service;
-
-    auto server
-        = build_diana_server(builder, server_db_path, async_search, service);
-
-    *server_ptr = server.get();
-
-    server_started_callback();
-
-    server->Wait();
 }
 
-std::unique_ptr<grpc::Server> build_diana_server(
-    grpc::ServerBuilder&            builder,
-    const std::string&              server_db_path,
-    bool                            async_search,
-    std::unique_ptr<grpc::Service>& service)
+void DianaServerRunner::set_async_search(bool flag)
 {
-    service.reset(new DianaImpl(server_db_path));
-
-    reinterpret_cast<DianaImpl*>(service.get())
-        ->set_search_asynchronously(async_search);
-
-    builder.RegisterService(service.get());
-    return builder.BuildAndStart();
+    service_->set_search_asynchronously(flag);
 }
 
-std::unique_ptr<grpc::Server> build_diana_server(
-    const std::string&              server_address,
-    const std::string&              server_db_path,
-    bool                            async_search,
-    std::unique_ptr<grpc::Service>& service)
+void DianaServerRunner::wait()
 {
-    grpc::ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    server_->Wait();
+}
 
-    return build_diana_server(builder, server_db_path, async_search, service);
+void DianaServerRunner::shutdown()
+{
+    server_->Shutdown();
 }
 
 } // namespace diana

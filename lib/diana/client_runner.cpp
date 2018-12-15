@@ -172,7 +172,6 @@ std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
 DianaClientRunner::DianaClientRunner(
     const std::shared_ptr<grpc::Channel>& channel,
     const std::string&                    path)
-    : update_launched_count_(0), update_completed_count_(0)
 {
     stub_ = Diana::NewStub(channel);
 
@@ -203,17 +202,10 @@ DianaClientRunner::DianaClientRunner(
             throw std::runtime_error("Unsuccessful server setup");
         }
     }
-
-    // start the thread that will look for completed updates
-    update_completion_thread_
-        = new std::thread(&DianaClientRunner::update_completion_loop, this);
 }
 
 DianaClientRunner::~DianaClientRunner()
 {
-    update_cq_.Shutdown();
-    wait_updates_completion();
-    update_completion_thread_->join();
 }
 
 bool DianaClientRunner::send_setup() const
@@ -320,59 +312,6 @@ void DianaClientRunner::insert(const std::string& keyword, uint64_t index)
     }
 }
 
-void DianaClientRunner::async_insert(const std::string& keyword, uint64_t index)
-{
-    grpc::ClientContext  context;
-    UpdateRequestMessage message;
-
-
-    if (bulk_update_state_.is_up) { // an update session is running, use it
-        insert_in_session(keyword, index);
-    } else {
-        message
-            = request_to_message(client_->insertion_request(keyword, index));
-
-        update_tag_type* tag = new update_tag_type();
-        std::unique_ptr<
-            grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
-            rpc(stub_->Asyncinsert(&context, message, &update_cq_));
-
-        tag->reply.reset(new google::protobuf::Empty());
-        tag->status.reset(new grpc::Status());
-        tag->index.reset(new size_t(update_launched_count_++));
-
-        rpc->Finish(tag->reply.get(), tag->status.get(), tag);
-    }
-}
-
-void DianaClientRunner::async_insert(
-    const std::list<std::pair<std::string, uint64_t>>& update_list)
-{
-    if (bulk_update_state_.is_up) { // an update session is running, use it
-        insert_in_session(update_list);
-    } else {
-        grpc::ClientContext  context;
-        UpdateRequestMessage message;
-
-
-        for (const auto& it : update_list) {
-            message = request_to_message(
-                client_->insertion_request(it.first, it.second));
-
-            update_tag_type* tag = new update_tag_type();
-            std::unique_ptr<
-                grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
-                rpc(stub_->Asyncinsert(&context, message, &update_cq_));
-
-            tag->reply.reset(new google::protobuf::Empty());
-            tag->status.reset(new grpc::Status());
-            tag->index.reset(new size_t(update_launched_count_++));
-
-            rpc->Finish(tag->reply.get(), tag->status.get(), tag);
-        }
-    }
-}
-
 void DianaClientRunner::insert_in_session(const std::string& keyword,
                                           uint64_t           index)
 {
@@ -399,16 +338,6 @@ void DianaClientRunner::insert_in_session(
         throw std::runtime_error("Invalid state: the update session is not up");
     }
 
-
-    //            std::list<UpdateRequestMessage> message_list;
-
-    //            for(auto it = update_list.begin(); it != update_list.end();
-    //            ++it)
-    //            {
-    //                message_list.push_back(request_to_message(client_->insertion_request(it->first,
-    //                it->second)));
-    //            }
-
     std::list<UpdateRequest<DianaClientRunner::index_type>> message_list
         = client_->bulk_insertion_request(update_list);
 
@@ -422,15 +351,6 @@ void DianaClientRunner::insert_in_session(
         }
     }
     bulk_update_state_.mtx.unlock();
-}
-
-void DianaClientRunner::wait_updates_completion()
-{
-    stop_update_completion_thread_ = true;
-    std::unique_lock<std::mutex> lock(update_completion_mtx_);
-    update_completion_cv_.wait(lock, [this] {
-        return update_launched_count_ == update_completed_count_;
-    });
 }
 
 void DianaClientRunner::start_update_session()
@@ -478,36 +398,6 @@ void DianaClientRunner::end_update_session()
 }
 
 
-void DianaClientRunner::update_completion_loop()
-{
-    update_tag_type* tag;
-    bool             ok = false;
-
-    for (; !stop_update_completion_thread_; ok = false) {
-        bool r = update_cq_.Next(reinterpret_cast<void**>(&tag), &ok);
-        if (!r) {
-            logger::log(logger::LoggerSeverity::TRACE)
-                << "Close asynchronous update loop" << std::endl;
-            return;
-        }
-
-        logger::log(logger::LoggerSeverity::TRACE)
-            << "Asynchronous update " << std::dec << *(tag->index)
-            << " succeeded." << std::endl;
-        delete tag;
-
-
-        {
-            std::lock_guard<std::mutex> lock(update_completion_mtx_);
-            update_completed_count_++;
-
-            if (update_launched_count_ == update_completed_count_) {
-                update_completion_cv_.notify_all();
-            }
-        }
-    }
-}
-
 bool DianaClientRunner::load_inverted_index(const std::string& path)
 {
     try {
@@ -523,7 +413,7 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
                       = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                             for (unsigned doc : documents) {
-                                this->async_insert(keyword, doc);
+                                this->insert_in_session(keyword, doc);
                             }
                             counter++;
 
@@ -547,8 +437,6 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
         logger::log(sse::logger::LoggerSeverity::INFO)
             << "\rLoading: " << counter << " keywords processed" << std::endl;
 
-        wait_updates_completion();
-
         end_update_session();
 
         return true;
@@ -560,69 +448,6 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
     }
     return false;
 }
-
-//        bool DianaClientRunner::output_db(const std::string& out_path)
-//        {
-//            std::ofstream os(out_path);
-//
-//            if (!os.is_open()) {
-//                os.close();
-//
-//                logger::log(logger::LoggerSeverity::ERROR) << "Unable to
-//                create output file "
-//                << out_path << std::endl;
-//
-//                return false;
-//            }
-//
-//            client_->db_to_json(os);
-//
-//            os.close();
-//
-//            return true;
-//        }
-//        void DianaClientRunner::random_search() const
-//        {
-//            logger::log(logger::LoggerSeverity::TRACE) << "Random Search " <<
-//            std::endl;
-//
-//            grpc::ClientContext context;
-//            SearchRequestMessage message;
-//            SearchReply reply;
-//
-//            message =
-//            request_to_message((client_.get())->random_search_request());
-//
-//            std::unique_ptr<grpc::ClientReader<SearchReply> > reader(
-//            stub_->search(&context, message) ); std::list<uint64_t> results;
-//
-//
-//            while (reader->Read(&reply)) {
-//                logger::log(logger::LoggerSeverity::TRACE) << "New result: "
-//                << std::dec << reply.result() << std::endl;
-//                results.push_back(reply.result());
-//            }
-//            grpc::Status status = reader->Finish();
-//            if (status.ok()) {
-//                logger::log(logger::LoggerSeverity::TRACE) << "Search
-//                succeeded." << std::endl;
-//            } else {
-//                logger::log(logger::LoggerSeverity::ERROR) << "Search failed:"
-//                << std::endl; logger::log(logger::LoggerSeverity::ERROR) <<
-//                status.error_message() << std::endl;
-//            }
-//
-//        }
-
-//        void DianaClientRunner::search_benchmark(size_t n_bench) const
-//        {
-//            for (size_t i = 0; i < n_bench; i++) {
-//                logger::log(logger::LoggerSeverity::INFO) << "\rBenchmark " <<
-//                i+1 << std::flush; random_search();
-//            }
-//            logger::log(logger::LoggerSeverity::INFO) << "\nBenchmarks done"
-//            << std::endl;
-//        }
 
 SearchRequestMessage request_to_message(const SearchRequest& req)
 {

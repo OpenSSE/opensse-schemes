@@ -194,7 +194,6 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
 SophosClientRunner::SophosClientRunner(
     const std::shared_ptr<grpc::Channel>& channel,
     const std::string&                    path)
-    : update_launched_count_(0), update_completed_count_(0)
 {
     stub_ = sophos::Sophos::NewStub(channel);
 
@@ -225,18 +224,9 @@ SophosClientRunner::SophosClientRunner(
             throw std::runtime_error("Unsuccessful server setup");
         }
     }
-
-    // start the thread that will look for completed updates
-    update_completion_thread_
-        = new std::thread(&SophosClientRunner::update_completion_loop, this);
 }
-
-
 SophosClientRunner::~SophosClientRunner()
 {
-    update_cq_.Shutdown();
-    wait_updates_completion();
-    update_completion_thread_->join();
 }
 
 bool SophosClientRunner::send_setup() const
@@ -341,37 +331,6 @@ void SophosClientRunner::insert(const std::string& keyword, uint64_t index)
     }
 }
 
-void SophosClientRunner::async_insert(const std::string& keyword,
-                                      uint64_t           index)
-{
-    grpc::ClientContext          context;
-    sophos::UpdateRequestMessage message;
-
-
-    if (bulk_update_state_.is_up) { // an update session is running, use it
-        insert_in_session(keyword, index);
-    } else {
-        logger::log(logger::LoggerSeverity::WARNING)
-            << "This is dangerous: you should not use "
-               "async_updates, they are still buggy..."
-            << std::endl;
-
-        message
-            = request_to_message(client_->insertion_request(keyword, index));
-
-        update_tag_type* tag = new update_tag_type();
-        std::unique_ptr<
-            grpc::ClientAsyncResponseReader<google::protobuf::Empty>>
-            rpc(stub_->Asyncinsert(&context, message, &update_cq_));
-
-        tag->reply.reset(new google::protobuf::Empty());
-        tag->status.reset(new grpc::Status());
-        tag->index.reset(new size_t(update_launched_count_++));
-
-        rpc->Finish(tag->reply.get(), tag->status.get(), tag);
-    }
-}
-
 void SophosClientRunner::insert_in_session(const std::string& keyword,
                                            uint64_t           index)
 {
@@ -388,15 +347,6 @@ void SophosClientRunner::insert_in_session(const std::string& keyword,
             << "Update session: broken stream." << std::endl;
     }
     bulk_update_state_.mtx.unlock();
-}
-
-void SophosClientRunner::wait_updates_completion()
-{
-    stop_update_completion_thread_ = true;
-    std::unique_lock<std::mutex> lock(update_completion_mtx_);
-    update_completion_cv_.wait(lock, [this] {
-        return update_launched_count_ == update_completed_count_;
-    });
 }
 
 void SophosClientRunner::start_update_session()
@@ -444,36 +394,6 @@ void SophosClientRunner::end_update_session()
 }
 
 
-void SophosClientRunner::update_completion_loop()
-{
-    update_tag_type* tag;
-    bool             ok = false;
-
-    for (; !stop_update_completion_thread_; ok = false) {
-        bool r = update_cq_.Next(reinterpret_cast<void**>(&tag), &ok);
-        if (!r) {
-            logger::log(logger::LoggerSeverity::TRACE)
-                << "Close asynchronous update loop" << std::endl;
-            return;
-        }
-
-        logger::log(logger::LoggerSeverity::TRACE)
-            << "Asynchronous update " << std::dec << *(tag->index)
-            << " succeeded." << std::endl;
-        delete tag;
-
-
-        {
-            std::lock_guard<std::mutex> lock(update_completion_mtx_);
-            update_completed_count_++;
-
-            if (update_launched_count_ == update_completed_count_) {
-                update_completion_cv_.notify_all();
-            }
-        }
-    }
-}
-
 bool SophosClientRunner::load_inverted_index(const std::string& path)
 {
     try {
@@ -489,7 +409,7 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
                       = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                             for (unsigned doc : documents) {
-                                this->async_insert(keyword, doc);
+                                this->insert_in_session(keyword, doc);
                             }
                             counter++;
 
@@ -515,7 +435,6 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
         logger::log(sse::logger::LoggerSeverity::INFO)
             << "\rLoading: " << counter << " keywords processed" << std::endl;
 
-        wait_updates_completion();
 
         end_update_session();
 

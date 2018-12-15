@@ -63,20 +63,15 @@ public:
         const std::string&                   keyword,
         const std::function<void(uint64_t)>& receive_callback = nullptr) const;
     void insert(const std::string& keyword, uint64_t index);
-    void async_insert(const std::string& keyword, uint64_t index);
 
     void start_update_session();
     void end_update_session();
     void insert_in_session(const std::string& keyword, uint64_t index);
 
-    void wait_updates_completion();
-
     bool load_inverted_index(const std::string& path);
 
 
 private:
-    void update_completion_loop();
-
     bool send_setup() const;
 
     std::unique_ptr<sophos::Sophos::Stub> stub_;
@@ -90,18 +85,8 @@ private:
         ::google::protobuf::Empty              response;
 
         std::mutex mtx;
-        bool       is_up;
+        bool       is_up{false};
     } bulk_update_state_;
-
-    grpc::CompletionQueue update_cq_;
-
-    std::atomic_size_t      update_launched_count_, update_completed_count_;
-    std::thread*            update_completion_thread_;
-    std::mutex              update_completion_mtx_;
-    std::condition_variable update_completion_cv_;
-    std::atomic<bool>       stop_update_completion_thread_{false};
-
-    std::mutex update_mtx_;
 };
 
 SearchRequestMessage request_to_message(const SearchRequest& req);

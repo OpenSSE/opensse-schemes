@@ -80,8 +80,6 @@ public:
     void insert_in_session(
         const std::list<std::pair<std::string, uint64_t>>& update_list);
 
-    void wait_updates_completion();
-
     bool load_inverted_index(const std::string& path);
 
     // not copyable by any mean
@@ -96,13 +94,6 @@ private:
     std::unique_ptr<diana::Diana::Stub>      stub_;
     std::unique_ptr<DianaClient<index_type>> client_;
 
-    struct update_tag_type
-    {
-        std::unique_ptr<google::protobuf::Empty> reply;
-        std::unique_ptr<grpc::Status>            status;
-        std::unique_ptr<size_t>                  index;
-    };
-
     struct
     {
         std::unique_ptr<::grpc::ClientWriter<UpdateRequestMessage>> writer;
@@ -115,16 +106,6 @@ private:
 
     std::unique_ptr<grpc::ClientWriter<UpdateRequestMessage>>
         bulk_update_writer_;
-
-    grpc::CompletionQueue update_cq_;
-
-    std::atomic_size_t      update_launched_count_, update_completed_count_;
-    std::thread*            update_completion_thread_;
-    std::mutex              update_completion_mtx_;
-    std::condition_variable update_completion_cv_;
-    std::atomic<bool>       stop_update_completion_thread_{false};
-
-    std::mutex update_mtx_;
 };
 
 SearchRequestMessage request_to_message(const SearchRequest& req);

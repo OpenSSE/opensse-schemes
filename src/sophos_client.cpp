@@ -107,7 +107,7 @@ int main(int argc, char** argv)
         //        &writer_lock](index_type i)
 
         auto gen_callback = [&client_runner](const std::string& s, size_t i) {
-            client_runner->async_insert(s, i);
+            client_runner->insert_in_session(s, i);
         };
 
         client_runner->start_update_session();

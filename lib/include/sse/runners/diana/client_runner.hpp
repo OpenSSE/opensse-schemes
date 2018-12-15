@@ -70,9 +70,6 @@ public:
         const std::string&                   keyword,
         const std::function<void(uint64_t)>& receive_callback = nullptr) const;
     void insert(const std::string& keyword, uint64_t index);
-    void async_insert(const std::string& keyword, uint64_t index);
-    void async_insert(
-        const std::list<std::pair<std::string, uint64_t>>& update_list);
 
     void start_update_session();
     void end_update_session();

@@ -130,5 +130,19 @@ TYPED_TEST(RunnerTest, search_async)
     sse::test::insert_database(this->client_, test_db);
     sse::test::test_search_correctness(this->client_, test_db);
 }
+
+TYPED_TEST(RunnerTest, insert_session)
+{
+    this->client_->start_update_session();
+    const std::map<std::string, std::list<uint64_t>> test_db
+        = {{"kw_1", {0, 1}}, {"kw_2", {0}}, {"kw_3", {0}}};
+    iterate_database(test_db, [this](const std::string& kw, uint64_t index) {
+        this->client_->insert_in_session(kw, index);
+    });
+
+    this->client_->end_update_session();
+    sse::test::test_search_correctness(this->client_, test_db);
+}
+
 } // namespace test
 } // namespace sse

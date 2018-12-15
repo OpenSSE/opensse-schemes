@@ -110,7 +110,7 @@ private:
         ::google::protobuf::Empty                                   response;
 
         std::mutex mtx;
-        bool       is_up;
+        bool       is_up{false};
     } bulk_update_state_;
 
     std::unique_ptr<grpc::ClientWriter<UpdateRequestMessage>>

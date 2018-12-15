@@ -52,8 +52,8 @@ void insert_database(const std::unique_ptr<Client>&                    client,
                      });
 }
 
-template<class CientRunner>
-void insert_database(const std::unique_ptr<CientRunner>&               client,
+template<class ClientRunner>
+void insert_database(const std::unique_ptr<ClientRunner>&              client,
                      const std::map<std::string, std::list<uint64_t>>& db)
 {
     iterate_database(db, [&client](const std::string& kw, uint64_t index) {

@@ -79,8 +79,8 @@ static std::unique_ptr<DC> construct_client_from_directory(
         throw std::runtime_error("Missing token data");
     }
 
-    // TODO: This is a *very* ugly way to read the key files. This needs a
-    // massive overhaul
+    // TODO(rbost): This is a *very* ugly way to read the key files. This needs
+    // a massive overhaul
     std::ifstream master_key_in(master_key_path.c_str());
     std::ifstream kw_token_key_in(kw_token_master_key_path.c_str());
 
@@ -172,9 +172,8 @@ std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
 DianaClientRunner::DianaClientRunner(
     const std::shared_ptr<grpc::Channel>& channel,
     const std::string&                    path)
+    : stub_(Diana::NewStub(channel))
 {
-    stub_ = Diana::NewStub(channel);
-
     if (utility::is_directory(path)) {
         // try to initialize everything from this directory
 
@@ -204,8 +203,11 @@ DianaClientRunner::DianaClientRunner(
     }
 }
 
+// as we forward-declare Diana::Stub, we cannot use the default destructor
+// NOLINTNEXTLINE(modernize-use-equals-default)
 DianaClientRunner::~DianaClientRunner()
 {
+    // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
 }
 
 bool DianaClientRunner::send_setup() const
@@ -412,12 +414,15 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
             auto work = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                 std::list<std::pair<std::string, uint64_t>> update_list;
+                update_list.resize(documents.size());
 
-                for (unsigned doc : documents) {
-                    update_list.emplace_back(
-                        std::make_pair<std::string, uint64_t>(
-                            std::string(keyword), doc));
-                }
+                std::transform(documents.begin(),
+                               documents.end(),
+                               update_list.begin(),
+                               [&keyword](unsigned doc) {
+                                   return std::pair<std::string, uint64_t>(
+                                       std::string(keyword), doc);
+                               });
                 this->insert_in_session(update_list);
                 counter++;
 

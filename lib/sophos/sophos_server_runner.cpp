@@ -414,6 +414,8 @@ SophosServerRunner::SophosServerRunner(const std::string& server_address,
     server_ = builder.BuildAndStart();
 }
 
+// as we forward-declare SophosImpl, we cannot use the default destructor
+// NOLINTNEXTLINE(modernize-use-equals-default)
 SophosServerRunner::~SophosServerRunner()
 {
 }

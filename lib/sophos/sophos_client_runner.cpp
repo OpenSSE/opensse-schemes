@@ -144,8 +144,8 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
     }
 
 
-    // TODO: This is a *very* ugly way to read the key files. This needs a
-    // massive overhaul
+    // TODO(rbost): This is a *very* ugly way to read the key files. This needs
+    // a massive overhaul
     std::ifstream     sk_in(sk_path.c_str());
     std::ifstream     master_key_in(master_key_path.c_str());
     std::ifstream     rsa_prg_key_in(rsa_prg_key_path.c_str());
@@ -225,8 +225,13 @@ SophosClientRunner::SophosClientRunner(
         }
     }
 }
+
+// as we forward-declare Sophos::Stub, we cannot use the default
+// destructor
+// NOLINTNEXTLINE(modernize-use-equals-default)
 SophosClientRunner::~SophosClientRunner()
 {
+    // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
 }
 
 bool SophosClientRunner::send_setup() const

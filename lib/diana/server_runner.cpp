@@ -463,6 +463,8 @@ DianaServerRunner::DianaServerRunner(const std::string& server_address,
     server_ = builder.BuildAndStart();
 }
 
+// as we forward-declare DianaImpl, we cannot use the default destructor
+// NOLINTNEXTLINE(modernize-use-equals-default)
 DianaServerRunner::~DianaServerRunner()
 {
 }

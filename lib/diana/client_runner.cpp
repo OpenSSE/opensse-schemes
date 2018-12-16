@@ -406,25 +406,29 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
 
         std::atomic_size_t counter(0);
 
-        auto add_list_callback
-            = [this, &pool, &counter](const std::string         kw,
-                                      const std::list<unsigned> docs) {
-                  auto work
-                      = [this, &counter](const std::string&         keyword,
+        auto add_list_callback = [this, &pool, &counter](
+                                     const std::string         kw,
+                                     const std::list<unsigned> docs) {
+            auto work = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
-                            for (unsigned doc : documents) {
-                                this->insert_in_session(keyword, doc);
-                            }
-                            counter++;
+                std::list<std::pair<std::string, uint64_t>> update_list;
 
-                            if ((counter % 100) == 0) {
-                                logger::log(sse::logger::LoggerSeverity::INFO)
-                                    << "\rLoading: " << counter
-                                    << " keywords processed" << std::flush;
-                            }
-                        };
-                  pool.enqueue(work, kw, docs);
-              };
+                for (unsigned doc : documents) {
+                    update_list.emplace_back(
+                        std::make_pair<std::string, uint64_t>(
+                            std::string(keyword), doc));
+                }
+                this->insert_in_session(update_list);
+                counter++;
+
+                if ((counter % 100) == 0) {
+                    logger::log(sse::logger::LoggerSeverity::INFO)
+                        << "\rLoading: " << counter << " keywords processed"
+                        << std::flush;
+                }
+            };
+            pool.enqueue(work, kw, docs);
+        };
 
         parser.addCallbackList(add_list_callback);
 

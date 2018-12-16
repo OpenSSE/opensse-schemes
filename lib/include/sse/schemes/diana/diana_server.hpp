@@ -29,8 +29,6 @@
 
 #include <sse/crypto/prf.hpp>
 
-#define MIN(a, b) (((a) > (b)) ? (b) : (a))
-
 namespace sse {
 namespace diana {
 
@@ -372,11 +370,10 @@ void DianaServer<T>::search_simple_parallel(
         return;
     }
 
-    auto job = [this, &post_callback, delete_results](
-                   const uint8_t        t_id,
-                   const SearchRequest& req,
-                   const uint64_t       min_index,
-                   const uint64_t       max_index) {
+    auto job = [this, &post_callback, delete_results](const uint8_t        t_id,
+                                                      const SearchRequest& req,
+                                                      const size_t min_index,
+                                                      const size_t max_index) {
         auto get_callback
             // cppcheck-suppress variableScope
             = [this, t_id, &post_callback, delete_results](uint8_t* key) {
@@ -386,8 +383,8 @@ void DianaServer<T>::search_simple_parallel(
                   }
               };
 
-        uint64_t loc_min_index = min_index;
-        uint64_t loc_max_index = max_index;
+        size_t loc_min_index = min_index;
+        size_t loc_max_index = max_index;
 
 
         auto key_it = req.token_list.begin();
@@ -395,7 +392,7 @@ void DianaServer<T>::search_simple_parallel(
         do {
             // find the starting token
             // this is the number of leafs for the current node
-            uint64_t leaf_count = (1UL << key_it->second);
+            size_t leaf_count = (1UL << key_it->second);
 
             if ((leaf_count <= loc_min_index)) {
                 // the selected leaf does not cover the minimum index
@@ -410,7 +407,7 @@ void DianaServer<T>::search_simple_parallel(
                 // this is the last node for us
                 search_token_key_type token
                     = key_it->first; // copy the node as it will be
-                                            // erased by the next function
+                                     // erased by the next function
                 TokenTree::derive_leaves(token,
                                          key_it->second,
                                          loc_min_index,
@@ -425,7 +422,7 @@ void DianaServer<T>::search_simple_parallel(
 
                 search_token_key_type token
                     = key_it->first; // copy the node as it will be
-                                            // erased by the next function
+                                     // erased by the next function
                 TokenTree::derive_leaves(token,
                                          key_it->second,
                                          loc_min_index,
@@ -446,7 +443,8 @@ void DianaServer<T>::search_simple_parallel(
 
     std::vector<std::thread> threads;
 
-    threads_count = MIN(threads_count, req.add_count);
+    threads_count = std::min<uint8_t>(
+        std::min<uint32_t>(threads_count, req.add_count), 0xFF);
 
 
     size_t step      = req.add_count / threads_count;
@@ -460,15 +458,15 @@ void DianaServer<T>::search_simple_parallel(
             max++;
         }
 
-        threads.push_back(
-            std::thread(job, t, req, min, MIN(max, req.add_count) - 1));
+        threads.push_back(std::thread(
+            job, t, req, min, std::min<size_t>(max, req.add_count) - 1));
 
         min = max;
         max += step;
     }
 
-    for (uint8_t t = 0; t < threads_count; t++) {
-        threads[t].join();
+    for (auto& t : threads) {
+        t.join();
     }
 }
 

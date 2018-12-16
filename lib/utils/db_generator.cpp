@@ -91,11 +91,6 @@ static void generation_job(
     bool use_rnd_group_5 = true;
     bool use_rnd_group_6 = true;
 
-    //            uint16_t n_groups_3 = (int)ceilf(96./step), n_groups_4 =
-    //            (int)ceilf(100./step), n_groups_5 = (int)ceilf(10./step),
-    //            n_groups_6 = (int)ceilf(10./step);
-
-
     const uint64_t size_group_2 = 1e2, size_group_3 = 1e3, size_group_4 = 1e4,
                    size_group_5 = 1e5, size_group_6 = 1e6;
     const uint64_t n_groups_2
@@ -142,34 +137,6 @@ static void generation_job(
     std::vector<uint64_t> group_rand_10_4(n_groups_4, 0);
     std::vector<uint64_t> group_rand_10_5(n_groups_5, 0);
     std::vector<uint64_t> group_rand_10_6(n_groups_6, 0);
-    //            uint64_t *group_rand_10_2 = (uint64_t
-    //            *)malloc(n_groups_2*sizeof(uint64_t)); uint64_t
-    //            *group_rand_10_3 = (uint64_t
-    //            *)malloc(n_groups_3*sizeof(uint64_t)); uint64_t
-    //            *group_rand_10_4 = (uint64_t
-    //            *)malloc(n_groups_4*sizeof(uint64_t)); uint64_t
-    //            *group_rand_10_5 = (uint64_t
-    //            *)malloc(n_groups_5*sizeof(uint64_t)); uint64_t
-    //            *group_rand_10_6 = (uint64_t
-    //            *)malloc(n_groups_6*sizeof(uint64_t));
-
-    //
-    //            for (size_t i=0; i< n_groups_2; i++) {
-    //                group_rand_10_2[i] = 0;
-    //            }
-    //            for (size_t i=0; i< n_groups_3; i++) {
-    //                group_rand_10_3[i] = 0;
-    //            }
-    //            for (size_t i=0; i< n_groups_4; i++) {
-    //                group_rand_10_4[i] = 0;
-    //            }
-    //            for (size_t i=0; i< n_groups_5; i++) {
-    //                group_rand_10_5[i] = 0;
-    //            }
-    //            for (size_t i=0; i< n_groups_6; i++) {
-    //                group_rand_10_6[i] = 0;
-    //            }
-    //
 
     std::string kw;
 
@@ -189,7 +156,7 @@ static void generation_job(
         keyword_1 = kKeyword1PercentBase;
         keyword_1.append("_").append(std::to_string(ind_1)).append("_1");
         keyword_10 = kKeyword10PercentBase;
-        keyword_1.append("_").append(std::to_string(ind_10)).append("_1");
+        keyword_10.append("_").append(std::to_string(ind_10)).append("_1");
 
         callback(keyword_01, ind);
         callback(keyword_1, ind);
@@ -206,7 +173,7 @@ static void generation_job(
         keyword_1 = kKeyword1PercentBase;
         keyword_1.append("_").append(std::to_string(ind_1)).append("_2");
         keyword_10 = kKeyword10PercentBase;
-        keyword_1.append("_").append(std::to_string(ind_10)).append("_2");
+        keyword_10.append("_").append(std::to_string(ind_10)).append("_2");
 
         callback(keyword_01, ind);
         callback(keyword_1, ind);
@@ -214,22 +181,16 @@ static void generation_job(
 
         new_entries += 3;
 
-        ind_01 = (ind / (static_cast<unsigned int>(1e6))) % 1000;
-        ind_1  = ind_01 % 100;
-        ind_10 = ind_1 % 10;
+        // ind_01 = (ind / (static_cast<unsigned int>(1e6))) % 1000;
+        // ind_1  = ind_01 % 100;
+        // ind_10 = ind_1 % 10;
 
-        keyword_01 = kKeyword01PercentBase;
-        keyword_01.append("_").append(std::to_string(ind_01)).append("_3");
-        keyword_1 = kKeyword1PercentBase;
-        keyword_1.append("_").append(std::to_string(ind_1)).append("_3");
-        keyword_10 = kKeyword10PercentBase;
-        keyword_1.append("_").append(std::to_string(ind_10)).append("_3");
-
-
-        //                client->async_insert(keyword_01, ind);
-        //                client->async_insert(keyword_1, ind);
-        //                client->async_insert(keyword_10, ind);
-        //                new_entries += 3;
+        // keyword_01 = kKeyword01PercentBase;
+        // keyword_01.append("_").append(std::to_string(ind_01)).append("_3");
+        // keyword_1 = kKeyword1PercentBase;
+        // keyword_1.append("_").append(std::to_string(ind_1)).append("_3");
+        // keyword_10 = kKeyword10PercentBase;
+        // keyword_1.append("_").append(std::to_string(ind_10)).append("_3");
 
 
         if (counter_10_1 < max_10_counter) {

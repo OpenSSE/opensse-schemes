@@ -1,10 +1,12 @@
 #include "diana_runner.hpp"
 #include "sophos_runner.hpp"
+#include "test.hpp"
 #include "utility.hpp"
 
 #include <sse/schemes/utils/utils.hpp>
 
 #include <sse/crypto/utils.hpp>
+#include <sse/dbparser/json/DBParserJSON.h>
 
 #include <grpc++/create_channel.h>
 #include <grpc++/impl/codegen/service_type.h>
@@ -144,5 +146,36 @@ TYPED_TEST(RunnerTest, insert_session)
     sse::test::test_search_correctness(this->client_, test_db);
 }
 
+TYPED_TEST(RunnerTest, load_JSON)
+{
+    // this test is a bit inefficient as it loads the same JSON library twice :
+    // once by the test itself to get the reference library, and once by the
+    // client to perform the actual insertions.
+    // However, this is unavoidable as long as we cannot hook the parser in the
+    // client
+
+    ASSERT_TRUE(sse::utility::exists(sse::test::JSON_test_library));
+
+    // parse the JSON to create the reference database
+    dbparser::DBParserJSON test_parser(sse::test::JSON_test_library);
+
+    std::map<std::string, std::list<uint64_t>> ref_db;
+
+    auto db_callback
+        = [&ref_db](const std::string kw, const std::list<unsigned> docs) {
+              std::list<uint64_t>& elts = ref_db[kw];
+              elts.insert(elts.end(), docs.begin(), docs.end());
+          };
+    test_parser.addCallbackList(db_callback);
+
+    test_parser.parse();
+
+    // now, call the JSON invertion method of the client
+    this->client_->load_inverted_index(sse::test::JSON_test_library);
+
+
+    // check that everything happened correctly
+    sse::test::test_search_correctness(this->client_, ref_db);
+}
 } // namespace test
 } // namespace sse

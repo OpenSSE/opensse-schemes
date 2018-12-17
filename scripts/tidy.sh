@@ -14,7 +14,7 @@ if [ ! -f $STATIC_ANALYSIS_DIR/compile_commands.json ]; then
     mkdir -p $STATIC_ANALYSIS_DIR 
     cd $STATIC_ANALYSIS_DIR
     # For the static analysis, only focus on an AES NI-enabled target
-    CFLAGS="-maes -DWITH_OPENSSL" CXXFLAGS="-maes -DWITH_OPENSSL" cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    CMAKE_PREFIX_PATH=${HOME}/deps CFLAGS="-maes -DWITH_OPENSSL" CXXFLAGS="-maes -DWITH_OPENSSL" cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
     make grpc_gen
     cd ..
 fi

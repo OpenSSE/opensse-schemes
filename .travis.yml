@@ -46,7 +46,6 @@ env:
 
 before_install:
   - INSTALL_DIR=$HOME/deps
-  - CMAKE_PREFIX_PATH=${HOME}/deps
   - CPATH=$CPATH:$INSTALL_DIR/include
   - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib
   - PATH=$PATH:$INSTALL_DIR/bin

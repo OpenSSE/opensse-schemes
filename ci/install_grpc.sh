@@ -26,7 +26,7 @@ PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" make prefix=$INSTALL_DIR  -j4
 PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" sudo make prefix=$INSTALL_DIR install
 
 cd third_party/protobuf
-sudo make install
+make install
 
 # make clean
 fi

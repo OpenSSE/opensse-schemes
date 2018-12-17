@@ -17,6 +17,14 @@ else
 	git clone --single-branch --depth 1 https://github.com/facebook/rocksdb.git
 	cd rocksdb
 
+
+# Workaround for an issue on Travis
+	if [ "$COMPILER" = "clang" ];
+	then
+		export CC=`which clang`
+		export CXX=`which clang++`
+	fi
+
 	make INSTALL_PATH=$INSTALL_DIR shared_lib -j4
 	sudo -E make INSTALL_PATH=$INSTALL_DIR install-shared
 	make clean

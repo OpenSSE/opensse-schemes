@@ -8,8 +8,8 @@ fi
 PATTERN=".*\\.\\(h\\|c\\|hpp\\|cpp\\)\$"
 
 FILES="$(find lib -type f -print| grep "$PATTERN")"
-FILES+="$(find src -type f -print| grep "$PATTERN")"
-FILES+="$(find test -type f -print| grep "$PATTERN")"
+FILES+=" $(find src -type f -print| grep "$PATTERN")"
+FILES+=" $(find test -type f -print| grep "$PATTERN")"
 
 for file in $FILES ; do
     eval "$CLANG_FORMAT -i ${file}"

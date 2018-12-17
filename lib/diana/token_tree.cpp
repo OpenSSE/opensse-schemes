@@ -239,7 +239,7 @@ static void derive_leaves_aux(uint8_t*                             K,
 
     if (need_left && need_right) {
         // generate  both children
-        
+
         crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K),
                             0,
                             2 * TokenTree::kTokenSize,
@@ -248,7 +248,6 @@ static void derive_leaves_aux(uint8_t*                             K,
         left_node  = derived_tokens;
         right_node = derived_tokens + TokenTree::kTokenSize;
     } else if (need_left) {
-
         crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K),
                             0,
                             TokenTree::kTokenSize,
@@ -256,7 +255,6 @@ static void derive_leaves_aux(uint8_t*                             K,
 
         left_node = derived_tokens;
     } else if (need_right) {
-
         crypto::Prg::derive(crypto::Key<crypto::Prg::kKeySize>(K),
                             TokenTree::kTokenSize,
                             TokenTree::kTokenSize,

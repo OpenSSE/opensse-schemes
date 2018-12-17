@@ -10,9 +10,12 @@ cache:
 
 addons:
    apt:
-     sources:
+     sources: &basic_sources
        - ubuntu-toolchain-r-test
-     packages:
+       - sourceline: 'deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
+       - sourceline: 'deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main'
+         key_url: 'https://llvm.org/apt/llvm-snapshot.gpg.key'
+     packages: &basic_deps
        - libssl-dev
        - yasm
        - libgmp-dev
@@ -29,16 +32,16 @@ env:
     - ENABLE_COVERAGE=Off
     - BUILD_TYPE=Debug
 
-matrix:
-   include:
-    - env:
-        - STATIC_ANALYSIS=false
-        - RUN_CHECKS=true
-        - COMPILER=gcc
-        - ENABLE_COVERAGE=On
-      after_success:
-        - ./ci/gen_coverage.sh # get the code coverage
-        - ./ci/upload_report.sh # upload the report to coveralls
+# matrix:
+#    include:
+#     - env:
+#         - STATIC_ANALYSIS=false
+#         - RUN_CHECKS=true
+#         - COMPILER=gcc
+#         - ENABLE_COVERAGE=On
+#       after_success:
+#         - ./ci/gen_coverage.sh # get the code coverage
+#         - ./ci/upload_report.sh # upload the report to coveralls
 
 
 before_install:
@@ -55,6 +58,64 @@ install:
   - ./ci/install_grpc.sh
   - ./ci/install_rocksdb.sh
   - gem install coveralls-lcov
+
+matrix:
+   include:
+      - env:
+          - STATIC_ANALYSIS=false
+          - RUN_CHECKS=true
+          - COMPILER=gcc
+          - ENABLE_COVERAGE=On
+        compiler: gcc
+        addons:
+            apt:
+              sources: *basic_sources
+              packages:
+                 - *basic_deps
+        after_success:
+          - ./ci/gen_coverage.sh # get the code coverage
+          - ./ci/upload_report.sh # upload the report to coveralls
+
+      - env:
+          - STATIC_ANALYSIS=false
+          - RUN_CHECKS=true
+          - COMPILER=clang
+        compiler: clang
+        addons:
+            apt:
+              sources: *basic_sources
+              packages:
+                 - *basic_deps
+
+
+      - env:
+          - STATIC_ANALYSIS=true
+          - RUN_CHECKS=false
+          - CLANG_TIDY=clang-tidy-5.0
+        addons:
+           apt:
+              sources: *basic_sources
+              packages:
+                 - *basic_deps
+                 - cppcheck
+                 - libclang-common-5.0-dev # to get the headers right
+                 - clang-tidy-5.0
+        script:
+           - ./scripts/cppcheck.sh
+           - ./scripts/tidy.sh
+
+      - env:
+          - STATIC_ANALYSIS=false
+          - RUN_CHECKS=false
+          - CLANG_FORMAT=clang-format-5.0
+        addons:
+           apt:
+              sources: *basic_sources
+              packages:
+                 - clang-format-5.0
+        install: # do not compile the dependencies
+        script:
+           - ./scripts/check_format.sh
 
 script:
   - ./ci/build.sh

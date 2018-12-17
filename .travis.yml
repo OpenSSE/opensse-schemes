@@ -81,6 +81,8 @@ matrix:
           - STATIC_ANALYSIS=false
           - RUN_CHECKS=true
           - COMPILER=clang
+          - CC=`which clang`
+          - CXX=`which clang++`
         compiler: clang
         addons:
             apt:

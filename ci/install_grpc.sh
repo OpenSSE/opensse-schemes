@@ -23,10 +23,10 @@ cd grpc
 git submodule update --init
 
 PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" make prefix=$INSTALL_DIR  -j4
-PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" sudo make prefix=$INSTALL_DIR install
+PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" sudo -E make prefix=$INSTALL_DIR install
 
 cd third_party/protobuf
-sudo make install
+sudo -E make install
 
 # make clean
 fi

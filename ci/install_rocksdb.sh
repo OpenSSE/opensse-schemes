@@ -18,6 +18,6 @@ else
 	cd rocksdb
 
 	make INSTALL_PATH=$INSTALL_DIR shared_lib -j4
-	make INSTALL_PATH=$INSTALL_DIR install-shared
+	sudo -E make INSTALL_PATH=$INSTALL_DIR install-shared
 	make clean
 fi

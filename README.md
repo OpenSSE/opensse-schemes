@@ -1,6 +1,7 @@
 # OpenSSE Schemes
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Build Status](https://travis-ci.org/OpenSSE/opensse-schemes.svg?branch=master)](https://travis-ci.org/OpenSSE/opensse-schemes)
+[![build status](https://badges.herokuapp.com/travis/OpenSSE/opensse-schemes?branch=master&label=build&env=COMPILER=gcc)](https://travis-ci.org/OpenSSE/opensse-schemes)
+[![static analysis](https://badges.herokuapp.com/travis/OpenSSE/opensse-schemes?branch=master&label=static%20analysis&env=STATIC_ANALYSIS=true)](https://travis-ci.org/OpenSSE/opensse-schemes)
 [![Coverage Status](https://coveralls.io/repos/github/OpenSSE/opensse-schemes/badge.svg?branch=master)](https://coveralls.io/github/OpenSSE/opensse-schemes?branch=master)
 [![CodeFactor](https://www.codefactor.io/repository/github/opensse/opensse-schemes/badge)](https://www.codefactor.io/repository/github/opensse/opensse-schemes)
 
@@ -144,7 +145,7 @@ Unless otherwise stated, the code has been written by [Raphael Bost](https://rap
 
 # Licensing
 
-OpenSSE Schemes is licensed under the [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html).
+OpenSSE Schemes is licensed under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl.html).
 
-![AGPL](http://www.gnu.org/graphics/agplv3-88x31.png)
+![AGPL](https://www.gnu.org/graphics/agplv3-88x31.png)
 

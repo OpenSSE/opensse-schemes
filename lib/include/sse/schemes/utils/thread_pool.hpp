@@ -47,7 +47,7 @@ public:
     ~ThreadPool();
 
 private:
-    virtual void register_thread(uint32_t id_pool);
+    void register_thread(uint32_t id_pool);
 
     // need to keep track of threads so we can join them
     std::vector<std::thread> workers;
@@ -60,20 +60,6 @@ private:
     std::mutex              queue_mutex;
     std::condition_variable condition;
     bool                    stop;
-};
-
-class IdentifiedThreadPool : public ThreadPool
-{
-public:
-    explicit IdentifiedThreadPool(uint32_t threads);
-
-    uint32_t get_thread_index() const;
-
-private:
-    void register_thread(uint32_t id_pool) override;
-
-    std::mutex                                    setup_mutex_;
-    std::unordered_map<std::thread::id, uint32_t> thread_indexes_;
 };
 
 // the constructor just launches some amount of workers
@@ -171,22 +157,4 @@ inline ThreadPool::~ThreadPool()
 
     //    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
 }
-
-inline IdentifiedThreadPool::IdentifiedThreadPool(uint32_t threads)
-    : ThreadPool(threads), thread_indexes_(threads)
-{
-}
-
-inline void IdentifiedThreadPool::register_thread(uint32_t id_pool)
-{
-    std::unique_lock<std::mutex> lock(setup_mutex_);
-
-    thread_indexes_[std::this_thread::get_id()] = id_pool;
-}
-
-inline uint32_t IdentifiedThreadPool::get_thread_index() const
-{
-    return thread_indexes_.at(std::this_thread::get_id());
-}
-
 #endif

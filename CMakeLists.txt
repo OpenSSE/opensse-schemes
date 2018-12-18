@@ -103,6 +103,7 @@ foreach(runner ${runner_bins})
 endforeach(runner ${runner_bins})
 
 # Build googletest for the tests
+set(BUILD_GMOCK OFF CACHE BOOL "Disable GMock" FORCE)
 add_subdirectory(externals/googletest)
 add_subdirectory(test)
 add_coverage(check)

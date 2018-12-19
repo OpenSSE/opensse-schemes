@@ -340,6 +340,7 @@ void DianaServer<T>::search_simple_parallel(
                                                       const size_t max_index) {
         auto get_callback
             // cppcheck-suppress variableScope
+            // cppcheck-suppress shadowVar
             = [this, t_id, &post_callback, delete_results](uint8_t* key) {
                   index_type index;
                   if (get_unmask(key, index, delete_results)) {

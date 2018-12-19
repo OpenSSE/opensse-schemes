@@ -45,35 +45,31 @@ void set_logging_level(spdlog::level::level_enum log_level)
     logger()->set_level(log_level);
 }
 
-bool          benchmark_stream_set__{false};
-std::ofstream benchmark_stream__;
-std::ostream  null_stream__(nullptr);
+// bool                           benchmark_stream_set__{false};
+std::unique_ptr<std::ostream> benchmark_stream__;
 
 bool set_benchmark_file(const std::string& path)
 {
-    std::ofstream stream(path);
+    std::unique_ptr<std::ostream> stream(new std::ofstream(path));
 
-    if (!stream.is_open()) {
+    if (!(dynamic_cast<std::ofstream*>(stream.get())->is_open())) {
         logger::logger()->error("Failed to set benchmark file: " + path);
 
         return false;
     }
-    if (benchmark_stream_set__) {
-        benchmark_stream__.close();
-    }
 
-    benchmark_stream__     = std::move(stream);
-    benchmark_stream_set__ = true;
+    benchmark_stream__ = std::move(stream);
 
     return true;
 }
 
 std::ostream& log_benchmark()
 {
-    if (benchmark_stream_set__) {
-        return benchmark_stream__;
+    if (!benchmark_stream__) {
+        // set the benchmark stream to the null stream
+        benchmark_stream__.reset(new std::ostream(nullptr));
     }
-    return null_stream__;
+    return *benchmark_stream__;
 }
 
 } // namespace logger

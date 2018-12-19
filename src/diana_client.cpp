@@ -134,20 +134,19 @@ int main(int argc, char** argv)
         std::ostream& out_stream = std::cout;
         bool          first      = true;
 
-        auto print_callback
-            = [&out_mtx, &out_stream, &first, print_results](uint64_t res) {
-                  if (print_results) {
-                      out_mtx.lock();
+        auto print_callback = [&out_mtx, &first, print_results](uint64_t res) {
+            if (print_results) {
+                out_mtx.lock();
 
-                      if (!first) {
-                          out_stream << ", ";
-                      }
-                      first = false;
-                      out_stream << res;
+                if (!first) {
+                    out_stream << ", ";
+                }
+                first = false;
+                out_stream << res;
 
-                      out_mtx.unlock();
-                  }
-              };
+                out_mtx.unlock();
+            }
+        };
 
         out_stream << "Search results: \n{";
 

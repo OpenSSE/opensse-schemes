@@ -114,7 +114,7 @@ int main(int argc, char** argv)
         std::ostream& out_stream = std::cout;
         bool          first      = true;
 
-        auto print_callback = [&out_mtx, &out_stream, &first](uint64_t res) {
+        auto print_callback = [&out_mtx, &first](uint64_t res) {
             out_mtx.lock();
 
             if (!first) {

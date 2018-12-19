@@ -13,3 +13,7 @@
 [submodule "externals/sanitizers-cmake"]
 	path = externals/sanitizers-cmake
 	url = https://github.com/arsenm/sanitizers-cmake.git
+[submodule "externals/spdlog"]
+	path = externals/spdlog
+	url = https://github.com/gabime/spdlog.git
+	branch = v1.2.1

@@ -130,29 +130,28 @@ int main(int argc, char** argv)
     for (std::string& kw : keywords) {
         std::cout << "-------------- Search --------------" << std::endl;
 
-        std::mutex    out_mtx;
-        std::ostream& out_stream = std::cout;
-        bool          first      = true;
+        std::mutex out_mtx;
+        bool       first = true;
 
         auto print_callback = [&out_mtx, &first, print_results](uint64_t res) {
             if (print_results) {
                 out_mtx.lock();
 
                 if (!first) {
-                    out_stream << ", ";
+                    std::cout << ", ";
                 }
                 first = false;
-                out_stream << res;
+                std::cout << res;
 
                 out_mtx.unlock();
             }
         };
 
-        out_stream << "Search results: \n{";
+        std::cout << "Search results: \n{";
 
         auto res = client_runner->search(kw, print_callback);
 
-        out_stream << "}" << std::endl;
+        std::cout << "}" << std::endl;
     }
 
     client_runner.reset();

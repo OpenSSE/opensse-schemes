@@ -66,6 +66,8 @@ IncludeCategories:
     Priority:        3
   - Regex:           '^<(grpc|grpc\+\+|google/protobuf)/.*\.(h|hpp)'
     Priority:        4
+  - Regex:           '^<spdlog/.*\.(h|hpp)'
+    Priority:        4
   - Regex:           '^(<|")(gtest)/.*\.(h|hpp)'
     Priority:        7
   - Regex:           '^<.*\.h>'

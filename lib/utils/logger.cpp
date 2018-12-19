@@ -18,8 +18,9 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-
 #include <sse/schemes/utils/logger.hpp>
+
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <fstream>
 #include <iostream>
@@ -27,6 +28,19 @@
 
 namespace sse {
 namespace logger {
+
+std::shared_ptr<spdlog::logger> shared_logger_(nullptr);
+
+std::shared_ptr<spdlog::logger> logger()
+{
+    if (!shared_logger_) {
+        // initialize the logger
+        shared_logger_ = spdlog::stderr_color_mt("console");
+    }
+    return shared_logger_;
+}
+
+
 LoggerSeverity severity__ = LoggerSeverity::INFO;
 // NOLINTNEXTLINE(cert-err58-cpp)
 std::ostream null_stream__(nullptr);
@@ -65,8 +79,7 @@ bool set_benchmark_file(const std::string& path)
     if (!stream_ptr->is_open()) {
         benchmark_stream__.reset();
 
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed to set benchmark file: " << path << std::endl;
+        logger::logger()->error("Failed to set benchmark file: " + path);
 
         return false;
     }

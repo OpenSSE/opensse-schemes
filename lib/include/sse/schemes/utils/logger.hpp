@@ -21,8 +21,11 @@
 
 #pragma once
 
+#include <spdlog/spdlog.h>
+
 #include <array>
 #include <iomanip>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -38,6 +41,8 @@ enum class LoggerSeverity : uint8_t
     ERROR    = 40,
     CRITICAL = 50
 };
+
+std::shared_ptr<spdlog::logger> logger();
 
 std::ostream* logger_stream();
 void          set_logger_stream(std::ostream* stream);

@@ -73,14 +73,12 @@ int main(int argc, char** argv)
     }
 
     if (client_db.empty()) {
-        sse::logger::log(sse::logger::LoggerSeverity::WARNING)
-            << "Client database not specified" << std::endl;
-        sse::logger::log(sse::logger::LoggerSeverity::WARNING)
-            << "Using \'test.csdb\' by default" << std::endl;
+        sse::logger::logger()->warn(
+            "Client database not specified. Using \'test.csdb\' by default");
         client_db = "test.csdb";
     } else {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Running client with database " << client_db << std::endl;
+        sse::logger::logger()->info("Running client with database "
+                                    + client_db);
     }
 
     std::unique_ptr<sse::sophos::SophosClientRunner> client_runner;
@@ -91,20 +89,14 @@ int main(int argc, char** argv)
         new sse::sophos::SophosClientRunner(channel, client_db));
 
     for (std::string& path : input_files) {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Load file " << path << std::endl;
+        sse::logger::logger()->info("Load file " + path);
         client_runner->load_inverted_index(path);
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Done loading file " << path << std::endl;
+        sse::logger::logger()->info("Done loading file " + path);
     }
 
     if (rnd_entries_count > 0) {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Randomly generating database with " << rnd_entries_count
-            << " docs" << std::endl;
-
-        //        auto post_callback = [&writer, &res_size,
-        //        &writer_lock](index_type i)
+        sse::logger::logger()->info("Randomly generating database with {} docs",
+                                    rnd_entries_count);
 
         auto gen_callback = [&client_runner](const std::string& s, size_t i) {
             client_runner->insert_in_session(s, i);
@@ -118,28 +110,27 @@ int main(int argc, char** argv)
     for (std::string& kw : keywords) {
         std::cout << "-------------- Search --------------" << std::endl;
 
-        std::mutex    logger_mtx;
-        std::ostream& log_stream
-            = sse::logger::log(sse::logger::LoggerSeverity::INFO);
-        bool first = true;
+        std::mutex    out_mtx;
+        std::ostream& out_stream = std::cout;
+        bool          first      = true;
 
-        auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res) {
-            logger_mtx.lock();
+        auto print_callback = [&out_mtx, &out_stream, &first](uint64_t res) {
+            out_mtx.lock();
 
             if (!first) {
-                log_stream << ", ";
+                out_stream << ", ";
             }
             first = false;
-            log_stream << res;
+            out_stream << res;
 
-            logger_mtx.unlock();
+            out_mtx.unlock();
         };
 
-        log_stream << "Search results: \n{";
+        out_stream << "Search results: \n{";
 
         auto res = client_runner->search(kw, print_callback);
 
-        log_stream << "}" << std::endl;
+        out_stream << "}" << std::endl;
     }
 
     //    if (bench_count > 0) {

@@ -82,14 +82,12 @@ int main(int argc, char** argv)
     }
 
     if (client_db.empty()) {
-        sse::logger::log(sse::logger::LoggerSeverity::WARNING)
-            << "Client database not specified" << std::endl;
-        sse::logger::log(sse::logger::LoggerSeverity::WARNING)
-            << "Using \'test.dcdb\' by default" << std::endl;
+        sse::logger::logger()->warn(
+            "Client database not specified. Using \'test.dcdb\' by default");
         client_db = "test.dcdb";
     } else {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Running client with database " << client_db << std::endl;
+        sse::logger::logger()->info("Running client with database "
+                                    + client_db);
     }
 
     std::unique_ptr<sse::diana::DianaClientRunner> client_runner;
@@ -99,17 +97,14 @@ int main(int argc, char** argv)
     client_runner.reset(new sse::diana::DianaClientRunner(channel, client_db));
 
     for (std::string& path : input_files) {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Load file " << path << std::endl;
+        sse::logger::logger()->info("Load file " + path);
         client_runner->load_inverted_index(path);
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Done loading file " << path << std::endl;
+        sse::logger::logger()->info("Done loading file " + path);
     }
 
     if (rnd_entries_count > 0) {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Randomly generating database with " << rnd_entries_count
-            << " docs" << std::endl;
+        sse::logger::logger()->info("Randomly generating database with {} docs",
+                                    rnd_entries_count);
 
         std::mutex buffer_mtx;
 
@@ -135,31 +130,30 @@ int main(int argc, char** argv)
     for (std::string& kw : keywords) {
         std::cout << "-------------- Search --------------" << std::endl;
 
-        std::mutex    logger_mtx;
-        std::ostream& log_stream
-            = sse::logger::log(sse::logger::LoggerSeverity::INFO);
-        bool first = true;
+        std::mutex    out_mtx;
+        std::ostream& out_stream = std::cout;
+        bool          first      = true;
 
         auto print_callback
-            = [&logger_mtx, &log_stream, &first, print_results](uint64_t res) {
+            = [&out_mtx, &out_stream, &first, print_results](uint64_t res) {
                   if (print_results) {
-                      logger_mtx.lock();
+                      out_mtx.lock();
 
                       if (!first) {
-                          log_stream << ", ";
+                          out_stream << ", ";
                       }
                       first = false;
-                      log_stream << res;
+                      out_stream << res;
 
-                      logger_mtx.unlock();
+                      out_mtx.unlock();
                   }
               };
 
-        log_stream << "Search results: \n{";
+        out_stream << "Search results: \n{";
 
         auto res = client_runner->search(kw, print_callback);
 
-        log_stream << "}" << std::endl;
+        out_stream << "}" << std::endl;
     }
 
     client_runner.reset();

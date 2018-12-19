@@ -81,13 +81,12 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
                                __attribute__((unused))
                                google::protobuf::Empty* e)
 {
-    logger::log(logger::LoggerSeverity::TRACE) << "Setup!" << std::endl;
+    logger::logger()->trace("Setup started");
 
     if (server_) {
         // problem, the server is already set up
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Info: server received a setup message but is already set up"
-            << std::endl;
+        logger::logger()->error(
+            "Info: server received a setup message but is already set up");
 
         return grpc::Status(grpc::FAILED_PRECONDITION,
                             "The server was already set up");
@@ -97,18 +96,16 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
     // there
 
     if (utility::exists(storage_path_)) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error: Unable to create the server's content directory"
-            << std::endl;
+        logger::logger()->error(
+            "Error: Unable to create the server's content directory");
 
         return grpc::Status(grpc::ALREADY_EXISTS,
                             "Unable to create the server's content directory");
     }
 
     if (!utility::create_directory(storage_path_, static_cast<mode_t>(0700))) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error: Unable to create the server's content directory"
-            << std::endl;
+        logger::logger()->error(
+            "Error: Unable to create the server's content directory");
 
         return grpc::Status(grpc::PERMISSION_DENIED,
                             "Unable to create the server's content directory");
@@ -121,16 +118,16 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
     std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
 
     try {
-        logger::log(logger::LoggerSeverity::INFO)
-            << "Seting up server" << std::endl;
+        logger::logger()->info("Setting up server");
         server_.reset(new SophosServer(pairs_map_path, message->public_key()));
     } catch (std::exception& e) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error when setting up the server's core" << std::endl;
+        logger::logger()->error("Error when setting up the server's core:\n"
+                                + std::string(e.what()));
 
         server_.reset();
         return grpc::Status(grpc::FAILED_PRECONDITION,
-                            "Unable to create the server's core.");
+                            "Unable to create the server's core. Exception: "
+                                + std::string(e.what()));
     }
 
     // write the public key in a file
@@ -140,8 +137,7 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
     if (!pk_out.is_open()) {
         // error
 
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error when writing the public key" << std::endl;
+        logger::logger()->error("Error when writing the public key");
 
         return grpc::Status(grpc::PERMISSION_DENIED,
                             "Unable to write the public key to disk");
@@ -149,8 +145,7 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
     pk_out << message->public_key();
     pk_out.close();
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Successful setup" << std::endl;
+    logger::logger()->trace("Successful setup");
 
     return grpc::Status::OK;
 }
@@ -210,7 +205,7 @@ grpc::Status SophosImpl::sync_search(
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << "Searching ...";
+    logger::logger()->trace("Start synchronous search...");
     std::list<uint64_t> res_list;
 
     auto req = message_to_request(mes);
@@ -235,8 +230,7 @@ grpc::Status SophosImpl::sync_search(
         writer->Write(reply);
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
-
+    logger::logger()->trace("Synchronous search done");
 
     return grpc::Status::OK;
 }
@@ -253,7 +247,7 @@ grpc::Status SophosImpl::async_search(
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << "Searching ...";
+    logger::logger()->trace("Start asynchronous search...");
     auto req = message_to_request(mes);
 
     std::atomic_uint res_size(0);
@@ -296,7 +290,7 @@ grpc::Status SophosImpl::async_search(
     }
 
 
-    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
+    logger::logger()->trace("Asynchronous search done");
 
 
     return grpc::Status::OK;
@@ -317,12 +311,11 @@ grpc::Status SophosImpl::insert(__attribute__((unused))
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << "Updating ..." << std::endl;
+    logger::logger()->trace("Start updating");
 
     server_->insert(message_to_request(mes));
 
-    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
-
+    logger::logger()->trace("Update completed");
     return grpc::Status::OK;
 }
 
@@ -337,8 +330,7 @@ grpc::Status SophosImpl::bulk_insert(
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Updating (bulk)..." << std::endl;
+    logger::logger()->trace("Start updating (bulk)...");
 
     sophos::UpdateRequestMessage mes;
 
@@ -346,8 +338,7 @@ grpc::Status SophosImpl::bulk_insert(
         server_->insert(message_to_request(&mes));
     }
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Updating (bulk)... done" << std::endl;
+    logger::logger()->trace("Updating (bulk)... done");
 
 
     return grpc::Status::OK;

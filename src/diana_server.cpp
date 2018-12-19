@@ -21,8 +21,7 @@ sse::diana::DianaServerRunner* server_ptr__ = nullptr;
 
 void exit_handler(__attribute__((unused)) int signal)
 {
-    sse::logger::log(sse::logger::LoggerSeverity::INFO)
-        << "\nExiting ... " << std::endl;
+    sse::logger::logger()->info("Exiting ... ");
 
     if (server_ptr__ != nullptr) {
         server_ptr__->shutdown();
@@ -71,22 +70,18 @@ int main(int argc, char** argv)
     }
 
     if (async_search) {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Asynchronous searches" << std::endl;
+        sse::logger::logger()->info("Use asynchronous searches");
     } else {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Synchronous searches" << std::endl;
+        sse::logger::logger()->info("Use synchronous searches");
     }
 
     if (server_db.empty()) {
-        sse::logger::log(sse::logger::LoggerSeverity::WARNING)
-            << "Server database not specified" << std::endl;
-        sse::logger::log(sse::logger::LoggerSeverity::WARNING)
-            << "Using \'test.dsdb\' by default" << std::endl;
+        sse::logger::logger()->warn(
+            "Server database not specified. Using \'test.dsdb\' by default");
         server_db = "test.dsdb";
     } else {
-        sse::logger::log(sse::logger::LoggerSeverity::INFO)
-            << "Running client with database " << server_db << std::endl;
+        sse::logger::logger()->info("Running server with database "
+                                    + server_db);
     }
     server_ptr__ = new sse::diana::DianaServerRunner("0.0.0.0:4241", server_db);
     server_ptr__->set_async_search(async_search);
@@ -95,7 +90,7 @@ int main(int argc, char** argv)
 
     sse::crypto::cleanup_crypto_lib();
 
-    sse::logger::log(sse::logger::LoggerSeverity::INFO) << "Done" << std::endl;
+    sse::logger::logger()->info("Diana exited");
 
     return 0;
 }

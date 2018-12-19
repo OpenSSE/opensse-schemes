@@ -92,9 +92,9 @@ SearchRequest SophosClient::search_request(const std::string& keyword) const
     found = counter_map_.get(keyword, kw_counter);
 
     if (!found) {
-        logger::log(logger::LoggerSeverity::INFO)
-            << "No matching counter found for keyword " << keyword << " (index "
-            << utility::hex_string(seed) << ")" << std::endl;
+        logger::logger()->info("No matching counter found for keyword "
+                               + keyword + " (index "
+                               + utility::hex_string(seed) + ")");
     } else {
         // Now derive the original search token from the kw_index (as seed)
         req.token = inverse_tdp().generate_array(rsa_prg_, seed);
@@ -103,9 +103,8 @@ SearchRequest SophosClient::search_request(const std::string& keyword) const
 
         req.derivation_key = derivation_prf().prf(
             reinterpret_cast<const uint8_t*>(seed.data()), kKeywordIndexSize);
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Sent derivation key: "
-            << utility::hex_string(req.derivation_key) << std::endl;
+        logger::logger()->debug("Sent derivation key: "
+                                + utility::hex_string(req.derivation_key));
         req.add_count = kw_counter + 1;
     }
 
@@ -133,26 +132,21 @@ UpdateRequest SophosClient::insertion_request(const std::string& keyword,
     st = inverse_tdp().generate_array(rsa_prg_, seed);
 
     if (kw_counter == 0) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "ST0 " << utility::hex_string(st) << std::endl;
+        logger::logger()->debug("Newly generated ST0: "
+                                + utility::hex_string(st));
     } else {
         st = inverse_tdp().invert_mult(st, kw_counter);
 
-        if (logger::severity() <= logger::LoggerSeverity::DBG) {
-            logger::log(logger::LoggerSeverity::DBG)
-                << "New ST " << utility::hex_string(st) << std::endl;
-        }
+        logger::logger()->debug("New ST: " + utility::hex_string(st));
     }
 
 
     auto deriv_key = derivation_prf().prf(
         reinterpret_cast<const uint8_t*>(seed.data()), kKeywordIndexSize);
 
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Derivation key: " << utility::hex_string(deriv_key)
-            << std::endl;
-    }
+    logger::logger()->debug("Derivation key: "
+                            + utility::hex_string(deriv_key));
+
 
     std::array<uint8_t, kUpdateTokenSize> mask;
 
@@ -163,11 +157,9 @@ UpdateRequest SophosClient::insertion_request(const std::string& keyword,
         mask);
     req.index = utility::xor_mask(index, mask);
 
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Update token: (" << utility::hex_string(req.token) << ", "
-            << std::hex << req.index << ")" << std::endl;
-    }
+    logger::logger()->debug("Update token: (" + utility::hex_string(req.token)
+                            + ", " + utility::hex_string(req.index) + ")");
+
 
     return req;
 }

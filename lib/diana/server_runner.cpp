@@ -78,13 +78,12 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
                               __attribute__((unused))
                               google::protobuf::Empty* e)
 {
-    logger::log(logger::LoggerSeverity::TRACE) << "Setup!" << std::endl;
+    logger::logger()->trace("Start server setup");
 
     if (server_) {
         // problem, the server is already set up
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Info: server received a setup message but is already set up"
-            << std::endl;
+        logger::logger()->error(
+            "Info: server received a setup message but is already set up");
 
         return grpc::Status(grpc::FAILED_PRECONDITION,
                             "The server was already set up");
@@ -94,18 +93,16 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
     // there
 
     if (utility::exists(storage_path_)) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error: Unable to create the server's content directory"
-            << std::endl;
+        logger::logger()->error(
+            "Error: Unable to create the server's content directory");
 
         return grpc::Status(grpc::ALREADY_EXISTS,
                             "Unable to create the server's content directory");
     }
 
     if (!utility::create_directory(storage_path_, static_cast<mode_t>(0700))) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error: Unable to create the server's content directory"
-            << std::endl;
+        logger::logger()->error(
+            "Error: Unable to create the server's content directory");
 
         return grpc::Status(grpc::PERMISSION_DENIED,
                             "Unable to create the server's content directory");
@@ -118,19 +115,18 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
     std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
 
     try {
-        logger::log(logger::LoggerSeverity::INFO) << "Seting up" << std::endl;
+        logger::logger()->info("Setting up ...");
         server_.reset(new DianaServer<index_type>(pairs_map_path));
     } catch (std::exception& e) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Error when setting up the server's core" << std::endl;
+        logger::logger()->error("Error when setting up the server's core: \n"
+                                + std::string(e.what()));
 
         server_.reset();
         return grpc::Status(grpc::FAILED_PRECONDITION,
                             "Unable to create the server's core.");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Successful setup" << std::endl;
+    logger::logger()->trace("Successful setup");
 
     return grpc::Status::OK;
 }
@@ -190,19 +186,16 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << "Searching ..." << std::endl;
-    //            std::list<uint64_t> res_list;
+    logger::logger()->trace("Start searching keyword ...");
 
     SearchRequest req = message_to_request(mes);
 
     std::vector<uint64_t> res_list(req.add_count);
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << req.add_count << " expected matches" << std::endl;
+    logger::logger()->trace("{} expected matches", req.add_count);
 
     if (req.add_count == 0) {
-        logger::log(logger::LoggerSeverity::INFO)
-            << "Empty request (no expected match)" << std::endl;
+        logger::logger()->info("Empty request (no expected match)");
     } else {
         //                BENCHMARK_Q((res_list =
         //                server_->search(message_to_request(mes))),res_list.size(),
@@ -233,7 +226,7 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
             writer->Write(reply);
         }
     }
-    logger::log(logger::LoggerSeverity::TRACE) << "Done searching" << std::endl;
+    logger::logger()->trace("Done searching");
 
 
     return grpc::Status::OK;
@@ -251,7 +244,7 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << "Searching ...";
+    logger::logger()->trace("Start searching keyword...");
 
     std::atomic_uint res_size(0);
 
@@ -325,7 +318,7 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
     }
 
 
-    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
+    logger::logger()->trace("Done searching");
 
 
     return grpc::Status::OK;
@@ -346,11 +339,11 @@ grpc::Status DianaImpl::insert(__attribute__((unused))
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE) << "Updating ..." << std::endl;
+    logger::logger()->trace("Updating ...");
 
     server_->insert(message_to_request(mes));
 
-    logger::log(logger::LoggerSeverity::TRACE) << " done" << std::endl;
+    logger::logger()->trace("Update done");
 
     return grpc::Status::OK;
 }
@@ -366,8 +359,7 @@ grpc::Status DianaImpl::bulk_insert(
                             "The server is not set up");
     }
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Updating (bulk)..." << std::endl;
+    logger::logger()->trace("Updating (bulk)...");
 
     UpdateRequestMessage mes;
 
@@ -375,8 +367,7 @@ grpc::Status DianaImpl::bulk_insert(
         server_->insert(message_to_request(&mes));
     }
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Updating (bulk)... done" << std::endl;
+    logger::logger()->trace("Updating (bulk)... done");
 
 
     flush_server_storage();
@@ -398,13 +389,11 @@ void DianaImpl::set_search_asynchronously(bool flag)
 void DianaImpl::flush_server_storage()
 {
     if (server_) {
-        logger::log(logger::LoggerSeverity::TRACE)
-            << "Flush server storage..." << std::endl;
+        logger::logger()->trace("Flush server storage...");
 
         server_->flush_edb();
 
-        logger::log(logger::LoggerSeverity::TRACE)
-            << "Flush server storage... done" << std::endl;
+        logger::logger()->trace("Flush server storage... done");
     }
 }
 

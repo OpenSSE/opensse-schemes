@@ -1,12 +1,12 @@
 #include <sse/schemes/utils/db_generator.hpp>
 
-#include <gtest/gtest.h>
-
 #include <iostream>
 #include <map>
 #include <mutex>
 #include <string>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 namespace sse {
 namespace test {

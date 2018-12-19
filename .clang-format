@@ -66,16 +66,16 @@ IncludeCategories:
     Priority:        3
   - Regex:           '^<(grpc|grpc\+\+|google/protobuf)/.*\.(h|hpp)'
     Priority:        4
+  - Regex:           '^(<|")(gtest)/.*\.(h|hpp)'
+    Priority:        7
   - Regex:           '^<.*\.h>'
     Priority:        5
+  - Regex:           '^<(chrono|condition_variable)>'
+    Priority:        6
   - Regex:           '^<c.*>'
     Priority:        5
   - Regex:           '^<.*'
     Priority:        6
-  - Regex:           '^<(chrono|condition_variable)>'
-    Priority:        6
-  - Regex:           '^(<|")(gtest)/.*\.(h|hpp)'
-    Priority:        7
   - Regex:           '.*'
     Priority:        8
 IncludeIsMainRegex: '([-_](test|unittest))?$'

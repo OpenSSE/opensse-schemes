@@ -6,8 +6,6 @@
 
 #include <sse/crypto/utils.hpp>
 
-#include <gtest/gtest.h>
-
 #include <algorithm>
 #include <fstream>
 #include <functional>
@@ -16,6 +14,8 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 
 namespace sse {

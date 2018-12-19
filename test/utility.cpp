@@ -2,9 +2,9 @@
 
 #include <sse/schemes/utils/utils.hpp>
 
-#include <gtest/gtest.h>
-
 #include <string>
+
+#include <gtest/gtest.h>
 
 namespace sse {
 namespace test {

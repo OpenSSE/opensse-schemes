@@ -14,8 +14,8 @@
 #include <sse/crypto/utils.hpp>
 
 #include <cassert>
-#include <chrono>
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <ostream>

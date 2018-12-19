@@ -37,7 +37,6 @@
 #include <grpc/grpc.h>
 
 #include <chrono>
-
 #include <fstream>
 #include <iostream>
 #include <memory>

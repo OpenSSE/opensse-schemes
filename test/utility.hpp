@@ -1,13 +1,13 @@
 #pragma once
 
-#include <gtest/gtest.h>
-
 #include <functional>
 #include <list>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
+
+#include <gtest/gtest.h>
 
 namespace sse {
 namespace test {

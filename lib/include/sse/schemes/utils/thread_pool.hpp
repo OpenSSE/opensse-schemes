@@ -23,7 +23,6 @@
 #define THREAD_POOL_H
 
 #include <condition_variable>
-
 #include <functional>
 #include <future>
 #include <iostream>

@@ -29,7 +29,7 @@ void exit_handler(__attribute__((unused)) int signal)
 
 int main(int argc, char** argv)
 {
-    sse::logger::set_severity(sse::logger::LoggerSeverity::INFO);
+    sse::logger::set_logging_level(spdlog::level::info);
     sse::logger::set_benchmark_file("benchmark_sophos_server.out");
 
     std::signal(SIGTERM, exit_handler);

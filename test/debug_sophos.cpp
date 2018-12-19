@@ -21,7 +21,7 @@ using namespace std;
 
 void test_client_server()
 {
-    sse::logger::set_severity(sse::logger::LoggerSeverity::DBG);
+    sse::logger::set_logging_level(spdlog::level::debug);
 
     string client_sk_path          = "sophos_client_test/tdp_sk.key";
     string client_master_key_path  = "sophos_client_test/derivation_master.key";

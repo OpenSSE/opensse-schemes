@@ -40,101 +40,40 @@ std::shared_ptr<spdlog::logger> logger()
     return shared_logger_;
 }
 
-
-LoggerSeverity severity__ = LoggerSeverity::INFO;
-// NOLINTNEXTLINE(cert-err58-cpp)
-std::ostream null_stream__(nullptr);
-
-std::unique_ptr<std::ofstream> benchmark_stream__;
-std::ostream*                  log_stream__ = &std::cout;
-
-std::ostream* logger_stream()
+void set_logging_level(spdlog::level::level_enum log_level)
 {
-    return log_stream__;
+    logger()->set_level(log_level);
 }
 
-void set_logger_stream(std::ostream* stream)
-{
-    log_stream__ = stream;
-}
-
-LoggerSeverity severity()
-{
-    return severity__;
-}
-
-void set_severity(LoggerSeverity s)
-{
-    severity__ = s;
-}
+bool          benchmark_stream_set__{false};
+std::ofstream benchmark_stream__;
+std::ostream  null_stream__(nullptr);
 
 bool set_benchmark_file(const std::string& path)
 {
-    if (benchmark_stream__) {
-        benchmark_stream__->close();
-    }
+    std::ofstream stream(path);
 
-    std::unique_ptr<std::ofstream> stream_ptr(new std::ofstream(path));
-
-    if (!stream_ptr->is_open()) {
-        benchmark_stream__.reset();
-
+    if (!stream.is_open()) {
         logger::logger()->error("Failed to set benchmark file: " + path);
 
         return false;
     }
-    benchmark_stream__ = std::move(stream_ptr);
+    if (benchmark_stream_set__) {
+        benchmark_stream__.close();
+    }
+
+    benchmark_stream__     = std::move(stream);
+    benchmark_stream_set__ = true;
 
     return true;
 }
 
-std::ostream& log(LoggerSeverity s)
-{
-    if (s >= severity__) {
-        return ((*log_stream__) << severity_string(s));
-    }
-    return null_stream__;
-}
-
 std::ostream& log_benchmark()
 {
-    if (benchmark_stream__) {
-        return *benchmark_stream__;
+    if (benchmark_stream_set__) {
+        return benchmark_stream__;
     }
-    return (*log_stream__);
-}
-
-std::string severity_string(LoggerSeverity s)
-{
-    switch (s) {
-    case LoggerSeverity::DBG:
-        return "[DEBUG] - ";
-        break;
-
-    case LoggerSeverity::TRACE:
-        return "[TRACE] - ";
-        break;
-
-    case LoggerSeverity::INFO:
-        return "[INFO] - ";
-        break;
-
-    case LoggerSeverity::WARNING:
-        return "[WARNING] - ";
-        break;
-
-    case LoggerSeverity::ERROR:
-        return "[ERROR] - ";
-        break;
-
-    case LoggerSeverity::CRITICAL:
-        return "[CRITICAL] - ";
-        break;
-
-    default:
-        return "[??] - ";
-        break;
-    }
+    return null_stream__;
 }
 
 } // namespace logger

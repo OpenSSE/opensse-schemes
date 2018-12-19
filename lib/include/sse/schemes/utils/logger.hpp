@@ -32,29 +32,14 @@
 
 namespace sse {
 namespace logger {
-enum class LoggerSeverity : uint8_t
-{
-    DBG      = 00,
-    TRACE    = 10,
-    INFO     = 20,
-    WARNING  = 30,
-    ERROR    = 40,
-    CRITICAL = 50
-};
 
 std::shared_ptr<spdlog::logger> logger();
 
-std::ostream* logger_stream();
-void          set_logger_stream(std::ostream* stream);
-
-LoggerSeverity severity();
-void           set_severity(LoggerSeverity s);
-std::ostream&  log(LoggerSeverity s);
+void set_logging_level(spdlog::level::level_enum log_level);
 
 bool          set_benchmark_file(const std::string& path);
 std::ostream& log_benchmark();
 
-std::string severity_string(LoggerSeverity s);
 } // namespace logger
 } // namespace sse
 

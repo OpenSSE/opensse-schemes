@@ -21,7 +21,7 @@
 
 int main(int argc, char** argv)
 {
-    sse::logger::set_severity(sse::logger::LoggerSeverity::INFO);
+    sse::logger::set_logging_level(spdlog::level::info);
     sse::logger::set_benchmark_file("benchmark_sophos_client.out");
 
     sse::crypto::init_crypto_lib();

@@ -22,7 +22,7 @@ using namespace std;
 
 void test_client_server()
 {
-    sse::logger::set_severity(sse::logger::LoggerSeverity::DBG);
+    sse::logger::set_logging_level(spdlog::level::debug);
 
     string client_master_key_path          = "diana_derivation_master.key";
     string client_kw_token_master_key_path = "diana_kw_token_master.key";

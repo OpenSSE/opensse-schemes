@@ -22,8 +22,7 @@ int main(int argc, char* argv[])
     // Be sure to go through every branch of the logger, but still do not log
     // anything
     std::ostream null_stream(nullptr);
-    sse::logger::set_logger_stream(&null_stream);
-    sse::logger::set_severity(sse::logger::LoggerSeverity::DBG);
+    sse::logger::set_logging_level(spdlog::level::warn);
 
     ::testing::InitGoogleTest(&argc, argv);
 

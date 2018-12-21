@@ -43,7 +43,7 @@ std::shared_ptr<spdlog::logger> logger()
     return shared_logger_;
 }
 
-void set_logger(std::shared_ptr<spdlog::logger> logger)
+void set_logger(const std::shared_ptr<spdlog::logger>& logger)
 {
     if (logger) {
         shared_logger_ = logger;
@@ -68,8 +68,9 @@ void Benchmark::set_benchmark_file(const std::string& path)
     benchmark_logger_->set_level(spdlog::level::trace);
 }
 
-Benchmark::Benchmark(const std::string& fmt)
-    : format_(fmt), begin_(std::chrono::high_resolution_clock::now())
+Benchmark::Benchmark(std::string format)
+    : format_(std::move(format)),
+      begin_(std::chrono::high_resolution_clock::now())
 {
 }
 

@@ -35,7 +35,7 @@ namespace sse {
 namespace logger {
 
 std::shared_ptr<spdlog::logger> logger();
-void set_logger(std::shared_ptr<spdlog::logger> logger);
+void set_logger(const std::shared_ptr<spdlog::logger>& logger);
 
 void set_logging_level(spdlog::level::level_enum log_level);
 
@@ -46,7 +46,7 @@ class Benchmark
 public:
     static void set_benchmark_file(const std::string& path);
 
-    Benchmark(const std::string& format);
+    explicit Benchmark(std::string format);
     Benchmark() = delete;
 
     void stop();

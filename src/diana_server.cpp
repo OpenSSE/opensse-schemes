@@ -32,7 +32,7 @@ void exit_handler(__attribute__((unused)) int signal)
 int main(int argc, char** argv)
 {
     sse::logger::set_logging_level(spdlog::level::info);
-    sse::logger::set_benchmark_file("benchmark_diana_server.out");
+    sse::Benchmark::set_benchmark_file("benchmark_diana_server.out");
 
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);

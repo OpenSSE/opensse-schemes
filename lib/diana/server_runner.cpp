@@ -131,40 +131,6 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
     return grpc::Status::OK;
 }
 
-#define PRINT_BENCH_SEARCH(t, c)                                               \
-    ("SEARCH: "                                                                \
-     + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, "                  \
-                         + std::to_string((c)) + " pairs"                      \
-                   : std::to_string((t)) + " ms, no pair found"))
-
-//#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
-        //"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (with RPC), " + std::to_string((c)) + " pairs" : \
-        //std::to_string((t)) + " ms, no pair found" )
-//
-//#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
-        //"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC),
-//" + std::to_string((c)) + " pairs" : \ std::to_string((t)) + " ms, no pair
-// found" )
-//
-
-//#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
-        //"Search (with PRC): " + std::to_string((c)) + " " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair" : \
-        //std::to_string((t)) + " ms, no pair found" )
-//
-//#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
-        //"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC),
-//" + std::to_string((c)) + " pairs" : \ std::to_string((t)) + " ms, no pair
-// found" )
-
-#define PRINT_BENCH_SEARCH_PAR_RPC(t, c)                                       \
-    std::to_string((c)) + " \t\t "                                             \
-        + (((c) != 0) ? std::to_string((t) / (c)) : std::to_string((t)))
-
-#define PRINT_BENCH_SEARCH_PAR_NORPC(t, c)                                     \
-    std::to_string((c)) + " \t\t "                                             \
-        + (((c) != 0) ? std::to_string((t) / (c)) : std::to_string((t)))
-
-
 grpc::Status DianaImpl::search(grpc::ServerContext*             context,
                                const SearchRequestMessage*      mes,
                                grpc::ServerWriter<SearchReply>* writer)
@@ -197,28 +163,12 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
     if (req.add_count == 0) {
         logger::logger()->info("Empty request (no expected match)");
     } else {
-        //                BENCHMARK_Q((res_list =
-        //                server_->search(message_to_request(mes))),res_list.size(),
-        //                PRINT_BENCH_SEARCH_PAR_NORPC) BENCHMARK_Q((res_list =
-        //                server_->search_parallel(message_to_request(mes),4,4)),res_list.size(),
-        //                PRINT_BENCH_SEARCH_PAR_NORPC)
-        //            BENCHMARK_Q((res_list =
-        //            server_->search_simple_parallel(message_to_request(mes),8)),res_list.size(),
-        //            PRINT_BENCH_SEARCH_PAR_NORPC)
-
-
-        BENCHMARK_Q((server_->search_simple_parallel(req, 8, res_list)),
-                    res_list.size(),
-                    PRINT_BENCH_SEARCH_PAR_NORPC)
-
-
-        //            BENCHMARK_Q((res_list =
-        //            server_->search_parallel(message_to_request(mes),2)),res_list.size(),
-        //            PRINT_BENCH_SEARCH_PAR_NORPC)
-        //    BENCHMARK_Q((res_list =
-        //    server_->search_parallel_light(message_to_request(mes),3)),res_list.size(),
-        //    PRINT_BENCH_SEARCH_PAR_NORPC) BENCHMARK_SIMPLE("\n\n",{;})
-
+        {
+            Benchmark bench(
+                "Synchronous search: {0} items, {1} ms, {2} ms/item");
+            server_->search_simple_parallel(req, 8, res_list);
+            bench.set_count(res_list.size());
+        }
         for (auto& i : res_list) {
             SearchReply reply;
             reply.set_result(static_cast<uint64_t>(i));
@@ -263,60 +213,25 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
 
     auto req = message_to_request(mes);
 
-    if (mes->add_count() >= 40) { // run the search algorithm in parallel only
-                                  // if there are more than 2 results
-
-        //                BENCHMARK_Q((server_->search_parallel(message_to_request(mes),
-        //                post_callback, 8, 8)),res_size,
-        //                PRINT_BENCH_SEARCH_PAR_RPC)
-        BENCHMARK_Q(
-            (server_->search_simple_parallel(
-                req, post_callback, std::thread::hardware_concurrency())),
-            res_size,
-            PRINT_BENCH_SEARCH_PAR_RPC)
-
-        //                BENCHMARK_Q((res_list =
-        //                server_->search_simple_parallel(message_to_request(mes),8)),res_list.size(),
-        //                PRINT_BENCH_SEARCH_PAR_NORPC)
-
-        //                BENCHMARK_Q((server_->search_simple_parallel(message_to_request(mes),
-        //                post_callback, std::thread::hardware_concurrency())),
-        //                PRINT_BENCH_SEARCH_PAR_RPC)
+    {
+        Benchmark bench("Asynchronous search: {0} items, {1} ms, {2} ms/item");
 
 
-        //                BENCHMARK_Q((server_->search_parallel_callback(message_to_request(mes),
-        //                post_callback, std::thread::hardware_concurrency(),
-        //                8,1)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
-        //                //
-        //                BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),
-        //                post_callback,
-        //                std::thread::hardware_concurrency())),res_size,
-        //                PRINT_BENCH_SEARCH_PAR_RPC)
-        //                //
-        //                BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),
-        //                post_callback, 10)),res_size,
-        //                PRINT_BENCH_SEARCH_PAR_RPC)
-    } else if (mes->add_count() >= 2) {
-        //                BENCHMARK_Q((server_->search_parallel(message_to_request(mes),
-        //                post_callback, 8, 8)),res_size,
-        //                PRINT_BENCH_SEARCH_PAR_RPC)
+        if (mes->add_count() >= 40) { // run the search algorithm in parallel
+                                      // only if there are more than 2 results
 
-        BENCHMARK_Q(
-            (server_->search_simple_parallel(
-                req, post_callback, std::thread::hardware_concurrency())),
-            res_size,
-            PRINT_BENCH_SEARCH_PAR_RPC)
+            server_->search_simple_parallel(
+                req, post_callback, std::thread::hardware_concurrency());
 
-        //                BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),
-        //                post_callback,
-        //                std::thread::hardware_concurrency())),res_size,
-        //                PRINT_BENCH_SEARCH_PAR_RPC)
-    } else {
-        BENCHMARK_Q((server_->search(req, post_callback)),
-                    res_size,
-                    PRINT_BENCH_SEARCH_PAR_RPC)
+        } else if (mes->add_count() >= 2) {
+            server_->search_simple_parallel(
+                req, post_callback, std::thread::hardware_concurrency());
+
+        } else {
+            server_->search(req, post_callback);
+        }
+        bench.set_count(res_size);
     }
-
 
     logger::logger()->trace("Done searching");
 

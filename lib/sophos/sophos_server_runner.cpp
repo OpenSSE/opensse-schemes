@@ -150,40 +150,6 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
     return grpc::Status::OK;
 }
 
-#define PRINT_BENCH_SEARCH(t, c)                                               \
-    ("SEARCH: "                                                                \
-     + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, "                  \
-                         + std::to_string((c)) + " pairs"                      \
-                   : std::to_string((t)) + " ms, no pair found"))
-
-//#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
-//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (with RPC), " + std::to_string((c)) + " pairs" : \
-//std::to_string((t)) + " ms, no pair found" )
-//
-//#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
-//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC),
-//" + std::to_string((c)) + " pairs" : \ std::to_string((t)) + " ms, no pair
-// found" )
-//
-
-//#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
-//"Search (with PRC): " + std::to_string((c)) + " " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair" : \
-//std::to_string((t)) + " ms, no pair found" )
-//
-//#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
-//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC),
-//" + std::to_string((c)) + " pairs" : \ std::to_string((t)) + " ms, no pair
-// found" )
-
-#define PRINT_BENCH_SEARCH_PAR_RPC(t, c)                                       \
-    std::to_string((c)) + " \t\t "                                             \
-        + (((c) != 0) ? std::to_string((t) / (c)) : std::to_string((t)))
-
-#define PRINT_BENCH_SEARCH_PAR_NORPC(t, c)                                     \
-    std::to_string((c)) + " \t\t "                                             \
-        + (((c) != 0) ? std::to_string((t) / (c)) : std::to_string((t)))
-
-
 grpc::Status SophosImpl::search(grpc::ServerContext*                context,
                                 const sophos::SearchRequestMessage* mes,
                                 grpc::ServerWriter<sophos::SearchReply>* writer)
@@ -210,18 +176,11 @@ grpc::Status SophosImpl::sync_search(
 
     auto req = message_to_request(mes);
 
-    //    BENCHMARK_Q((res_list = server_->search(req)),res_list.size(),
-    //    PRINT_BENCH_SEARCH_PAR_NORPC) BENCHMARK_Q((res_list =
-    //    server_->search_parallel(req)),res_list.size(),
-    //    PRINT_BENCH_SEARCH_PAR_NORPC) BENCHMARK_Q((res_list =
-    //    server_->search_parallel_light(req,1)),res_list.size(),
-    //    PRINT_BENCH_SEARCH_PAR_NORPC)
-    BENCHMARK_Q((res_list = server_->search_parallel(req, 2)),
-                res_list.size(),
-                PRINT_BENCH_SEARCH_PAR_NORPC)
-    //    BENCHMARK_Q((res_list =
-    //    server_->search_parallel_light(req,3)),res_list.size(),
-    //    PRINT_BENCH_SEARCH_PAR_NORPC) BENCHMARK_SIMPLE("\n\n",{;})
+    {
+        Benchmark bench("Synchronous search: {0} items, {1} ms, {2} ms/item");
+        res_list = server_->search_parallel(req, 2);
+        bench.set_count(res_list.size());
+    }
 
     for (auto& i : res_list) {
         sophos::SearchReply reply;
@@ -265,30 +224,20 @@ grpc::Status SophosImpl::async_search(
         res_size++;
     };
 
-    if (mes->add_count() >= 40) { // run the search algorithm in parallel only
-                                  // if there are more than 2 results
-        BENCHMARK_Q(
-            (server_->search_parallel_callback(
-                req, post_callback, std::thread::hardware_concurrency(), 8, 1)),
-            res_size,
-            PRINT_BENCH_SEARCH_PAR_RPC)
-        //        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),
-        //        post_callback, std::thread::hardware_concurrency())),res_size,
-        //        PRINT_BENCH_SEARCH_PAR_RPC)
-        //        BENCHMARK_Q((server_->search_parallel_light_callback(message_to_request(mes),
-        //        post_callback, 10)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
-    } else if (mes->add_count() >= 2) {
-        BENCHMARK_Q(
-            (server_->search_parallel_light_callback(
-                req, post_callback, std::thread::hardware_concurrency())),
-            res_size,
-            PRINT_BENCH_SEARCH_PAR_RPC)
-    } else {
-        BENCHMARK_Q((server_->search_callback(req, post_callback)),
-                    res_size,
-                    PRINT_BENCH_SEARCH_PAR_RPC)
+    {
+        Benchmark bench("Asynchronous search: {0} items, {1} ms, {2} ms/item");
+        if (mes->add_count() >= 40) { // run the search algorithm in parallel
+                                      // only if there are more than 2 results
+            server_->search_parallel_callback(
+                req, post_callback, std::thread::hardware_concurrency(), 8, 1);
+        } else if (mes->add_count() >= 2) {
+            server_->search_parallel_light_callback(
+                req, post_callback, std::thread::hardware_concurrency());
+        } else {
+            server_->search_callback(req, post_callback);
+        }
+        bench.set_count(res_size);
     }
-
 
     logger::logger()->trace("Asynchronous search done");
 

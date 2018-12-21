@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
 
     ::testing::InitGoogleTest(&argc, argv);
 
+    sse::Benchmark::set_benchmark_file("benchmark.log");
 
     // If there is one remaining argument, we use it as a pointer to the JSON
     // test library

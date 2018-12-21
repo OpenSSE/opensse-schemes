@@ -20,6 +20,7 @@
 
 #include <sse/schemes/utils/logger.hpp>
 
+#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/null_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -55,32 +56,52 @@ void set_logging_level(spdlog::level::level_enum log_level)
 {
     logger()->set_level(log_level);
 }
-
-std::unique_ptr<std::ostream> benchmark_stream__;
-
-bool set_benchmark_file(const std::string& path)
-{
-    std::unique_ptr<std::ostream> stream(new std::ofstream(path));
-
-    if (!(dynamic_cast<std::ofstream*>(stream.get())->is_open())) {
-        logger::logger()->error("Failed to set benchmark file: " + path);
-
-        return false;
-    }
-
-    benchmark_stream__ = std::move(stream);
-
-    return true;
-}
-
-std::ostream& log_benchmark()
-{
-    if (!benchmark_stream__) {
-        // set the benchmark stream to the null stream
-        benchmark_stream__.reset(new std::ostream(nullptr));
-    }
-    return *benchmark_stream__;
-}
-
 } // namespace logger
+
+std::shared_ptr<spdlog::logger> Benchmark::benchmark_logger_{nullptr};
+
+void Benchmark::set_benchmark_file(const std::string& path)
+{
+    benchmark_logger_ = spdlog::basic_logger_st("benchmark", path);
+    benchmark_logger_->set_level(spdlog::level::trace);
+}
+
+Benchmark::Benchmark(const std::string& fmt)
+    : format_(fmt), begin_(std::chrono::high_resolution_clock::now())
+{
+}
+
+void Benchmark::stop()
+{
+    if (!stopped_) {
+        end_ = std::chrono::high_resolution_clock::now();
+    }
+}
+
+void Benchmark::stop(size_t count)
+{
+    if (!stopped_) {
+        end_   = std::chrono::high_resolution_clock::now();
+        count_ = count;
+    }
+}
+
+Benchmark::~Benchmark()
+{
+    stop();
+
+    std::chrono::duration<double, std::milli> time_ms = end_ - begin_;
+
+    auto time_per_item = time_ms;
+
+    if (count_ > 1) {
+        time_per_item /= count_;
+    }
+
+    if (benchmark_logger_) {
+        benchmark_logger_->trace(
+            format_.c_str(), count_, time_ms.count(), time_per_item.count());
+    }
+}
+
 } // namespace sse

@@ -26,7 +26,7 @@ __thread std::list<std::pair<std::string, uint64_t>>* buffer_list__ = nullptr;
 int main(int argc, char** argv)
 {
     sse::logger::set_logging_level(spdlog::level::info);
-    sse::logger::set_benchmark_file("benchmark_diana_client.out");
+    sse::Benchmark::set_benchmark_file("benchmark_diana_client.out");
 
     sse::crypto::init_crypto_lib();
 

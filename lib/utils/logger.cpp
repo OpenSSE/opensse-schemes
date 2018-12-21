@@ -110,12 +110,12 @@ Benchmark::~Benchmark()
 }
 
 constexpr auto search_JSON_begin
-    = "{{ \"message\" : \""; // double { to escape it in fmt
+    = R"({{ "message" : ")"; // double { to escape it in fmt
 constexpr auto search_JSON_end
-    = "\", \"items\" : {0}, \"time\" : {1}, \"time/item\" : {2} }}";
+    = R"(", "items" : {0}, "time" : {1}, "time/item" : {2} }})";
 
 SearchBenchmark::SearchBenchmark(std::string message)
-    : Benchmark(search_JSON_begin + message + search_JSON_end)
+    : Benchmark(search_JSON_begin + std::move(message) + search_JSON_end)
 {
 }
 } // namespace sse

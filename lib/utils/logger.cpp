@@ -66,6 +66,8 @@ void Benchmark::set_benchmark_file(const std::string& path)
     benchmark_logger_
         = spdlog::basic_logger_mt<spdlog::async_factory>("benchmark", path);
     benchmark_logger_->set_level(spdlog::level::trace);
+
+    benchmark_logger_->set_pattern("[%Y-%m-%d %T.%e] %v");
 }
 
 Benchmark::Benchmark(std::string format)
@@ -107,4 +109,13 @@ Benchmark::~Benchmark()
     }
 }
 
+constexpr auto search_JSON_begin
+    = "{{ \"message\" : \""; // double { to escape it in fmt
+constexpr auto search_JSON_end
+    = "\", \"items\" : {0}, \"time\" : {1}, \"time/item\" : {2} }}";
+
+SearchBenchmark::SearchBenchmark(std::string message)
+    : Benchmark(search_JSON_begin + message + search_JSON_end)
+{
+}
 } // namespace sse

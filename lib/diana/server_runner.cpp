@@ -164,8 +164,7 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
         logger::logger()->info("Empty request (no expected match)");
     } else {
         {
-            Benchmark bench(
-                "Synchronous search: {0} items, {1} ms, {2} ms/item");
+            SearchBenchmark bench("Diana synchronous search");
             server_->search_simple_parallel(req, 8, res_list);
             bench.set_count(res_list.size());
         }
@@ -214,7 +213,7 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
     auto req = message_to_request(mes);
 
     {
-        Benchmark bench("Asynchronous search: {0} items, {1} ms, {2} ms/item");
+        SearchBenchmark bench("Diana asynchronous search");
 
 
         if (mes->add_count() >= 40) { // run the search algorithm in parallel

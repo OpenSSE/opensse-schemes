@@ -57,7 +57,7 @@ public:
         count_ = c;
     }
 
-    ~Benchmark();
+    virtual ~Benchmark();
 
 private:
     static std::shared_ptr<spdlog::logger> benchmark_logger_;
@@ -67,6 +67,12 @@ private:
     bool                                           stopped_;
     std::chrono::high_resolution_clock::time_point begin_;
     std::chrono::high_resolution_clock::time_point end_;
+};
+
+class SearchBenchmark : public Benchmark
+{
+public:
+    explicit SearchBenchmark(std::string message);
 };
 
 } // namespace sse

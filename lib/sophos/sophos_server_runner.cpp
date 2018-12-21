@@ -177,7 +177,8 @@ grpc::Status SophosImpl::sync_search(
     auto req = message_to_request(mes);
 
     {
-        Benchmark bench("Synchronous search: {0} items, {1} ms, {2} ms/item");
+        SearchBenchmark bench("Sophos synchronous search");
+
         res_list = server_->search_parallel(req, 2);
         bench.set_count(res_list.size());
     }
@@ -225,7 +226,8 @@ grpc::Status SophosImpl::async_search(
     };
 
     {
-        Benchmark bench("Asynchronous search: {0} items, {1} ms, {2} ms/item");
+        SearchBenchmark bench("Sophos asynchronous search");
+
         if (mes->add_count() >= 40) { // run the search algorithm in parallel
                                       // only if there are more than 2 results
             server_->search_parallel_callback(

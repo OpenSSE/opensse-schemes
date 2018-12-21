@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,modernize-*,-modernize-use-auto,-modernize-make-unique,bugprone-*, readability-*,-readability-avoid-const-params-in-decls,misc-*,-misc-unused-parameters,performance-*,cert-*,-cert-err60-cpp,google-*,-google-runtime-references,llvm-*,-llvm-header-guard'
+Checks:          'clang-diagnostic-*,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,modernize-*,-modernize-use-auto,-modernize-make-unique,-modernize-raw-string-literal,bugprone-*, readability-*,-readability-avoid-const-params-in-decls,misc-*,-misc-unused-parameters,performance-*,cert-*,-cert-err60-cpp,google-*,-google-runtime-references,llvm-*,-llvm-header-guard'
 WarningsAsErrors: ''
 HeaderFilterRegex: 'sse/(runners|schemes)/.*'
 AnalyzeTemporaryDtors: false
@@ -7,7 +7,7 @@ FormatStyle:     none
 User:            rbost
 WarningsAsErrors:   '*'
 CheckOptions:    
-  - key:             google-readability-braces-around-statements.ShortStatementLines
+  - key:            google-readability-braces-around-statements.ShortStatementLines
     value:           '1'
   - key:             google-readability-function-size.StatementThreshold
     value:           '800'

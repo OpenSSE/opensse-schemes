@@ -20,6 +20,7 @@
 
 #include <sse/schemes/utils/logger.hpp>
 
+#include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/null_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -62,7 +63,8 @@ std::shared_ptr<spdlog::logger> Benchmark::benchmark_logger_{nullptr};
 
 void Benchmark::set_benchmark_file(const std::string& path)
 {
-    benchmark_logger_ = spdlog::basic_logger_st("benchmark", path);
+    benchmark_logger_
+        = spdlog::basic_logger_mt<spdlog::async_factory>("benchmark", path);
     benchmark_logger_->set_level(spdlog::level::trace);
 }
 

@@ -19,9 +19,7 @@ int main(int argc, char* argv[])
 {
     sse::crypto::init_crypto_lib();
 
-    // Be sure to go through every branch of the logger, but still do not log
-    // anything
-    std::ostream null_stream(nullptr);
+    // sse::logger::set_logger(std::shared_ptr<spdlog::logger>(nullptr));
     sse::logger::set_logging_level(spdlog::level::warn);
 
     ::testing::InitGoogleTest(&argc, argv);

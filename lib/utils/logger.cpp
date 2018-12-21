@@ -20,6 +20,7 @@
 
 #include <sse/schemes/utils/logger.hpp>
 
+#include <spdlog/sinks/null_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <fstream>
@@ -40,12 +41,21 @@ std::shared_ptr<spdlog::logger> logger()
     return shared_logger_;
 }
 
+void set_logger(std::shared_ptr<spdlog::logger> logger)
+{
+    if (logger) {
+        shared_logger_ = logger;
+    } else {
+        shared_logger_
+            = spdlog::create<spdlog::sinks::null_sink_mt>("null_logger");
+    }
+}
+
 void set_logging_level(spdlog::level::level_enum log_level)
 {
     logger()->set_level(log_level);
 }
 
-// bool                           benchmark_stream_set__{false};
 std::unique_ptr<std::ostream> benchmark_stream__;
 
 bool set_benchmark_file(const std::string& path)

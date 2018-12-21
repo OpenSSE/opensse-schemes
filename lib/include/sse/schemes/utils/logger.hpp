@@ -34,6 +34,7 @@ namespace sse {
 namespace logger {
 
 std::shared_ptr<spdlog::logger> logger();
+void set_logger(std::shared_ptr<spdlog::logger> logger);
 
 void set_logging_level(spdlog::level::level_enum log_level);
 

@@ -59,7 +59,7 @@ void set_logging_level(spdlog::level::level_enum log_level)
 }
 } // namespace logger
 
-std::shared_ptr<spdlog::logger> Benchmark::benchmark_logger_{nullptr};
+std::shared_ptr<spdlog::logger> Benchmark::benchmark_logger_(nullptr);
 
 void Benchmark::set_benchmark_file(const std::string& path)
 {
@@ -69,7 +69,7 @@ void Benchmark::set_benchmark_file(const std::string& path)
 }
 
 Benchmark::Benchmark(std::string format)
-    : format_(std::move(format)),
+    : format_(std::move(format)), count_(0), stopped_(false),
       begin_(std::chrono::high_resolution_clock::now())
 {
 }

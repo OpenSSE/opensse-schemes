@@ -60,10 +60,11 @@ public:
     ~Benchmark();
 
 private:
-    static std::shared_ptr<spdlog::logger>         benchmark_logger_;
+    static std::shared_ptr<spdlog::logger> benchmark_logger_;
+
     std::string                                    format_;
-    size_t                                         count_{0};
-    bool                                           stopped_{false};
+    size_t                                         count_;
+    bool                                           stopped_;
     std::chrono::high_resolution_clock::time_point begin_;
     std::chrono::high_resolution_clock::time_point end_;
 };

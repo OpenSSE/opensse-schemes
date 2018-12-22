@@ -14,8 +14,8 @@
 #include <sse/crypto/utils.hpp>
 
 #include <cassert>
-#include <chrono>
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -302,7 +302,7 @@ void benchmark_puncturable_encryption()
 
 void test_client_server()
 {
-    sse::logger::set_severity(sse::logger::LoggerSeverity::DBG);
+    sse::logger::set_logging_level(spdlog::level::debug);
 
     string   client_master_key_path = "janus_master.key";
     ifstream client_master_key_in(client_master_key_path.c_str());

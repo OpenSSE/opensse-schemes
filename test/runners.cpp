@@ -12,10 +12,8 @@
 #include <grpc++/impl/codegen/service_type.h>
 #include <grpc++/server_builder.h>
 
-#include <condition_variable>
-#include <gtest/gtest.h>
-
 #include <algorithm>
+#include <condition_variable>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -23,6 +21,8 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 namespace sse {
 namespace test {

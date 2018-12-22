@@ -18,9 +18,9 @@ struct serialization<janus::JanusServer::cached_result_type>
 {
     std::string serialize(const janus::JanusServer::cached_result_type& elt)
     {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Serializing pair (" << utility::hex_string(elt.first) << ", "
-            << utility::hex_string(elt.second) << ")\n";
+        logger::logger()->debug("Serializing pair ("
+                                + utility::hex_string(elt.first) + ", "
+                                + utility::hex_string(elt.second) + ")");
 
         return std::string(reinterpret_cast<const char*>(&(elt.first)),
                            sizeof(janus::index_type))
@@ -34,19 +34,16 @@ struct serialization<janus::JanusServer::cached_result_type>
         if (end < begin + sizeof(janus::index_type)
                       + sizeof(crypto::punct::kTagSize)) {
             if (end != begin) {
-                logger::log(logger::LoggerSeverity::ERROR)
-                    << "Unable to deserialize" << std::endl;
+                logger::logger()->error("Error when deserializing");
             }
 
             return false;
         }
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Deserialized string: "
-            << utility::hex_string(
-                   std::string(begin,
-                               begin + sizeof(janus::index_type)
-                                   + sizeof(crypto::punct::kTagSize)))
-            << "\n";
+        logger::logger()->debug("Deserialized string: "
+                                + utility::hex_string(std::string(
+                                      begin,
+                                      begin + sizeof(janus::index_type)
+                                          + sizeof(crypto::punct::kTagSize))));
 
         janus::index_type       ind;
         crypto::punct::tag_type tag;
@@ -62,9 +59,9 @@ struct serialization<janus::JanusServer::cached_result_type>
 
         out = std::make_pair(ind, tag);
 
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Deserializing pair (" << utility::hex_string(out.first) << ", "
-            << utility::hex_string(out.second) << ")\n";
+        logger::logger()->debug("Deserializing pair ("
+                                + utility::hex_string(out.first) + ", "
+                                + utility::hex_string(out.second) + ")");
 
         return true;
     }
@@ -119,8 +116,7 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
     ++sk_it; // skip the first element
     for (; sk_it != key_shares.end(); ++sk_it) {
         auto tag = crypto::punct::extract_tag(*sk_it);
-        logger::log(logger::LoggerSeverity::DBG)
-            << "tag " << utility::hex_string(tag) << " is removed" << std::endl;
+        logger::logger()->debug("Tag " + utility::hex_string(tag) + " removed");
         removed_tags.insert(tag);
     }
 
@@ -247,9 +243,8 @@ void JanusServer::search_parallel(
         ++sk_it; // skip the first element
         for (; sk_it != key_shares.end(); ++sk_it) {
             auto tag = crypto::punct::extract_tag(*sk_it);
-            logger::log(logger::LoggerSeverity::DBG)
-                << "tag " << utility::hex_string(tag) << " is removed"
-                << std::endl;
+            logger::logger()->debug("Tag " + utility::hex_string(tag)
+                                    + " removed");
             removed_tags.insert(tag);
         }
 

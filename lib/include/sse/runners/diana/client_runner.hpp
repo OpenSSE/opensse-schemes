@@ -27,9 +27,8 @@
 #include <grpc++/channel.h>
 #include <grpc++/completion_queue.h>
 
-#include <condition_variable>
-
 #include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <thread>

@@ -3,10 +3,11 @@
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
 
 #include <cstring>
-#include <gtest/gtest.h>
 
 #include <memory>
 #include <string>
+
+#include <gtest/gtest.h>
 
 namespace sse {
 namespace test {

@@ -144,11 +144,9 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
 
     if (!found) {
         if (log_not_found) {
-            logger::log(logger::LoggerSeverity::INFO)
-                << "No matching counter found for keyword "
-                << utility::hex_string(
-                       std::string(kw_index.begin(), kw_index.end()))
-                << std::endl;
+            logger::logger()->info("No matching counter found for keyword "
+                                   + utility::hex_string(std::string(
+                                         kw_index.begin(), kw_index.end())));
         }
     } else {
         req.add_count = kw_counter + 1;
@@ -191,21 +189,14 @@ UpdateRequest<T> DianaClient<T>::insertion_request(const std::string& keyword,
 
     st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "New ST " << utility::hex_string(st) << std::endl;
-    }
+    logger::logger()->debug("New Search Token " + utility::hex_string(st));
 
     gen_update_token_mask(st, req.token, mask);
 
     req.index = xor_mask(index, mask);
 
-    //            if (logger::severity() <= logger::LoggerSeverity::DBG) {
-    //                logger::log(logger::LoggerSeverity::DBG) << "Update
-    //                Request: (" << utility::hex_string(ut) << ", " << std::hex
-    //                << req.index << ")" << std::endl;
-    //            }
-
+    logger::logger()->debug("Update Request: (" + utility::hex_string(req.token)
+                            + ", " + utility::hex_string(req.index) + ")");
     return req;
 }
 
@@ -239,10 +230,7 @@ std::list<UpdateRequest<T>> DianaClient<T>::bulk_insertion_request(
 
         st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
-        if (logger::severity() <= logger::LoggerSeverity::DBG) {
-            logger::log(logger::LoggerSeverity::DBG)
-                << "New ST " << utility::hex_string(st) << std::endl;
-        }
+        logger::logger()->debug("New Search Token " + utility::hex_string(st));
 
         gen_update_token_mask(st, req.token, mask);
 

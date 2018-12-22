@@ -123,10 +123,12 @@ RockDBWrapper::RockDBWrapper(const std::string& path) : db_(nullptr)
 
     /* LCOV_EXCL_START */
     if (!status.ok()) {
-        logger::log(logger::LoggerSeverity::CRITICAL)
-            << "Unable to open the database: " << status.ToString()
-            << std::endl;
+        logger::logger()->critical("Unable to open the database:\n "
+                                   + status.ToString());
         db_ = nullptr;
+
+        throw std::runtime_error("Unable to open the database located at "
+                                 + path);
     }
     /* LCOV_EXCL_STOP */
 }
@@ -188,12 +190,10 @@ bool RockDBWrapper::put(const std::array<uint8_t, N>& key, const V& data)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Unable to insert pair in the database: " << s.ToString()
-            << std::endl;
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << utility::hex_string(key)
-            << ", data=" << utility::hex_string(data) << std::endl;
+        logger::logger()->error(
+            std::string("Unable to insert pair in the database\nkey=")
+            + utility::hex_string(key) + "\ndata=" + utility::hex_string(data)
+            + "\nRocksdb status: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 
@@ -229,8 +229,7 @@ void RockDBWrapper::flush(bool blocking)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "DB Flush failed: " << s.ToString() << std::endl;
+        logger::logger()->error("DB Flush failed: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 }
@@ -398,10 +397,12 @@ RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
 
     /* LCOV_EXCL_START */
     if (!status.ok()) {
-        logger::log(logger::LoggerSeverity::CRITICAL)
-            << "Unable to open the database: " << status.ToString()
-            << std::endl;
+        logger::logger()->critical("Unable to open the database:\n "
+                                   + status.ToString());
         db_ = nullptr;
+
+        throw std::runtime_error("Unable to open the database located at "
+                                 + path);
     }
     /* LCOV_EXCL_STOP */
 }
@@ -484,12 +485,11 @@ bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Unable to insert key in the database: " << s.ToString()
-            << std::endl;
-        //            logger::log(logger::LoggerSeverity::ERROR) << "Failed on
-        //            pair: key=" << utility::hex_string(key) << ", data=" <<
-        //            utility::hex_string(data) << std::endl;
+        logger::logger()->error(
+            std::string("Unable to insert pair in the database\nkey=")
+            + utility::hex_string(key)
+            + "\ndata=" + utility::hex_string(serialized_list)
+            + "\nRocksdb status: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 
@@ -508,8 +508,7 @@ void RockDBListStore<T, Serializer>::flush(bool blocking)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "DB Flush failed: " << s.ToString() << std::endl;
+        logger::logger()->error("DB Flush failed: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 }

@@ -50,6 +50,7 @@ target_link_libraries(
     OpenSSE::crypto
     OpenSSE::dbparser
     ${ROCKSDB_LIBRARIES}
+    spdlog::spdlog
 )
 
 set(PROTOS
@@ -117,4 +118,5 @@ target_link_libraries(
     OpenSSE::schemes
     gRPC::grpc++
     protobuf::libprotobuf
+    spdlog::spdlog
 )

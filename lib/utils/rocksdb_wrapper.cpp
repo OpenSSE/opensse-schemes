@@ -72,10 +72,12 @@ RocksDBCounter::RocksDBCounter(const std::string& path) : db_(nullptr)
     rocksdb::Status status = rocksdb::DB::Open(options, path, &db_);
     /* LCOV_EXCL_START */
     if (!status.ok()) {
-        logger::log(logger::LoggerSeverity::CRITICAL)
-            << "Unable to open the database: " << status.ToString()
-            << std::endl;
+        logger::logger()->critical("Unable to open the database:\n "
+                                   + status.ToString());
         db_ = nullptr;
+
+        throw std::runtime_error("Unable to open the database located at "
+                                 + path);
     }
     /* LCOV_EXCL_STOP */
 }
@@ -86,8 +88,8 @@ bool RocksDBCounter::get(const std::string& key, uint32_t& val) const
 
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
 
-    logger::log(logger::LoggerSeverity::DBG)
-        << "Get: " << key << " Status: " << s.ToString() << std::endl;
+    logger::logger()->debug("Get: " + utility::hex_string(key)
+                            + "\nStatus: " + s.ToString());
 
     if (s.ok()) {
         ::memcpy(&val, data.data(), sizeof(uint32_t));
@@ -102,8 +104,8 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
 
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
 
-    logger::log(logger::LoggerSeverity::DBG)
-        << "Get and inc: " << key << " Status: " << s.ToString() << std::endl;
+    logger::logger()->debug("Get and increment: " + utility::hex_string(key)
+                            + "\nStatus: " + s.ToString());
 
     if (s.ok()) {
         ::memcpy(&val, data.data(), sizeof(uint32_t));
@@ -119,12 +121,10 @@ bool RocksDBCounter::get_and_increment(const std::string& key, uint32_t& val)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Unable to insert pair in the database: " << s.ToString()
-            << std::endl;
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << utility::hex_string(key)
-            << ", value=" << val << std::endl;
+        logger::logger()->error("Unable to insert pair in the database\nkey="
+                                + utility::hex_string(key)
+                                + "\nvalue=" + std::to_string(val)
+                                + "\nRocksdb status: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 
@@ -137,9 +137,6 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
     uint32_t    val;
 
     rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
-
-    //            logger::log(logger::LoggerSeverity::DBG) << "Get and inc: " <<
-    //            key << " Status: " << s.ToString() << std::endl;
 
     if (s.ok()) {
         // the key has been found
@@ -156,12 +153,10 @@ bool RocksDBCounter::increment(const std::string& key, uint32_t default_value)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Unable to increment value in the database: " << s.ToString()
-            << std::endl;
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << utility::hex_string(key)
-            << ", value=" << val << std::endl;
+        logger::logger()->error(
+            "Unable to increment value in the database\nkey="
+            + utility::hex_string(key) + "\nvalue=" + std::to_string(val)
+            + "\nRocksdb status: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 
@@ -176,12 +171,10 @@ bool RocksDBCounter::set(const std::string& key, uint32_t val)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Unable to insert pair in the database: " << s.ToString()
-            << std::endl;
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed on pair: key=" << utility::hex_string(key)
-            << ", value=" << val << std::endl;
+        logger::logger()->error(
+            std::string("Unable to insert pair in the counter database\nkey=")
+            + utility::hex_string(key) + "\nvalue=" + std::to_string(val)
+            + "\nRocksdb status: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 
@@ -206,8 +199,7 @@ void RocksDBCounter::flush(bool blocking)
 
     /* LCOV_EXCL_START */
     if (!s.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "DB Flush failed: " << s.ToString() << std::endl;
+        logger::logger()->error("DB Flush failed: " + s.ToString());
     }
     /* LCOV_EXCL_STOP */
 }

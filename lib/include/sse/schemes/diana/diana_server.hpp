@@ -113,37 +113,28 @@ bool DianaServer<T>::get_unmask(uint8_t*    key,
     update_token_type ut;
     index_type        mask;
 
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Derived leaf token: "
-            << utility::hex_string(std::string(
-                   reinterpret_cast<const char*>(key), kSearchTokenKeySize))
-            << std::endl;
-    }
+    logger::logger()->debug(
+        "Derived leaf token: "
+        + utility::hex_string(std::string(reinterpret_cast<const char*>(key),
+                                          kSearchTokenKeySize)));
 
     gen_update_token_mask<T>(key, ut, mask);
 
 
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Derived token : " << utility::hex_string(ut) << std::endl;
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Mask : " << utility::hex_string(mask) << std::endl;
-    }
+    logger::logger()->debug("Derived token : " + utility::hex_string(ut)
+                            + " Mask : " + utility::hex_string(mask));
 
     bool found = retrieve_entry(ut, index, delete_key);
 
     if (found) {
-        if (logger::severity() <= logger::LoggerSeverity::DBG) {
-            logger::log(logger::LoggerSeverity::DBG)
-                << "Found: " << utility::hex_string(index) << std::endl;
-        }
+        logger::logger()->debug("Found: " + utility::hex_string(index));
 
         index = xor_mask(index, mask);
     } else {
         /* LCOV_EXCL_START */
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "We were supposed to find something!" << std::endl;
+        logger::logger()->error(
+            "We were supposed to find an entry. Accessed key: "
+            + utility::hex_string(ut));
         /* LCOV_EXCL_STOP */
     }
 
@@ -170,12 +161,9 @@ void DianaServer<T>::search(
     const std::function<void(index_type)>& post_callback,
     bool                                   delete_results)
 {
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Expected matches: " << req.add_count << std::endl;
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Number of search nodes: " << req.token_list.size() << std::endl;
-    }
+    logger::logger()->debug("Search: {} expected matches and {} search tokens",
+                            req.add_count,
+                            req.token_list.size());
 
     crypto::Prf<kUpdateTokenSize> derivation_prf(
         crypto::Key<kKeySize>(req.kw_token.data()));
@@ -189,14 +177,10 @@ void DianaServer<T>::search(
     };
 
     for (auto& it_token : req.token_list) {
-        if (logger::severity() <= logger::LoggerSeverity::DBG) {
-            logger::log(logger::LoggerSeverity::DBG)
-                << "Search token key: " << utility::hex_string(it_token.first)
-                << std::endl;
-            logger::log(logger::LoggerSeverity::DBG)
-                << "Search token depth: " << std::dec
-                << static_cast<uint32_t>(it_token.second) << std::endl;
-        }
+        logger::logger()->debug(
+            "Search token key: " + utility::hex_string(it_token.first)
+            + "; Token depth: "
+            + std::to_string(static_cast<uint32_t>(it_token.second)));
 
         TokenTree::derive_all_leaves(
             it_token.first, it_token.second, get_callback);
@@ -211,25 +195,19 @@ void DianaServer<T>::search_simple(
 {
     index_type r;
 
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Expected matches: " << req.add_count << std::endl;
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Number of search nodes: " << req.token_list.size() << std::endl;
-    }
+    logger::logger()->debug("Search: {} expected matches and {} search tokens",
+                            req.add_count,
+                            req.token_list.size());
 
     crypto::Prf<kUpdateTokenSize> derivation_prf(
         crypto::Key<kKeySize>(req.kw_token.data()));
 
     for (auto& it_token : req.token_list) {
-        if (logger::severity() <= logger::LoggerSeverity::DBG) {
-            logger::log(logger::LoggerSeverity::DBG)
-                << "Search token key: " << utility::hex_string(it_token.first)
-                << std::endl;
-            logger::log(logger::LoggerSeverity::DBG)
-                << "Search token depth: " << std::dec
-                << static_cast<uint32_t>(it_token.second) << std::endl;
-        }
+        logger::logger()->debug(
+            "Search token key: " + utility::hex_string(it_token.first)
+            + "; Token depth: "
+            + std::to_string(static_cast<uint32_t>(it_token.second)));
+
 
         // for now we implement the search algorithm in a naive way:
         // the tokens are iteratively generated using the derive_node function
@@ -250,45 +228,31 @@ void DianaServer<T>::search_simple(
                 i,
                 it_token.second);
 
-            if (logger::severity() <= logger::LoggerSeverity::DBG) {
-                logger::log(logger::LoggerSeverity::DBG)
-                    << "Derived leaf token: " << utility::hex_string(t)
-                    << std::endl;
-            }
+            logger::logger()->debug("Derived leaf token: "
+                                    + utility::hex_string(t));
+
 
             update_token_type ut;
             index_type        mask;
 
             gen_update_token_mask(t, ut, mask);
 
-            if (logger::severity() <= logger::LoggerSeverity::DBG) {
-                logger::log(logger::LoggerSeverity::DBG)
-                    << "Derived token : " << utility::hex_string(ut)
-                    << std::endl;
-                logger::log(logger::LoggerSeverity::DBG)
-                    << "Mask : " << std::hex << mask << std::endl;
-            }
+            logger::logger()->debug("Derived token : " + utility::hex_string(ut)
+                                    + "; Mask : " + utility::hex_string(mask));
 
             bool found = retrieve_entry(ut, r, delete_results);
 
             if (found) {
-                if (logger::severity() <= logger::LoggerSeverity::DBG) {
-                    logger::log(logger::LoggerSeverity::DBG)
-                        << "Found: " << std::hex << r << std::endl;
-                }
+                logger::logger()->debug("Found: " + utility::hex_string(r));
 
                 r ^= mask;
 
-                if (logger::severity() <= logger::LoggerSeverity::DBG) {
-                    logger::log(logger::LoggerSeverity::DBG)
-                        << "Unmasked: " << std::hex << r << std::endl;
-                }
+                logger::logger()->debug("Unmasked: " + utility::hex_string(r));
 
                 post_callback(r);
             } else {
                 /* LCOV_EXCL_START */
-                logger::log(logger::LoggerSeverity::ERROR)
-                    << "We were supposed to find something!" << std::endl;
+                logger::logger()->error("We were supposed to find something!");
                 /* LCOV_EXCL_STOP */
             }
         }
@@ -376,6 +340,7 @@ void DianaServer<T>::search_simple_parallel(
                                                       const size_t max_index) {
         auto get_callback
             // cppcheck-suppress variableScope
+            // cppcheck-suppress shadowVar
             = [this, t_id, &post_callback, delete_results](uint8_t* key) {
                   index_type index;
                   if (get_unmask(key, index, delete_results)) {
@@ -473,11 +438,9 @@ void DianaServer<T>::search_simple_parallel(
 template<typename T>
 void DianaServer<T>::insert(const UpdateRequest<T>& req)
 {
-    if (logger::severity() <= logger::LoggerSeverity::DBG) {
-        logger::log(logger::LoggerSeverity::DBG)
-            << "Update: (" << utility::hex_string(req.token) << ", "
-            << utility::hex_string(req.index) << ")" << std::endl;
-    }
+    logger::logger()->debug("Received update: ("
+                            + utility::hex_string(req.token) + ", "
+                            + utility::hex_string(req.index) + ")");
 
     edb_.put(req.token, req.index);
 }

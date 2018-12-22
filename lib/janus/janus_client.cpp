@@ -104,15 +104,6 @@ SearchRequest JanusClient::search_request(const std::string& keyword)
             .add_count); // the add_count for the deletion scheme is actually
                          // the number of deleted entries
 
-    /*
-    if (req.insertion_search_request.add_count <
-    req.deletion_search_request.add_count) { logger::log(logger::ERROR) <<
-    "Keyword " << keyword << " was inserted " <<
-    req.insertion_search_request.add_count << " times and deleted " <<
-    req.deletion_search_request.add_count << " times" << std::endl;
-    }
-    */
-
 
     // increment the search counter only if there were some insertions or some
     // deletions

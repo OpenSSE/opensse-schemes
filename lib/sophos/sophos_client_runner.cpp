@@ -37,7 +37,6 @@
 #include <grpc/grpc.h>
 
 #include <chrono>
-
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -245,13 +244,10 @@ bool SophosClientRunner::send_setup() const
     grpc::Status status = stub_->setup(&context, message, &e);
 
     if (status.ok()) {
-        logger::log(logger::LoggerSeverity::TRACE)
-            << "Setup succeeded." << std::endl;
+        logger::logger()->info("Server setup succeeded.");
     } else {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Setup failed: " << std::endl;
-        logger::log(logger::LoggerSeverity::ERROR)
-            << status.error_message() << std::endl;
+        logger::logger()->error("Server setup failed: "
+                                + status.error_message());
         return false;
     }
 
@@ -271,8 +267,7 @@ std::list<uint64_t> SophosClientRunner::search(
     const std::string&                   keyword,
     const std::function<void(uint64_t)>& receive_callback) const
 {
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Search " << keyword << std::endl;
+    logger::logger()->trace("Search keyword: " + keyword);
 
     grpc::ClientContext          context;
     sophos::SearchRequestMessage message;
@@ -286,9 +281,6 @@ std::list<uint64_t> SophosClientRunner::search(
 
 
     while (reader->Read(&reply)) {
-        //        logger::log(logger::LoggerSeverity::TRACE) << "New result
-        //        received: "
-        //        << std::dec << reply.result() << std::endl;
         results.push_back(reply.result());
 
         if (receive_callback != nullptr) {
@@ -297,13 +289,9 @@ std::list<uint64_t> SophosClientRunner::search(
     }
     grpc::Status status = reader->Finish();
     if (status.ok()) {
-        logger::log(logger::LoggerSeverity::TRACE)
-            << "Search succeeded." << std::endl;
+        logger::logger()->trace("Search succeeded");
     } else {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Search failed:" << std::endl;
-        logger::log(logger::LoggerSeverity::ERROR)
-            << status.error_message() << std::endl;
+        logger::logger()->error("Search failed: " + status.error_message());
     }
 
     return results;
@@ -325,13 +313,9 @@ void SophosClientRunner::insert(const std::string& keyword, uint64_t index)
         grpc::Status status = stub_->insert(&context, message, &e);
 
         if (status.ok()) {
-            logger::log(logger::LoggerSeverity::TRACE)
-                << "Update succeeded." << std::endl;
+            logger::logger()->trace("Update succeeded.");
         } else {
-            logger::log(logger::LoggerSeverity::ERROR)
-                << "Update failed:" << std::endl;
-            logger::log(logger::LoggerSeverity::ERROR)
-                << status.error_message() << std::endl;
+            logger::logger()->error("Update failed: " + status.error_message());
         }
     }
 }
@@ -348,8 +332,7 @@ void SophosClientRunner::insert_in_session(const std::string& keyword,
 
     bulk_update_state_.mtx.lock();
     if (!bulk_update_state_.writer->Write(message)) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Update session: broken stream." << std::endl;
+        logger::logger()->error("Update session: broken stream.");
     }
     bulk_update_state_.mtx.unlock();
 }
@@ -357,9 +340,8 @@ void SophosClientRunner::insert_in_session(const std::string& keyword,
 void SophosClientRunner::start_update_session()
 {
     if (bulk_update_state_.writer) {
-        logger::log(logger::LoggerSeverity::WARNING)
-            << "Invalid client state: the bulk update session is already up"
-            << std::endl;
+        logger::logger()->warn(
+            "Invalid client state: the bulk update session is already up");
         return;
     }
 
@@ -368,16 +350,14 @@ void SophosClientRunner::start_update_session()
         bulk_update_state_.context.get(), &(bulk_update_state_.response));
     bulk_update_state_.is_up = true;
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Update session started." << std::endl;
+    logger::logger()->trace("Update session started.");
 }
 
 void SophosClientRunner::end_update_session()
 {
     if (!bulk_update_state_.writer) {
-        logger::log(logger::LoggerSeverity::WARNING)
-            << "Invalid client state: the bulk update session is not up"
-            << std::endl;
+        logger::logger()->warn(
+            "Invalid client state: the bulk update session is not up");
         return;
     }
 
@@ -385,17 +365,15 @@ void SophosClientRunner::end_update_session()
     ::grpc::Status status = bulk_update_state_.writer->Finish();
 
     if (!status.ok()) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Status not OK at the end of update sessions. Status: "
-            << status.error_message() << std::endl;
+        logger::logger()->error("Status not OK at the end of update sessions:\n"
+                                + status.error_message());
     }
 
     bulk_update_state_.is_up = false;
     bulk_update_state_.context.reset();
     bulk_update_state_.writer.reset();
 
-    logger::log(logger::LoggerSeverity::TRACE)
-        << "Update session terminated." << std::endl;
+    logger::logger()->trace("Update session terminated.");
 }
 
 
@@ -407,25 +385,23 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
 
         std::atomic_size_t counter(0);
 
-        auto add_list_callback
-            = [this, &pool, &counter](const std::string         kw,
-                                      const std::list<unsigned> docs) {
-                  auto work
-                      = [this, &counter](const std::string&         keyword,
+        auto add_list_callback = [this, &pool, &counter](
+                                     const std::string         kw,
+                                     const std::list<unsigned> docs) {
+            auto work = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
-                            for (unsigned doc : documents) {
-                                this->insert_in_session(keyword, doc);
-                            }
-                            counter++;
+                for (unsigned doc : documents) {
+                    this->insert_in_session(keyword, doc);
+                }
+                counter++;
 
-                            if ((counter % 100) == 0) {
-                                logger::log(sse::logger::LoggerSeverity::INFO)
-                                    << "\rLoading: " << counter
-                                    << " keywords processed" << std::flush;
-                            }
-                        };
-                  pool.enqueue(work, kw, docs);
-              };
+                if ((counter % 100) == 0) {
+                    logger::logger()->info("Loading: {} keywords processed",
+                                           counter);
+                }
+            };
+            pool.enqueue(work, kw, docs);
+        };
 
 
         parser.addCallbackList(add_list_callback);
@@ -437,17 +413,14 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
         parser.parse();
 
         pool.join();
-        logger::log(sse::logger::LoggerSeverity::INFO)
-            << "\rLoading: " << counter << " keywords processed" << std::endl;
-
+        logger::logger()->info("Loading: {} keywords processed", counter);
 
         end_update_session();
 
         return true;
     } catch (std::exception& e) {
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "\nFailed to load file " << path << " : " << e.what()
-            << std::endl;
+        logger::logger()->error("Failed to load file " + path + ": "
+                                + e.what());
         return false;
     }
     return false;

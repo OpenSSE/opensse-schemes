@@ -18,8 +18,12 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-
 #include <sse/schemes/utils/logger.hpp>
+
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/null_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <fstream>
 #include <iostream>
@@ -27,102 +31,91 @@
 
 namespace sse {
 namespace logger {
-LoggerSeverity severity__ = LoggerSeverity::INFO;
-// NOLINTNEXTLINE(cert-err58-cpp)
-std::ostream null_stream__(nullptr);
 
-std::unique_ptr<std::ofstream> benchmark_stream__;
-std::ostream*                  log_stream__ = &std::cout;
+std::shared_ptr<spdlog::logger> shared_logger_(nullptr);
 
-std::ostream* logger_stream()
+std::shared_ptr<spdlog::logger> logger()
 {
-    return log_stream__;
-}
-
-void set_logger_stream(std::ostream* stream)
-{
-    log_stream__ = stream;
-}
-
-LoggerSeverity severity()
-{
-    return severity__;
-}
-
-void set_severity(LoggerSeverity s)
-{
-    severity__ = s;
-}
-
-bool set_benchmark_file(const std::string& path)
-{
-    if (benchmark_stream__) {
-        benchmark_stream__->close();
+    if (!shared_logger_) {
+        // initialize the logger
+        shared_logger_ = spdlog::stderr_color_mt("console");
     }
-
-    std::unique_ptr<std::ofstream> stream_ptr(new std::ofstream(path));
-
-    if (!stream_ptr->is_open()) {
-        benchmark_stream__.reset();
-
-        logger::log(logger::LoggerSeverity::ERROR)
-            << "Failed to set benchmark file: " << path << std::endl;
-
-        return false;
-    }
-    benchmark_stream__ = std::move(stream_ptr);
-
-    return true;
+    return shared_logger_;
 }
 
-std::ostream& log(LoggerSeverity s)
+void set_logger(const std::shared_ptr<spdlog::logger>& logger)
 {
-    if (s >= severity__) {
-        return ((*log_stream__) << severity_string(s));
-    }
-    return null_stream__;
-}
-
-std::ostream& log_benchmark()
-{
-    if (benchmark_stream__) {
-        return *benchmark_stream__;
-    }
-    return (*log_stream__);
-}
-
-std::string severity_string(LoggerSeverity s)
-{
-    switch (s) {
-    case LoggerSeverity::DBG:
-        return "[DEBUG] - ";
-        break;
-
-    case LoggerSeverity::TRACE:
-        return "[TRACE] - ";
-        break;
-
-    case LoggerSeverity::INFO:
-        return "[INFO] - ";
-        break;
-
-    case LoggerSeverity::WARNING:
-        return "[WARNING] - ";
-        break;
-
-    case LoggerSeverity::ERROR:
-        return "[ERROR] - ";
-        break;
-
-    case LoggerSeverity::CRITICAL:
-        return "[CRITICAL] - ";
-        break;
-
-    default:
-        return "[??] - ";
-        break;
+    if (logger) {
+        shared_logger_ = logger;
+    } else {
+        shared_logger_
+            = spdlog::create<spdlog::sinks::null_sink_mt>("null_logger");
     }
 }
 
+void set_logging_level(spdlog::level::level_enum log_level)
+{
+    logger()->set_level(log_level);
+}
 } // namespace logger
+
+std::shared_ptr<spdlog::logger> Benchmark::benchmark_logger_(nullptr);
+
+void Benchmark::set_benchmark_file(const std::string& path)
+{
+    benchmark_logger_
+        = spdlog::basic_logger_mt<spdlog::async_factory>("benchmark", path);
+    benchmark_logger_->set_level(spdlog::level::trace);
+
+    benchmark_logger_->set_pattern("[%Y-%m-%d %T.%e] %v");
+}
+
+Benchmark::Benchmark(std::string format)
+    : format_(std::move(format)), count_(0), stopped_(false),
+      begin_(std::chrono::high_resolution_clock::now())
+{
+}
+
+void Benchmark::stop()
+{
+    if (!stopped_) {
+        end_ = std::chrono::high_resolution_clock::now();
+    }
+}
+
+void Benchmark::stop(size_t count)
+{
+    if (!stopped_) {
+        end_   = std::chrono::high_resolution_clock::now();
+        count_ = count;
+    }
+}
+
+Benchmark::~Benchmark()
+{
+    stop();
+
+    std::chrono::duration<double, std::milli> time_ms = end_ - begin_;
+
+    auto time_per_item = time_ms;
+
+    if (count_ > 1) {
+        time_per_item /= count_;
+    }
+
+    if (benchmark_logger_) {
+        benchmark_logger_->trace(
+            format_.c_str(), count_, time_ms.count(), time_per_item.count());
+    }
+}
+
+constexpr auto search_JSON_begin
+    = "{{ \"message\" : \""; // double { to escape it in fmt
+constexpr auto search_JSON_end
+    = "\", \"items\" : {0}, \"time\" : {1}, \"time/item\" : {2} }}";
+
+SearchBenchmark::SearchBenchmark(std::string message)
+    : Benchmark(search_JSON_begin + std::move(message) + search_JSON_end)
+{
+}
 } // namespace sse

@@ -21,63 +21,58 @@
 
 #pragma once
 
+#include <spdlog/spdlog.h>
+
 #include <array>
+#include <chrono>
 #include <iomanip>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
 
 namespace sse {
 namespace logger {
-enum class LoggerSeverity : uint8_t
+
+std::shared_ptr<spdlog::logger> logger();
+void set_logger(const std::shared_ptr<spdlog::logger>& logger);
+
+void set_logging_level(spdlog::level::level_enum log_level);
+
+} // namespace logger
+
+class Benchmark
 {
-    DBG      = 00,
-    TRACE    = 10,
-    INFO     = 20,
-    WARNING  = 30,
-    ERROR    = 40,
-    CRITICAL = 50
+public:
+    static void set_benchmark_file(const std::string& path);
+
+    explicit Benchmark(std::string format);
+    Benchmark() = delete;
+
+    void stop();
+    void stop(size_t count);
+
+    inline void set_count(size_t c)
+    {
+        count_ = c;
+    }
+
+    virtual ~Benchmark();
+
+private:
+    static std::shared_ptr<spdlog::logger> benchmark_logger_;
+
+    std::string                                    format_;
+    size_t                                         count_;
+    bool                                           stopped_;
+    std::chrono::high_resolution_clock::time_point begin_;
+    std::chrono::high_resolution_clock::time_point end_;
 };
 
-std::ostream* logger_stream();
-void          set_logger_stream(std::ostream* stream);
+class SearchBenchmark : public Benchmark
+{
+public:
+    explicit SearchBenchmark(std::string message);
+};
 
-LoggerSeverity severity();
-void           set_severity(LoggerSeverity s);
-std::ostream&  log(LoggerSeverity s);
-
-bool          set_benchmark_file(const std::string& path);
-std::ostream& log_benchmark();
-
-std::string severity_string(LoggerSeverity s);
-} // namespace logger
 } // namespace sse
-
-#ifdef BENCHMARK
-
-#define BENCHMARK_SIMPLE(comment, block)                                       \
-    {                                                                          \
-        auto begin = std::chrono::high_resolution_clock::now();                \
-        block;                                                                 \
-        auto end = std::chrono::high_resolution_clock::now();                  \
-        std::chrono::duration<double, std::milli> time_ms = end - begin;       \
-        sse::logger::log_benchmark()                                           \
-            << (comment) << " " << time_ms.count() << " ms" << std::endl;      \
-    }
-
-#define BENCHMARK_Q(block, quotient, comment_f)                                \
-    {                                                                          \
-        auto begin = std::chrono::high_resolution_clock::now();                \
-        block;                                                                 \
-        auto end = std::chrono::high_resolution_clock::now();                  \
-        std::chrono::duration<double, std::milli> time_ms = end - begin;       \
-        {                                                                      \
-            sse::logger::log_benchmark()                                       \
-                << comment_f(time_ms.count(), quotient) << std::endl;          \
-        }                                                                      \
-    }
-
-#else
-#define BENCHMARK_SIMPLE(comment, block) block;
-#define BENCHMARK_Q(block, quotient, comment_f) block;
-#endif

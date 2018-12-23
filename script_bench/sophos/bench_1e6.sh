@@ -25,7 +25,7 @@ do
 		kw_list="$kw_list ${kKeywordGroupBase}20_${i}_${j}"
 	done
 done
-`./client -b $db_file "$kw_list"`
+./client -b $db_file "$kw_list"
 
 kw_list=""
 for i in $(seq 0 7);
@@ -45,7 +45,7 @@ do
 		kw_list="$kw_list ${kKeywordGroupBase}60_${i}_${j}"
 	done
 done
-`./client -b $db_file "$kw_list"`
+./client -b $db_file "$kw_list"
 
 kw_list=""
 for i in $(seq 0 7);

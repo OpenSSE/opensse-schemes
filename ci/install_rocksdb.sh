@@ -6,7 +6,7 @@ bold=$(tput bold)
 normal=$(tput sgr0)
 green=$(tput setaf 2)
 
-if [ -d "$INSTALL_DIR/include/rocksdb" ] && ([ -f "$INSTALL_DIR/lib/librocksdb.a" ] || [ -f "$INSTALL_DIR/lib/librocksdb.so" ]); then
+if [ -d "$INSTALL_DIR/include/rocksdb" ] && { [ -f "$INSTALL_DIR/lib/librocksdb.a" ] || [ -f "$INSTALL_DIR/lib/librocksdb.so" ] ;}; then
 	echo "${bold}${green}RocksDB is already installed${normal}"
 else
 
@@ -21,11 +21,13 @@ else
 # Workaround for an issue on Travis
 	if [ "$COMPILER" = "clang" ];
 	then
-		export CC=`which clang`
-		export CXX=`which clang++`
+		CC=$(command -v clang)
+		CXX=$(command -v clang++)
+		export CC
+		export CXX
 	fi
 
-	make INSTALL_PATH=$INSTALL_DIR shared_lib -j4
-	sudo -E make INSTALL_PATH=$INSTALL_DIR install-shared
+	make INSTALL_PATH="$INSTALL_DIR" shared_lib -j4
+	sudo -E make INSTALL_PATH="$INSTALL_DIR" install-shared
 	make clean
 fi

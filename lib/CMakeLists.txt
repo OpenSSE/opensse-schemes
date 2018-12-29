@@ -82,6 +82,11 @@ target_compile_features(
     PRIVATE
     cxx_lambdas
 )
+target_link_libraries(
+    grpc_gen
+    gRPC::grpc++
+    protobuf::libprotobuf
+)
 
 add_library(
     runners

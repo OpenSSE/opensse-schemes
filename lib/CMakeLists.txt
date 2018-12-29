@@ -64,29 +64,8 @@ set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR})
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTOS})
 grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
-# add_custom_target(grpc_gen DEPENDS ${PROTO_SRCS} ${PROTO_HDRS} ${GRPC_SRCS} ${GRPC_HDRS})
-add_library(grpc_gen OBJECT ${PROTO_SRCS} ${PROTO_HDRS} ${GRPC_SRCS} ${GRPC_HDRS})
-target_compile_options(grpc_gen PUBLIC "-Wno-unused-parameter")
-target_compile_features(
-    grpc_gen
-    PUBLIC
-    cxx_auto_type
-    cxx_nullptr
-    cxx_constexpr
-    cxx_defaulted_functions
-    cxx_deleted_functions
-    cxx_extern_templates
-    cxx_noexcept
-    cxx_static_assert
-    cxx_thread_local
-    PRIVATE
-    cxx_lambdas
-)
-target_link_libraries(
-    grpc_gen
-    gRPC::grpc++
-    protobuf::libprotobuf
-)
+add_custom_target(grpc_gen DEPENDS ${PROTO_SRCS} ${PROTO_HDRS} ${GRPC_SRCS} ${GRPC_HDRS})
+set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} ${GRPC_SRCS} ${GRPC_HDRS} PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
 
 add_library(
     runners
@@ -95,7 +74,8 @@ add_library(
     sophos/sophos_server_runner.cpp
     diana/client_runner.cpp
     diana/server_runner.cpp
-    $<TARGET_OBJECTS:grpc_gen>
+    ${PROTO_SRCS} 
+    ${GRPC_SRCS} 
 )
 
 target_include_directories(runners SYSTEM PRIVATE ${PROTO_SRC_DIR})

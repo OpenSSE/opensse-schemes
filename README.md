@@ -98,7 +98,7 @@ For example, if you wish to use Clang, you can set the project up with the follo
 
 -   `opensse_ENABLE_WEXTRA=On|Off`: Toggles the `-Wextra` compiler option. On by default
 
--   `opensse_ENABLE_WERROR=On|Off`: Toggles the `-Werror` compiler option to turn all warnings into errors. Off by default
+-   `opensse_ENABLE_WERROR=On|Off`: Toggles the `-Werror` compiler option to turn all warnings into errors. On by default
 
 -   `CMAKE_BUILD_TYPE`: Sets the build type. See [CMake's documentation](https://cmake.org/cmake/help/v3.12/variable/CMAKE_BUILD_TYPE.html) for more details. The `Debug` build type is used by default. Use `Release` for an optimized build.
 

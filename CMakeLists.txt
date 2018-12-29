@@ -14,7 +14,7 @@ set(default_build_type "Debug")
 # Options
 option(opensse_ENABLE_WALL "Enable all warnings" ON)
 option(opensse_ENABLE_WEXTRA "Enable extra warnings" ON)
-option(opensse_ENABLE_WERROR "Make all warnings into errors" OFF)
+option(opensse_ENABLE_WERROR "Make all warnings into errors" ON)
 option(
     opensse_OPTIMIZE_FOR_NATIVE_ARCH
     "Enable compiler optimizations for the native processor architecture (if available)"

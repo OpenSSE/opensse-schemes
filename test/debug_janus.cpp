@@ -38,6 +38,7 @@ void benchmark_sk0_generation(ostream& out)
 
         PuncturableEncryption cryptor(std::move(master_key));
         auto volatile sk0 = cryptor.initial_keyshare(i);
+        (void)sk0;
 
         auto t_end = std::chrono::high_resolution_clock::now();
 
@@ -93,6 +94,7 @@ void benchmark_puncture_generation(ostream& out)
             PuncturableEncryption cryptor(
                 master_key_type(master_key_array_cp.data()));
             auto volatile sk_i = cryptor.inc_puncture(i, tag);
+            (void)sk_i;
 
             auto t_end = std::chrono::high_resolution_clock::now();
 
@@ -156,6 +158,7 @@ void benchmark_encrypt(ostream& out)
             PuncturableEncryption cryptor(
                 master_key_type(master_key_array_cp.data()));
             auto sk_i = cryptor.encrypt(M, tag);
+            (void)sk_i;
 
             auto t_end = std::chrono::high_resolution_clock::now();
 
@@ -440,7 +443,7 @@ void test_client_server()
     client_master_key_in.close();
 }
 
-int main(int argc, const char* argv[])
+int main(int /*argc*/, const char** /*argv*/)
 {
     init_crypto_lib();
 

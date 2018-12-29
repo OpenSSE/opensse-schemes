@@ -177,7 +177,7 @@ void test_client_server()
     client_kw_token_master_key_in.close();
 }
 
-int main(int argc, const char* argv[])
+int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
     test_client_server();

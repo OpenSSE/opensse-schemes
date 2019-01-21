@@ -78,7 +78,7 @@ private:
     crypto::Key<JanusClient::kPRFKeySize> insertion_kw_token_master_key() const;
     crypto::Key<JanusClient::kPRFKeySize> deletion_derivation_master_key()
         const;
-    crypto::Key<JanusClient::kPRFKeySize> delertion_kw_token_master_key() const;
+    crypto::Key<JanusClient::kPRFKeySize> deletion_kw_token_master_key() const;
 
     crypto::Prf<kPRFKeySize>                   master_prf_;
     crypto::Prf<crypto::punct::kTagSize>       tag_prf_;

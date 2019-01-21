@@ -21,7 +21,6 @@
 #pragma once
 
 #include <sse/schemes/diana/diana_common.hpp>
-#include <sse/schemes/diana/token_tree.hpp>
 #include <sse/schemes/diana/types.hpp>
 #include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
@@ -29,6 +28,8 @@
 
 #include <sse/crypto/key.hpp>
 #include <sse/crypto/prf.hpp>
+#include <sse/crypto/rcprf.hpp>
+#include <sse/crypto/wrapper.hpp>
 #include <sse/dbparser/json/rapidjson/document.h>
 #include <sse/dbparser/json/rapidjson/filereadstream.h>
 #include <sse/dbparser/json/rapidjson/filewritestream.h>
@@ -152,7 +153,8 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
         req.add_count = kw_counter + 1;
 
         // Compute the root of the tree attached to kw_index
-
+        sse::crypto::RCPrf<kKeySize> rcprf_root(
+            root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
         TokenTree::token_type root
             = root_prf_.prf(kw_index.data(), kw_index.size());
 
@@ -182,7 +184,11 @@ UpdateRequest<T> DianaClient<T>::insertion_request(const std::string& keyword,
 
     bool success = counter_map_.get_and_increment(keyword, kw_counter);
 
-    assert(success);
+    if (!success) {
+        std::runtime_error(
+            "Unable to increment the keyword counter for keyword \"" + keyword
+            + "\"");
+    }
 
     TokenTree::inner_token_type root
         = root_prf_.derive_key(kw_index.data(), kw_index.size());
@@ -260,7 +266,11 @@ std::list<std::tuple<std::string, T, uint32_t>> DianaClient<T>::
         uint32_t kw_counter;
         bool     success = counter_map_.get_and_increment(keyword, kw_counter);
 
-        assert(success);
+        if (!success) {
+            std::runtime_error(
+                "Unable to increment the keyword counter for keyword \""
+                + keyword + "\"");
+        }
 
         res.push_back(std::make_tuple(keyword, index, kw_counter));
     }

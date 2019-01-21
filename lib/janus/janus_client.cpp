@@ -50,10 +50,11 @@ crypto::Key<JanusClient::kPRFKeySize> JanusClient::
 }
 
 crypto::Key<JanusClient::kPRFKeySize> JanusClient::
-    delertion_kw_token_master_key() const
+    deletion_kw_token_master_key() const
 {
     return master_prf_.derive_key("del_kw_token_master_key");
 }
+
 
 JanusClient::JanusClient(const std::string&         search_counter_map_path,
                          const std::string&         add_map_path,
@@ -66,7 +67,7 @@ JanusClient::JanusClient(const std::string&         search_counter_map_path,
                         insertion_kw_token_master_key()),
       deletion_client_(del_map_path,
                        deletion_derivation_master_key(),
-                       delertion_kw_token_master_key()),
+                       deletion_kw_token_master_key()),
       search_counter_map_(search_counter_map_path)
 {
 }

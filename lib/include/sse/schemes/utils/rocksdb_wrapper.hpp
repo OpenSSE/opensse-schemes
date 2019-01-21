@@ -239,6 +239,7 @@ uint64_t RockDBWrapper::approximate_size() const
     uint64_t v;
     bool     flag
         = db_->GetIntProperty(rocksdb::DB::Properties::kEstimateNumKeys, &v);
+    (void)flag;
 
     assert(flag);
 

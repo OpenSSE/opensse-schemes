@@ -274,7 +274,9 @@ void benchmark_decrypt(ostream& out)
 
                 auto t_end = std::chrono::high_resolution_clock::now();
 
+                (void)success;
                 assert(success);
+
                 time = t_end - t_start;
 
                 out << "Decrypt_" << std::to_string(current_p_count) << " \t "

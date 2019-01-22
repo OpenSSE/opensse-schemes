@@ -175,7 +175,7 @@ void DianaServer<T>::search(
     //     }
     // };
 
-    for (size_t i = 0; i < req.constrained_rcprf.max_leaf(); i++) {
+    for (size_t i = 0; i <= req.constrained_rcprf.max_leaf(); i++) {
         search_token_key_type st = req.constrained_rcprf.eval(i);
         index_type            index;
         if (get_unmask(st.data(), index, delete_results)) {

@@ -25,6 +25,8 @@
 #include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
+#include <sse/crypto/wrapper.hpp>
+
 #include <grpc++/security/server_credentials.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
@@ -154,7 +156,7 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
 
     logger::logger()->trace("Start searching keyword ...");
 
-    SearchRequest req = message_to_request(mes);
+    SearchRequest req = message_to_request(token_wrapper_, mes);
 
     std::vector<uint64_t> res_list(req.add_count);
 
@@ -210,7 +212,7 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
         res_size++;
     };
 
-    auto req = message_to_request(mes);
+    auto req = message_to_request(token_wrapper_, mes);
 
     {
         SearchBenchmark bench("Diana asynchronous search");
@@ -311,24 +313,21 @@ void DianaImpl::flush_server_storage()
     }
 }
 
-SearchRequest message_to_request(const SearchRequestMessage* mes)
+SearchRequest message_to_request(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequestMessage*             mes)
 {
-    SearchRequest req;
+    uint32_t add_count = mes->add_count();
 
-    req.add_count = mes->add_count();
+    std::vector<uint8_t> rcprf_rep_buffer(mes->constrained_rcprf_rep().begin(),
+                                          mes->constrained_rcprf_rep().end());
+    constrained_rcprf_type rcprf
+        = wrapper->unwrap<constrained_rcprf_type>(rcprf_rep_buffer);
 
+    keyword_token_type kw_token;
+    std::copy(mes->kw_token().begin(), mes->kw_token().end(), kw_token.begin());
 
-    for (const auto& it : mes->token_list()) {
-        search_token_key_type st;
-        std::copy(it.token().begin(), it.token().end(), st.begin());
-
-        req.token_list.emplace_back(st, it.depth());
-    }
-
-    std::copy(
-        mes->kw_token().begin(), mes->kw_token().end(), req.kw_token.begin());
-
-    return req;
+    return SearchRequest(kw_token, std::move(rcprf), add_count);
 }
 
 UpdateRequest<DianaImpl::index_type> message_to_request(

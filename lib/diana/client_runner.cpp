@@ -287,7 +287,8 @@ std::list<uint64_t> DianaClientRunner::search(
     SearchRequestMessage message;
     SearchReply          reply;
 
-    message = request_to_message(client_->search_request(keyword));
+    message
+        = request_to_message(token_wrapper_, client_->search_request(keyword));
 
     if (message.add_count() == 0) {
         return {};
@@ -474,17 +475,23 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
     return false;
 }
 
-SearchRequestMessage request_to_message(const SearchRequest& req)
+SearchRequestMessage request_to_message(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequest&                    req)
 {
     SearchRequestMessage mes;
 
     mes.set_add_count(req.add_count);
 
-    for (const auto& it : req.token_list) {
-        SearchToken* t = mes.add_token_list();
-        t->set_token(it.first.data(), it.first.size());
-        t->set_depth(it.second);
-    }
+    auto buffer = wrapper->wrap(req.constrained_rcprf);
+
+    // for (const auto& it : req.token_list) {
+    //     SearchToken* t = mes.add_token_list();
+    //     t->set_token(it.first.data(), it.first.size());
+    //     t->set_depth(it.second);
+    // }
+    mes.set_constrained_rcprf_rep(buffer.data(), buffer.size());
+
     mes.set_kw_token(req.kw_token.data(), req.kw_token.size());
 
     return mes;

@@ -136,10 +136,9 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
 {
     keyword_index_type kw_index = get_keyword_index(keyword);
 
-    bool          found;
-    uint32_t      kw_counter;
-    SearchRequest req;
-    req.add_count = 0;
+    bool     found;
+    uint32_t kw_counter;
+    // SearchRequest req;
 
     found = counter_map_.get(keyword, kw_counter);
 
@@ -149,23 +148,32 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
                                    + utility::hex_string(std::string(
                                          kw_index.begin(), kw_index.end())));
         }
-    } else {
-        req.add_count = kw_counter + 1;
-
-        // Compute the root of the tree attached to kw_index
-        sse::crypto::RCPrf<kKeySize> rcprf_root(
-            root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
-        TokenTree::token_type root
-            = root_prf_.prf(kw_index.data(), kw_index.size());
-
-        req.token_list
-            = TokenTree::covering_list(root, req.add_count, kTreeDepth);
-
-        // set the kw_token
-        req.kw_token = kw_token_prf_.prf(kw_index);
+        return SearchRequest(
+            {}, crypto::ConstrainedRCPrf<kSearchTokenKeySize>({}), 0);
     }
+    // else {
+    uint32_t add_count = kw_counter + 1;
 
-    return req;
+    // Compute the root of the tree attached to kw_index
+    crypto::RCPrf<kKeySize> rcprf_root(
+        root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
+
+    // auto constrained_rcprf = rcprf_root.constrain(0, kw_counter);
+    // req.constrained_rcprf  = std::move(constrained_rcprf);
+    // TokenTree::token_type root
+    // = root_prf_.prf(kw_index.data(), kw_index.size());
+
+    // req.token_list
+    // = TokenTree::covering_list(root, req.add_count, kTreeDepth);
+
+    // set the kw_token
+    // req.kw_token = kw_token_prf_.prf(kw_index);
+    // }
+
+    return SearchRequest(kw_token_prf_.prf(kw_index),
+                         rcprf_root.constrain(0, kw_counter)
+                         /*std::move(constrained_rcprf)*/,
+                         add_count);
 }
 
 template<typename T>
@@ -190,10 +198,15 @@ UpdateRequest<T> DianaClient<T>::insertion_request(const std::string& keyword,
             + "\"");
     }
 
-    TokenTree::inner_token_type root
-        = root_prf_.derive_key(kw_index.data(), kw_index.size());
+    sse::crypto::RCPrf<kKeySize> rcprf_root(
+        root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
 
-    st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
+    st = rcprf_root.eval(kw_counter);
+
+    // TokenTree::inner_token_type root
+    //     = root_prf_.derive_key(kw_index.data(), kw_index.size());
+
+    // st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
     logger::logger()->debug("New Search Token " + utility::hex_string(st));
 
@@ -231,10 +244,15 @@ std::list<UpdateRequest<T>> DianaClient<T>::bulk_insertion_request(
         // retrieve the counter
         uint32_t kw_counter = std::get<2>(*it);
 
-        TokenTree::inner_token_type root
-            = root_prf_.derive_key(kw_index.data(), kw_index.size());
+        sse::crypto::RCPrf<kKeySize> rcprf_root(
+            root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
 
-        st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
+        st = rcprf_root.eval(kw_counter);
+
+        // TokenTree::inner_token_type root
+        //     = root_prf_.derive_key(kw_index.data(), kw_index.size());
+
+        // st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
         logger::logger()->debug("New Search Token " + utility::hex_string(st));
 

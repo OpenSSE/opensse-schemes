@@ -67,6 +67,7 @@ config.log
 
 library/
 build/
+Ubuntu/
 static_analysis/
 debug
 check

@@ -108,7 +108,9 @@ private:
         bulk_update_writer_;
 };
 
-SearchRequestMessage request_to_message(const SearchRequest& req);
+SearchRequestMessage request_to_message(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequest&                    req);
 UpdateRequestMessage request_to_message(
     const UpdateRequest<DianaClientRunner::index_type>& req);
 

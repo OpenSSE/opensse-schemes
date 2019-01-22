@@ -21,27 +21,54 @@
 
 #pragma once
 
-#include <sse/schemes/diana/token_tree.hpp>
+// #include <sse/schemes/diana/token_tree.hpp>
+
+#include <sse/crypto/rcprf.hpp>
 
 namespace sse {
 namespace diana {
 
-constexpr size_t kSearchTokenKeySize = TokenTree::kTokenSize;
+constexpr size_t kSearchTokenKeySize = crypto::Prg::kKeySize;
 constexpr size_t kUpdateTokenSize    = 16;
 constexpr size_t kKeywordTokenSize   = 32;
 
-using search_token_key_type = TokenTree::token_type;
+
+using search_token_key_type = std::array<uint8_t, kSearchTokenKeySize>;
 using keyword_token_type    = std::array<uint8_t, kKeywordTokenSize>;
 using update_token_type     = std::array<uint8_t, kUpdateTokenSize>;
-//        typedef uint64_t index_type;
+using constrained_rcprf_type
+    = sse::crypto::ConstrainedRCPrf<kSearchTokenKeySize>;
 
-using search_token_type = std::list<std::pair<TokenTree::token_type, uint8_t>>;
+// using search_token_type = std::list<std::pair<TokenTree::token_type,
+// uint8_t>>;
 
 struct SearchRequest
 {
-    std::list<std::pair<search_token_key_type, uint8_t>> token_list;
-    uint32_t                                             add_count;
-    keyword_token_type                                   kw_token;
+    // std::list<std::pair<search_token_key_type, uint8_t>> token_list;
+    keyword_token_type     kw_token;
+    constrained_rcprf_type constrained_rcprf;
+    uint32_t               add_count;
+
+    SearchRequest() = delete;
+    SearchRequest(const keyword_token_type& token,
+                  constrained_rcprf_type&&  c_rcprf,
+                  uint32_t                  ac)
+        : kw_token(token), constrained_rcprf(std::move(c_rcprf)), add_count(ac)
+    {
+    }
+
+    SearchRequest(SearchRequest&& sr) noexcept = default;
+
+    SearchRequest& operator=(SearchRequest&& sr) noexcept
+    {
+        this->add_count         = sr.add_count;
+        this->kw_token          = sr.kw_token;
+        this->constrained_rcprf = std::move(sr.constrained_rcprf);
+
+        return *this;
+    };
+
+    SearchRequest& operator=(const SearchRequest& sr) = delete;
 };
 
 template<typename T>

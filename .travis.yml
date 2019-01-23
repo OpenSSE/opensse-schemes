@@ -23,7 +23,6 @@ addons:
        - libsnappy-dev
        - zlib1g-dev
        - libbz2-dev
-       - liblz4-dev
        - autoconf
        - libtool
        - lcov

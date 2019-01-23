@@ -225,23 +225,18 @@ void DianaServer<T>::search_parallel(SearchRequest&           req,
                                      std::vector<index_type>& results,
                                      bool                     delete_results)
 {
-    (void)req;
-    (void)threads_count;
-    (void)results;
-    (void)delete_results;
-    //     if (results.size() < req.add_count) {
-    //         // resize the vector if needed
-    //         results.resize(req.add_count);
-    //     }
+    if (results.size() < req.add_count) {
+        // resize the vector if needed
+        results.resize(req.add_count);
+    }
 
-    //     std::atomic<uint64_t> r_index(0);
+    std::atomic<uint64_t> r_index(0);
 
-    //     auto callback = [&results, &r_index](index_type i, uint8_t
-    //     /*thread_id*/) {
-    //         results[r_index++] = i;
-    //     };
+    auto callback
+        = [&results, &r_index](index_type i, uint8_t
+                               /*thread_id*/) { results[r_index++] = i; };
 
-    //     search_parallel(req, callback, threads_count, delete_results);
+    search_parallel(req, callback, threads_count, delete_results);
 }
 
 template<typename T>
@@ -268,113 +263,52 @@ void DianaServer<T>::search_parallel(
     (void)post_callback;
     (void)threads_count;
     (void)delete_results;
-    // assert(threads_count > 0);
-    // if (req.add_count == 0) {
-    //     return;
-    // }
 
-    // auto job = [this, &post_callback, delete_results](const uint8_t t_id,
-    //                                                   const SearchRequest&
-    //                                                   req, const size_t
-    //                                                   min_index, const size_t
-    //                                                   max_index) {
-    //     auto get_callback
-    //         // cppcheck-suppress variableScope
-    //         // cppcheck-suppress shadowVar
-    //         = [this, t_id, &post_callback, delete_results](uint8_t* key) {
-    //               index_type index;
-    //               if (get_unmask(key, index, delete_results)) {
-    //                   post_callback(index, t_id);
-    //               }
-    //           };
+    assert(threads_count > 0);
+    if (req.add_count == 0) {
+        return;
+    }
 
-    //     size_t loc_min_index = min_index;
-    //     size_t loc_max_index = max_index;
+    auto job = [this, &post_callback, delete_results](const uint8_t        t_id,
+                                                      const SearchRequest* req,
+                                                      const size_t min_index,
+                                                      const size_t max_index) {
+        for (size_t i = min_index; i <= max_index; i++) {
+            search_token_key_type st = req->constrained_rcprf.eval(i);
+            index_type            index;
+            if (get_unmask(st.data(), index, delete_results)) {
+                post_callback(index, t_id);
+            }
+        }
+    };
 
+    std::vector<std::thread> threads;
 
-    //     auto key_it = req.token_list.begin();
-
-    //     do {
-    //         // find the starting token
-    //         // this is the number of leafs for the current node
-    //         size_t leaf_count = (1UL << key_it->second);
-
-    //         if ((leaf_count <= loc_min_index)) {
-    //             // the selected leaf does not cover the minimum index
-    //             // get the next node
-
-    //             // update the local index counters
-    //             loc_min_index -= leaf_count; // no underflow:
-    //             loc_max_index -= leaf_count; // leaf_count <= loc_min_index
-    //             <=
-    //                                          // loc_max_index
-
-    //         } else if ((leaf_count > loc_max_index)) {
-    //             // this is the last node for us
-    //             search_token_key_type token
-    //                 = key_it->first; // copy the node as it will be
-    //                                  // erased by the next function
-    //             TokenTree::derive_leaves(token,
-    //                                      key_it->second,
-    //                                      loc_min_index,
-    //                                      loc_max_index,
-    //                                      get_callback);
+    threads_count = std::min<uint8_t>(
+        std::min<uint32_t>(threads_count, req.add_count), 0xFF);
 
 
-    //             break;
-    //         } else {
-    //             // leaf_count > loc_min_index and leaf_count <= loc_max_index
+    size_t step      = req.add_count / threads_count;
+    size_t remaining = req.add_count % threads_count;
 
+    size_t min = 0;
+    size_t max = step;
 
-    //             search_token_key_type token
-    //                 = key_it->first; // copy the node as it will be
-    //                                  // erased by the next function
-    //             TokenTree::derive_leaves(token,
-    //                                      key_it->second,
-    //                                      loc_min_index,
-    //                                      leaf_count - 1,
-    //                                      get_callback);
+    for (uint8_t t = 0; t < threads_count; t++) {
+        if (t < remaining) {
+            max++;
+        }
 
-    //             // update the local index counters
-    //             loc_min_index = 0; // the first leaves have been generated
-    //             now loc_max_index -= leaf_count; // leaf_count <=
-    //             loc_min_index <=
-    //                                          // loc_max_index
-    //         }
+        threads.push_back(std::thread(
+            job, t, &req, min, std::min<size_t>(max, req.add_count) - 1));
 
+        min = max;
+        max += step;
+    }
 
-    //         // get the next tree node
-    //         ++key_it;
-    //     } while ((key_it != req.token_list.end()));
-    // };
-
-    // std::vector<std::thread> threads;
-
-    // threads_count = std::min<uint8_t>(
-    //     std::min<uint32_t>(threads_count, req.add_count), 0xFF);
-
-
-    // size_t step      = req.add_count / threads_count;
-    // size_t remaining = req.add_count % threads_count;
-
-    // size_t min = 0;
-    // size_t max = step;
-
-    // for (uint8_t t = 0; t < threads_count; t++) {
-    //     if (t < remaining) {
-    //         max++;
-    //     }
-
-    //     threads.push_back(std::thread(
-    //         job, t, req, min, std::min<size_t>(max, req.add_count) - 1));
-
-    //     min = max;
-    //     max += step;
-    // }
-
-    // for (auto& t : threads) {
-    //     t.join();
-    // }
+    for (auto& t : threads) {
+        t.join();
+    }
 }
 
 template<typename T>

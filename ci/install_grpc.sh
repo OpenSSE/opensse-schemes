@@ -14,7 +14,7 @@ else
 
 	set -ex
 
-	git clone -b "$(curl -L https://grpc.io/release)" https://github.com/grpc/grpc
+	git clone -b "$(curl -L https://grpc.io/release)" --single-branch --depth 1 https://github.com/grpc/grpc
 
 	cd grpc
 	git submodule update --init

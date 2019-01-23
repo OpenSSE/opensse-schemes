@@ -110,7 +110,7 @@ SearchRequest JanusClient::search_request(const std::string& keyword)
     SearchRequest req(keyword_token,
                       std::move(insertion_search_request),
                       std::move(deletion_search_request),
-                      std::move(first_key_share));
+                      first_key_share);
     // increment the search counter only if there were some insertions or some
     // deletions
     if (req.insertion_search_request.add_count > 0

@@ -35,13 +35,12 @@ struct SearchRequest
 
     SearchRequest() = delete;
 
-    SearchRequest(const keyword_token_type&       token,
-                  diana::SearchRequest&&          add_req,
-                  diana::SearchRequest&&          del_req,
-                  crypto::punct::key_share_type&& ks)
+    SearchRequest(const keyword_token_type&            token,
+                  diana::SearchRequest&&               add_req,
+                  diana::SearchRequest&&               del_req,
+                  const crypto::punct::key_share_type& ks)
         : keyword_token(token), insertion_search_request(std::move(add_req)),
-          deletion_search_request(std::move(del_req)),
-          first_key_share(std::move(ks))
+          deletion_search_request(std::move(del_req)), first_key_share(ks)
     {
     }
 

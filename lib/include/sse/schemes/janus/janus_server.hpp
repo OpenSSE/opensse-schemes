@@ -41,29 +41,6 @@ public:
                          uint8_t                                         diana_threads_count,
                          const std::function<void(index_type, uint8_t)>& post_callback);
 
-    //            void search(const SearchRequest& req, const
-    //            std::function<void(index_type)> &post_callback); void
-    //            search_simple(const SearchRequest& req, const
-    //            std::function<void(index_type)> &post_callback);
-    //
-    //            std::list<index_type> search_parallel(const SearchRequest&
-    //            req, uint8_t derivation_threads_count,uint8_t
-    //            access_threads_count); void search_parallel(const
-    //            SearchRequest& req, const std::function<void(index_type)>
-    //            &post_callback, uint8_t derivation_threads_count,uint8_t
-    //            access_threads_count);
-    //
-    //            std::list<index_type> search_simple_parallel(const
-    //            SearchRequest& req, uint8_t threads_count); void
-    //            search_simple_parallel(const SearchRequest& req, uint8_t
-    //            threads_count, std::vector<index_type> &results); void
-    //            search_simple_parallel(const SearchRequest& req, const
-    //            std::function<void(index_type)> &post_callback, uint8_t
-    //            threads_count); void search_simple_parallel(const
-    //            SearchRequest& req, const std::function<void(index_type,
-    //            uint8_t)> &post_callback, uint8_t threads_count);
-    //
-
     void insert(const InsertionRequest& req);
     void remove(const DeletionRequest& req);
 

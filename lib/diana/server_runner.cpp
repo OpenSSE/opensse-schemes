@@ -167,7 +167,7 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
     } else {
         {
             SearchBenchmark bench("Diana synchronous search");
-            server_->search_simple_parallel(req, 8, res_list);
+            server_->search_parallel(req, 8, res_list);
             bench.set_count(res_list.size());
         }
         for (auto& i : res_list) {
@@ -221,11 +221,11 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
         if (mes->add_count() >= 40) { // run the search algorithm in parallel
                                       // only if there are more than 2 results
 
-            server_->search_simple_parallel(
+            server_->search_parallel(
                 req, post_callback, std::thread::hardware_concurrency());
 
         } else if (mes->add_count() >= 2) {
-            server_->search_simple_parallel(
+            server_->search_parallel(
                 req, post_callback, std::thread::hardware_concurrency());
 
         } else {

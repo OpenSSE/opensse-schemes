@@ -40,14 +40,22 @@ public:
     static constexpr size_t kKeySize = 32;
 
     using index_type = T;
+    // Callback only taking the result as input
+    using basic_callback_type = std::function<void(index_type)>;
+    // Callback taking the position of the result in the result list (i.e. n if
+    // it is the n-th element in the insertion order), the result and the thread
+    // id as input. In this implementation, this callback is guaranteed to be
+    // called by only one thread (hence the tl prefix for 'thread local')
+    using tl_callback_type = std::function<void(size_t, index_type, uint8_t)>;
+
 
     explicit DianaServer(const std::string& db_path);
 
     std::list<index_type> search(const SearchRequest& req,
                                  bool                 delete_results = false);
-    void                  search(const SearchRequest&                   req,
-                                 const std::function<void(index_type)>& post_callback,
-                                 bool                                   delete_results = false);
+    void                  search(const SearchRequest&       req,
+                                 const basic_callback_type& post_callback,
+                                 bool                       delete_results = false);
 
     std::list<index_type> search_parallel(const SearchRequest& req,
                                           uint8_t              threads_count,
@@ -56,15 +64,14 @@ public:
                                           uint8_t                  threads_count,
                                           std::vector<index_type>& results,
                                           bool                     delete_results = false);
-    void                  search_parallel(const SearchRequest&                   req,
-                                          const std::function<void(index_type)>& post_callback,
-                                          uint8_t                                threads_count,
-                                          bool delete_results = false);
-    void                  search_parallel(
-                         const SearchRequest&                            req,
-                         const std::function<void(index_type, uint8_t)>& post_callback,
-                         uint8_t                                         threads_count,
-                         bool                                            delete_results = false);
+    void                  search_parallel(const SearchRequest&       req,
+                                          const basic_callback_type& post_callback,
+                                          uint8_t                    threads_count,
+                                          bool                       delete_results = false);
+    void                  search_parallel(const SearchRequest&    req,
+                                          const tl_callback_type& post_callback,
+                                          uint8_t                 threads_count,
+                                          bool                    delete_results = false);
 
 
     void insert(const UpdateRequest<index_type>& req);
@@ -152,10 +159,9 @@ std::list<typename DianaServer<T>::index_type> DianaServer<T>::search(
 }
 
 template<typename T>
-void DianaServer<T>::search(
-    const SearchRequest&                   req,
-    const std::function<void(index_type)>& post_callback,
-    bool                                   delete_results)
+void DianaServer<T>::search(const SearchRequest&       req,
+                            const basic_callback_type& post_callback,
+                            bool                       delete_results)
 {
     logger::logger()->debug("Search: {} expected matches.", req.add_count);
 
@@ -181,9 +187,10 @@ std::list<typename DianaServer<T>::index_type> DianaServer<T>::search_parallel(
     std::list<index_type>* result_lists
         = new std::list<index_type>[threads_count];
 
-    auto callback = [&result_lists](index_type i, uint8_t thread_id) {
-        result_lists[thread_id].push_back(i);
-    };
+    auto callback
+        = [&result_lists](size_t /*i*/, index_type res, uint8_t thread_id) {
+              result_lists[thread_id].push_back(res);
+          };
 
     search_parallel(req, callback, threads_count, delete_results);
 
@@ -209,34 +216,35 @@ void DianaServer<T>::search_parallel(const SearchRequest&     req,
         results.resize(req.add_count);
     }
 
-    std::atomic<uint64_t> r_index(0);
 
-    auto callback
-        = [&results, &r_index](index_type i, uint8_t
-                               /*thread_id*/) { results[r_index++] = i; };
+    auto callback = [&results](size_t i, index_type res, uint8_t
+                               /*thread_id*/) {
+        if (__builtin_expect(i < results.size(), 1)) {
+            results[i] = res;
+        }
+    };
 
     search_parallel(req, callback, threads_count, delete_results);
 }
 
 template<typename T>
-void DianaServer<T>::search_parallel(
-    const SearchRequest&                   req,
-    const std::function<void(index_type)>& post_callback,
-    uint8_t                                threads_count,
-    bool                                   delete_results)
+void DianaServer<T>::search_parallel(const SearchRequest&       req,
+                                     const basic_callback_type& post_callback,
+                                     uint8_t                    threads_count,
+                                     bool                       delete_results)
 {
-    auto aux = [&post_callback](index_type ind, uint8_t /*i*/) {
-        post_callback(ind);
-    };
+    auto aux
+        = [&post_callback](size_t /*i*/, index_type ind, uint8_t /*t_id*/) {
+              post_callback(ind);
+          };
     search_parallel(req, aux, threads_count, delete_results);
 }
 
 template<typename T>
-void DianaServer<T>::search_parallel(
-    const SearchRequest&                            req,
-    const std::function<void(index_type, uint8_t)>& post_callback,
-    uint8_t                                         threads_count,
-    bool                                            delete_results)
+void DianaServer<T>::search_parallel(const SearchRequest&    req,
+                                     const tl_callback_type& post_callback,
+                                     uint8_t                 threads_count,
+                                     bool                    delete_results)
 {
     assert(threads_count > 0);
     if (req.add_count == 0) {
@@ -251,7 +259,7 @@ void DianaServer<T>::search_parallel(
                   search_token_key_type st = req.constrained_rcprf.eval(i);
                   index_type            index;
                   if (get_unmask(st.data(), index, delete_results)) {
-                      post_callback(index, t_id);
+                      post_callback(i, index, t_id);
                   }
               }
           };

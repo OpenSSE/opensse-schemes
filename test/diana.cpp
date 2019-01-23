@@ -274,11 +274,11 @@ TEST(diana, search_parallel_thread_local_callback)
     std::mutex          res_list_mutex;
     std::list<uint64_t> res_list;
 
-    auto search_callback
-        = [&res_list_mutex, &res_list](uint64_t index, uint8_t) {
-              std::lock_guard<std::mutex> lock(res_list_mutex);
-              res_list.push_back(index);
-          };
+    auto search_callback = [&res_list_mutex, &res_list](
+                               size_t /*i*/, uint64_t index, uint8_t /*t_id*/) {
+        std::lock_guard<std::mutex> lock(res_list_mutex);
+        res_list.push_back(index);
+    };
     auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
                                                     SearchRequest&   req) {
         server.search_parallel(req, search_callback, concurrency_level, false);

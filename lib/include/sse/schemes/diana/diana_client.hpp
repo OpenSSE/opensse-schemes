@@ -149,7 +149,7 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
                                          kw_index.begin(), kw_index.end())));
         }
         return SearchRequest(
-            {}, crypto::ConstrainedRCPrf<kSearchTokenKeySize>({}), 0);
+            {{}}, crypto::ConstrainedRCPrf<kSearchTokenKeySize>({}), 0);
     }
     // else {
     uint32_t add_count = kw_counter + 1;

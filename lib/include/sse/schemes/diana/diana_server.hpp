@@ -165,13 +165,16 @@ void DianaServer<T>::search(const SearchRequest&       req,
 {
     logger::logger()->debug("Search: {} expected matches.", req.add_count);
 
-    for (size_t i = 0; i <= req.constrained_rcprf.max_leaf(); i++) {
-        search_token_key_type st = req.constrained_rcprf.eval(i);
-        index_type            index;
-        if (get_unmask(st.data(), index, delete_results)) {
-            post_callback(index);
-        }
-    }
+    auto eval_callback
+        = [this, &post_callback, delete_results](uint64_t /*leaf_index*/,
+                                                 search_token_key_type st) {
+              index_type index;
+              if (get_unmask(st.data(), index, delete_results)) {
+                  post_callback(index);
+              }
+          };
+    req.constrained_rcprf.eval_range(
+        0, req.constrained_rcprf.max_leaf(), eval_callback);
 }
 
 template<typename T>
@@ -251,18 +254,21 @@ void DianaServer<T>::search_parallel(const SearchRequest&    req,
         return;
     }
 
-    auto job
-        = [this, &req, &post_callback, delete_results](const uint8_t t_id,
-                                                       const size_t  min_index,
-                                                       const size_t max_index) {
-              for (size_t i = min_index; i <= max_index; i++) {
-                  search_token_key_type st = req.constrained_rcprf.eval(i);
-                  index_type            index;
+
+    auto job = [this, &req, &post_callback, delete_results](
+                   const uint8_t t_id,
+                   const size_t  min_index,
+                   const size_t  max_index) {
+        auto eval_callback
+            = [this, &post_callback, delete_results, t_id](
+                  uint64_t leaf_index, search_token_key_type st) {
+                  index_type index;
                   if (get_unmask(st.data(), index, delete_results)) {
-                      post_callback(i, index, t_id);
+                      post_callback(leaf_index, index, t_id);
                   }
-              }
-          };
+              };
+        req.constrained_rcprf.eval_range(min_index, max_index, eval_callback);
+    };
 
     std::vector<std::thread> threads;
 

@@ -165,6 +165,11 @@ void DianaServer<T>::search(const SearchRequest&       req,
 {
     logger::logger()->debug("Search: {} expected matches.", req.add_count);
 
+    // if the search request is empty, return immediately
+    if (req.add_count == 0) {
+        return;
+    }
+
     auto eval_callback
         = [this, &post_callback, delete_results](uint64_t /*leaf_index*/,
                                                  search_token_key_type st) {
@@ -185,6 +190,10 @@ std::list<typename DianaServer<T>::index_type> DianaServer<T>::search_parallel(
 {
     assert(threads_count > 0);
 
+    // if the search request is empty, return immediately
+    if (req.add_count == 0) {
+        return {};
+    }
 
     // use one result list per thread so to avoid using locks
     std::list<index_type>* result_lists

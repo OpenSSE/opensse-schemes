@@ -22,7 +22,6 @@
 #pragma once
 
 #include <sse/schemes/diana/diana_common.hpp>
-#include <sse/schemes/diana/token_tree.hpp>
 #include <sse/schemes/diana/types.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
 #include <sse/schemes/utils/thread_pool.hpp>

@@ -21,8 +21,6 @@
 
 #pragma once
 
-// #include <sse/schemes/diana/token_tree.hpp>
-
 #include <sse/crypto/rcprf.hpp>
 
 namespace sse {

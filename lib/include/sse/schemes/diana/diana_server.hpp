@@ -171,6 +171,7 @@ void DianaServer<T>::search(const SearchRequest&       req,
     }
 
     auto eval_callback
+        // cppcheck-suppress variableScope
         = [this, &post_callback, delete_results](uint64_t /*leaf_index*/,
                                                  search_token_key_type st) {
               index_type index;
@@ -269,6 +270,10 @@ void DianaServer<T>::search_parallel(const SearchRequest&    req,
                    const size_t  min_index,
                    const size_t  max_index) {
         auto eval_callback
+            // cppcheck does not like nested lambda
+            // cppcheck-suppress shadowVar
+            // Silence issues with cppcheck on lambda's variable scope
+            // cppcheck-suppress variableScope
             = [this, &post_callback, delete_results, t_id](
                   uint64_t leaf_index, search_token_key_type st) {
                   index_type index;

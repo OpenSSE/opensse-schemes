@@ -375,12 +375,18 @@ void DianaClientRunner::insert_in_session(
 
     bulk_update_state_.mtx.lock();
 
-    for (auto& it : message_list) {
-        if (!bulk_update_state_.writer->Write(request_to_message(it))) {
-            logger::logger()->error("Update session stopped: broken stream.");
-            break;
-        }
+    bool success = std::all_of(
+        message_list.begin(),
+        message_list.end(),
+        [this](UpdateRequest<DianaClientRunner::index_type>& req) {
+            return this->bulk_update_state_.writer->Write(
+                request_to_message(req));
+        });
+
+    if (!success) {
+        logger::logger()->error("Update session stopped: broken stream.");
     }
+
     bulk_update_state_.mtx.unlock();
 }
 

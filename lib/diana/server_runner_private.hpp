@@ -82,6 +82,7 @@ public:
 
 private:
     static const char* pairs_map_file;
+    static const char* wrapping_key_file;
 
     std::unique_ptr<crypto::Wrapper> token_wrapper_;
 

@@ -145,8 +145,8 @@ static std::unique_ptr<DC> construct_client_from_directory(
 }
 
 std::unique_ptr<DC> init_client_in_directory(
-    const std::string&                     dir_path,
-    std::unique_ptr<sse::crypto::Wrapper>& wrapper)
+    const std::string&                              dir_path,
+    std::array<uint8_t, crypto::Wrapper::kKeySize>& wrapping_key)
 {
     // try to initialize everything in this directory
     if (!utility::is_directory(dir_path)) {
@@ -165,8 +165,9 @@ std::unique_ptr<DC> init_client_in_directory(
         = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
     std::array<uint8_t, DC::kKeySize> kw_token_master_key
         = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
-    std::array<uint8_t, DC::kKeySize> wrapping_key
-        = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+    // no need to define a new variable for the wrapping key: the wrapping_key
+    // variable will be output here
+    wrapping_key = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
 
     std::ofstream master_key_out(master_key_path.c_str());
     if (!master_key_out.is_open()) {
@@ -198,9 +199,6 @@ std::unique_ptr<DC> init_client_in_directory(
     wrapping_key_out << std::string(wrapping_key.begin(), wrapping_key.end());
     wrapping_key_out.close();
 
-    wrapper.reset(new sse::crypto::Wrapper(
-        sse::crypto::Key<DC::kKeySize>(wrapping_key.data())));
-
     return std::unique_ptr<DC>(
         new DC(counter_map_path,
                sse::crypto::Key<DC::kKeySize>(master_derivation_key.data()),
@@ -231,10 +229,14 @@ DianaClientRunner::DianaClientRunner(
             throw std::runtime_error(path + ": unable to create directory");
         }
 
-        client_ = init_client_in_directory(path, token_wrapper_);
+        std::array<uint8_t, crypto::Wrapper::kKeySize> wrapper_key;
+        client_ = init_client_in_directory(path, wrapper_key);
 
         // send a setup message to the server
-        bool success = send_setup();
+        bool success = send_setup(wrapper_key);
+
+        token_wrapper_.reset(new crypto::Wrapper(
+            crypto::Key<crypto::Wrapper::kKeySize>(wrapper_key.data())));
 
         if (!success) {
             throw std::runtime_error("Unsuccessful server setup");
@@ -249,11 +251,14 @@ DianaClientRunner::~DianaClientRunner()
     // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
 }
 
-bool DianaClientRunner::send_setup() const
+bool DianaClientRunner::send_setup(
+    const std::array<uint8_t, crypto::Wrapper::kKeySize>& wrapping_key) const
 {
     grpc::ClientContext     context;
     SetupMessage            message;
     google::protobuf::Empty e;
+
+    message.set_wrapping_key(wrapping_key.data(), wrapping_key.size());
 
     grpc::Status status = stub_->setup(&context, message, &e);
 

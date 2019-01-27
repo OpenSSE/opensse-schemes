@@ -87,7 +87,8 @@ public:
 private:
     void update_completion_loop();
 
-    bool send_setup() const;
+    bool send_setup(const std::array<uint8_t, crypto::Wrapper::kKeySize>&
+                        wrapping_key) const;
 
     std::unique_ptr<crypto::Wrapper> token_wrapper_;
 

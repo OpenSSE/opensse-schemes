@@ -42,7 +42,8 @@
 namespace sse {
 namespace diana {
 
-const char* DianaImpl::pairs_map_file = "pairs.dat";
+const char* DianaImpl::pairs_map_file    = "pairs.dat";
+const char* DianaImpl::wrapping_key_file = "wrapping.key";
 
 DianaImpl::DianaImpl(std::string path)
     : storage_path_(std::move(path)), async_search_(true)
@@ -50,13 +51,37 @@ DianaImpl::DianaImpl(std::string path)
     if (utility::is_directory(storage_path_)) {
         // try to initialize everything from this directory
 
-        std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
+        std::string pairs_map_path    = storage_path_ + "/" + pairs_map_file;
+        std::string wrapping_key_path = storage_path_ + "/" + wrapping_key_file;
 
+        if (!utility::is_file(wrapping_key_path)) {
+            // error, the wrapping key file is not there
+            throw std::runtime_error("Missing wrapping key file");
+        }
         if (!utility::is_directory(pairs_map_path)) {
             // error, the token map data is not there
             throw std::runtime_error("Missing data");
         }
 
+        std::ifstream     wrapping_key_in(wrapping_key_path.c_str());
+        std::stringstream wrapping_key_buf;
+        std::array<uint8_t, crypto::Wrapper::kKeySize> wrapping_key_array;
+
+        wrapping_key_buf << wrapping_key_in.rdbuf();
+
+        auto wrapping_key_str = wrapping_key_buf.str();
+
+        if (wrapping_key_str.size() != wrapping_key_array.size()) {
+            throw std::runtime_error(
+                "Invalid wrapping key size when "
+                "constructing the Diana server: "
+                + std::to_string(wrapping_key_buf.str().size())
+                + " bytes instead of 32");
+        }
+
+        token_wrapper_.reset(new sse::crypto::Wrapper(
+            sse::crypto::Key<crypto::Wrapper::kKeySize>(
+                wrapping_key_array.data())));
 
         server_.reset(new DianaServer<index_type>(pairs_map_path));
     } else if (utility::exists(storage_path_)) {
@@ -75,8 +100,7 @@ DianaImpl::~DianaImpl()
 
 grpc::Status DianaImpl::setup(__attribute__((unused))
                               grpc::ServerContext* context,
-                              __attribute__((unused))
-                              const SetupMessage* message,
+                              const SetupMessage*  message,
                               __attribute__((unused))
                               google::protobuf::Empty* e)
 {
@@ -127,6 +151,38 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
         return grpc::Status(grpc::FAILED_PRECONDITION,
                             "Unable to create the server's core.");
     }
+
+
+    // write the wrapping key in a file
+    std::string wrapping_key_path = storage_path_ + "/" + wrapping_key_file;
+
+    std::ofstream wrapping_key_out(wrapping_key_path.c_str());
+    if (!wrapping_key_out.is_open()) {
+        // error
+
+        logger::logger()->error("Error when writing the wrapping key");
+
+        return grpc::Status(grpc::PERMISSION_DENIED,
+                            "Unable to write the wrapping key to disk");
+    }
+
+    if (message->wrapping_key().size() != crypto::Wrapper::kKeySize) {
+        logger::logger()->error("Invalid wrapping key size");
+
+        return grpc::Status(grpc::INVALID_ARGUMENT,
+                            "Invalid transmitted wrapping key size");
+    }
+
+    wrapping_key_out << message->wrapping_key();
+    wrapping_key_out.close();
+
+    std::array<uint8_t, crypto::Wrapper::kKeySize> wrapping_key;
+    std::copy(message->wrapping_key().begin(),
+              message->wrapping_key().end(),
+              wrapping_key.begin());
+
+    token_wrapper_.reset(new crypto::Wrapper(
+        crypto::Key<crypto::Wrapper::kKeySize>(wrapping_key.data())));
 
     logger::logger()->trace("Successful setup");
 

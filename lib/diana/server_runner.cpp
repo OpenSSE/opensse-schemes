@@ -78,7 +78,9 @@ DianaImpl::DianaImpl(std::string path)
                 + std::to_string(wrapping_key_buf.str().size())
                 + " bytes instead of 32");
         }
-
+        std::copy(wrapping_key_str.begin(),
+                  wrapping_key_str.end(),
+                  wrapping_key_array.begin());
         token_wrapper_.reset(new sse::crypto::Wrapper(
             sse::crypto::Key<crypto::Wrapper::kKeySize>(
                 wrapping_key_array.data())));

@@ -146,7 +146,7 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
         if (log_not_found) {
             logger::logger()->info("No matching counter found for keyword "
                                    + utility::hex_string(std::string(
-                                         kw_index.begin(), kw_index.end())));
+                                       kw_index.begin(), kw_index.end())));
         }
         return SearchRequest(
             {{}}, crypto::ConstrainedRCPrf<kSearchTokenKeySize>({}), 0);

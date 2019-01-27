@@ -41,9 +41,9 @@ struct serialization<janus::JanusServer::cached_result_type>
         }
         logger::logger()->debug("Deserialized string: "
                                 + utility::hex_string(std::string(
-                                      begin,
-                                      begin + sizeof(janus::index_type)
-                                          + sizeof(crypto::punct::kTagSize))));
+                                    begin,
+                                    begin + sizeof(janus::index_type)
+                                        + sizeof(crypto::punct::kTagSize))));
 
         janus::index_type       ind;
         crypto::punct::tag_type tag;

@@ -45,6 +45,7 @@
 
 #define MASTER_KEY_FILE "master_derivation.key"
 #define KW_TOKEN_MASTER_KEY_FILE "kw_token_master.key"
+#define WRAPPING_KEY_FILE "wrapping.key"
 #define COUNTER_MAP_FILE "counters.dat"
 
 namespace sse {
@@ -53,7 +54,8 @@ namespace diana {
 using DC = DianaClient<DianaClientRunner::index_type>;
 
 static std::unique_ptr<DC> construct_client_from_directory(
-    const std::string& dir_path)
+    const std::string&                     dir_path,
+    std::unique_ptr<sse::crypto::Wrapper>& wrapper)
 {
     // try to initialize everything from this directory
     if (!utility::is_directory(dir_path)) {
@@ -63,7 +65,8 @@ static std::unique_ptr<DC> construct_client_from_directory(
     std::string master_key_path = dir_path + "/" + MASTER_KEY_FILE;
     std::string kw_token_master_key_path
         = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
-    std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
+    std::string wrapping_key_path = dir_path + "/" + WRAPPING_KEY_FILE;
+    std::string counter_map_path  = dir_path + "/" + COUNTER_MAP_FILE;
 
     if (!utility::is_file(master_key_path)) {
         // error, the derivation key file is not there
@@ -72,6 +75,10 @@ static std::unique_ptr<DC> construct_client_from_directory(
     if (!utility::is_file(kw_token_master_key_path)) {
         // error, the rsa prg key file is not there
         throw std::runtime_error("Missing keyword token key file");
+    }
+    if (!utility::is_file(wrapping_key_path)) {
+        // error, the wrapping key file is not there
+        throw std::runtime_error("Missing wrapping key file");
     }
     if (!utility::is_directory(counter_map_path)) {
         // error, the token map data is not there
@@ -82,14 +89,17 @@ static std::unique_ptr<DC> construct_client_from_directory(
     // a massive overhaul
     std::ifstream master_key_in(master_key_path.c_str());
     std::ifstream kw_token_key_in(kw_token_master_key_path.c_str());
+    std::ifstream wrapping_key_in(wrapping_key_path.c_str());
 
-    std::stringstream master_key_buf, kw_token_key_buf;
+
+    std::stringstream master_key_buf, kw_token_key_buf, wrapping_key_buf;
 
     master_key_buf << master_key_in.rdbuf();
     kw_token_key_buf << kw_token_key_in.rdbuf();
+    wrapping_key_buf << wrapping_key_in.rdbuf();
 
     std::array<uint8_t, DC::kKeySize> client_master_key_array,
-        client_kw_token_key_array;
+        client_kw_token_key_array, client_wrapping_key_array;
 
 
     if (master_key_buf.str().size() != client_master_key_array.size()) {
@@ -104,9 +114,16 @@ static std::unique_ptr<DC> construct_client_from_directory(
                                  + std::to_string(kw_token_key_buf.str().size())
                                  + " bytes instead of 32");
     }
+    if (wrapping_key_buf.str().size() != client_wrapping_key_array.size()) {
+        throw std::runtime_error("Invalid wrapping key size when "
+                                 "constructing the Diana client: "
+                                 + std::to_string(wrapping_key_buf.str().size())
+                                 + " bytes instead of 32");
+    }
 
     auto master_key_str   = master_key_buf.str();
     auto kw_token_key_str = kw_token_key_buf.str();
+    auto wrapping_key_str = wrapping_key_buf.str();
 
     std::copy(master_key_str.begin(),
               master_key_str.end(),
@@ -114,6 +131,12 @@ static std::unique_ptr<DC> construct_client_from_directory(
     std::copy(kw_token_key_str.begin(),
               kw_token_key_str.end(),
               client_kw_token_key_array.begin());
+    std::copy(wrapping_key_str.begin(),
+              wrapping_key_str.end(),
+              client_wrapping_key_array.begin());
+
+    wrapper.reset(new sse::crypto::Wrapper(
+        sse::crypto::Key<DC::kKeySize>(client_wrapping_key_array.data())));
 
     return std::unique_ptr<DC>(new DC(
         counter_map_path,
@@ -121,15 +144,18 @@ static std::unique_ptr<DC> construct_client_from_directory(
         sse::crypto::Key<DC::kKeySize>(client_kw_token_key_array.data())));
 }
 
-std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
+std::unique_ptr<DC> init_client_in_directory(
+    const std::string&                              dir_path,
+    std::array<uint8_t, crypto::Wrapper::kKeySize>& wrapping_key)
 {
     // try to initialize everything in this directory
     if (!utility::is_directory(dir_path)) {
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
-    std::string counter_map_path = dir_path + "/" + COUNTER_MAP_FILE;
-    std::string master_key_path  = dir_path + "/" + MASTER_KEY_FILE;
+    std::string counter_map_path  = dir_path + "/" + COUNTER_MAP_FILE;
+    std::string master_key_path   = dir_path + "/" + MASTER_KEY_FILE;
+    std::string wrapping_key_path = dir_path + "/" + WRAPPING_KEY_FILE;
     std::string kw_token_master_key_path
         = dir_path + "/" + KW_TOKEN_MASTER_KEY_FILE;
 
@@ -139,6 +165,9 @@ std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
         = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
     std::array<uint8_t, DC::kKeySize> kw_token_master_key
         = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
+    // no need to define a new variable for the wrapping key: the wrapping_key
+    // variable will be output here
+    wrapping_key = sse::crypto::random_bytes<uint8_t, DC::kKeySize>();
 
     std::ofstream master_key_out(master_key_path.c_str());
     if (!master_key_out.is_open()) {
@@ -161,6 +190,15 @@ std::unique_ptr<DC> init_client_in_directory(const std::string& dir_path)
                                     kw_token_master_key.end());
     kw_token_key_out.close();
 
+    std::ofstream wrapping_key_out(wrapping_key_path.c_str());
+    if (!wrapping_key_out.is_open()) {
+        throw std::runtime_error(
+            wrapping_key_path + ": unable to write the master derivation key");
+    }
+
+    wrapping_key_out << std::string(wrapping_key.begin(), wrapping_key.end());
+    wrapping_key_out.close();
+
     return std::unique_ptr<DC>(
         new DC(counter_map_path,
                sse::crypto::Key<DC::kKeySize>(master_derivation_key.data()),
@@ -176,7 +214,7 @@ DianaClientRunner::DianaClientRunner(
     if (utility::is_directory(path)) {
         // try to initialize everything from this directory
 
-        client_ = construct_client_from_directory(path);
+        client_ = construct_client_from_directory(path, token_wrapper_);
 
     } else if (utility::exists(path)) {
         // there should be nothing else than a directory at path, but we found
@@ -191,10 +229,14 @@ DianaClientRunner::DianaClientRunner(
             throw std::runtime_error(path + ": unable to create directory");
         }
 
-        client_ = init_client_in_directory(path);
+        std::array<uint8_t, crypto::Wrapper::kKeySize> wrapper_key;
+        client_ = init_client_in_directory(path, wrapper_key);
 
         // send a setup message to the server
-        bool success = send_setup();
+        bool success = send_setup(wrapper_key);
+
+        token_wrapper_.reset(new crypto::Wrapper(
+            crypto::Key<crypto::Wrapper::kKeySize>(wrapper_key.data())));
 
         if (!success) {
             throw std::runtime_error("Unsuccessful server setup");
@@ -209,11 +251,14 @@ DianaClientRunner::~DianaClientRunner()
     // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
 }
 
-bool DianaClientRunner::send_setup() const
+bool DianaClientRunner::send_setup(
+    const std::array<uint8_t, crypto::Wrapper::kKeySize>& wrapping_key) const
 {
     grpc::ClientContext     context;
     SetupMessage            message;
     google::protobuf::Empty e;
+
+    message.set_wrapping_key(wrapping_key.data(), wrapping_key.size());
 
     grpc::Status status = stub_->setup(&context, message, &e);
 
@@ -247,7 +292,8 @@ std::list<uint64_t> DianaClientRunner::search(
     SearchRequestMessage message;
     SearchReply          reply;
 
-    message = request_to_message(client_->search_request(keyword));
+    message
+        = request_to_message(token_wrapper_, client_->search_request(keyword));
 
     if (message.add_count() == 0) {
         return {};
@@ -329,12 +375,18 @@ void DianaClientRunner::insert_in_session(
 
     bulk_update_state_.mtx.lock();
 
-    for (auto& it : message_list) {
-        if (!bulk_update_state_.writer->Write(request_to_message(it))) {
-            logger::logger()->error("Update session stopped: broken stream.");
-            break;
-        }
+    bool success = std::all_of(
+        message_list.begin(),
+        message_list.end(),
+        [this](UpdateRequest<DianaClientRunner::index_type>& req) {
+            return this->bulk_update_state_.writer->Write(
+                request_to_message(req));
+        });
+
+    if (!success) {
+        logger::logger()->error("Update session stopped: broken stream.");
     }
+
     bulk_update_state_.mtx.unlock();
 }
 
@@ -434,17 +486,23 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
     return false;
 }
 
-SearchRequestMessage request_to_message(const SearchRequest& req)
+SearchRequestMessage request_to_message(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequest&                    req)
 {
     SearchRequestMessage mes;
 
     mes.set_add_count(req.add_count);
 
-    for (const auto& it : req.token_list) {
-        SearchToken* t = mes.add_token_list();
-        t->set_token(it.first.data(), it.first.size());
-        t->set_depth(it.second);
-    }
+    auto buffer = wrapper->wrap(req.constrained_rcprf);
+
+    // for (const auto& it : req.token_list) {
+    //     SearchToken* t = mes.add_token_list();
+    //     t->set_token(it.first.data(), it.first.size());
+    //     t->set_depth(it.second);
+    // }
+    mes.set_constrained_rcprf_rep(buffer.data(), buffer.size());
+
     mes.set_kw_token(req.kw_token.data(), req.kw_token.size());
 
     return mes;

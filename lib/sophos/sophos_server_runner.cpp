@@ -52,8 +52,8 @@ SophosImpl::SophosImpl(std::string path)
         std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
 
         if (!utility::is_file(pk_path)) {
-            // error, the secret key file is not there
-            throw std::runtime_error("Missing secret key file");
+            // error, the public key file is not there
+            throw std::runtime_error("Missing public key file");
         }
         if (!utility::is_directory(pairs_map_path)) {
             // error, the token map data is not there

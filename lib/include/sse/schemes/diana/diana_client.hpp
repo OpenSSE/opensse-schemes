@@ -21,7 +21,6 @@
 #pragma once
 
 #include <sse/schemes/diana/diana_common.hpp>
-#include <sse/schemes/diana/token_tree.hpp>
 #include <sse/schemes/diana/types.hpp>
 #include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
@@ -29,6 +28,8 @@
 
 #include <sse/crypto/key.hpp>
 #include <sse/crypto/prf.hpp>
+#include <sse/crypto/rcprf.hpp>
+#include <sse/crypto/wrapper.hpp>
 #include <sse/dbparser/json/rapidjson/document.h>
 #include <sse/dbparser/json/rapidjson/filereadstream.h>
 #include <sse/dbparser/json/rapidjson/filewritestream.h>
@@ -135,10 +136,9 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
 {
     keyword_index_type kw_index = get_keyword_index(keyword);
 
-    bool          found;
-    uint32_t      kw_counter;
-    SearchRequest req;
-    req.add_count = 0;
+    bool     found;
+    uint32_t kw_counter;
+    // SearchRequest req;
 
     found = counter_map_.get(keyword, kw_counter);
 
@@ -146,24 +146,22 @@ SearchRequest DianaClient<T>::search_request(const std::string& keyword,
         if (log_not_found) {
             logger::logger()->info("No matching counter found for keyword "
                                    + utility::hex_string(std::string(
-                                         kw_index.begin(), kw_index.end())));
+                                       kw_index.begin(), kw_index.end())));
         }
-    } else {
-        req.add_count = kw_counter + 1;
-
-        // Compute the root of the tree attached to kw_index
-
-        TokenTree::token_type root
-            = root_prf_.prf(kw_index.data(), kw_index.size());
-
-        req.token_list
-            = TokenTree::covering_list(root, req.add_count, kTreeDepth);
-
-        // set the kw_token
-        req.kw_token = kw_token_prf_.prf(kw_index);
+        return SearchRequest(
+            {{}}, crypto::ConstrainedRCPrf<kSearchTokenKeySize>({}), 0);
     }
+    // else {
+    uint32_t add_count = kw_counter + 1;
 
-    return req;
+    // Compute the root of the tree attached to kw_index
+    crypto::RCPrf<kKeySize> rcprf_root(
+        root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
+
+    return SearchRequest(kw_token_prf_.prf(kw_index),
+                         rcprf_root.constrain(0, kw_counter)
+                         /*std::move(constrained_rcprf)*/,
+                         add_count);
 }
 
 template<typename T>
@@ -182,12 +180,21 @@ UpdateRequest<T> DianaClient<T>::insertion_request(const std::string& keyword,
 
     bool success = counter_map_.get_and_increment(keyword, kw_counter);
 
-    assert(success);
+    if (!success) {
+        std::runtime_error(
+            "Unable to increment the keyword counter for keyword \"" + keyword
+            + "\"");
+    }
 
-    TokenTree::inner_token_type root
-        = root_prf_.derive_key(kw_index.data(), kw_index.size());
+    sse::crypto::RCPrf<kKeySize> rcprf_root(
+        root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
 
-    st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
+    st = rcprf_root.eval(kw_counter);
+
+    // TokenTree::inner_token_type root
+    //     = root_prf_.derive_key(kw_index.data(), kw_index.size());
+
+    // st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
     logger::logger()->debug("New Search Token " + utility::hex_string(st));
 
@@ -225,10 +232,15 @@ std::list<UpdateRequest<T>> DianaClient<T>::bulk_insertion_request(
         // retrieve the counter
         uint32_t kw_counter = std::get<2>(*it);
 
-        TokenTree::inner_token_type root
-            = root_prf_.derive_key(kw_index.data(), kw_index.size());
+        sse::crypto::RCPrf<kKeySize> rcprf_root(
+            root_prf_.derive_key(kw_index.data(), kw_index.size()), kTreeDepth);
 
-        st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
+        st = rcprf_root.eval(kw_counter);
+
+        // TokenTree::inner_token_type root
+        //     = root_prf_.derive_key(kw_index.data(), kw_index.size());
+
+        // st = TokenTree::derive_node(std::move(root), kw_counter, kTreeDepth);
 
         logger::logger()->debug("New Search Token " + utility::hex_string(st));
 
@@ -260,7 +272,11 @@ std::list<std::tuple<std::string, T, uint32_t>> DianaClient<T>::
         uint32_t kw_counter;
         bool     success = counter_map_.get_and_increment(keyword, kw_counter);
 
-        assert(success);
+        if (!success) {
+            std::runtime_error(
+                "Unable to increment the keyword counter for keyword \""
+                + keyword + "\"");
+        }
 
         res.push_back(std::make_tuple(keyword, index, kw_counter));
     }

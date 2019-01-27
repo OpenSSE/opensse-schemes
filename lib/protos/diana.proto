@@ -21,6 +21,7 @@ rpc bulk_insert (stream UpdateRequestMessage) returns (google.protobuf.Empty) {}
 
 message SetupMessage
 {
+    bytes wrapping_key = 1;
 }
 
 message SearchToken
@@ -31,7 +32,7 @@ message SearchToken
 
 message SearchRequestMessage
 {
-    repeated SearchToken token_list = 1;
+    bytes constrained_rcprf_rep = 1;
     fixed32 add_count = 2;
     bytes kw_token = 3;
 }

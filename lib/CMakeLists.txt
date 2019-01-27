@@ -9,7 +9,6 @@ add_library(
     sophos/sophos_client.cpp
     sophos/sophos_server.cpp
     diana/diana_common.cpp
-    diana/token_tree.cpp
     janus/janus_client.cpp
     janus/janus_server.cpp
 )

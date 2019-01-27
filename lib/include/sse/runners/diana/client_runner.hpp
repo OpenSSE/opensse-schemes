@@ -23,6 +23,8 @@
 
 #include <sse/schemes/diana/diana_client.hpp>
 
+#include <sse/crypto/wrapper.hpp>
+
 #include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
 #include <grpc++/channel.h>
 #include <grpc++/completion_queue.h>
@@ -85,7 +87,10 @@ public:
 private:
     void update_completion_loop();
 
-    bool send_setup() const;
+    bool send_setup(const std::array<uint8_t, crypto::Wrapper::kKeySize>&
+                        wrapping_key) const;
+
+    std::unique_ptr<crypto::Wrapper> token_wrapper_;
 
     std::unique_ptr<diana::Diana::Stub>      stub_;
     std::unique_ptr<DianaClient<index_type>> client_;
@@ -104,7 +109,9 @@ private:
         bulk_update_writer_;
 };
 
-SearchRequestMessage request_to_message(const SearchRequest& req);
+SearchRequestMessage request_to_message(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequest&                    req);
 UpdateRequestMessage request_to_message(
     const UpdateRequest<DianaClientRunner::index_type>& req);
 

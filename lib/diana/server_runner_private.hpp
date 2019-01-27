@@ -25,6 +25,8 @@
 
 #include <sse/schemes/diana/diana_server.hpp>
 
+#include <sse/crypto/wrapper.hpp>
+
 #include <grpc++/server.h>
 #include <grpc++/server_context.h>
 
@@ -80,6 +82,9 @@ public:
 
 private:
     static const char* pairs_map_file;
+    static const char* wrapping_key_file;
+
+    std::unique_ptr<crypto::Wrapper> token_wrapper_;
 
     std::unique_ptr<DianaServer<index_type>> server_;
     std::string                              storage_path_;
@@ -89,7 +94,9 @@ private:
     bool async_search_;
 };
 
-SearchRequest message_to_request(const SearchRequestMessage* mes);
+SearchRequest message_to_request(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequestMessage*             mes);
 UpdateRequest<DianaImpl::index_type> message_to_request(
     const UpdateRequestMessage* mes);
 } // namespace diana

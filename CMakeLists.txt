@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
+project(opensse-schemes VERSION 0.3 DESCRIPTION "OpenSSE's Schemes Implementation")
+
+
 
 list(
     APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/CMake-codecov/cmake"

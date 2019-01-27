@@ -59,14 +59,12 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# SConstruct
-.sconsign.dblite
-config.log
-.sconf_temp
-*.pyc
+# VSCode
+.vscode/launch.json
 
 library/
 build/
+Ubuntu/
 static_analysis/
 debug
 check

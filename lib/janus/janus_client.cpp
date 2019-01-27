@@ -50,10 +50,11 @@ crypto::Key<JanusClient::kPRFKeySize> JanusClient::
 }
 
 crypto::Key<JanusClient::kPRFKeySize> JanusClient::
-    delertion_kw_token_master_key() const
+    deletion_kw_token_master_key() const
 {
     return master_prf_.derive_key("del_kw_token_master_key");
 }
+
 
 JanusClient::JanusClient(const std::string&         search_counter_map_path,
                          const std::string&         add_map_path,
@@ -66,7 +67,7 @@ JanusClient::JanusClient(const std::string&         search_counter_map_path,
                         insertion_kw_token_master_key()),
       deletion_client_(del_map_path,
                        deletion_derivation_master_key(),
-                       delertion_kw_token_master_key()),
+                       deletion_kw_token_master_key()),
       search_counter_map_(search_counter_map_path)
 {
 }
@@ -87,24 +88,29 @@ SearchRequest JanusClient::search_request(const std::string& keyword)
 
     std::string m_kw = meta_keyword(keyword, search_counter);
 
-    SearchRequest req;
 
-    req.keyword_token = kw_token_prf_.prf(keyword);
+    keyword_token_type keyword_token = kw_token_prf_.prf(keyword);
 
-    req.insertion_search_request = insertion_client_.search_request(m_kw);
-    req.deletion_search_request  = deletion_client_.search_request(
-        m_kw, false); // do not log if there is no deletion
+    diana::SearchRequest insertion_search_request(
+        insertion_client_.search_request(m_kw));
+    diana::SearchRequest deletion_search_request(
+        deletion_client_.search_request(
+            m_kw, false)); // do not log if there is no deletion
 
 
     // the key derivation will to be modified for the real implementation
     crypto::PuncturableEncryption punct_encryption(
         punct_enc_master_prf_.derive_key(m_kw));
-    req.first_key_share = punct_encryption.initial_keyshare(
-        req.deletion_search_request
-            .add_count); // the add_count for the deletion scheme is actually
-                         // the number of deleted entries
+    crypto::punct::key_share_type first_key_share
+        = punct_encryption.initial_keyshare(
+            deletion_search_request
+                .add_count); // the add_count for the deletion scheme is
+                             // actually the number of deleted entries
 
-
+    SearchRequest req(keyword_token,
+                      std::move(insertion_search_request),
+                      std::move(deletion_search_request),
+                      first_key_share);
     // increment the search counter only if there were some insertions or some
     // deletions
     if (req.insertion_search_request.add_count > 0

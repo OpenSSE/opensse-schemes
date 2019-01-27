@@ -25,6 +25,8 @@
 #include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
+#include <sse/crypto/wrapper.hpp>
+
 #include <grpc++/security/server_credentials.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
@@ -40,7 +42,8 @@
 namespace sse {
 namespace diana {
 
-const char* DianaImpl::pairs_map_file = "pairs.dat";
+const char* DianaImpl::pairs_map_file    = "pairs.dat";
+const char* DianaImpl::wrapping_key_file = "wrapping.key";
 
 DianaImpl::DianaImpl(std::string path)
     : storage_path_(std::move(path)), async_search_(true)
@@ -48,13 +51,39 @@ DianaImpl::DianaImpl(std::string path)
     if (utility::is_directory(storage_path_)) {
         // try to initialize everything from this directory
 
-        std::string pairs_map_path = storage_path_ + "/" + pairs_map_file;
+        std::string pairs_map_path    = storage_path_ + "/" + pairs_map_file;
+        std::string wrapping_key_path = storage_path_ + "/" + wrapping_key_file;
 
+        if (!utility::is_file(wrapping_key_path)) {
+            // error, the wrapping key file is not there
+            throw std::runtime_error("Missing wrapping key file");
+        }
         if (!utility::is_directory(pairs_map_path)) {
             // error, the token map data is not there
             throw std::runtime_error("Missing data");
         }
 
+        std::ifstream     wrapping_key_in(wrapping_key_path.c_str());
+        std::stringstream wrapping_key_buf;
+        std::array<uint8_t, crypto::Wrapper::kKeySize> wrapping_key_array;
+
+        wrapping_key_buf << wrapping_key_in.rdbuf();
+
+        auto wrapping_key_str = wrapping_key_buf.str();
+
+        if (wrapping_key_str.size() != wrapping_key_array.size()) {
+            throw std::runtime_error(
+                "Invalid wrapping key size when "
+                "constructing the Diana server: "
+                + std::to_string(wrapping_key_buf.str().size())
+                + " bytes instead of 32");
+        }
+        std::copy(wrapping_key_str.begin(),
+                  wrapping_key_str.end(),
+                  wrapping_key_array.begin());
+        token_wrapper_.reset(new sse::crypto::Wrapper(
+            sse::crypto::Key<crypto::Wrapper::kKeySize>(
+                wrapping_key_array.data())));
 
         server_.reset(new DianaServer<index_type>(pairs_map_path));
     } else if (utility::exists(storage_path_)) {
@@ -73,8 +102,7 @@ DianaImpl::~DianaImpl()
 
 grpc::Status DianaImpl::setup(__attribute__((unused))
                               grpc::ServerContext* context,
-                              __attribute__((unused))
-                              const SetupMessage* message,
+                              const SetupMessage*  message,
                               __attribute__((unused))
                               google::protobuf::Empty* e)
 {
@@ -126,6 +154,38 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
                             "Unable to create the server's core.");
     }
 
+
+    // write the wrapping key in a file
+    std::string wrapping_key_path = storage_path_ + "/" + wrapping_key_file;
+
+    std::ofstream wrapping_key_out(wrapping_key_path.c_str());
+    if (!wrapping_key_out.is_open()) {
+        // error
+
+        logger::logger()->error("Error when writing the wrapping key");
+
+        return grpc::Status(grpc::PERMISSION_DENIED,
+                            "Unable to write the wrapping key to disk");
+    }
+
+    if (message->wrapping_key().size() != crypto::Wrapper::kKeySize) {
+        logger::logger()->error("Invalid wrapping key size");
+
+        return grpc::Status(grpc::INVALID_ARGUMENT,
+                            "Invalid transmitted wrapping key size");
+    }
+
+    wrapping_key_out << message->wrapping_key();
+    wrapping_key_out.close();
+
+    std::array<uint8_t, crypto::Wrapper::kKeySize> wrapping_key;
+    std::copy(message->wrapping_key().begin(),
+              message->wrapping_key().end(),
+              wrapping_key.begin());
+
+    token_wrapper_.reset(new crypto::Wrapper(
+        crypto::Key<crypto::Wrapper::kKeySize>(wrapping_key.data())));
+
     logger::logger()->trace("Successful setup");
 
     return grpc::Status::OK;
@@ -154,7 +214,7 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
 
     logger::logger()->trace("Start searching keyword ...");
 
-    SearchRequest req = message_to_request(mes);
+    SearchRequest req = message_to_request(token_wrapper_, mes);
 
     std::vector<uint64_t> res_list(req.add_count);
 
@@ -165,7 +225,7 @@ grpc::Status DianaImpl::sync_search(__attribute__((unused))
     } else {
         {
             SearchBenchmark bench("Diana synchronous search");
-            server_->search_simple_parallel(req, 8, res_list);
+            server_->search_parallel(req, 8, res_list);
             bench.set_count(res_list.size());
         }
         for (auto& i : res_list) {
@@ -210,7 +270,7 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
         res_size++;
     };
 
-    auto req = message_to_request(mes);
+    auto req = message_to_request(token_wrapper_, mes);
 
     {
         SearchBenchmark bench("Diana asynchronous search");
@@ -219,11 +279,11 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
         if (mes->add_count() >= 40) { // run the search algorithm in parallel
                                       // only if there are more than 2 results
 
-            server_->search_simple_parallel(
+            server_->search_parallel(
                 req, post_callback, std::thread::hardware_concurrency());
 
         } else if (mes->add_count() >= 2) {
-            server_->search_simple_parallel(
+            server_->search_parallel(
                 req, post_callback, std::thread::hardware_concurrency());
 
         } else {
@@ -311,24 +371,21 @@ void DianaImpl::flush_server_storage()
     }
 }
 
-SearchRequest message_to_request(const SearchRequestMessage* mes)
+SearchRequest message_to_request(
+    const std::unique_ptr<crypto::Wrapper>& wrapper,
+    const SearchRequestMessage*             mes)
 {
-    SearchRequest req;
+    uint32_t add_count = mes->add_count();
 
-    req.add_count = mes->add_count();
+    std::vector<uint8_t> rcprf_rep_buffer(mes->constrained_rcprf_rep().begin(),
+                                          mes->constrained_rcprf_rep().end());
+    constrained_rcprf_type rcprf
+        = wrapper->unwrap<constrained_rcprf_type>(rcprf_rep_buffer);
 
+    keyword_token_type kw_token;
+    std::copy(mes->kw_token().begin(), mes->kw_token().end(), kw_token.begin());
 
-    for (const auto& it : mes->token_list()) {
-        search_token_key_type st;
-        std::copy(it.token().begin(), it.token().end(), st.begin());
-
-        req.token_list.emplace_back(st, it.depth());
-    }
-
-    std::copy(
-        mes->kw_token().begin(), mes->kw_token().end(), req.kw_token.begin());
-
-    return req;
+    return SearchRequest(kw_token, std::move(rcprf), add_count);
 }
 
 UpdateRequest<DianaImpl::index_type> message_to_request(

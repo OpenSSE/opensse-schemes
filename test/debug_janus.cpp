@@ -274,7 +274,9 @@ void benchmark_decrypt(ostream& out)
 
                 auto t_end = std::chrono::high_resolution_clock::now();
 
+                (void)success;
                 assert(success);
+
                 time = t_end - t_start;
 
                 out << "Decrypt_" << std::to_string(current_p_count) << " \t "
@@ -343,10 +345,9 @@ void test_client_server()
                                      "janus_server.del.dat",
                                      "janus_server.cache.dat"));
 
-        SearchRequest s_req;
 
-        std::string key = "toto";
-        s_req           = client->search_request(key);
+        std::string   key   = "toto";
+        SearchRequest s_req = client->search_request(key);
         //        auto res = server->search(s_req);
         auto res = server->search_parallel(s_req, 8);
 
@@ -415,10 +416,8 @@ void test_client_server()
         server->remove(del_req);
     }
 
-    SearchRequest s_req;
-
-    std::string key = "toto";
-    s_req           = client->search_request(key);
+    std::string   key   = "toto";
+    SearchRequest s_req = client->search_request(key);
     //    auto res = server->search(s_req);
     auto res = server->search_parallel(s_req, 8);
 

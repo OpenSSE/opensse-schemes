@@ -212,21 +212,21 @@ TEST(diana, search)
     test_search_function(search_fun);
 }
 
-TEST(diana, search_simple_parallel)
+TEST(diana, search_parallel)
 {
     auto search_fun = [](TestDianaServer& server, SearchRequest& req) {
-        return server.search_simple_parallel(
+        return server.search_parallel(
             req, concurrency_level); // only 2 access threads
     };
     test_search_function(search_fun);
 }
 
-TEST(diana, search_simple_parallel_vec)
+TEST(diana, search_parallel_vec)
 {
     auto search_fun = [](TestDianaServer& server, SearchRequest& req) {
         std::vector<uint64_t> res_par_vec;
 
-        server.search_simple_parallel(req, concurrency_level, res_par_vec);
+        server.search_parallel(req, concurrency_level, res_par_vec);
 
         return std::list<uint64_t>(res_par_vec.begin(), res_par_vec.end());
     };
@@ -251,8 +251,7 @@ TEST(diana, search_callback)
     test_search_function(search_fun);
 }
 
-
-TEST(diana, search_simple_callback)
+TEST(diana, search_parallel_callback)
 {
     std::mutex          res_list_mutex;
     std::list<uint64_t> res_list;
@@ -264,45 +263,25 @@ TEST(diana, search_simple_callback)
 
     auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
                                                     SearchRequest&   req) {
-        server.search_simple(req, search_callback);
+        server.search_parallel(req, search_callback, concurrency_level, false);
         return res_list;
     };
     test_search_function(search_fun);
 }
 
-TEST(diana, search_simple_parallel_callback)
+TEST(diana, search_parallel_thread_local_callback)
 {
     std::mutex          res_list_mutex;
     std::list<uint64_t> res_list;
 
-    auto search_callback = [&res_list_mutex, &res_list](uint64_t index) {
+    auto search_callback = [&res_list_mutex, &res_list](
+                               size_t /*i*/, uint64_t index, uint8_t /*t_id*/) {
         std::lock_guard<std::mutex> lock(res_list_mutex);
         res_list.push_back(index);
     };
-
     auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
                                                     SearchRequest&   req) {
-        server.search_simple_parallel(
-            req, search_callback, concurrency_level, false);
-        return res_list;
-    };
-    test_search_function(search_fun);
-}
-
-TEST(diana, search_simple_parallel_thread_local_callback)
-{
-    std::mutex          res_list_mutex;
-    std::list<uint64_t> res_list;
-
-    auto search_callback
-        = [&res_list_mutex, &res_list](uint64_t index, uint8_t) {
-              std::lock_guard<std::mutex> lock(res_list_mutex);
-              res_list.push_back(index);
-          };
-    auto search_fun = [&search_callback, &res_list](TestDianaServer& server,
-                                                    SearchRequest&   req) {
-        server.search_simple_parallel(
-            req, search_callback, concurrency_level, false);
+        server.search_parallel(req, search_callback, concurrency_level, false);
         return res_list;
     };
     test_search_function(search_fun);

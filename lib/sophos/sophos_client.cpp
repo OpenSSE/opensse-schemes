@@ -127,7 +127,11 @@ UpdateRequest SophosClient::insertion_request(const std::string& keyword,
 
     bool success = counter_map_.get_and_increment(keyword, kw_counter);
 
-    assert(success);
+    if (!success) {
+        std::runtime_error(
+            "Unable to increment the keyword counter for keyword \"" + keyword
+            + "\"");
+    }
 
     st = inverse_tdp().generate_array(rsa_prg_, seed);
 

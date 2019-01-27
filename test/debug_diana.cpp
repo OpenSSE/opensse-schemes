@@ -138,14 +138,13 @@ void test_client_server()
     }
 
 
-    SearchRequest         s_req;
     std::list<index_type> res;
     string                key;
 
-    key   = "toto";
-    s_req = client->search_request(key);
-    res   = server->search(s_req);
-    //    res = server->search_simple_parallel(s_req,8);
+    key = "toto";
+    SearchRequest s_req(client->search_request(key));
+    res = server->search(s_req);
+    //    res = server->search_parallel(s_req,8);
 
     cout << "Search " << key << ". Results: [";
     for (index_type i : res) {

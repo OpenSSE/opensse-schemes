@@ -41,9 +41,9 @@ struct serialization<janus::JanusServer::cached_result_type>
         }
         logger::logger()->debug("Deserialized string: "
                                 + utility::hex_string(std::string(
-                                      begin,
-                                      begin + sizeof(janus::index_type)
-                                          + sizeof(crypto::punct::kTagSize))));
+                                    begin,
+                                    begin + sizeof(janus::index_type)
+                                        + sizeof(crypto::punct::kTagSize))));
 
         janus::index_type       ind;
         crypto::punct::tag_type tag;
@@ -101,11 +101,11 @@ std::list<index_type> JanusServer::search(SearchRequest& req)
         = deletion_server_.search(req.deletion_search_request, true);
 
     // std::list<crypto::punct::ciphertext_type> insertions
-    //     = insertion_server_.search_simple_parallel(
+    //     = insertion_server_.search_parallel(
     //         req.insertion_search_request, 8, true);
 
     // std::list<crypto::punct::key_share_type> key_shares
-    //     = deletion_server_.search_simple_parallel(
+    //     = deletion_server_.search_parallel(
     //         req.deletion_search_request, 8, true);
 
     key_shares.push_front(req.first_key_share);
@@ -199,7 +199,7 @@ void JanusServer::search_parallel(
 {
     // start by retrieving the key shares
     std::list<crypto::punct::key_share_type> key_shares
-        = deletion_server_.search_simple_parallel(
+        = deletion_server_.search_parallel(
             req.deletion_search_request, diana_threads_count, true);
 
     key_shares.push_front(req.first_key_share);
@@ -277,7 +277,7 @@ void JanusServer::search_parallel(
 
     // run the search on the insertion SE with the decryption_callback
     // we have to start the cache_thread first because the next call is blocking
-    //            insertion_server_.search_simple_parallel(req.insertion_search_request,
+    //            insertion_server_.search_parallel(req.insertion_search_request,
     //            decryption_callback, threads_count-1); // one thread is
     //            already in use
     insertion_server_.search(req.insertion_search_request,

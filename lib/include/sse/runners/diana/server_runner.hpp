@@ -23,7 +23,7 @@
 
 #include <sse/schemes/diana/diana_server.hpp>
 
-#include <grpc++/server.h>
+#include <grpcpp/grpcpp.h>
 
 #include <mutex>
 #include <string>

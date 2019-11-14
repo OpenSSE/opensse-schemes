@@ -27,8 +27,7 @@
 
 #include <sse/crypto/wrapper.hpp>
 
-#include <grpc++/server.h>
-#include <grpc++/server_context.h>
+#include <grpcpp/grpcpp.h>
 
 #include <memory>
 #include <mutex>

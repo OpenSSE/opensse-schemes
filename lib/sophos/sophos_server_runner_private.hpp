@@ -26,8 +26,8 @@
 #include <sse/schemes/sophos/sophos_server.hpp>
 
 #include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
-#include <grpc++/server.h>
-#include <grpc++/server_context.h>
+
+#include <grpcpp/grpcpp.h>
 
 #include <memory>
 #include <mutex>

@@ -8,9 +8,7 @@
 #include <sse/crypto/utils.hpp>
 #include <sse/dbparser/json/DBParserJSON.h>
 
-#include <grpc++/create_channel.h>
-#include <grpc++/impl/codegen/service_type.h>
-#include <grpc++/server_builder.h>
+#include <grpcpp/grpcpp.h>
 
 #include <algorithm>
 #include <condition_variable>

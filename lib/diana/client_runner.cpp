@@ -30,10 +30,9 @@
 
 #include <sse/dbparser/json/DBParserJSON.h>
 
-#include <grpc++/client_context.h>
-#include <grpc++/create_channel.h>
-#include <grpc++/security/credentials.h>
 #include <grpc/grpc.h>
+
+#include <grpcpp/grpcpp.h>
 
 #include <chrono>
 #include <fstream>

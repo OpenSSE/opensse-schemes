@@ -25,11 +25,9 @@
 #include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
-#include <grpc++/security/server_credentials.h>
-#include <grpc++/server.h>
-#include <grpc++/server_builder.h>
-#include <grpc++/server_context.h>
 #include <grpc/grpc.h>
+
+#include <grpcpp/grpcpp.h>
 
 #include <atomic>
 #include <fstream>

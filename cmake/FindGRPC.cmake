@@ -85,6 +85,10 @@ endif()
 find_path(GRPC_INCLUDE_DIR grpc/grpc.h)
 mark_as_advanced(GRPC_INCLUDE_DIR)
 
+# Find gRPC C++ include directory
+find_path(GRPCPP_INCLUDE_DIR grpcpp/grpcpp.h)
+mark_as_advanced(GRPCPP_INCLUDE_DIR)
+
 # Find gRPC library
 find_library(GRPC_LIBRARY NAMES grpc)
 mark_as_advanced(GRPC_LIBRARY)
@@ -100,7 +104,7 @@ find_library(GRPC_GRPC++_LIBRARY NAMES grpc++)
 mark_as_advanced(GRPC_GRPC++_LIBRARY)
 add_library(gRPC::grpc++ UNKNOWN IMPORTED)
 set_target_properties(gRPC::grpc++ PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIR}
+    INTERFACE_INCLUDE_DIRECTORIES ${GRPCPP_INCLUDE_DIR}
     INTERFACE_LINK_LIBRARIES gRPC::grpc
     IMPORTED_LOCATION ${GRPC_GRPC++_LIBRARY}
 )

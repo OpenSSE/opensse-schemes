@@ -11,10 +11,9 @@
 
 #include <sse/crypto/utils.hpp>
 
-#include <grpc++/server.h>
-
 #include <csignal>
 #include <cstdio>
+#include <grpcpp/grpcpp.h>
 #include <unistd.h>
 
 sse::diana::DianaServerRunner* server_ptr__ = nullptr;

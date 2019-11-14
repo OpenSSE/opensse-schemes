@@ -26,8 +26,9 @@
 #include <sse/crypto/wrapper.hpp>
 
 #include <google/protobuf/empty.pb.h> // For ::google::protobuf::Empty
-#include <grpc++/channel.h>
-#include <grpc++/completion_queue.h>
+
+#include <grpcpp/grpcpp.h>
+#include <grpcpp/support/sync_stream.h>
 
 #include <atomic>
 #include <condition_variable>

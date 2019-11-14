@@ -12,8 +12,6 @@
 
 #include <sse/crypto/utils.hpp>
 
-#include <grpc++/create_channel.h>
-
 #include <cstdio>
 #include <unistd.h>
 

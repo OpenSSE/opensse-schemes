@@ -21,8 +21,7 @@
 
 #pragma once
 
-#include <grpc++/server.h>
-#include <grpc++/server_builder.h>
+#include <grpcpp/grpcpp.h>
 
 #include <string>
 

@@ -7,7 +7,7 @@ normal=$(tput sgr0)
 green=$(tput setaf 2)
 
 
-if [ -d "$INSTALL_DIR/include/google" ] && [ -d "$INSTALL_DIR/include/grpc" ] && [ -d "$INSTALL_DIR/include/grpc++" ]  && [ -f "$INSTALL_DIR/lib/libprotobuf.a" ] && [ -f "$INSTALL_DIR/lib/libgrpc.a" ]  && [ -f "$INSTALL_DIR/bin/protoc" ]; then
+if [ -d "$INSTALL_DIR/include/google" ] && [ -d "$INSTALL_DIR/include/grpc" ] && [ -d "$INSTALL_DIR/include/grpcpp" ]  && [ -f "$INSTALL_DIR/lib/libprotobuf.a" ] && [ -f "$INSTALL_DIR/lib/libgrpc.a" ]  && [ -f "$INSTALL_DIR/bin/protoc" ]; then
 	echo "${bold}${green}gRPC is already installed${normal}"
 else
 	echo "${bold}${green}Install gRPC${normal}"

@@ -125,5 +125,6 @@ add_sanitizers(check)
 add_sanitizers(sophos_debug)
 add_sanitizers(diana_debug)
 add_sanitizers(janus_debug)
+add_sanitizers(oceanus_debug)
 
 coverage_evaluate()

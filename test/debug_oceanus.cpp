@@ -24,7 +24,7 @@ void test_insertion(const size_t n_insertions)
 
     std::cout << "Start insertions" << std::endl;
 
-    for (size_t i = 0; i < 2 * n_insertions; i++) {
+    for (size_t i = 0; i < n_insertions; i++) {
         std::array<uint8_t, kTableKeySize> prf_out
             = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(i));
 
@@ -35,7 +35,7 @@ void test_insertion(const size_t n_insertions)
 int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
-    test_insertion(1 << (17));
+    test_insertion(1 << (20));
     sse::crypto::cleanup_crypto_lib();
 
     return 0;

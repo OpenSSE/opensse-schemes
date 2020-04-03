@@ -20,6 +20,8 @@ namespace oceanus {
 using index_type = uint64_t;
 
 constexpr size_t kTableKeySize = 16; // 128 bits table keys
+using key_type                 = std::array<uint8_t, kTableKeySize>;
+
 constexpr size_t kOverhead
     = kTableKeySize / sizeof(index_type)
       + ((kTableKeySize % sizeof(index_type) == 0) ? 0 : 1);
@@ -41,7 +43,14 @@ using prf_type = sse::crypto::Prf<kTableKeySize>;
 
 struct CuckooKey
 {
-    uint64_t h[2];
+    uint64_t h[2]{~0UL, ~0UL};
+
+    CuckooKey() = default;
+    CuckooKey(const key_type& key)
+    {
+        static_assert(sizeof(h) == sizeof(key_type), "Invalid source key size");
+        memcpy(h, key.data(), sizeof(h));
+    }
 };
 
 static_assert(kTableKeySize == sizeof(CuckooKey), "Invalid Cuckoo key size");

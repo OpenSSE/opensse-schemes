@@ -55,6 +55,9 @@ bool exists(const std::string& path);
 bool create_directory(const std::string& path, mode_t mode);
 bool remove_directory(const std::string& path);
 
+int     open_fd(const std::string& filename, bool direct_io);
+ssize_t file_size(int fd);
+
 std::string hex_string(const std::string& in);
 
 template<size_t N>
@@ -81,6 +84,20 @@ std::ostream& print_hex(std::ostream& out, const std::array<uint8_t, N>& a)
 
 std::string hex_string(const uint64_t& a);
 std::string hex_string(const uint32_t& a);
+
+template<typename T>
+constexpr auto is_aligned(T x, size_t a) noexcept ->
+    typename std::enable_if<std::is_integral<T>::value
+                                && !std::is_same<T, bool>::value,
+                            bool>::type
+{
+    return (x & (a - 1)) == 0;
+}
+
+inline bool is_aligned(const volatile void* p, size_t a)
+{
+    return is_aligned(reinterpret_cast<uintptr_t>(p), a);
+}
 
 } // namespace utility
 } // namespace sse

@@ -20,12 +20,22 @@ namespace oceanus {
 using index_type = uint64_t;
 
 constexpr size_t kTableKeySize = 16; // 128 bits table keys
-
+constexpr size_t kOverhead
+    = kTableKeySize / sizeof(index_type)
+      + ((kTableKeySize % sizeof(index_type) == 0) ? 0 : 1);
 
 template<size_t PAGE_SIZE,
          typename std::enable_if<PAGE_SIZE % sizeof(index_type) == 0, int>::type
          = 0>
-using payload_type = std::array<index_type, PAGE_SIZE / sizeof(index_type)>;
+using payload_type __attribute__((aligned(PAGE_SIZE)))
+= std::array<index_type, PAGE_SIZE / sizeof(index_type)>;
+
+template<size_t PAGE_SIZE,
+         typename std::enable_if<PAGE_SIZE % sizeof(index_type) == 0, int>::type
+         = 0>
+using data_type
+    = std::array<index_type, PAGE_SIZE / sizeof(index_type) - kOverhead>;
+
 
 using prf_type = sse::crypto::Prf<kTableKeySize>;
 

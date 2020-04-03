@@ -19,20 +19,23 @@ void test_insertion(const size_t n_insertions)
         path, n_elts, epsilon, max_search_depth);
 
     sse::crypto::Prf<kTableKeySize> prf;
-    payload_type<kPageSize>         pl;
+    data_type<kPageSize>            pl;
     std::fill(pl.begin(), pl.end(), 0);
 
     std::cout << "Start insertions" << std::endl;
 
     for (size_t i = 0; i < 2 * n_insertions; i++) {
-        builder.insert(prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(i)), pl);
+        std::array<uint8_t, kTableKeySize> prf_out
+            = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(i));
+
+        builder.insert(prf_out, pl);
     }
 }
 
 int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
-    test_insertion(1E6);
+    test_insertion(1 << (17));
     sse::crypto::cleanup_crypto_lib();
 
     return 0;

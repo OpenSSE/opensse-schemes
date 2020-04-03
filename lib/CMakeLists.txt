@@ -1,3 +1,5 @@
+find_package(Libaio REQUIRED)
+
 add_library(
     schemes
     SHARED
@@ -5,6 +7,8 @@ add_library(
     utils/rocksdb_wrapper.cpp
     utils/utils.cpp
     utils/db_generator.cpp
+    abstractio/scheduler.cpp
+    abstractio/linux_aio_scheduler.cpp
     sophos/sophos_common.cpp
     sophos/sophos_client.cpp
     sophos/sophos_server.cpp
@@ -51,6 +55,7 @@ target_link_libraries(
     OpenSSE::dbparser
     ${ROCKSDB_LIBRARIES}
     spdlog::spdlog
+    ${LIBAIO_LIBRARIES}
 )
 
 set(PROTOS

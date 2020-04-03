@@ -23,6 +23,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <fcntl.h>
 #include <fts.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -145,6 +146,52 @@ bool remove_directory(const std::string& path)
     fts_close(ftsp);
 
     return true;
+}
+
+
+int open_fd(const std::string& filename, bool direct_io)
+{
+    int flags = (O_CREAT | O_RDWR);
+
+    if (direct_io) {
+#if !defined(OS_MACOSX) && !defined(OS_OPENBSD) && !defined(OS_SOLARIS)
+        flags |= O_DIRECT;
+#endif
+    }
+
+    int fd = open(filename.c_str(), flags, 0644);
+
+    if (fd == -1) {
+        throw std::runtime_error("Error when opening file " + filename
+                                 + "; errno " + std::to_string(errno) + "("
+                                 + strerror(errno) + ")");
+    }
+
+    if (direct_io) {
+#ifdef OS_MACOSX
+        if (fcntl(fd, F_NOCACHE, 1) == -1) {
+            close(fd);
+            throw std::runtime_error(
+                "Error calling fcntl F_NOCACHE on file " + filename + "; errno "
+                + std::to_string(errno) + "(" + strerror(errno) + ")");
+        }
+#endif
+    }
+
+    return fd;
+}
+
+ssize_t file_size(int fd)
+{
+    struct stat s;
+    if (fstat(fd, &s) == -1) {
+        int saveErrno = errno;
+        throw std::runtime_error("Error when get size of file descriptor "
+                                 + std::to_string(fd) + "; errno "
+                                 + std::to_string(saveErrno) + "("
+                                 + strerror(saveErrno) + ")");
+    }
+    return (s.st_size);
 }
 
 std::string hex_string(const std::string& in)

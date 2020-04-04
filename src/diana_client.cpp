@@ -104,8 +104,6 @@ int main(int argc, char** argv)
         sse::logger::logger()->info("Randomly generating database with {} docs",
                                     rnd_entries_count);
 
-        std::mutex buffer_mtx;
-
         auto gen_callback = [&client_runner](const std::string& s, size_t i) {
             if (buffer_list__ == nullptr) {
                 buffer_list__

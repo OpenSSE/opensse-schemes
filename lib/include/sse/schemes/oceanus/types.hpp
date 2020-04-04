@@ -41,6 +41,22 @@ using data_type
 
 using prf_type = sse::crypto::Prf<kTableKeySize>;
 
+template<size_t PAGE_SIZE>
+inline bool match_key(const payload_type<PAGE_SIZE>& pl, const key_type& key)
+{
+    static_assert(PAGE_SIZE / sizeof(index_type) > kTableKeySize,
+                  "Payload too small to store a key");
+
+    const uint8_t* pl_data = reinterpret_cast<const uint8_t*>(pl.data());
+
+    for (size_t i = 0; i < kTableKeySize; i++) {
+        if (pl_data[i] != key[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 struct CuckooKey
 {
     uint64_t h[2]{~0UL, ~0UL};

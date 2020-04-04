@@ -81,6 +81,8 @@ template<size_t PAGE_SIZE>
 class OceanusServerBuilder
 {
 public:
+    using content_type = payload_type<PAGE_SIZE>;
+
     OceanusServerBuilder(const std::string& db_path,
                          size_t             max_n_elements,
                          double             epsilon,
@@ -93,6 +95,15 @@ public:
 
     void commit();
 
+
+    static std::string first_table_path(std::string path)
+    {
+        return path.append(".0");
+    }
+    static std::string second_table_path(std::string path)
+    {
+        return path.append(".1");
+    }
 
 private:
     // struct Content
@@ -112,21 +123,12 @@ private:
     //     }
     // };
 
-    using content_type = payload_type<PAGE_SIZE>;
 
     static std::string tmp_data_path(std::string path)
     {
         return path.append(".tmp");
     }
 
-    static std::string first_table_path(std::string path)
-    {
-        return path.append(".0");
-    }
-    static std::string second_table_path(std::string path)
-    {
-        return path.append(".1");
-    }
 
     const std::string path;
 

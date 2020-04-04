@@ -35,6 +35,7 @@ void test_insertion(const size_t n_insertions)
     const size_t fill_val_2 = 0x987654;
     std::fill(pl_1.begin(), pl_1.end(), fill_val_1);
     std::fill(pl_2.begin(), pl_2.end(), fill_val_2);
+    size_t actual_insertions = n_insertions / 2;
 
 
     if (!sse::utility::is_file(
@@ -46,15 +47,14 @@ void test_insertion(const size_t n_insertions)
 
 
         std::cout << "Start insertions" << std::endl;
-
-        for (size_t i = 0; i < n_insertions / 2; i++) {
+        for (size_t i = 0; i < actual_insertions; i++) {
             std::array<uint8_t, kTableKeySize> prf_out
                 = prf_1.prf(reinterpret_cast<uint8_t*>(&i), sizeof(i));
 
             builder.insert(prf_out, pl_1);
         }
 
-        for (size_t i = 0; i < n_insertions / 2; i++) {
+        for (size_t i = 0; i < actual_insertions; i++) {
             std::array<uint8_t, kTableKeySize> prf_out
                 = prf_2.prf(reinterpret_cast<uint8_t*>(&i), sizeof(i));
 
@@ -73,7 +73,7 @@ void test_insertion(const size_t n_insertions)
 
         auto res = server.search(req_1);
         std::cerr << "Res size: " << res.size() << "\n";
-        std::cerr << "Expected: " << n_elts / 2 * pl_1.size() << "\n";
+        std::cerr << "Expected: " << actual_insertions * pl_1.size() << "\n";
 
         for (auto& r : res) {
             if (r != fill_val_1) {
@@ -85,7 +85,7 @@ void test_insertion(const size_t n_insertions)
 
         res = server.search(req_2);
         std::cerr << "Res size: " << res.size() << "\n";
-        std::cerr << "Expected: " << n_elts / 2 * pl_2.size() << "\n";
+        std::cerr << "Expected: " << actual_insertions * pl_2.size() << "\n";
 
         for (auto& r : res) {
             if (r != fill_val_2) {
@@ -98,7 +98,7 @@ void test_insertion(const size_t n_insertions)
 int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
-    test_insertion(1 << (12));
+    test_insertion(1 << (17));
     sse::crypto::cleanup_crypto_lib();
 
     return 0;

@@ -7,18 +7,8 @@ namespace oceanus {
 namespace details {
 
 
-CuckooBuilder::CuckooBuilder(size_t max_n_elements,
-                             double epsilon,
-                             size_t max_search_depth)
-    : table_size(cuckoo_table_size(max_n_elements, epsilon)),
-      table_1(table_size), table_2(table_size),
-      max_search_depth(max_search_depth)
-{
-}
+size_t CuckooAllocator::insert(const CuckooKey& key, size_t index)
 
-
-size_t CuckooBuilder::insert(const std::array<uint8_t, kTableKeySize>& key,
-                             size_t                                    index)
 {
     using std::swap;
 
@@ -28,17 +18,17 @@ size_t CuckooBuilder::insert(const std::array<uint8_t, kTableKeySize>& key,
 
     CuckooValue value;
 
-    value.key         = CuckooKey(key);
+    value.key         = key;
     value.value_index = index;
 
     unsigned                                 table_index = 0;
-    std::array<std::vector<CuckooValue>*, 2> tables      = {&table_1, &table_2};
+    std::array<std::vector<CuckooValue>*, 2> tables      = {&table_0, &table_1};
 
     // search for an empty space
     for (size_t depth = 0; (depth < max_search_depth)
                            && (!is_empty_placeholder(value.value_index));
          depth++) {
-        size_t loc = value.key.h[table_index] % table_size;
+        size_t loc = value.key.h[table_index] % cuckoo_table_size;
 
         swap(value, (*tables[table_index])[loc]);
 

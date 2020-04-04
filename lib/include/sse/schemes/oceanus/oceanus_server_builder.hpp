@@ -1,87 +1,77 @@
 #pragma once
 
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
+#include <sse/schemes/oceanus/cuckoo.hpp>
 #include <sse/schemes/oceanus/types.hpp>
 
-#include <cmath>
+#include <cassert>
 
 #include <vector>
 
 namespace sse {
 namespace oceanus {
-namespace details {
-class CuckooBuilder
+
+struct OceanusKeySerializer
 {
-public:
-    struct CuckooValue
+    static constexpr size_t serialization_length()
     {
-        CuckooKey key;
-        size_t    value_index{~0UL};
-    };
-
-
-    using iterator        = std::vector<CuckooValue>::iterator;
-    using const_interator = std::vector<CuckooValue>::const_iterator;
-
-    CuckooBuilder(size_t max_n_elements,
-                  double epsilon,
-                  size_t max_search_depth);
-
-    static inline size_t cuckoo_table_size(size_t n_elements, double epsilon)
-    {
-        return std::ceil((1. + epsilon / 2.) * n_elements);
-    };
-
-    size_t cuckoo_table_size() const
-    {
-        return table_size;
+        return kTableKeySize;
     }
-
-    size_t insert(const std::array<uint8_t, kTableKeySize>& key, size_t index);
-
-    inline static constexpr bool is_empty_placeholder(size_t v)
+    void serialize(const key_type& key, uint8_t* buffer)
     {
-        return v == ~0UL;
+        memcpy(buffer, key.data(), kTableKeySize);
     }
-
-    const_interator table_1_begin() const
-    {
-        return table_1.begin();
-    }
-    const_interator table_1_end() const
-    {
-        return table_1.end();
-    }
-    const_interator table_2_begin() const
-    {
-        return table_2.begin();
-    }
-    const_interator table_2_end() const
-    {
-        return table_2.end();
-    }
-
-
-private:
-    // friend void swap(CuckooValue& lhs, CuckooValue& rhs);
-
-
-    const size_t table_size;
-
-
-    std::vector<CuckooValue> table_1;
-    std::vector<CuckooValue> table_2;
-
-    const size_t max_search_depth;
 };
-} // namespace details
+
+struct OceanusCuckooHasher
+{
+    CuckooKey operator()(const key_type& key)
+    {
+        CuckooKey ck;
+        static_assert(sizeof(ck.h) == sizeof(key_type),
+                      "Invalid source key size");
+
+        memcpy(ck.h, key.data(), sizeof(ck.h));
+
+        return ck;
+    }
+};
+
+template<size_t PAGE_SIZE>
+struct OceanusContentSerializer
+{
+    static constexpr size_t serialization_length()
+    {
+        return PAGE_SIZE - kOverhead * sizeof(index_type);
+    }
+    void serialize(const data_type<PAGE_SIZE>& value, uint8_t* buffer)
+    {
+        assert(value.size() * sizeof(typename data_type<PAGE_SIZE>::value_type)
+               == serialization_length());
+        memcpy(buffer,
+               value.data(),
+               value.size()
+                   * sizeof(typename data_type<PAGE_SIZE>::value_type));
+    }
+
+    data_type<PAGE_SIZE> deserialize(const uint8_t* buffer)
+    {
+        data_type<PAGE_SIZE> res;
+        memcpy(res.data(),
+               buffer,
+               res.size() * sizeof(typename data_type<PAGE_SIZE>::value_type));
+
+        return res;
+    }
+};
 
 
 template<size_t PAGE_SIZE>
 class OceanusServerBuilder
 {
 public:
-    using content_type = payload_type<PAGE_SIZE>;
+    using content_type       = data_type<PAGE_SIZE>;
+    using content_serializer = OceanusContentSerializer<PAGE_SIZE>;
 
     OceanusServerBuilder(const std::string& db_path,
                          size_t             max_n_elements,
@@ -106,43 +96,37 @@ public:
     }
 
 private:
-    // struct Content
-    // {
-    //     // std::array<uint8_t, kTableKeySize> key;
-    //     payload_type<PAGE_SIZE> value;
+    static CuckooBuilderParam make_cuckoo_builder_params(
+        const std::string& base_path,
+        size_t             max_n_elements,
+        double             epsilon,
+        size_t             max_search_depth)
+    {
+        CuckooBuilderParam params;
+        params.value_file_path  = tmp_data_path(base_path);
+        params.table_0_path     = first_table_path(base_path);
+        params.table_1_path     = second_table_path(base_path);
+        params.epsilon          = epsilon;
+        params.max_n_elements   = max_n_elements;
+        params.max_search_depth = max_search_depth;
 
-    //     Content() = default;
-    //     // Content(std::array<uint8_t, kTableKeySize> k,
-    //     payload_type<PAGE_SIZE>
-    //     // v) : key(std::move(k)), value(std::move(v))
-    //     // {
-    //     // }
-
-    //     Content(payload_type<PAGE_SIZE> v) : value(std::move(v))
-    //     {
-    //     }
-    // };
-
+        return params;
+    }
 
     static std::string tmp_data_path(std::string path)
     {
         return path.append(".tmp");
     }
 
+    CuckooBuilderParam cuckoo_builder_params;
 
-    const std::string path;
-
-    abstractio::awonvm_vector<content_type, PAGE_SIZE, PAGE_SIZE> data;
-    // std::vector<content_type> data;
-
-    details::CuckooBuilder cuckoo_builder;
-    std::vector<size_t>    spilled_data;
-
-    const size_t      max_n_elements;
-    const std::string db_path;
-    size_t            n_elements;
-
-    bool is_committed{false};
+    CuckooBuilder<PAGE_SIZE,
+                  key_type,
+                  content_type,
+                  OceanusKeySerializer,
+                  content_serializer,
+                  OceanusCuckooHasher>
+        cuckoo_builder;
 };
 
 
@@ -152,75 +136,25 @@ OceanusServerBuilder<PAGE_SIZE>::OceanusServerBuilder(
     size_t             max_n_elements,
     double             epsilon,
     size_t             max_search_depth)
-    : path(db_path), data(tmp_data_path(db_path)),
-      cuckoo_builder(max_n_elements, epsilon, max_search_depth), spilled_data(),
-      max_n_elements(max_n_elements), db_path(db_path), n_elements(0)
+    : cuckoo_builder_params(make_cuckoo_builder_params(db_path,
+                                                       max_n_elements,
+                                                       epsilon,
+                                                       max_search_depth)),
+      cuckoo_builder(cuckoo_builder_params)
 {
-    data.reserve(max_n_elements);
 }
 
 template<size_t PAGE_SIZE>
 OceanusServerBuilder<PAGE_SIZE>::~OceanusServerBuilder()
 {
-    if (!is_committed) {
-        commit();
-    }
+    commit();
 }
 
 
 template<size_t PAGE_SIZE>
 void OceanusServerBuilder<PAGE_SIZE>::commit()
 {
-    if (is_committed) {
-        return;
-    }
-
-    is_committed = true;
-
-    // commit the data file
-    data.commit();
-
-    // create two new files: one per table
-
-    abstractio::awonvm_vector<content_type, PAGE_SIZE> table_1(
-        first_table_path(path));
-
-    abstractio::awonvm_vector<content_type, PAGE_SIZE> table_2(
-        second_table_path(path));
-
-    table_1.reserve(cuckoo_builder.cuckoo_table_size());
-    table_2.reserve(cuckoo_builder.cuckoo_table_size());
-
-    content_type empty_content;
-
-    memset(empty_content.data(), 0xFF, sizeof(empty_content));
-
-    for (auto it = cuckoo_builder.table_1_begin();
-         it != cuckoo_builder.table_1_end();
-         ++it) {
-        size_t loc = it->value_index;
-
-        if (details::CuckooBuilder::is_empty_placeholder(loc)) {
-            table_1.push_back(empty_content);
-        } else {
-            content_type pl = data.get(loc);
-            table_1.push_back(pl);
-        }
-    }
-    for (auto it = cuckoo_builder.table_2_begin();
-         it != cuckoo_builder.table_2_end();
-         ++it) {
-        size_t loc = it->value_index;
-
-        if (details::CuckooBuilder::is_empty_placeholder(loc)) {
-            table_2.push_back(empty_content);
-        } else {
-            content_type pl = data.get(loc);
-            table_2.push_back(pl);
-        }
-    }
-    table_1.commit();
-    table_2.commit();
+    cuckoo_builder.commit();
 }
 
 template<size_t PAGE_SIZE>
@@ -228,22 +162,7 @@ void OceanusServerBuilder<PAGE_SIZE>::insert(
     const std::array<uint8_t, kTableKeySize>& key,
     const data_type<PAGE_SIZE>&               value)
 {
-    payload_type<PAGE_SIZE> payload;
-
-    memcpy(payload.data(), key.data(), kTableKeySize);
-    std::copy(value.begin(), value.end(), payload.begin() + kOverhead);
-
-    // data.emplace_back(std::move(value));
-    data.push_back(payload);
-
-    size_t spill = cuckoo_builder.insert(key, data.size() - 1);
-
-    if (!details::CuckooBuilder::is_empty_placeholder(spill)) {
-        std::cerr << "Spill!\n";
-        spilled_data.push_back(spill);
-    } else {
-        // std::cerr << "No spill\n";
-    }
+    cuckoo_builder.insert(key, value);
 }
 
 } // namespace oceanus

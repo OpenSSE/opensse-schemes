@@ -15,7 +15,7 @@ add_library(
     diana/diana_common.cpp
     janus/janus_client.cpp
     janus/janus_server.cpp
-    oceanus/oceanus_server_builder.cpp
+    oceanus/cuckoo.cpp
 )
 # Add an alias
 add_library(OpenSSE::schemes ALIAS schemes)

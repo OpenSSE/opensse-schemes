@@ -23,7 +23,7 @@ public:
     OceanusServer(const std::string& db_path);
     ~OceanusServer();
 
-    std::list<index_type> search(const SearchRequest& req);
+    std::vector<index_type> search(const SearchRequest& req);
 
     // using content_type = payload_type<PAGE_SIZE>;
     // using content_type = typename
@@ -54,9 +54,10 @@ OceanusServer<PAGE_SIZE>::~OceanusServer()
 }
 
 template<size_t PAGE_SIZE>
-std::list<index_type> OceanusServer<PAGE_SIZE>::search(const SearchRequest& req)
+std::vector<index_type> OceanusServer<PAGE_SIZE>::search(
+    const SearchRequest& req)
 {
-    std::list<index_type> res;
+    std::vector<index_type> res;
 
 
     // const size_t table_size = table1.size();
@@ -75,7 +76,7 @@ std::list<index_type> OceanusServer<PAGE_SIZE>::search(const SearchRequest& req)
             content_type val = cuckoo_table.get(prf_out);
 
             for (auto it = val.begin(); it != val.end(); ++it) {
-                res.emplace_back(*it);
+                res.push_back(*it);
             }
         } catch (const std::exception& e) {
             std::cerr << e.what() << '\n';

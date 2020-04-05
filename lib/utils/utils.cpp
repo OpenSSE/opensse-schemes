@@ -26,11 +26,12 @@
 #include <fcntl.h>
 #include <fts.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <iomanip>
 #include <iostream>
-
 namespace sse {
 namespace utility {
 
@@ -233,6 +234,37 @@ void append_keyword_map(std::ostream&      out,
                         uint32_t           index)
 {
     out << kw << "       " << std::hex << index << "\n";
+}
+
+
+size_t os_page_size()
+{
+    return sysconf(_SC_PAGE_SIZE);
+}
+
+size_t device_page_size(int fd)
+{
+    struct statvfs stats;
+
+
+    fstatvfs(fd, &stats);
+
+
+    return stats.f_bsize;
+}
+
+size_t device_page_size(const std::string& path)
+{
+    if (!exists(path)) {
+        return 0;
+    }
+    struct statvfs stats;
+
+
+    statvfs(path.c_str(), &stats);
+
+
+    return stats.f_bsize;
 }
 
 } // namespace utility

@@ -99,5 +99,10 @@ inline bool is_aligned(const volatile void* p, size_t a)
     return is_aligned(reinterpret_cast<uintptr_t>(p), a);
 }
 
+
+size_t os_page_size();
+size_t device_page_size(int fd);
+size_t device_page_size(const std::string& path);
+
 } // namespace utility
 } // namespace sse

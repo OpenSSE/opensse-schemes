@@ -3,6 +3,7 @@
 #pragma once
 
 #include <sse/schemes/abstractio/scheduler.hpp>
+#include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
 #include <cassert>
@@ -17,19 +18,15 @@
 #include <string>
 #include <type_traits>
 
-
 namespace sse {
 namespace abstractio {
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT = PAGE_SIZE>
+template<typename T, size_t ALIGNMENT = alignof(T)>
 class awonvm_vector
 {
-    static_assert(sizeof(T) % PAGE_SIZE == 0,
-                  "Incompatible type T and page size");
-
 public:
     static constexpr size_t kTypeAlignment = ALIGNMENT;
-    static constexpr size_t kPageSize      = PAGE_SIZE;
+    static constexpr size_t kValueSize     = sizeof(T);
 
     using get_callback_type = std::function<void(std::unique_ptr<T>)>;
 
@@ -64,26 +61,47 @@ public:
     void set_use_direct_access(bool flag);
 
 private:
-    const std::string  m_filename;
-    int                m_fd{0};
-    bool               m_use_direct_io{false};
+    static size_t async_io_page_size(int fd);
+
+
+    const std::string m_filename;
+    bool              m_use_direct_io{false};
+    int               m_fd{0};
+    const size_t      m_device_page_size;
+
     std::atomic_size_t m_size{0};
 
     std::atomic_bool m_is_committed{false};
 
-
-    // std::atomic_size_t         m_completed_writes{0};
     std::unique_ptr<Scheduler> m_io_scheduler;
 };
+template<typename T, size_t ALIGNMENT>
+constexpr size_t awonvm_vector<T, ALIGNMENT>::kValueSize;
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::awonvm_vector(const std::string& path,
-                                                      bool direct_io)
-    : m_filename(path), m_use_direct_io(direct_io), m_io_scheduler(nullptr)
+template<typename T, size_t ALIGNMENT>
+awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
+                                           bool               direct_io)
+    : m_filename(path), m_use_direct_io(direct_io),
+      m_fd(utility::open_fd(path, m_use_direct_io)),
+      m_device_page_size(Scheduler::async_io_page_size(m_fd)),
+      m_io_scheduler(nullptr)
 {
-    // open the file at path in O_DIRECT mode
-    m_fd            = utility::open_fd(path, m_use_direct_io);
     off_t file_size = utility::file_size(m_fd);
+
+    if (m_device_page_size == 0) {
+        sse::logger::logger()->warn(
+            "Unable to read page size for file {}. Async IOs will "
+            "most likely be blocking.");
+    } else if (kValueSize % m_device_page_size != 0) {
+        sse::logger::logger()->warn("Device page size for file {} ({} "
+                                    "bytes) is not aligned with the "
+                                    "value size ({} bytes). Async IOs will "
+                                    "most likely be blocking.",
+                                    path,
+                                    m_device_page_size,
+                                    kValueSize);
+    }
+
 
     if (file_size > 0) {
         std::cerr << "Already committed file\n";
@@ -93,19 +111,19 @@ awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::awonvm_vector(const std::string& path,
     }
 
     if (m_use_direct_io) {
-        m_io_scheduler.reset(make_linux_aio_scheduler(kPageSize, 128));
+        m_io_scheduler.reset(make_linux_aio_scheduler(m_device_page_size, 128));
     }
 }
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::~awonvm_vector()
+template<typename T, size_t ALIGNMENT>
+awonvm_vector<T, ALIGNMENT>::~awonvm_vector()
 {
     commit();
     close(m_fd);
 }
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::reserve(size_t n)
+template<typename T, size_t ALIGNMENT>
+void awonvm_vector<T, ALIGNMENT>::reserve(size_t n)
 {
     if (!m_is_committed && n > size()) {
         ftruncate(m_fd, n * sizeof(T));
@@ -113,8 +131,8 @@ void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::reserve(size_t n)
 }
 
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-size_t awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::push_back(const T& val)
+template<typename T, size_t ALIGNMENT>
+size_t awonvm_vector<T, ALIGNMENT>::push_back(const T& val)
 {
     if (m_is_committed) {
         throw std::runtime_error(
@@ -145,8 +163,8 @@ size_t awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::push_back(const T& val)
     return pos;
 }
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-size_t awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::async_push_back(const T& val)
+template<typename T, size_t ALIGNMENT>
+size_t awonvm_vector<T, ALIGNMENT>::async_push_back(const T& val)
 {
     if (!m_use_direct_io) {
         std::cerr << "awonvm_vector uses buffered IOs. Calls for async IOs "
@@ -190,13 +208,13 @@ size_t awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::async_push_back(const T& val)
 }
 
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::commit() noexcept
+template<typename T, size_t ALIGNMENT>
+void awonvm_vector<T, ALIGNMENT>::commit() noexcept
 {
     if (!m_is_committed) {
         if (m_use_direct_io) {
             m_io_scheduler.reset(make_linux_aio_scheduler(
-                kPageSize,
+                m_device_page_size,
                 128)); // this will block until the completion of write
             // queries and then create a new scheduler for future
             // async read queries
@@ -207,8 +225,8 @@ void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::commit() noexcept
     m_is_committed = true;
 }
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::set_use_direct_access(bool flag)
+template<typename T, size_t ALIGNMENT>
+void awonvm_vector<T, ALIGNMENT>::set_use_direct_access(bool flag)
 {
     if (flag != m_use_direct_io) {
         // wait for unfinished async IOs
@@ -223,15 +241,15 @@ void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::set_use_direct_access(bool flag)
 
         // recreate an async scheduler
         m_io_scheduler.reset(make_linux_aio_scheduler(
-            kPageSize,
+            m_device_page_size,
             128)); // this will block until the completion of write
 
         m_use_direct_io = flag;
     }
 }
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-T awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::get(size_t index)
+template<typename T, size_t ALIGNMENT>
+T awonvm_vector<T, ALIGNMENT>::get(size_t index)
 {
     if (index > m_size.load()) {
         throw std::invalid_argument("Index (" + std::to_string(index)
@@ -256,10 +274,9 @@ T awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::get(size_t index)
     return v;
 }
 
-template<typename T, size_t PAGE_SIZE, size_t ALIGNMENT>
-void awonvm_vector<T, PAGE_SIZE, ALIGNMENT>::async_get(
-    size_t            index,
-    get_callback_type get_callback)
+template<typename T, size_t ALIGNMENT>
+void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
+                                            get_callback_type get_callback)
 {
     if (index > m_size.load()) {
         throw std::invalid_argument("Index (" + std::to_string(index)

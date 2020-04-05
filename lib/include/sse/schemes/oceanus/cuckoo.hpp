@@ -54,8 +54,8 @@ public:
 private:
     CuckooBuilderParam params;
 
-    details::CuckooAllocator                                      allocator;
-    abstractio::awonvm_vector<payload_type, PAGE_SIZE, PAGE_SIZE> data;
+    details::CuckooAllocator                           allocator;
+    abstractio::awonvm_vector<payload_type, PAGE_SIZE> data;
 
     std::vector<size_t> spilled_data;
 

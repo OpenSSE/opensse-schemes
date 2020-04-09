@@ -2,6 +2,7 @@
 
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
 #include <sse/schemes/oceanus/details/cuckoo.hpp>
+#include <sse/schemes/utils/optional.hpp>
 
 #include <cmath>
 
@@ -273,12 +274,19 @@ public:
                                                 ValueSerializer,
                                                 CuckooHasher>::payload_type;
 
+    using get_callback_type
+        = std::function<void(std::experimental::optional<T>)>;
+
 
     CuckooHashTable(const std::string& table_0_path,
                     const std::string& table_1_path);
 
 
-    T get(const Key& key);
+    T    get(const Key& key);
+    void async_get(const Key& key, get_callback_type callback);
+
+
+    void use_direct_IO(bool flag);
 
 private:
     abstractio::awonvm_vector<payload_type, PAGE_SIZE> table_0;
@@ -355,6 +363,106 @@ T CuckooHashTable<PAGE_SIZE,
             throw std::out_of_range("Key not found");
         }
     }
+}
+
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class KeySerializer,
+         class ValueSerializer,
+         class CuckooHasher>
+void CuckooHashTable<PAGE_SIZE,
+                     Key,
+                     T,
+                     KeySerializer,
+                     ValueSerializer,
+                     CuckooHasher>::async_get(const Key&        key,
+                                              get_callback_type callback)
+{
+    struct CallBackState
+    {
+        std::unique_ptr<payload_type> result{nullptr};
+        std::atomic_uint8_t           completion_counter{0};
+    };
+
+    CuckooKey search_key = CuckooHasher()(key);
+
+    // generate both locations
+    size_t loc_0 = search_key.h[0] % table_size;
+    size_t loc_1 = search_key.h[1] % table_size;
+
+    std::array<uint8_t, kKeySize> ser_key;
+    KeySerializer().serialize(key, ser_key.data());
+
+    CallBackState* state = new CallBackState();
+
+    auto inner_callback =
+        [state, ser_key, callback](std::unique_ptr<payload_type> read_value) {
+            if (read_value) {
+                // check whether we are a match on the key
+                if (details::match_key<PAGE_SIZE>(*read_value.get(), ser_key)) {
+                    // only one of the two callback should access this
+                    // section
+                    // no need for a mutex
+                    state->result = std::move(read_value);
+                }
+            }
+
+
+            uint8_t completed = state->completion_counter.fetch_add(1);
+
+            if (completed == 1) {
+                // We can use the caller callback, and delete the state
+                // Be careful though: we want to destruct the state before we
+                // calling the callback, while still having a pointer to the
+                // retrieved data
+                // So we first need to move the smart pointer.
+
+                // Also, why putting the retrieved data in the state and not
+                // in the local callback state? Think about when none of the
+                // fetched value match the searched key: we still have to
+                // return the (empty) result to the outer callback, and this
+                // can only be done by the last running inner callback. Thus
+                // we will communication channel between both inner callbacks.
+                // Although this might be done with a smaller overhead than
+                // using a unique_ptr (eg. using the completion counter as an
+                // additional flag), this is its role for the moment.
+
+                std::unique_ptr<payload_type> data = std::move(state->result);
+
+                delete state;
+
+                if (data) {
+                    callback(
+                        ValueSerializer().deserialize(data->data() + kKeySize));
+                } else {
+                    callback(std::experimental::nullopt);
+                }
+            }
+        };
+
+
+    table_0.async_get(loc_0, inner_callback);
+    table_1.async_get(loc_1, inner_callback);
+}
+
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class KeySerializer,
+         class ValueSerializer,
+         class CuckooHasher>
+void CuckooHashTable<PAGE_SIZE,
+                     Key,
+                     T,
+                     KeySerializer,
+                     ValueSerializer,
+                     CuckooHasher>::use_direct_IO(bool flag)
+{
+    table_0.set_use_direct_access(flag);
+    table_1.set_use_direct_access(flag);
 }
 
 

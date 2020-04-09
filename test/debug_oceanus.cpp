@@ -83,7 +83,7 @@ void test_insertion(const size_t n_insertions)
 
         SearchRequest req_2(std::move(prf_2));
 
-        res = server.search(req_2);
+        res = server.search_async(req_2);
         std::cerr << "Res size: " << res.size() << "\n";
         std::cerr << "Expected: " << actual_insertions * pl_2.size() << "\n";
 

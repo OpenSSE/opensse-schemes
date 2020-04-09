@@ -74,6 +74,7 @@ private:
     std::atomic_bool m_is_committed{false};
 
     std::unique_ptr<Scheduler> m_io_scheduler;
+    bool                       m_io_warn_flag{false};
 };
 template<typename T, size_t ALIGNMENT>
 constexpr size_t awonvm_vector<T, ALIGNMENT>::kValueSize;
@@ -84,7 +85,7 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
     : m_filename(path), m_use_direct_io(direct_io),
       m_fd(utility::open_fd(path, m_use_direct_io)),
       m_device_page_size(Scheduler::async_io_page_size(m_fd)),
-      m_io_scheduler(nullptr)
+      m_io_scheduler(make_linux_aio_scheduler(m_device_page_size, 128))
 {
     off_t file_size = utility::file_size(m_fd);
 
@@ -108,10 +109,6 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
         m_is_committed = true;
 
         m_size.store(file_size / sizeof(T));
-    }
-
-    if (m_use_direct_io) {
-        m_io_scheduler.reset(make_linux_aio_scheduler(m_device_page_size, 128));
     }
 }
 
@@ -166,9 +163,14 @@ size_t awonvm_vector<T, ALIGNMENT>::push_back(const T& val)
 template<typename T, size_t ALIGNMENT>
 size_t awonvm_vector<T, ALIGNMENT>::async_push_back(const T& val)
 {
-    if (!m_use_direct_io) {
+    if (!m_io_scheduler) {
+        throw std::runtime_error("No IO Scheduler set");
+    }
+
+    if (!m_use_direct_io && !m_io_warn_flag) {
         std::cerr << "awonvm_vector uses buffered IOs. Calls for async IOs "
                      "will be synchronous.\n";
+        m_io_warn_flag = true;
     }
 
     // we have to copy the data so it does not get destructed by the caller
@@ -245,6 +247,7 @@ void awonvm_vector<T, ALIGNMENT>::set_use_direct_access(bool flag)
             128)); // this will block until the completion of write
 
         m_use_direct_io = flag;
+        m_io_warn_flag  = false;
     }
 }
 
@@ -278,6 +281,10 @@ template<typename T, size_t ALIGNMENT>
 void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
                                             get_callback_type get_callback)
 {
+    if (!m_io_scheduler) {
+        throw std::runtime_error("No IO Scheduler set");
+    }
+
     if (index > m_size.load()) {
         throw std::invalid_argument("Index (" + std::to_string(index)
                                     + ") out of bounds (size="
@@ -289,9 +296,10 @@ void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
             "Invalid state during read: the vector is not committed");
     }
 
-    if (!m_use_direct_io) {
+    if (!m_use_direct_io && !m_io_warn_flag) {
         std::cerr << "awonvm_vector uses buffered IOs. Calls for async IOs "
                      "will be synchronous.\n";
+        m_io_warn_flag = true;
     }
 
     void* buffer;

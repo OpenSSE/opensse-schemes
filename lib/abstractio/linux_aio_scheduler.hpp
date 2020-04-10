@@ -79,6 +79,14 @@ private:
     std::atomic_uint64_t m_submitted_queries_count;
     uint64_t             m_completed_queries_count;
     std::atomic_uint64_t m_failed_queries_count;
+
+    std::mutex              m_cv_lock;
+    std::condition_variable m_cv_submission;
+    bool                    m_waiting_submissions{false};
+
+    // std::atomic_size_t m_submit_calls{0};
+    // std::atomic_size_t m_submit_EAGAIN{0};
+    // std::atomic_size_t m_submit_partial{0};
 };
 
 } // namespace abstractio

@@ -33,6 +33,10 @@ LinuxAIOScheduler::~LinuxAIOScheduler()
     wait_completions();
 
     io_destroy(m_ioctx);
+
+    // std::cerr << "io_submit: " << m_submit_calls << " calls\n";
+    // std::cerr << m_submit_partial << " partial submissions\n";
+    // std::cerr << m_submit_EAGAIN << " with full queue\n";
 }
 
 void LinuxAIOScheduler::notify_loop()
@@ -51,6 +55,13 @@ void LinuxAIOScheduler::notify_loop()
         if (num_events < 0) {
             std::cerr << "Error in io_getevents: " << std::to_string(errno)
                       << "(" << strerror(errno) << ")\n";
+        }
+
+        if (num_events > 0) {
+            std::lock_guard<std::mutex> guard(m_cv_lock);
+            m_waiting_submissions = false;
+
+            m_cv_submission.notify_all();
         }
 
         for (int i = 0; i < num_events; i++) {
@@ -101,13 +112,26 @@ int LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
 
     while (remaining_subs > 0) {
         res = io_submit(m_ioctx, remaining_subs, iocbs_head);
+        // m_submit_calls++;
 
         if (res >= 0) {
-            assert(res <= remaining_subs);
+            assert(static_cast<size_t>(res) <= remaining_subs);
+            if (static_cast<size_t>(res) != remaining_subs) {
+                // m_submit_partial++;
+            }
             remaining_subs -= res;
             iocbs_head += res;
-        } else if (res != -EAGAIN) {
-            m_failed_queries_count.fetch_add(remaining_subs);
+        } else if (res == -EAGAIN) {
+            // m_submit_EAGAIN++;
+            // wait until the submission queue has some space
+            std::unique_lock<std::mutex> lock(m_cv_lock);
+
+            m_waiting_submissions = true;
+            while (m_waiting_submissions) {
+                m_cv_submission.wait(lock);
+            }
+        } else {
+            // m_failed_queries_count.fetch_add(remaining_subs);
             std::cerr << "Submission error: " << res << "\n";
             if (res < 0)
                 perror("io_submit");

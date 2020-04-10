@@ -38,10 +38,7 @@ void test_insertion(const size_t n_insertions)
     size_t actual_insertions = n_insertions / 2;
 
 
-    if (!sse::utility::is_file(
-            OceanusServerBuilder<kPageSize>::first_table_path(path))
-        && !sse::utility::is_file(
-            OceanusServerBuilder<kPageSize>::second_table_path(path))) {
+    if (!sse::utility::is_file(path)) {
         OceanusServerBuilder<kPageSize> builder(
             path, n_elts, epsilon, max_search_depth);
 
@@ -71,7 +68,19 @@ void test_insertion(const size_t n_insertions)
         // construct a search request from the PRF
         SearchRequest req_1(std::move(prf_1));
 
-        auto res = server.search(req_1);
+        auto begin = std::chrono::high_resolution_clock::now();
+
+        std::vector<uint64_t> res;
+
+        res = server.search(req_1);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> time_ms = end - begin;
+
+        std::cout << "Sync read duration: " << time_ms.count() << " ms\n";
+        std::cout << 1000 * time_ms.count() / actual_insertions << " mus/elt\n";
+        std::cout << 1000 * actual_insertions / time_ms.count() << " elt/s\n\n";
+
         std::cerr << "Res size: " << res.size() << "\n";
         std::cerr << "Expected: " << actual_insertions * pl_1.size() << "\n";
 
@@ -81,9 +90,21 @@ void test_insertion(const size_t n_insertions)
             }
         }
 
+
         SearchRequest req_2(std::move(prf_2));
 
+        begin = std::chrono::high_resolution_clock::now();
+
         res = server.search_async(req_2);
+
+        end = std::chrono::high_resolution_clock::now();
+
+        time_ms = end - begin;
+
+        std::cout << "Async read duration: " << time_ms.count() << " ms\n";
+        std::cout << 1000 * time_ms.count() / actual_insertions << " mus/elt\n";
+        std::cout << 1000 * actual_insertions / time_ms.count() << " elt/s\n\n";
+
         std::cerr << "Res size: " << res.size() << "\n";
         std::cerr << "Expected: " << actual_insertions * pl_2.size() << "\n";
 

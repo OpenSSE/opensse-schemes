@@ -44,8 +44,7 @@ private:
 
 template<size_t PAGE_SIZE>
 OceanusServer<PAGE_SIZE>::OceanusServer(const std::string& db_path)
-    : cuckoo_table(OceanusServerBuilder<PAGE_SIZE>::first_table_path(db_path),
-                   OceanusServerBuilder<PAGE_SIZE>::second_table_path(db_path))
+    : cuckoo_table(db_path)
 {
     std::cerr << "Oceanus server initialization succeeded!\n";
 }

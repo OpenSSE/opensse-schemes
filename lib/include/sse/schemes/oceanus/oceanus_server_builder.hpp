@@ -86,15 +86,6 @@ public:
     void commit();
 
 
-    static std::string first_table_path(std::string path)
-    {
-        return path.append(".0");
-    }
-    static std::string second_table_path(std::string path)
-    {
-        return path.append(".1");
-    }
-
 private:
     static CuckooBuilderParam make_cuckoo_builder_params(
         const std::string& base_path,
@@ -103,12 +94,11 @@ private:
         size_t             max_search_depth)
     {
         CuckooBuilderParam params;
-        params.value_file_path  = tmp_data_path(base_path);
-        params.table_0_path     = first_table_path(base_path);
-        params.table_1_path     = second_table_path(base_path);
-        params.epsilon          = epsilon;
-        params.max_n_elements   = max_n_elements;
-        params.max_search_depth = max_search_depth;
+        params.value_file_path   = tmp_data_path(base_path);
+        params.cuckoo_table_path = base_path;
+        params.epsilon           = epsilon;
+        params.max_n_elements    = max_n_elements;
+        params.max_search_depth  = max_search_depth;
 
         return params;
     }

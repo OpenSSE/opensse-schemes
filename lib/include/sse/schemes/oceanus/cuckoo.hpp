@@ -14,8 +14,7 @@ namespace oceanus {
 struct CuckooBuilderParam
 {
     std::string value_file_path;
-    std::string table_0_path;
-    std::string table_1_path;
+    std::string cuckoo_table_path;
 
     size_t max_n_elements;
     double epsilon;
@@ -199,14 +198,14 @@ void CuckooBuilder<PAGE_SIZE,
 
     // create two new files: one per table
 
-    abstractio::awonvm_vector<payload_type, PAGE_SIZE> table_0(
-        params.table_0_path);
+    abstractio::awonvm_vector<payload_type, PAGE_SIZE> cuckoo_table(
+        params.cuckoo_table_path);
 
-    abstractio::awonvm_vector<payload_type, PAGE_SIZE> table_1(
-        params.table_1_path);
+    // abstractio::awonvm_vector<payload_type, PAGE_SIZE> table_1(
+    //     params.table_1_path);
 
-    table_0.reserve(allocator.get_cuckoo_table_size());
-    table_1.reserve(allocator.get_cuckoo_table_size());
+    cuckoo_table.reserve(2 * allocator.get_cuckoo_table_size());
+    // table_1.reserve(allocator.get_cuckoo_table_size());
 
     payload_type empty_content;
 
@@ -217,10 +216,10 @@ void CuckooBuilder<PAGE_SIZE,
         size_t loc = it->value_index;
 
         if (details::CuckooAllocator::is_empty_placeholder(loc)) {
-            table_0.push_back(empty_content);
+            cuckoo_table.push_back(empty_content);
         } else {
             payload_type pl = data.get(loc);
-            table_0.push_back(pl);
+            cuckoo_table.push_back(pl);
         }
     }
     for (auto it = allocator.table_1_begin(); it != allocator.table_1_end();
@@ -228,14 +227,13 @@ void CuckooBuilder<PAGE_SIZE,
         size_t loc = it->value_index;
 
         if (details::CuckooAllocator::is_empty_placeholder(loc)) {
-            table_1.push_back(empty_content);
+            cuckoo_table.push_back(empty_content);
         } else {
             payload_type pl = data.get(loc);
-            table_1.push_back(pl);
+            cuckoo_table.push_back(pl);
         }
     }
-    table_0.commit();
-    table_1.commit();
+    cuckoo_table.commit();
 }
 
 template<size_t PAGE_SIZE,
@@ -278,8 +276,7 @@ public:
         = std::function<void(std::experimental::optional<T>)>;
 
 
-    CuckooHashTable(const std::string& table_0_path,
-                    const std::string& table_1_path);
+    CuckooHashTable(const std::string& path);
 
 
     T    get(const Key& key);
@@ -289,8 +286,7 @@ public:
     void use_direct_IO(bool flag);
 
 private:
-    abstractio::awonvm_vector<payload_type, PAGE_SIZE> table_0;
-    abstractio::awonvm_vector<payload_type, PAGE_SIZE> table_1;
+    abstractio::awonvm_vector<payload_type, PAGE_SIZE> table;
 
     size_t table_size;
 };
@@ -306,22 +302,19 @@ CuckooHashTable<PAGE_SIZE,
                 T,
                 KeySerializer,
                 ValueSerializer,
-                CuckooHasher>::CuckooHashTable(const std::string& table_0_path,
-                                               const std::string& table_1_path)
-    : table_0(table_0_path, false), table_1(table_1_path, false)
+                CuckooHasher>::CuckooHashTable(const std::string& path)
+    : table(path, false)
 {
-    if (!table_0.is_committed()) {
-        throw std::runtime_error("Table 0 not committed");
-    }
-    if (!table_1.is_committed()) {
-        throw std::runtime_error("Table 1 not committed");
+    if (!table.is_committed()) {
+        throw std::runtime_error("Table not committed");
     }
 
-    table_size = table_0.size();
+    table_size = table.size();
 
-    if (table_size != table_1.size()) {
-        throw std::runtime_error("Invalid Cuckoo table sizes");
+    if (table_size % 2 != 0) {
+        throw std::runtime_error("Invalid Cuckoo table size");
     }
+    table_size /= 2;
 
     std::cerr << "Cuckoo hash table initialization succeeded!\n";
     std::cerr << "Table size: " << table_size << "\n";
@@ -349,13 +342,13 @@ T CuckooHashTable<PAGE_SIZE,
     std::array<uint8_t, kKeySize> ser_key;
     KeySerializer().serialize(key, ser_key.data());
 
-    payload_type val_0 = table_0.get(loc);
+    payload_type val_0 = table.get(loc);
     if (details::match_key<PAGE_SIZE>(val_0, ser_key)) {
         return ValueSerializer().deserialize(val_0.data() + kKeySize);
     } else {
         loc = search_key.h[1] % table_size;
 
-        payload_type val_1 = table_1.get(loc);
+        payload_type val_1 = table.get(loc + table_size);
 
         if (details::match_key<PAGE_SIZE>(val_1, ser_key)) {
             return ValueSerializer().deserialize(val_1.data() + kKeySize);
@@ -390,7 +383,7 @@ void CuckooHashTable<PAGE_SIZE,
 
     // generate both locations
     size_t loc_0 = search_key.h[0] % table_size;
-    size_t loc_1 = search_key.h[1] % table_size;
+    size_t loc_1 = table_size + (search_key.h[1] % table_size);
 
     std::array<uint8_t, kKeySize> ser_key;
     KeySerializer().serialize(key, ser_key.data());
@@ -443,8 +436,8 @@ void CuckooHashTable<PAGE_SIZE,
         };
 
 
-    table_0.async_get(loc_0, inner_callback);
-    table_1.async_get(loc_1, inner_callback);
+    table.async_get(loc_0, inner_callback);
+    table.async_get(loc_1, inner_callback);
 }
 
 
@@ -461,8 +454,8 @@ void CuckooHashTable<PAGE_SIZE,
                      ValueSerializer,
                      CuckooHasher>::use_direct_IO(bool flag)
 {
-    table_0.set_use_direct_access(flag);
-    table_1.set_use_direct_access(flag);
+    table.set_use_direct_access(flag);
+    // table_1.set_use_direct_access(flag);
 }
 
 

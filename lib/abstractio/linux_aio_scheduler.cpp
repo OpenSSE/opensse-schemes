@@ -66,6 +66,23 @@ void LinuxAIOScheduler::notify_loop()
     std::cerr << "Shut down\n";
 }
 
+int LinuxAIOScheduler::check_args(void* buf, size_t len, off_t offset)
+{
+    if (!utility::is_aligned(buf, m_page_size)) {
+        return -EINVAL_UNALIGNED_BUFFER;
+    }
+
+    if (len % 512 != 0) {
+        return -EINVAL_BUFFERSIZE;
+    }
+
+    if (offset % 512 != 0) {
+        return -EINVAL_UNALIGNED_ACCESS;
+    }
+
+    return 0;
+}
+
 void LinuxAIOScheduler::wait_completions()
 {
     m_stop_flag = true;
@@ -88,16 +105,10 @@ int LinuxAIOScheduler::submit_pread(int                     fd,
                                       // code conventions
     }
 
-    if (!utility::is_aligned(buf, m_page_size)) {
-        return -EINVAL_UNALIGNED_BUFFER;
-    }
+    int ret = check_args(buf, len, offset);
 
-    if (len % 512 != 0) {
-        return -EINVAL_BUFFERSIZE;
-    }
-
-    if (offset % 512 != 0) {
-        return -EINVAL_UNALIGNED_ACCESS;
+    if (ret != 0) {
+        return ret;
     }
     struct iocb  iocb;
     struct iocb* iocbs = &iocb;
@@ -113,12 +124,9 @@ int LinuxAIOScheduler::submit_pread(int                     fd,
 
     // std::cerr << "Submit IO\n";
 
-    int    res             = -EAGAIN;
-    size_t tentative_count = 0;
+    int res = -EAGAIN;
 
     while (res == -EAGAIN) {
-        tentative_count++;
-
         res = io_submit(m_ioctx, 1, &iocbs);
     }
 
@@ -134,6 +142,63 @@ int LinuxAIOScheduler::submit_pread(int                     fd,
 
     return res;
 }
+
+int LinuxAIOScheduler::submit_preads(const std::vector<PReadSumission>& subs)
+{
+    if (m_stop_flag) {
+        return -EINVAL_INVALID_STATE; // the error code is negated, to be
+                                      // consistent with the libaio error
+                                      // code conventions
+    }
+
+    std::vector<struct iocb> iocbs;
+
+    iocbs.reserve(subs.size());
+
+    for (const auto& sub : subs) {
+        // check that the arguments are well-formed
+        if (check_args(sub.buf, sub.len, sub.offset) != 0) {
+            continue;
+        }
+
+        struct iocb iocb;
+
+        uint64_t         query_id = m_submitted_queries_count.fetch_add(1);
+        LinuxAIORequest* req
+            = new LinuxAIORequest(query_id, sub.data, sub.callback);
+
+        io_prep_pread(&iocb, sub.fd, sub.buf, sub.len, sub.offset);
+        iocb.data = req;
+        iocbs.push_back(iocb);
+    }
+
+    // now we have to submit the iocbs
+    struct iocb* iocbs_ptr      = iocbs.data();
+    size_t       remaining_subs = iocbs.size();
+
+    int res = -EAGAIN;
+
+    while (remaining_subs > 0) {
+        res = io_submit(m_ioctx, remaining_subs, &iocbs_ptr);
+
+        if (res >= 0) {
+            assert(res <= remaining_subs);
+            remaining_subs -= res;
+            iocbs_ptr += res;
+        } else if (res != -EAGAIN) {
+            m_failed_queries_count.fetch_add(remaining_subs);
+            std::cerr << "Submission error: " << res << "\n";
+            if (res < 0)
+                perror("io_submit");
+            else
+                fprintf(stderr, "io_submit failed\n");
+            return -1;
+        }
+    }
+
+    return iocbs.size() - remaining_subs;
+}
+
 
 int LinuxAIOScheduler::submit_pwrite(int                     fd,
                                      void*                   buf,
@@ -262,6 +327,11 @@ std::future<ReadBuffer> LinuxAIOScheduler::async_read(int    fd,
 
     auto prom = move_to_dcc(
         read_promise); // does this hack annoy you? Yeah, me too ...
+    // This is due to the fact that std::function must be copy-constructible,
+    // which is not possible when we capture a promise, which is only
+    // move-constructible. The only other way to do that is to rely on a
+    // shared_pointer, at the cost of an extra memory allocation.
+    // This solution comes from https://stackoverflow.com/a/57694904
 
     auto cb = [prom](void* buffer, int64_t len) {
         ReadBuffer res;
@@ -270,7 +340,7 @@ std::future<ReadBuffer> LinuxAIOScheduler::async_read(int    fd,
         prom.value.set_value(res);
     };
 
-    ret = submit_pread(fd, buffer, len, offset, buffer, cb);
+    ret = submit_pread(fd, buffer, len, offset, buffer, std::move(cb));
 
     if (ret != 1) {
         free(buffer);

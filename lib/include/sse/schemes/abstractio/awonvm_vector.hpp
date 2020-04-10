@@ -30,6 +30,17 @@ public:
 
     using get_callback_type = std::function<void(std::unique_ptr<T>)>;
 
+    struct GetRequest
+    {
+        size_t            index;
+        get_callback_type callback;
+
+        GetRequest(size_t index, get_callback_type callback)
+            : index(index), callback(std::move(callback))
+        {
+        }
+    };
+
     awonvm_vector(const std::string& path, bool direct_io = false);
     ~awonvm_vector();
 
@@ -47,6 +58,7 @@ public:
 
     T    get(size_t index);
     void async_get(size_t index, get_callback_type get_callback);
+    void async_gets(const std::vector<GetRequest>& requests);
 
     bool is_committed() const noexcept
     {
@@ -285,12 +297,6 @@ void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
         throw std::runtime_error("No IO Scheduler set");
     }
 
-    if (index > m_size.load()) {
-        throw std::invalid_argument("Index (" + std::to_string(index)
-                                    + ") out of bounds (size="
-                                    + std::to_string(m_size.load()) + ")");
-    }
-
     if (!m_is_committed) {
         throw std::runtime_error(
             "Invalid state during read: the vector is not committed");
@@ -300,6 +306,12 @@ void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
         std::cerr << "awonvm_vector uses buffered IOs. Calls for async IOs "
                      "will be synchronous.\n";
         m_io_warn_flag = true;
+    }
+
+    if (index > m_size.load()) {
+        throw std::invalid_argument("Index (" + std::to_string(index)
+                                    + ") out of bounds (size="
+                                    + std::to_string(m_size.load()) + ")");
     }
 
     void* buffer;
@@ -333,6 +345,77 @@ void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
             + std::to_string(ret) + "(" + strerror(ret) + ")");
     }
 }
+
+template<typename T, size_t ALIGNMENT>
+void awonvm_vector<T, ALIGNMENT>::async_gets(
+    const std::vector<GetRequest>& requests)
+{
+    using namespace abstractio;
+
+    if (!m_io_scheduler) {
+        throw std::runtime_error("No IO Scheduler set");
+    }
+
+    if (!m_is_committed) {
+        throw std::runtime_error(
+            "Invalid state during read: the vector is not committed");
+    }
+
+    if (!m_use_direct_io && !m_io_warn_flag) {
+        std::cerr << "awonvm_vector uses buffered IOs. Calls for async IOs "
+                     "will be synchronous.\n";
+        m_io_warn_flag = true;
+    }
+
+    std::vector<Scheduler::PReadSumission> submissions;
+    submissions.reserve(requests.size());
+
+    for (const auto& req : requests) {
+        if (req.index > m_size.load()) {
+            throw std::invalid_argument("Index (" + std::to_string(req.index)
+                                        + ") out of bounds (size="
+                                        + std::to_string(m_size.load()) + ")");
+        }
+
+
+        void* buffer;
+        int   ret = posix_memalign(
+            (&buffer), ALIGNMENT, std::max(ALIGNMENT, sizeof(T)));
+
+        if (ret != 0 || buffer == NULL) {
+            throw std::runtime_error(
+                "Error when allocating aligned memory: errno "
+                + std::to_string(ret) + "(" + strerror(ret) + ")");
+        }
+
+        auto get_callback = req.callback;
+        auto inner_cb     = [get_callback](void* buf, int64_t res) {
+            std::unique_ptr<T> result(nullptr);
+
+            if (res == sizeof(T)) {
+                result.reset(reinterpret_cast<T*>(buf));
+            }
+
+            get_callback(std::move(result));
+        };
+
+        submissions.push_back(Scheduler::PReadSumission(
+            m_fd, buffer, sizeof(T), req.index * sizeof(T), buffer, inner_cb));
+    }
+
+    int ret = m_io_scheduler->submit_preads(submissions);
+
+    if (ret < 0 || static_cast<size_t>(ret) != submissions.size()) {
+        for (auto& sub : submissions) {
+            free(sub.buf);
+        }
+
+        throw std::runtime_error(
+            "Error when submitting the read async IO: errno "
+            + std::to_string(ret) + "(" + strerror(ret) + ")");
+    }
+}
+
 
 } // namespace abstractio
 } // namespace sse

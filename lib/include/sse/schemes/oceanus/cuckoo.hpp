@@ -286,7 +286,8 @@ public:
     void use_direct_IO(bool flag);
 
 private:
-    abstractio::awonvm_vector<payload_type, PAGE_SIZE> table;
+    using table_type = abstractio::awonvm_vector<payload_type, PAGE_SIZE>;
+    table_type table;
 
     size_t table_size;
 };
@@ -436,8 +437,11 @@ void CuckooHashTable<PAGE_SIZE,
         };
 
 
-    table.async_get(loc_0, inner_callback);
-    table.async_get(loc_1, inner_callback);
+    // table.async_get(loc_0, inner_callback);
+    // table.async_get(loc_1, inner_callback);
+    using GetRequest = typename table_type::GetRequest;
+    table.async_gets(
+        {GetRequest(loc_0, inner_callback), GetRequest(loc_1, inner_callback)});
 }
 
 
@@ -455,7 +459,6 @@ void CuckooHashTable<PAGE_SIZE,
                      CuckooHasher>::use_direct_IO(bool flag)
 {
     table.set_use_direct_access(flag);
-    // table_1.set_use_direct_access(flag);
 }
 
 

@@ -14,7 +14,43 @@ namespace abstractio {
 
 class LinuxAIOScheduler : public Scheduler
 {
+public:
+    LinuxAIOScheduler(const size_t page_size, const unsigned nr_events);
+    ~LinuxAIOScheduler();
+
+    void wait_completions() override;
+
+    int submit_pread(int                     fd,
+                     void*                   buf,
+                     size_t                  len,
+                     off_t                   offset,
+                     void*                   data,
+                     scheduler_callback_type callback) override;
+
+    int submit_preads(const std::vector<PReadSumission>& subs) override;
+
+    int submit_pwrite(int                     fd,
+                      void*                   buf,
+                      size_t                  len,
+                      off_t                   offset,
+                      void*                   data,
+                      scheduler_callback_type callback) override;
+
+    std::future<ReadBuffer> async_read(int    fd,
+                                       size_t len,
+                                       off_t  offset) override;
+
+    std::future<int> async_write(int    fd,
+                                 void*  buf,
+                                 size_t len,
+                                 off_t  offset) override;
+
+
 private:
+    void notify_loop();
+
+    int check_args(void* buf, size_t len, off_t offset);
+
     struct LinuxAIORequest
     {
         size_t                  m_id;
@@ -40,36 +76,6 @@ private:
     std::atomic_uint64_t m_submitted_queries_count;
     uint64_t             m_completed_queries_count;
     std::atomic_uint64_t m_failed_queries_count;
-
-    void notify_loop();
-
-public:
-    LinuxAIOScheduler(const size_t page_size, const unsigned nr_events);
-    ~LinuxAIOScheduler();
-
-    void wait_completions() override;
-
-    int submit_pread(int                     fd,
-                     void*                   buf,
-                     size_t                  len,
-                     off_t                   offset,
-                     void*                   data,
-                     scheduler_callback_type callback) override;
-    int submit_pwrite(int                     fd,
-                      void*                   buf,
-                      size_t                  len,
-                      off_t                   offset,
-                      void*                   data,
-                      scheduler_callback_type callback) override;
-
-    std::future<ReadBuffer> async_read(int    fd,
-                                       size_t len,
-                                       off_t  offset) override;
-
-    std::future<int> async_write(int    fd,
-                                 void*  buf,
-                                 size_t len,
-                                 off_t  offset) override;
 };
 
 } // namespace abstractio

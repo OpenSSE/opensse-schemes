@@ -51,6 +51,9 @@ private:
 
     int check_args(void* buf, size_t len, off_t offset);
 
+    int submit_iocbs(struct iocb** iocbs, size_t n_iocbs);
+
+
     struct LinuxAIORequest
     {
         size_t                  m_id;

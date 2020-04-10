@@ -92,6 +92,34 @@ void LinuxAIOScheduler::wait_completions()
     }
 }
 
+int LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
+{
+    int           res            = -EAGAIN;
+    size_t        remaining_subs = n_iocbs;
+    struct iocb** iocbs_head     = iocbs;
+
+
+    while (remaining_subs > 0) {
+        res = io_submit(m_ioctx, remaining_subs, iocbs_head);
+
+        if (res >= 0) {
+            assert(res <= remaining_subs);
+            remaining_subs -= res;
+            iocbs_head += res;
+        } else if (res != -EAGAIN) {
+            m_failed_queries_count.fetch_add(remaining_subs);
+            std::cerr << "Submission error: " << res << "\n";
+            if (res < 0)
+                perror("io_submit");
+            else
+                fprintf(stderr, "io_submit failed\n");
+            return -1;
+        }
+    }
+
+    return n_iocbs - remaining_subs;
+}
+
 int LinuxAIOScheduler::submit_pread(int                     fd,
                                     void*                   buf,
                                     size_t                  len,
@@ -123,24 +151,7 @@ int LinuxAIOScheduler::submit_pread(int                     fd,
     iocb.data = req;
 
     // std::cerr << "Submit IO\n";
-
-    int res = -EAGAIN;
-
-    while (res == -EAGAIN) {
-        res = io_submit(m_ioctx, 1, &iocbs);
-    }
-
-    if (res != 1) {
-        m_failed_queries_count.fetch_add(1);
-        std::cerr << "Submission error: " << res << "\n";
-        if (res < 0)
-            perror("io_submit");
-        else
-            fprintf(stderr, "io_submit failed\n");
-        return -1;
-    } // std::cerr << "IO Submitted: " << res << "\n";
-
-    return res;
+    return submit_iocbs(&iocbs, 1);
 }
 
 int LinuxAIOScheduler::submit_preads(const std::vector<PReadSumission>& subs)
@@ -151,52 +162,41 @@ int LinuxAIOScheduler::submit_preads(const std::vector<PReadSumission>& subs)
                                       // code conventions
     }
 
-    std::vector<struct iocb> iocbs;
+    struct iocb** iocbs
+        = (struct iocb**)calloc(subs.size(), sizeof(struct iocb*));
+    size_t iocbs_count = 0;
 
-    iocbs.reserve(subs.size());
+    // pre-allocate the actual iocb structures
+    struct iocb* flat_iocbs
+        = (struct iocb*)calloc(subs.size(), sizeof(struct iocb));
 
+
+    // fill in all the iocbs needed
     for (const auto& sub : subs) {
         // check that the arguments are well-formed
         if (check_args(sub.buf, sub.len, sub.offset) != 0) {
             continue;
         }
 
-        struct iocb iocb;
-
         uint64_t         query_id = m_submitted_queries_count.fetch_add(1);
         LinuxAIORequest* req
             = new LinuxAIORequest(query_id, sub.data, sub.callback);
 
-        io_prep_pread(&iocb, sub.fd, sub.buf, sub.len, sub.offset);
-        iocb.data = req;
-        iocbs.push_back(iocb);
+        io_prep_pread(
+            &flat_iocbs[iocbs_count], sub.fd, sub.buf, sub.len, sub.offset);
+        flat_iocbs[iocbs_count].data = req;
+        iocbs[iocbs_count]           = &flat_iocbs[iocbs_count];
+        iocbs_count++;
     }
 
     // now we have to submit the iocbs
-    struct iocb* iocbs_ptr      = iocbs.data();
-    size_t       remaining_subs = iocbs.size();
+    int ret = submit_iocbs(iocbs, iocbs_count);
 
-    int res = -EAGAIN;
+    // free the allocated memory
+    free(iocbs);
+    free(flat_iocbs);
 
-    while (remaining_subs > 0) {
-        res = io_submit(m_ioctx, remaining_subs, &iocbs_ptr);
-
-        if (res >= 0) {
-            assert(res <= remaining_subs);
-            remaining_subs -= res;
-            iocbs_ptr += res;
-        } else if (res != -EAGAIN) {
-            m_failed_queries_count.fetch_add(remaining_subs);
-            std::cerr << "Submission error: " << res << "\n";
-            if (res < 0)
-                perror("io_submit");
-            else
-                fprintf(stderr, "io_submit failed\n");
-            return -1;
-        }
-    }
-
-    return iocbs.size() - remaining_subs;
+    return ret;
 }
 
 
@@ -235,27 +235,7 @@ int LinuxAIOScheduler::submit_pwrite(int                     fd,
     io_prep_pwrite(&iocb, fd, buf, len, offset);
     iocb.data = req;
 
-
-    int    res             = -EAGAIN;
-    size_t tentative_count = 0;
-
-    while (res == -EAGAIN) {
-        tentative_count++;
-
-        res = io_submit(m_ioctx, 1, &iocbs);
-    }
-
-
-    if (res != 1) {
-        m_failed_queries_count.fetch_add(1);
-        std::cerr << "Submission error: " << res << "\n";
-        if (res < 0)
-            perror("io_submit");
-        else
-            fprintf(stdout, "io_submit failed\n");
-        return -1;
-    }
-    return res;
+    return submit_iocbs(&iocbs, 1);
 }
 
 

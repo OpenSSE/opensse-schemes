@@ -31,11 +31,11 @@ Vertex& TethysGraph::get_vertex(VertexPtr ptr)
     return vertices[ptr];
 }
 
-void TethysGraph::add_edge(size_t          value_index,
-                           ssize_t         cap,
-                           size_t          start,
-                           size_t          end,
-                           EdgeOrientation orientation)
+EdgePtr TethysGraph::add_edge(size_t          value_index,
+                              ssize_t         cap,
+                              size_t          start,
+                              size_t          end,
+                              EdgeOrientation orientation)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -67,12 +67,14 @@ void TethysGraph::add_edge(size_t          value_index,
     // add the pointer to the new edge to its ingoing and outgoing vertices
     vertices[e.start].out_edges.push_back(e_ptr);
     vertices[e.end].in_edges.push_back(e_ptr);
+
+    return e_ptr;
 }
 
-void TethysGraph::add_edge_from_source(size_t  value_index,
-                                       ssize_t cap,
-                                       size_t  end,
-                                       uint8_t table)
+EdgePtr TethysGraph::add_edge_from_source(size_t  value_index,
+                                          ssize_t cap,
+                                          size_t  end,
+                                          uint8_t table)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -102,12 +104,14 @@ void TethysGraph::add_edge_from_source(size_t  value_index,
     // add the pointer to the new edge to its ingoing and outgoing vertices
     source.out_edges.push_back(e_ptr);
     vertices[e.end].in_edges.push_back(e_ptr);
+
+    return e_ptr;
 }
 
-void TethysGraph::add_edge_to_sink(size_t  value_index,
-                                   ssize_t cap,
-                                   size_t  start,
-                                   uint8_t table)
+EdgePtr TethysGraph::add_edge_to_sink(size_t  value_index,
+                                      ssize_t cap,
+                                      size_t  start,
+                                      uint8_t table)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -138,6 +142,8 @@ void TethysGraph::add_edge_to_sink(size_t  value_index,
     // add the pointer to the new edge to its ingoing and outgoing vertices
     vertices[e.start].out_edges.push_back(e_ptr);
     sink.in_edges.push_back(e_ptr);
+
+    return e_ptr;
 }
 
 void VertexVec::reset_parent_edges() const
@@ -321,6 +327,31 @@ void TethysGraph::transform_residual_to_flow()
         e.rec_capacity = 0;
     }
     state = MaxFlowComputed;
+}
+
+size_t TethysGraph::get_flow() const
+{
+    if (state != MaxFlowComputed) {
+        throw std::invalid_argument(
+            "Invalid inner state. State should be MaxFlowComputed.");
+    }
+
+    size_t flow = 0;
+    for (const EdgePtr e_ptr : source.out_edges) {
+        flow += edges[e_ptr].capacity;
+    }
+
+    return flow;
+}
+
+size_t TethysGraph::get_edge_flow(EdgePtr e_ptr) const
+{
+    if (state != MaxFlowComputed) {
+        throw std::invalid_argument(
+            "Invalid inner state. State should be MaxFlowComputed.");
+    }
+
+    return edges[e_ptr].capacity;
 }
 
 

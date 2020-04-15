@@ -246,20 +246,20 @@ public:
     TethysGraph& operator=(const TethysGraph&) = delete;
     // TethysGraph& operator=(TethysGraph&&) = default;
 
-    void add_edge(size_t          value_index,
-                  ssize_t         cap,
-                  size_t          start,
-                  size_t          end,
-                  EdgeOrientation orientation);
+    EdgePtr add_edge(size_t          value_index,
+                     ssize_t         cap,
+                     size_t          start,
+                     size_t          end,
+                     EdgeOrientation orientation);
 
-    void add_edge_from_source(size_t  value_index,
-                              ssize_t cap,
-                              size_t  end,
-                              uint8_t table);
-    void add_edge_to_sink(size_t  value_index,
-                          ssize_t cap,
-                          size_t  start,
-                          uint8_t table);
+    EdgePtr add_edge_from_source(size_t  value_index,
+                                 ssize_t cap,
+                                 size_t  end,
+                                 uint8_t table);
+    EdgePtr add_edge_to_sink(size_t  value_index,
+                             ssize_t cap,
+                             size_t  start,
+                             uint8_t table);
 
     std::vector<EdgePtr> find_source_sink_path(size_t* path_capacity) const;
 
@@ -285,6 +285,11 @@ public:
 
     void compute_residual_maxflow();
     void transform_residual_to_flow();
+
+
+    size_t get_flow() const;
+
+    size_t get_edge_flow(EdgePtr e_ptr) const;
 
 private:
     void reset_parent_edges() const;

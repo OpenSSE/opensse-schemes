@@ -13,7 +13,7 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     include(GoogleTest)
 endif()
 
-add_executable(check test.cpp utility.cpp rocksdb.cpp sophos.cpp diana.cpp janus.cpp runners.cpp db_generator.cpp)
+add_executable(check test.cpp utility.cpp rocksdb.cpp sophos.cpp diana.cpp janus.cpp runners.cpp db_generator.cpp tethys_graph.cpp)
 target_link_libraries(check gtest OpenSSE::schemes OpenSSE::runners)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")

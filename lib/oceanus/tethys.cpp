@@ -232,9 +232,9 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(
         }
     }
 
-    if (!found_sink) {
-        std::cerr << "Did not found path from source to sink\n";
-    }
+    // if (!found_sink) {
+    //     std::cerr << "Did not found path from source to sink\n";
+    // }
 
     if (sink.parent_edge != kNullEdgePtr) {
         // start by computing the size of the path

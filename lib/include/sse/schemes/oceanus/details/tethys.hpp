@@ -98,6 +98,13 @@ struct Edge
     Edge(size_t vi, size_t cap) : value_index(vi), capacity(cap)
     {
     }
+
+    bool operator==(const Edge& e) const
+    {
+        return (value_index == e.value_index) && (capacity == e.capacity)
+               && (rec_capacity == e.rec_capacity) && (start == e.start)
+               && (end == e.end);
+    }
 };
 
 class EdgeVec
@@ -160,6 +167,10 @@ public:
         return edges.end();
     }
 
+    bool operator==(const EdgeVec& ev) const
+    {
+        return edges == ev.edges;
+    }
 
 private:
     std::vector<Edge> edges;
@@ -170,6 +181,11 @@ struct Vertex
     std::vector<EdgePtr> in_edges;
     std::vector<EdgePtr> out_edges;
     mutable EdgePtr      parent_edge;
+
+    bool operator==(const Vertex& v) const
+    {
+        return (in_edges == v.in_edges) && (out_edges == v.out_edges);
+    }
 };
 
 class VertexVec
@@ -188,6 +204,12 @@ public:
     const Vertex& operator[](VertexPtr ptr) const
     {
         return vertices[ptr.table][ptr.index];
+    }
+
+    bool operator==(const VertexVec& vv) const
+    {
+        return (vertices[0] == vv.vertices[0])
+               && (vertices[1] == vv.vertices[1]);
     }
 
 private:
@@ -253,6 +275,13 @@ public:
         return edges[ptr];
     }
 
+
+    bool operator==(const TethysGraph& g) const
+    {
+        return (graph_size == g.graph_size) && (source == g.source)
+               && (sink == g.sink) && (vertices == g.vertices)
+               && (edges == g.edges);
+    }
 
     void compute_residual_maxflow();
     void transform_residual_to_flow();

@@ -16,6 +16,7 @@ add_library(
     janus/janus_client.cpp
     janus/janus_server.cpp
     oceanus/cuckoo.cpp
+    oceanus/tethys.cpp
 )
 # Add an alias
 add_library(OpenSSE::schemes ALIAS schemes)

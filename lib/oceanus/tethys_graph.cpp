@@ -1,7 +1,11 @@
-#include "oceanus/details/tethys.hpp"
+#include "oceanus/details/tethys_graph.hpp"
+
+#include <cassert>
+#include <climits>
 
 #include <deque>
 #include <numeric>
+#include <stdexcept>
 
 namespace sse {
 namespace tethys {

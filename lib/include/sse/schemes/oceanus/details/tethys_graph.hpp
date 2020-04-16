@@ -1,6 +1,7 @@
 #pragma once
 
-#include <sse/schemes/abstractio/awonvm_vector.hpp>
+#include <cstdint>
+#include <sys/types.h>
 
 #include <vector>
 

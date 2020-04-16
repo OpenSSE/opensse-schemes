@@ -1,4 +1,4 @@
-#include <sse/schemes/oceanus/details/tethys.hpp>
+#include <sse/schemes/oceanus/details/tethys_graph.hpp>
 
 #include <iostream>
 

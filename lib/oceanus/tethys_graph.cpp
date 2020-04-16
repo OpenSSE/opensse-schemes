@@ -178,7 +178,6 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
     std::deque<VertexPtr> queue;
     queue.push_front(kSourcePtr);
 
-    // bool first_vertex = true;
     bool found_sink = false; // flag for early exit
     // as we have two nested loops (and we do not want to use gotos), this flag
     // is necessary
@@ -241,10 +240,6 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
             }
         }
     }
-
-    // if (!found_sink) {
-    //     std::cerr << "Did not found path from source to sink\n";
-    // }
 
     if (sink.parent_edge != kNullEdgePtr) {
         // start by computing the size of the path

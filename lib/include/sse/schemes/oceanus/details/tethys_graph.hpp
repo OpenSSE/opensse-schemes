@@ -55,10 +55,14 @@ struct EdgePtr_Templ
     bool   is_reciprocal : 1;
     size_t index : size - 1;
 
-    constexpr EdgePtr_Templ() : is_reciprocal(false), index(~0UL){};
+    static constexpr size_t index_mask = ~0UL >> 1;
+
+    constexpr EdgePtr_Templ()
+        : is_reciprocal(false), index(~0UL & index_mask){};
     constexpr explicit EdgePtr_Templ(size_t i)
-        : is_reciprocal(false), index(i){};
-    constexpr EdgePtr_Templ(bool r, size_t i) : is_reciprocal(r), index(i){};
+        : is_reciprocal(false), index(i & index_mask){};
+    constexpr EdgePtr_Templ(bool r, size_t i)
+        : is_reciprocal(r & 1), index(i & index_mask){};
 
 
     bool operator==(const EdgePtr_Templ<size>& ptr) const
@@ -74,7 +78,6 @@ struct EdgePtr_Templ
 
     EdgePtr_Templ reciprocal()
     {
-        // EdgePtr
         return EdgePtr_Templ(!is_reciprocal, index);
     }
 };
@@ -91,11 +94,13 @@ struct Vertex;
 struct Edge
 {
     size_t       value_index{~0UL};
-    const size_t capacity{0UL};
+    const size_t capacity;
     size_t       flow{0UL};
     size_t       rec_flow{0UL};
     VertexPtr    start{kNullVertexPtr};
     VertexPtr    end{kNullVertexPtr};
+
+    Edge() = delete;
 
     Edge(size_t vi, size_t cap) : value_index(vi), capacity(cap), flow(cap)
     {
@@ -243,10 +248,8 @@ public:
     }
 
     TethysGraph(const TethysGraph&) = delete;
-    // TethysGraph(TethysGraph&&)      = default;
 
     TethysGraph& operator=(const TethysGraph&) = delete;
-    // TethysGraph& operator=(TethysGraph&&) = default;
 
     EdgePtr add_edge(size_t          value_index,
                      ssize_t         cap,

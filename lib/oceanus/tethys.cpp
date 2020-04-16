@@ -1,6 +1,7 @@
 #include "oceanus/details/tethys.hpp"
 
 #include <deque>
+#include <numeric>
 
 namespace sse {
 namespace tethys {
@@ -166,8 +167,7 @@ void TethysGraph::reset_parent_edges() const
     vertices.reset_parent_edges();
 }
 
-std::vector<EdgePtr> TethysGraph::find_source_sink_path(
-    size_t* path_capacity) const
+std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
 {
     reset_parent_edges();
 
@@ -193,7 +193,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(
 
         for (EdgePtr e_ptr : out_edges) {
             const Edge& e = edges[e_ptr];
-            if (e.capacity > 0) {
+            if (e.flow > 0) {
                 const VertexPtr dest_ptr = e.end;
                 const Vertex&   dest     = get_vertex(dest_ptr);
 
@@ -216,7 +216,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(
         const std::vector<EdgePtr> in_edges = v.in_edges;
         for (EdgePtr e_ptr : in_edges) {
             const Edge& e = edges[e_ptr];
-            if (e.rec_capacity > 0) {
+            if (e.rec_flow > 0) {
                 const VertexPtr dest_ptr = e.start;
                 const Vertex&   dest     = get_vertex(dest_ptr);
 
@@ -244,16 +244,15 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(
 
     if (sink.parent_edge != kNullEdgePtr) {
         // start by computing the size of the path
-        ssize_t       capacity = SSIZE_MAX;
-        const Vertex* cur      = &sink;
-        size_t        size     = 0;
+        ssize_t       flow = SSIZE_MAX;
+        const Vertex* cur  = &sink;
+        size_t        size = 0;
 
         while (cur->parent_edge != kNullEdgePtr) {
             const Edge& e = edges[cur->parent_edge];
-            // be careful here: the capacity we are interested in might be the
-            // reciprocal capacity
-            capacity = std::min<ssize_t>(edges.edge_capacity(cur->parent_edge),
-                                         capacity);
+            // be careful here: the flow we are interested in might be the
+            // reciprocal flow
+            flow = std::min<ssize_t>(edges.edge_flow(cur->parent_edge), flow);
 
             cur = &get_vertex(e.start);
             size++;
@@ -261,8 +260,8 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(
 
         assert(size != 0);
 
-        if (path_capacity != nullptr) {
-            *path_capacity = capacity;
+        if (path_flow != nullptr) {
+            *path_flow = flow;
         }
 
         std::vector<EdgePtr> path(size);
@@ -283,8 +282,8 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(
     }
 
 
-    if (path_capacity != nullptr) {
-        *path_capacity = 0;
+    if (path_flow != nullptr) {
+        *path_flow = 0;
     }
     return {};
 }
@@ -307,8 +306,8 @@ void TethysGraph::compute_residual_maxflow()
         }
 
         for (EdgePtr e_ptr : path) {
-            // update capacities
-            edges.update_capacity(e_ptr, path_capacity);
+            // update flows
+            edges.update_flow(e_ptr, path_capacity);
         }
     }
 
@@ -323,8 +322,8 @@ void TethysGraph::transform_residual_to_flow()
     }
 
     for (Edge& e : edges) {
-        e.capacity     = e.rec_capacity;
-        e.rec_capacity = 0;
+        e.flow     = e.rec_flow;
+        e.rec_flow = 0;
     }
     state = MaxFlowComputed;
 }
@@ -338,10 +337,15 @@ size_t TethysGraph::get_flow() const
 
     size_t flow = 0;
     for (const EdgePtr e_ptr : source.out_edges) {
-        flow += edges[e_ptr].capacity;
+        flow += edges[e_ptr].flow;
     }
 
     return flow;
+}
+
+size_t TethysGraph::get_edge_capacity(EdgePtr e_ptr) const
+{
+    return edges[e_ptr].capacity;
 }
 
 size_t TethysGraph::get_edge_flow(EdgePtr e_ptr) const
@@ -351,10 +355,63 @@ size_t TethysGraph::get_edge_flow(EdgePtr e_ptr) const
             "Invalid inner state. State should be MaxFlowComputed.");
     }
 
-    return edges[e_ptr].capacity;
+    return edges[e_ptr].flow;
 }
 
 
+size_t TethysGraph::get_vertex_in_capacity(VertexPtr v_ptr) const
+{
+    const Vertex& v = get_vertex(v_ptr);
+
+    return std::accumulate(
+        v.in_edges.begin(),
+        v.in_edges.end(),
+        0UL,
+        [&](size_t acc, EdgePtr e_ptr) { return acc + edges[e_ptr].capacity; });
+}
+
+size_t TethysGraph::get_vertex_out_capacity(VertexPtr v_ptr) const
+{
+    const Vertex& v = get_vertex(v_ptr);
+
+    return std::accumulate(
+        v.out_edges.begin(),
+        v.out_edges.end(),
+        0UL,
+        [&](size_t acc, EdgePtr e_ptr) { return acc + edges[e_ptr].capacity; });
+}
+
+size_t TethysGraph::get_vertex_in_flow(VertexPtr v_ptr) const
+{
+    if (state != MaxFlowComputed) {
+        throw std::invalid_argument(
+            "Invalid inner state. State should be MaxFlowComputed.");
+    }
+
+    const Vertex& v = get_vertex(v_ptr);
+
+    return std::accumulate(
+        v.in_edges.begin(),
+        v.in_edges.end(),
+        0UL,
+        [&](size_t acc, EdgePtr e_ptr) { return acc + edges[e_ptr].flow; });
+}
+
+size_t TethysGraph::get_vertex_out_flow(VertexPtr v_ptr) const
+{
+    if (state != MaxFlowComputed) {
+        throw std::invalid_argument(
+            "Invalid inner state. State should be MaxFlowComputed.");
+    }
+
+    const Vertex& v = get_vertex(v_ptr);
+
+    return std::accumulate(
+        v.out_edges.begin(),
+        v.out_edges.end(),
+        0UL,
+        [&](size_t acc, EdgePtr e_ptr) { return acc + edges[e_ptr].flow; });
+}
 } // namespace details
 } // namespace tethys
 } // namespace sse

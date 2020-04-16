@@ -89,21 +89,22 @@ struct Vertex;
 
 struct Edge
 {
-    size_t    value_index{~0UL};
-    ssize_t   capacity{0UL};
-    ssize_t   rec_capacity{0UL};
-    VertexPtr start{kNullVertexPtr};
-    VertexPtr end{kNullVertexPtr};
+    size_t       value_index{~0UL};
+    const size_t capacity{0UL};
+    size_t       flow{0UL};
+    size_t       rec_flow{0UL};
+    VertexPtr    start{kNullVertexPtr};
+    VertexPtr    end{kNullVertexPtr};
 
-    Edge(size_t vi, size_t cap) : value_index(vi), capacity(cap)
+    Edge(size_t vi, size_t cap) : value_index(vi), capacity(cap), flow(cap)
     {
     }
 
     bool operator==(const Edge& e) const
     {
         return (value_index == e.value_index) && (capacity == e.capacity)
-               && (rec_capacity == e.rec_capacity) && (start == e.start)
-               && (end == e.end);
+               && (flow == e.flow) && (rec_flow == e.rec_flow)
+               && (start == e.start) && (end == e.end);
     }
 };
 
@@ -126,26 +127,26 @@ public:
         return edges[ptr.index];
     }
 
-    size_t edge_capacity(EdgePtr ptr) const
+    size_t edge_flow(EdgePtr ptr) const
     {
         const Edge& e = (*this)[ptr];
         if (ptr.is_reciprocal) {
-            return e.rec_capacity;
+            return e.rec_flow;
         } else {
-            return e.capacity;
+            return e.flow;
         }
     }
 
-    void update_capacity(EdgePtr ptr, size_t c)
+    void update_flow(EdgePtr ptr, size_t c)
     {
         Edge& e = (*this)[ptr];
 
         if (ptr.is_reciprocal) {
-            e.capacity += c;
-            e.rec_capacity -= c;
+            e.flow += c;
+            e.rec_flow -= c;
         } else {
-            e.capacity -= c;
-            e.rec_capacity += c;
+            e.flow -= c;
+            e.rec_flow += c;
         }
     }
 
@@ -290,6 +291,13 @@ public:
     size_t get_flow() const;
 
     size_t get_edge_flow(EdgePtr e_ptr) const;
+    size_t get_edge_capacity(EdgePtr e_ptr) const;
+
+    size_t get_vertex_in_flow(VertexPtr v_ptr) const;
+    size_t get_vertex_out_flow(VertexPtr v_ptr) const;
+
+    size_t get_vertex_in_capacity(VertexPtr v_ptr) const;
+    size_t get_vertex_out_capacity(VertexPtr v_ptr) const;
 
 private:
     void reset_parent_edges() const;

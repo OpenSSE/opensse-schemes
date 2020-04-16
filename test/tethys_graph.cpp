@@ -199,6 +199,13 @@ TEST(tethys_graph, maxflow_4)
 
     EXPECT_EQ(graph.get_edge_flow(e_sink_1), 0);
     EXPECT_EQ(graph.get_edge_flow(e_sink_2), 12);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 TEST(tethys_graph, maxflow_5)
@@ -227,6 +234,13 @@ TEST(tethys_graph, maxflow_5)
 
     EXPECT_EQ(graph.get_edge_flow(e_sink_1), 0);
     EXPECT_EQ(graph.get_edge_flow(e_sink_2), 15);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 TEST(tethys_graph, maxflow_6)
@@ -264,6 +278,13 @@ TEST(tethys_graph, maxflow_6)
     EXPECT_EQ(graph.get_edge_flow(e_sink_2), 20);
 
     EXPECT_EQ(graph.get_edge_flow(sat_edge), 20);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 
@@ -300,6 +321,13 @@ TEST(tethys_graph, maxflow_7)
     EXPECT_EQ(graph.get_edge_flow(e_sink_2), 22);
 
     EXPECT_EQ(graph.get_edge_flow(sat_edge), 7);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 
@@ -345,6 +373,13 @@ TEST(tethys_graph, maxflow_8)
     EXPECT_EQ(graph.get_edge_flow(sat_edge_1), 9);
     EXPECT_EQ(graph.get_edge_flow(sat_edge_2), 9);
     EXPECT_EQ(graph.get_edge_flow(sat_edge_3), 9);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 TEST(tethys_graph, maxflow_9)
@@ -389,6 +424,13 @@ TEST(tethys_graph, maxflow_9)
     EXPECT_EQ(graph.get_edge_flow(sat_edge_1), 10);
     EXPECT_EQ(graph.get_edge_flow(sat_edge_2), 10);
     EXPECT_EQ(graph.get_edge_flow(sat_edge_3), 10);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 TEST(tethys_graph, maxflow_10)
@@ -433,6 +475,13 @@ TEST(tethys_graph, maxflow_10)
 
     EXPECT_EQ(graph.get_edge_flow(sat_edge_1), 7);
     EXPECT_EQ(graph.get_edge_flow(sat_edge_2), 7);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 
@@ -478,6 +527,13 @@ TEST(tethys_graph, maxflow_11)
 
     EXPECT_EQ(graph.get_edge_flow(useless_edge_1), 0);
     EXPECT_EQ(graph.get_edge_flow(useless_edge_2), 0);
+
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr),
+              graph.get_vertex_out_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_in_flow(kSinkPtr), flow);
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr),
+              graph.get_vertex_in_flow(kSourcePtr));
+    EXPECT_EQ(graph.get_vertex_out_flow(kSinkPtr), 0);
 }
 
 

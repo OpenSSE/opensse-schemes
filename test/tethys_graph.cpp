@@ -77,100 +77,79 @@ TEST(tethys_graph, maxflow_1)
 {
     TethysGraph graph(3);
 
-    graph.add_edge_from_source(0, 2, 0, 0);
-    graph.add_edge(1, 2, 0, 0, ForcedRight);
+    EdgePtr e_0 = graph.add_edge_from_source(0, 2, 0, 0);
+    EdgePtr e_1 = graph.add_edge(1, 2, 0, 0, ForcedRight);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
+    EdgePtr e_2 = graph.add_edge(2, 1, 0, 1, ForcedLeft);
+    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1, 0);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    EdgePtr e_4 = graph.add_edge(4, 1, 0, 2, ForcedLeft);
+    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1, ForcedRight);
+    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1, 1);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
 
-
-    TethysGraph expected_graph(3);
-
-    expected_graph.add_edge_from_source(0, 2, 0, 0);
-    expected_graph.add_edge(1, 2, 0, 0, ForcedRight);
-
-    expected_graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    expected_graph.add_edge_to_sink(3, 1, 1, 0);
-
-    expected_graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    expected_graph.add_edge(5, 1, 2, 1, ForcedRight);
-    expected_graph.add_edge_to_sink(6, 1, 1, 1);
-
-    EXPECT_EQ(graph, expected_graph);
+    EXPECT_EQ(graph.get_edge_flow(e_0), 2);
+    EXPECT_EQ(graph.get_edge_flow(e_1), 2);
+    EXPECT_EQ(graph.get_edge_flow(e_2), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_3), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_4), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_5), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_6), 1);
 }
 
 TEST(tethys_graph, maxflow_2)
 {
     TethysGraph graph(3);
 
-    graph.add_edge_from_source(0, 1, 0, 0);
-    graph.add_edge(1, 1, 0, 0, ForcedRight);
+    EdgePtr e_0 = graph.add_edge_from_source(0, 1, 0, 0);
+    EdgePtr e_1 = graph.add_edge(1, 1, 0, 0, ForcedRight);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
+    EdgePtr e_2 = graph.add_edge(2, 1, 0, 1, ForcedLeft);
+    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1, 0);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    EdgePtr e_4 = graph.add_edge(4, 1, 0, 2, ForcedLeft);
+    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1, ForcedRight);
+    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1, 1);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
 
-
-    TethysGraph expected_graph(3);
-
-    expected_graph.add_edge_from_source(0, 1, 0, 0);
-    expected_graph.add_edge(1, 1, 0, 0, ForcedRight);
-
-    expected_graph.add_edge(2, 0, 0, 1, ForcedLeft);
-    expected_graph.add_edge_to_sink(3, 0, 1, 0);
-
-    expected_graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    expected_graph.add_edge(5, 1, 2, 1, ForcedRight);
-    expected_graph.add_edge_to_sink(6, 1, 1, 1);
-
-    EXPECT_EQ(graph, expected_graph);
+    EXPECT_EQ(graph.get_edge_flow(e_0), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_1), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_2), 0);
+    EXPECT_EQ(graph.get_edge_flow(e_3), 0);
+    EXPECT_EQ(graph.get_edge_flow(e_4), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_5), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_6), 1);
 }
 
 TEST(tethys_graph, maxflow_3)
 {
     TethysGraph graph(3);
 
-    graph.add_edge_from_source(0, 1, 0, 0);
-    graph.add_edge(1, 1, 0, 0, ForcedRight);
+    EdgePtr e_0 = graph.add_edge_from_source(0, 1, 0, 0);
+    EdgePtr e_1 = graph.add_edge(1, 1, 0, 0, ForcedRight);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    EdgePtr e_4 = graph.add_edge(4, 1, 0, 2, ForcedLeft);
+    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1, ForcedRight);
+    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1, 1);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
+    EdgePtr e_2 = graph.add_edge(2, 1, 0, 1, ForcedLeft);
+    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1, 0);
+
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
 
-
-    TethysGraph expected_graph(3);
-
-    expected_graph.add_edge_from_source(0, 1, 0, 0);
-    expected_graph.add_edge(1, 1, 0, 0, ForcedRight);
-
-
-    expected_graph.add_edge(4, 0, 0, 2, ForcedLeft);
-    expected_graph.add_edge(5, 0, 2, 1, ForcedRight);
-    expected_graph.add_edge_to_sink(6, 0, 1, 1);
-
-    expected_graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    expected_graph.add_edge_to_sink(3, 1, 1, 0);
-
-    EXPECT_EQ(graph, expected_graph);
+    EXPECT_EQ(graph.get_edge_flow(e_0), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_1), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_2), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_3), 1);
+    EXPECT_EQ(graph.get_edge_flow(e_4), 0);
+    EXPECT_EQ(graph.get_edge_flow(e_5), 0);
+    EXPECT_EQ(graph.get_edge_flow(e_6), 0);
 }
 
 

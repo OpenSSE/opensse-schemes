@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sse/schemes/utils/concat_iterator.hpp>
+
 #include <cstdint>
 #include <sys/types.h>
 
@@ -198,6 +200,16 @@ struct Vertex
 class VertexVec
 {
 public:
+    using value_type      = Vertex;
+    using size_type       = size_t;
+    using difference_type = ptrdiff_t;
+    using reference       = Vertex&;
+    using const_reference = const Vertex&;
+    using pointer         = Vertex*;
+    using const_pointer   = const Vertex*;
+    using iterator        = utility::concat_iterator<std::vector<Vertex>>;
+    using const_iterator  = utility::concat_const_iterator<std::vector<Vertex>>;
+
     explicit VertexVec(size_t n)
     {
         vertices[0] = std::vector<Vertex>(n);
@@ -217,6 +229,27 @@ public:
     {
         return (vertices[0] == vv.vertices[0])
                && (vertices[1] == vv.vertices[1]);
+    }
+
+    iterator begin()
+    {
+        return iterator(vertices[0], vertices[1]);
+    }
+
+    iterator end()
+    {
+        return iterator(vertices[0], vertices[1], vertices[1].end(), true);
+    }
+
+    const_iterator begin() const
+    {
+        return const_iterator(vertices[0], vertices[1]);
+    }
+
+    const_iterator end() const
+    {
+        return const_iterator(
+            vertices[0], vertices[1], vertices[1].end(), true);
     }
 
 private:

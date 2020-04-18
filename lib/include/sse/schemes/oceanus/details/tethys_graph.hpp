@@ -68,6 +68,13 @@ struct EdgePtr_Templ
                != *reinterpret_cast<const size_t*>(&ptr);
     }
 
+    // only needed for the std::set collection
+    bool operator<(const EdgePtr_Templ<size>& ptr) const
+    {
+        return (index < ptr.index)
+               || (index == ptr.index && is_reciprocal < ptr.is_reciprocal);
+    }
+
     EdgePtr_Templ reciprocal()
     {
         return EdgePtr_Templ(!is_reciprocal, index);
@@ -313,6 +320,11 @@ public:
     size_t get_vertex_out_capacity(VertexPtr v_ptr) const;
 
     const VertexVec& inner_vertices() const
+    {
+        return vertices;
+    }
+
+    VertexVec& inner_vertices()
     {
         return vertices;
     }

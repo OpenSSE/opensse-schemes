@@ -2,6 +2,8 @@
 
 #include <sse/schemes/oceanus/details/tethys_graph.hpp>
 
+#include <set>
+
 namespace sse {
 namespace tethys {
 namespace details {
@@ -27,17 +29,28 @@ class TethysAllocator
 public:
     TethysAllocator(size_t table_size, size_t page_size);
 
+
+    const std::set<EdgePtr>& get_stashed_edges() const;
+    const TethysGraph&       get_allocation_graph() const;
+    bool                     has_allocated() const
+    {
+        return allocated;
+    }
+
     void insert(TethysAllocatorKey key, size_t list_length, size_t index);
 
     void allocate();
 
+
     static constexpr size_t kEmptyIndexValue = ~0UL;
 
 private:
-    TethysGraph allocation_graph;
+    TethysGraph       allocation_graph;
+    std::set<EdgePtr> stashed_edges;
 
-    const size_t tethys_table_size;
+    const size_t tethys_graph_size;
     const size_t page_size;
+    bool         allocated{false};
 };
 
 

@@ -7,15 +7,40 @@ namespace tethys {
 namespace details {
 
 TethysAllocator::TethysAllocator(size_t table_size, size_t page_size)
-    : allocation_graph(table_size), tethys_table_size(table_size),
+    : allocation_graph(table_size), tethys_graph_size(table_size),
       page_size(page_size)
 {
+}
+
+
+const std::set<EdgePtr>& TethysAllocator::get_stashed_edges() const
+{
+    if (!allocated) {
+        throw std::invalid_argument("Cannot return the stashed edges: the "
+                                    "allocation algorithm has not been run");
+    }
+
+    return stashed_edges;
+}
+
+const TethysGraph& TethysAllocator::get_allocation_graph() const
+{
+    if (!allocated) {
+        throw std::invalid_argument("Cannot return the allocation graph: the "
+                                    "allocation algorithm has not been run");
+    }
+
+    return allocation_graph;
 }
 
 void TethysAllocator::insert(TethysAllocatorKey key,
                              size_t             list_length,
                              size_t             index)
 {
+    if (allocated) {
+        throw std::invalid_argument("The allocation algorithm was already run");
+    }
+
     if (index == ~0UL) {
         throw std::invalid_argument("Index must be different from -1");
     }
@@ -30,6 +55,10 @@ void TethysAllocator::insert(TethysAllocatorKey key,
 
 void TethysAllocator::allocate()
 {
+    if (allocated) {
+        throw std::invalid_argument("The allocation algorithm was already run");
+    }
+
     // We have to run the allocation algorithm which we recall here:
     // 1. For each vertex $i$, compute its outdegree $d$.
     // 	 a. If $d > p$, add $d-p$ edges from the source $s$ to $i$.
@@ -38,20 +67,20 @@ void TethysAllocator::allocate()
     // 3. Flip every edge that carries flow.
     // 4. Each element $e$ is assigned to the bin/vertex that is at the
     // origin of its associated edge (so the outdegree of a vertex should
-    // be interpreted as the load of the bin), so if said bin has number $n_e$,
-    // add $e$ to $B[n_e]$.
+    // be interpreted as the load of the bin), so if said bin has number
+    // $n_e$, add $e$ to $B[n_e]$.
     // 5. For each bin $B[i]$, if its load is $x > p$,
     // then $x-p$ elements are removed from $B[i]$ and added to $S$.
 
     // At the end of the algorithm, the allocation will be encoded in the
-    // following way: For each list represented as an edge e, e.flow elements
-    // will go the start vertex, e.rec_flow elements to the end vertex, and
-    // e.capacity - e.flow - e.rec_flow elements to the stash.
+    // following way: For each list represented as an edge e, e.flow
+    // elements will go the start vertex, e.rec_flow elements to the end
+    // vertex, and e.capacity - e.flow - e.rec_flow elements to the stash.
 
 
     // Step 1.: enumerate through the vertices
 
-    for (size_t i = 0; i < tethys_table_size; i++) {
+    for (size_t i = 0; i < tethys_graph_size; i++) {
         VertexPtr v_ptr(i);
 
         size_t d = allocation_graph.get_vertex_out_capacity(v_ptr);
@@ -78,11 +107,62 @@ void TethysAllocator::allocate()
     // method. As this operation is its own inverse, there is no point in doing
     // it twice; just don't do it.
 
-    // Ok, we are almost done here. Remember that, because we only logically
-    // flipped the edges carrying flow, the outdegree of a vertex is not only
-    // the sum of the flow for the outgoing edges, but also the sum of the
-    // reciproqual flow of incoming edges.
-    // The last thing we have to do is to deal with overflowing bins.
+    // Step 4. is essentially a no-op: we have the allocation (with overflows)
+    // represented by the graph.
+
+    // Step 5. take care of the overflows. Remember that, because we only
+    // logically flipped the edges carrying flow, the outdegree of a vertex is
+    // not only the sum of the flow for the outgoing edges, but also the sum of
+    // the reciproqual flow of incoming edges. The last thing we have to do is
+    // to deal with overflowing bins.
+
+    // go through the vertices
+    for (Vertex& v : allocation_graph.inner_vertices()) {
+        size_t load = 0;
+        // go through the incoming edges first
+        for (EdgePtr e_ptr : v.in_edges) {
+            Edge& e = allocation_graph.get_edge(e_ptr);
+
+            // we are not interested in the edges whose one the extremity is the
+            // source or the sink
+            if (e.value_index == kEmptyIndexValue) {
+                continue;
+            }
+            size_t f = e.rec_flow; // for incoming edges, we look at the
+            // reciproqual flow
+            if (load + f > page_size) {
+                load       = page_size;
+                e.rec_flow = page_size - load;
+                // as we reduced the number of elements put in the bins for this
+                // edge, we have to add the edge to the stash
+                stashed_edges.insert(e_ptr);
+            } else {
+                load += f;
+            }
+        }
+        // and now through the outgoing edges
+        for (EdgePtr e_ptr : v.out_edges) {
+            Edge& e = allocation_graph.get_edge(e_ptr);
+            // we are not interested in the edges whose one the extremity is the
+            // source or the sink
+            if (e.value_index == kEmptyIndexValue) {
+                continue;
+            }
+            size_t f = e.flow; // for incoming edges, we look at the
+            // reciproqual flow
+            if (load + f > page_size) {
+                load   = page_size;
+                e.flow = page_size - load;
+                // as we reduced the number of elements put in the bins for this
+                // edge, we have to add the edge to the stash
+                stashed_edges.insert(e_ptr);
+            } else {
+                load += f;
+            }
+        }
+    }
+
+    allocated = true;
 }
 
 } // namespace details

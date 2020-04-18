@@ -17,6 +17,7 @@ add_library(
     janus/janus_server.cpp
     oceanus/cuckoo.cpp
     oceanus/tethys_graph.cpp
+    oceanus/tethys_allocator.cpp
 )
 # Add an alias
 add_library(OpenSSE::schemes ALIAS schemes)

@@ -11,43 +11,34 @@ namespace sse {
 namespace tethys {
 namespace details {
 
-template<uint8_t size>
-struct VertexPtr_Templ
+struct VertexPtr
 {
-    uint8_t table : 1;
-    size_t  index : size - 1;
+    size_t index;
 
-    static constexpr size_t index_mask = ~0UL >> 1;
-    constexpr VertexPtr_Templ()
-        : table(1), index(~0UL >> 1){}; // null pointer by default
+    // static constexpr size_t index_mask = ~0UL >> 1;
+    constexpr VertexPtr() : index(~0UL){}; // null pointer by default
 
-    constexpr VertexPtr_Templ(uint8_t t, size_t i)
-        : table(t & 1), index(i & index_mask)
+    constexpr VertexPtr(size_t i) : index(i)
     {
     }
 
-    bool operator==(const VertexPtr_Templ<size>& ptr) const
+    bool operator==(const VertexPtr& ptr) const
     {
-        return *reinterpret_cast<const size_t*>(this)
-               == *reinterpret_cast<const size_t*>(&ptr);
+        return index == ptr.index;
     }
 
-    bool operator!=(const VertexPtr_Templ<size>& ptr) const
+    bool operator!=(const VertexPtr& ptr) const
     {
-        return *reinterpret_cast<const size_t*>(this)
-               != *reinterpret_cast<const size_t*>(&ptr);
+        return index != ptr.index;
     }
 };
-
-using VertexPtr = VertexPtr_Templ<sizeof(size_t) * 8>;
 
 static_assert(sizeof(VertexPtr) == sizeof(size_t), "Invalid VertexPtr size");
 
 
 constexpr VertexPtr kNullVertexPtr = VertexPtr();
-constexpr VertexPtr kSinkPtr = VertexPtr_Templ<sizeof(size_t) * 8>(1, ~0UL - 1);
-constexpr VertexPtr kSourcePtr
-    = VertexPtr_Templ<sizeof(size_t) * 8>(1, ~0UL - 2);
+constexpr VertexPtr kSinkPtr       = VertexPtr(~0UL - 1);
+constexpr VertexPtr kSourcePtr     = VertexPtr(~0UL - 2);
 
 
 template<uint8_t size>
@@ -206,49 +197,45 @@ public:
     using const_reference = const Vertex&;
     using pointer         = Vertex*;
     using const_pointer   = const Vertex*;
-    using iterator        = utility::concat_iterator<std::vector<Vertex>>;
-    using const_iterator  = utility::concat_const_iterator<std::vector<Vertex>>;
+    using iterator        = std::vector<Vertex>::iterator;
+    using const_iterator  = std::vector<Vertex>::const_iterator;
 
-    explicit VertexVec(size_t n)
+    explicit VertexVec(size_t n) : vertices(n)
     {
-        vertices[0] = std::vector<Vertex>(n);
-        vertices[1] = std::vector<Vertex>(n);
     }
     Vertex& operator[](VertexPtr ptr)
     {
-        return vertices[ptr.table][ptr.index];
+        return vertices[ptr.index];
     }
 
     const Vertex& operator[](VertexPtr ptr) const
     {
-        return vertices[ptr.table][ptr.index];
+        return vertices[ptr.index];
     }
 
     bool operator==(const VertexVec& vv) const
     {
-        return (vertices[0] == vv.vertices[0])
-               && (vertices[1] == vv.vertices[1]);
+        return (vertices == vv.vertices);
     }
 
     iterator begin()
     {
-        return iterator(vertices[0], vertices[1]);
+        return vertices.begin();
     }
 
     iterator end()
     {
-        return iterator(vertices[0], vertices[1], vertices[1].end(), true);
+        return vertices.end();
     }
 
     const_iterator begin() const
     {
-        return const_iterator(vertices[0], vertices[1]);
+        return vertices.begin();
     }
 
     const_iterator end() const
     {
-        return const_iterator(
-            vertices[0], vertices[1], vertices[1].end(), true);
+        return vertices.end();
     }
 
 private:
@@ -256,7 +243,7 @@ private:
 
     void reset_parent_edges() const;
 
-    std::vector<Vertex> vertices[2];
+    std::vector<Vertex> vertices;
 };
 
 enum EdgeOrientation : uint8_t
@@ -283,20 +270,10 @@ public:
 
     TethysGraph& operator=(const TethysGraph&) = delete;
 
-    EdgePtr add_edge(size_t          value_index,
-                     size_t          cap,
-                     size_t          start,
-                     size_t          end,
-                     EdgeOrientation orientation);
+    EdgePtr add_edge(size_t value_index, size_t cap, size_t start, size_t end);
 
-    EdgePtr add_edge_from_source(size_t  value_index,
-                                 size_t  cap,
-                                 size_t  end,
-                                 uint8_t table);
-    EdgePtr add_edge_to_sink(size_t  value_index,
-                             size_t  cap,
-                             size_t  start,
-                             uint8_t table);
+    EdgePtr add_edge_from_source(size_t value_index, size_t cap, size_t end);
+    EdgePtr add_edge_to_sink(size_t value_index, size_t cap, size_t start);
 
     std::vector<EdgePtr> find_source_sink_path(size_t* path_capacity) const;
 

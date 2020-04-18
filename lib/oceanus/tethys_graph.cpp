@@ -36,11 +36,10 @@ Vertex& TethysGraph::get_vertex(VertexPtr ptr)
     return vertices[ptr];
 }
 
-EdgePtr TethysGraph::add_edge(size_t          value_index,
-                              size_t          cap,
-                              size_t          start,
-                              size_t          end,
-                              EdgeOrientation orientation)
+EdgePtr TethysGraph::add_edge(size_t value_index,
+                              size_t cap,
+                              size_t start,
+                              size_t end)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -57,14 +56,8 @@ EdgePtr TethysGraph::add_edge(size_t          value_index,
 
     Edge e(value_index, cap);
 
-    if (orientation == ForcedLeft) {
-        e.start = VertexPtr(1, start);
-        e.end   = VertexPtr(0, end);
-    } else if (orientation == ForcedRight) {
-        e.start = VertexPtr(0, start);
-        e.end   = VertexPtr(1, end);
-    } // here we will be able to add additional orientations such as 'least
-      // charged'
+    e.start = VertexPtr(start);
+    e.end   = VertexPtr(end);
 
     // add the edge and get the corresponding pointer
     EdgePtr e_ptr = edges.push_back(e);
@@ -76,10 +69,9 @@ EdgePtr TethysGraph::add_edge(size_t          value_index,
     return e_ptr;
 }
 
-EdgePtr TethysGraph::add_edge_from_source(size_t  value_index,
-                                          size_t  cap,
-                                          size_t  end,
-                                          uint8_t table)
+EdgePtr TethysGraph::add_edge_from_source(size_t value_index,
+                                          size_t cap,
+                                          size_t end)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -90,19 +82,10 @@ EdgePtr TethysGraph::add_edge_from_source(size_t  value_index,
         throw std::out_of_range("End index out of bounds");
     }
 
-    if (table > 1) {
-        throw std::out_of_range("Table should be 0 or 1");
-    }
-
     Edge e(value_index, cap);
 
     e.start = kSourcePtr;
-
-    if (table == 0) {
-        e.end = VertexPtr(0, end);
-    } else {
-        e.end = VertexPtr(1, end);
-    }
+    e.end   = VertexPtr(end);
     // add the edge and get the corresponding pointer
     EdgePtr e_ptr = edges.push_back(e);
 
@@ -113,10 +96,9 @@ EdgePtr TethysGraph::add_edge_from_source(size_t  value_index,
     return e_ptr;
 }
 
-EdgePtr TethysGraph::add_edge_to_sink(size_t  value_index,
-                                      size_t  cap,
-                                      size_t  start,
-                                      uint8_t table)
+EdgePtr TethysGraph::add_edge_to_sink(size_t value_index,
+                                      size_t cap,
+                                      size_t start)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -127,19 +109,11 @@ EdgePtr TethysGraph::add_edge_to_sink(size_t  value_index,
         throw std::out_of_range("Start index out of bounds");
     }
 
-    if (table > 1) {
-        throw std::out_of_range("Table should be 0 or 1");
-    }
 
     Edge e(value_index, cap);
 
-    e.end = kSinkPtr;
-
-    if (table == 0) {
-        e.start = VertexPtr(0, start);
-    } else {
-        e.start = VertexPtr(1, start);
-    }
+    e.end   = kSinkPtr;
+    e.start = VertexPtr(start);
 
     // add the edge and get the corresponding pointer
     EdgePtr e_ptr = edges.push_back(e);
@@ -153,11 +127,7 @@ EdgePtr TethysGraph::add_edge_to_sink(size_t  value_index,
 
 void VertexVec::reset_parent_edges() const
 {
-    for (const Vertex& v : vertices[0]) {
-        v.parent_edge = kNullEdgePtr;
-    }
-
-    for (const Vertex& v : vertices[1]) {
+    for (const Vertex& v : *this) {
         v.parent_edge = kNullEdgePtr;
     }
 }

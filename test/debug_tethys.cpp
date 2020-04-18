@@ -15,17 +15,19 @@ using namespace sse::tethys::details;
 
 void test_dfs()
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    graph.add_edge_from_source(0, 2, 0, 0);
-    graph.add_edge(1, 2, 0, 0, ForcedRight);
+    graph.add_edge_from_source(0, 2, 0);
+    graph.add_edge(1, 2, 0, 0 + mid_graph);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
+    graph.add_edge(2, 1, 0 + mid_graph, 1);
+    graph.add_edge_to_sink(3, 1, 1);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    graph.add_edge(4, 1, 0 + mid_graph, 2);
+    graph.add_edge(5, 1, 2, 1 + mid_graph);
+    graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
     size_t cap  = 0;
     auto   path = graph.find_source_sink_path(&cap);
@@ -96,33 +98,35 @@ void test_dfs()
 
 void test_graphs()
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    graph.add_edge_from_source(0, 1, 0, 0);
-    graph.add_edge(1, 1, 0, 0, ForcedRight);
+    graph.add_edge_from_source(0, 1, 0);
+    graph.add_edge(1, 1, 0, 0 + mid_graph);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
+    graph.add_edge(2, 1, 0 + mid_graph, 1);
+    graph.add_edge_to_sink(3, 1, 1);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    graph.add_edge(4, 1, 0 + mid_graph, 2);
+    graph.add_edge(5, 1, 2, 1 + mid_graph);
+    graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
 
 
-    TethysGraph expected_graph(3);
+    TethysGraph expected_graph(graph_size);
 
-    expected_graph.add_edge_from_source(0, 1, 0, 0);
-    expected_graph.add_edge(1, 1, 0, 0, ForcedRight);
+    expected_graph.add_edge_from_source(0, 1, 0);
+    expected_graph.add_edge(1, 1, 0, 0 + mid_graph);
 
-    expected_graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    expected_graph.add_edge_to_sink(3, 1, 1, 0);
+    expected_graph.add_edge(2, 1, 0 + mid_graph, 1);
+    expected_graph.add_edge_to_sink(3, 1, 1);
 
-    expected_graph.add_edge(4, 0, 0, 2, ForcedLeft);
-    expected_graph.add_edge(5, 0, 2, 1, ForcedRight);
-    expected_graph.add_edge_to_sink(6, 0, 1, 1);
+    expected_graph.add_edge(4, 0, 0 + mid_graph, 2);
+    expected_graph.add_edge(5, 0, 2, 1 + mid_graph);
+    expected_graph.add_edge_to_sink(6, 0, 1 + mid_graph);
 }
 int main(int /*argc*/, const char** /*argv*/)
 {

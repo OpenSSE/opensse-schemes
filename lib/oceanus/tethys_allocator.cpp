@@ -25,8 +25,7 @@ void TethysAllocator::insert(TethysAllocatorKey key,
             "List length must be smaller than the page size");
     }
 
-    allocation_graph.add_edge(
-        index, list_length, key.h[0], key.h[1], key.orientation);
+    allocation_graph.add_edge(index, list_length, key.h[0], key.h[1]);
 }
 
 void TethysAllocator::allocate()
@@ -52,21 +51,19 @@ void TethysAllocator::allocate()
 
     // Step 1.: enumerate through the vertices
 
-    for (uint8_t table = 0; table <= 1; table++) {
-        for (size_t i = 0; i < tethys_table_size; i++) {
-            VertexPtr v_ptr(table, i);
+    for (size_t i = 0; i < tethys_table_size; i++) {
+        VertexPtr v_ptr(i);
 
-            size_t d = allocation_graph.get_vertex_out_capacity(v_ptr);
+        size_t d = allocation_graph.get_vertex_out_capacity(v_ptr);
 
-            if (d > page_size) {
-                // Step 1.a.
-                allocation_graph.add_edge_from_source(
-                    kEmptyIndexValue, d - page_size, i, table);
-            } else if (d < page_size) {
-                // Step 1.b.
-                allocation_graph.add_edge_to_sink(
-                    kEmptyIndexValue, page_size - d, i, table);
-            }
+        if (d > page_size) {
+            // Step 1.a.
+            allocation_graph.add_edge_from_source(
+                kEmptyIndexValue, d - page_size, i);
+        } else if (d < page_size) {
+            // Step 1.b.
+            allocation_graph.add_edge_to_sink(
+                kEmptyIndexValue, page_size - d, i);
         }
     }
 

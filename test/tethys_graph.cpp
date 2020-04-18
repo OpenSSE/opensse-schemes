@@ -13,17 +13,19 @@ namespace test {
 
 TEST(tethys_graph, dfs_1)
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    graph.add_edge_from_source(0, 2, 0, 0);
-    graph.add_edge(1, 2, 0, 0, ForcedRight);
+    graph.add_edge_from_source(0, 2, 0);
+    graph.add_edge(1, 2, 0, 0 + mid_graph);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
+    graph.add_edge(2, 1, 0 + mid_graph, 1);
+    graph.add_edge_to_sink(3, 1, 1);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    graph.add_edge(4, 1, 0 + mid_graph, 2);
+    graph.add_edge(5, 1, 2, 1 + mid_graph);
+    graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
     size_t cap  = 0;
     auto   path = graph.find_source_sink_path(&cap);
@@ -43,18 +45,19 @@ TEST(tethys_graph, dfs_1)
 
 TEST(tethys_graph, dfs_2)
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    graph.add_edge_from_source(0, 2, 0, 0);
-    graph.add_edge(1, 2, 0, 0, ForcedRight);
+    graph.add_edge_from_source(0, 2, 0);
+    graph.add_edge(1, 2, 0, 0 + mid_graph);
 
-    graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    graph.add_edge(5, 1, 2, 1, ForcedRight);
-    graph.add_edge_to_sink(6, 1, 1, 1);
+    graph.add_edge(4, 1, 0 + mid_graph, 2);
+    graph.add_edge(5, 1, 2, 1 + mid_graph);
+    graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
-    graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    graph.add_edge_to_sink(3, 1, 1, 0);
-
+    graph.add_edge(2, 1, 0 + mid_graph, 1);
+    graph.add_edge_to_sink(3, 1, 1);
 
     size_t cap  = 0;
     auto   path = graph.find_source_sink_path(&cap);
@@ -75,17 +78,19 @@ TEST(tethys_graph, dfs_2)
 
 TEST(tethys_graph, maxflow_1)
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_0 = graph.add_edge_from_source(0, 2, 0, 0);
-    EdgePtr e_1 = graph.add_edge(1, 2, 0, 0, ForcedRight);
+    EdgePtr e_0 = graph.add_edge_from_source(0, 2, 0);
+    EdgePtr e_1 = graph.add_edge(1, 2, 0, 0 + mid_graph);
 
-    EdgePtr e_2 = graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1, 0);
+    EdgePtr e_2 = graph.add_edge(2, 1, 0 + mid_graph, 1);
+    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1);
 
-    EdgePtr e_4 = graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1, ForcedRight);
-    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1, 1);
+    EdgePtr e_4 = graph.add_edge(4, 1, 0 + mid_graph, 2);
+    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1 + mid_graph);
+    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -101,17 +106,20 @@ TEST(tethys_graph, maxflow_1)
 
 TEST(tethys_graph, maxflow_2)
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_0 = graph.add_edge_from_source(0, 1, 0, 0);
-    EdgePtr e_1 = graph.add_edge(1, 1, 0, 0, ForcedRight);
+    EdgePtr e_0 = graph.add_edge_from_source(0, 1, 0);
+    EdgePtr e_1 = graph.add_edge(1, 1, 0, 0 + mid_graph);
 
-    EdgePtr e_2 = graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1, 0);
+    EdgePtr e_2 = graph.add_edge(2, 1, 0 + mid_graph, 1);
+    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1);
 
-    EdgePtr e_4 = graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1, ForcedRight);
-    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1, 1);
+    EdgePtr e_4 = graph.add_edge(4, 1, 0 + mid_graph, 2);
+    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1 + mid_graph);
+    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1 + mid_graph);
+
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -127,18 +135,19 @@ TEST(tethys_graph, maxflow_2)
 
 TEST(tethys_graph, maxflow_3)
 {
-    TethysGraph graph(3);
+    const size_t graph_size = 6;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_0 = graph.add_edge_from_source(0, 1, 0, 0);
-    EdgePtr e_1 = graph.add_edge(1, 1, 0, 0, ForcedRight);
+    EdgePtr e_0 = graph.add_edge_from_source(0, 1, 0);
+    EdgePtr e_1 = graph.add_edge(1, 1, 0, 0 + mid_graph);
 
-    EdgePtr e_4 = graph.add_edge(4, 1, 0, 2, ForcedLeft);
-    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1, ForcedRight);
-    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1, 1);
+    EdgePtr e_4 = graph.add_edge(4, 1, 0 + mid_graph, 2);
+    EdgePtr e_5 = graph.add_edge(5, 1, 2, 1 + mid_graph);
+    EdgePtr e_6 = graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
-    EdgePtr e_2 = graph.add_edge(2, 1, 0, 1, ForcedLeft);
-    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1, 0);
-
+    EdgePtr e_2 = graph.add_edge(2, 1, 0 + mid_graph, 1);
+    EdgePtr e_3 = graph.add_edge_to_sink(3, 1, 1);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -155,15 +164,17 @@ TEST(tethys_graph, maxflow_3)
 
 TEST(tethys_graph, maxflow_4)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9, 0);
+    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1);
+    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9);
 
-    graph.add_edge(3, 20, 1, 8, ForcedRight);
+    graph.add_edge(3, 20, 1, 8 + mid_graph);
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 12, 8, 1);
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 12, 8 + mid_graph);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -189,16 +200,17 @@ TEST(tethys_graph, maxflow_4)
 
 TEST(tethys_graph, maxflow_5)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9, 0);
+    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1);
+    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9);
 
-    graph.add_edge(3, 20, 1, 8, ForcedRight);
+    graph.add_edge(3, 20, 1, 8 + mid_graph);
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(
-        15, 30, 8, 1); // <-- change this capacity from 12 to 30
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -224,23 +236,26 @@ TEST(tethys_graph, maxflow_5)
 
 TEST(tethys_graph, maxflow_6)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9, 0);
+    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1);
+    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9);
 
     EdgePtr sat_edge
-        = graph.add_edge(3, 20, 1, 8, ForcedRight); // will saturate here
+        = graph.add_edge(3, 20, 1, 8 + mid_graph); // will saturate here
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
+
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
 
     // add these edges
-    graph.add_edge(7, 9, 9, 3, ForcedRight);
-    graph.add_edge(11, 9, 3, 3, ForcedLeft);
-    graph.add_edge(5, 7, 3, 6, ForcedRight);
-    graph.add_edge(14, 9, 6, 1, ForcedLeft);
+    graph.add_edge(7, 9, 9, 3 + mid_graph);
+    graph.add_edge(11, 9, 3 + mid_graph, 3);
+    graph.add_edge(5, 7, 3, 6 + mid_graph);
+    graph.add_edge(14, 9, 6 + mid_graph, 1);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -269,21 +284,22 @@ TEST(tethys_graph, maxflow_6)
 
 TEST(tethys_graph, maxflow_7)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9, 0);
+    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1);
+    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9);
 
-    graph.add_edge(3, 30, 1, 8, ForcedRight); // change this capacity
+    graph.add_edge(3, 30, 1, 8 + mid_graph); // change this capacity
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
-
-    graph.add_edge(7, 9, 9, 3, ForcedRight);
-    graph.add_edge(11, 9, 3, 3, ForcedLeft);
-    EdgePtr sat_edge = graph.add_edge(5, 7, 3, 6, ForcedRight); // saturate here
-    graph.add_edge(14, 9, 6, 1, ForcedLeft);
+    graph.add_edge(7, 9, 9, 3 + mid_graph);
+    graph.add_edge(11, 9, 3 + mid_graph, 3);
+    EdgePtr sat_edge = graph.add_edge(5, 7, 3, 6 + mid_graph); // saturate here
+    graph.add_edge(14, 9, 6 + mid_graph, 1);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -312,28 +328,29 @@ TEST(tethys_graph, maxflow_7)
 
 TEST(tethys_graph, maxflow_8)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9, 0);
+    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1);
+    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9);
 
-    graph.add_edge(3, 30, 1, 8, ForcedRight);
+    graph.add_edge(3, 30, 1, 8 + mid_graph); // change this capacity
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
-
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
     EdgePtr sat_edge_1
-        = graph.add_edge(7, 9, 9, 3, ForcedRight); // saturate here
+        = graph.add_edge(7, 9, 9, 3 + mid_graph); // saturate here
     EdgePtr sat_edge_2
-        = graph.add_edge(11, 9, 3, 3, ForcedLeft); // ... here ...
-    graph.add_edge(5, 7, 3, 6, ForcedRight);
-    EdgePtr sat_edge_3 = graph.add_edge(14, 9, 6, 1, ForcedLeft); // ..and here
+        = graph.add_edge(11, 9, 3 + mid_graph, 3); // ... here ...
+    graph.add_edge(5, 7, 3, 6 + mid_graph);
+    EdgePtr sat_edge_3 = graph.add_edge(14, 9, 6 + mid_graph, 1); // ..and here
 
     // add these edges
-    graph.add_edge(4, 7, 3, 4, ForcedRight);
-    graph.add_edge(12, 10, 4, 6, ForcedLeft);
-    graph.add_edge(6, 10, 6, 6, ForcedRight);
+    graph.add_edge(4, 7, 3, 4 + mid_graph);
+    graph.add_edge(12, 10, 4 + mid_graph, 6);
+    graph.add_edge(6, 10, 6, 6 + mid_graph);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -363,28 +380,29 @@ TEST(tethys_graph, maxflow_8)
 
 TEST(tethys_graph, maxflow_9)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9, 0);
+    EdgePtr e_source_1 = graph.add_edge_from_source(0, 15, 1);
+    EdgePtr e_source_2 = graph.add_edge_from_source(1, 10, 9);
 
-    graph.add_edge(3, 30, 1, 8, ForcedRight);
+    graph.add_edge(3, 30, 1, 8 + mid_graph);
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
-
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
     EdgePtr sat_edge_1
-        = graph.add_edge(7, 15, 9, 3, ForcedRight); // change this capacity
+        = graph.add_edge(7, 15, 9, 3 + mid_graph); // change this capacity
     EdgePtr sat_edge_2
-        = graph.add_edge(11, 15, 3, 3, ForcedLeft); // change this capacity
-    graph.add_edge(5, 7, 3, 6, ForcedRight);
+        = graph.add_edge(11, 15, 3 + mid_graph, 3); // change this capacity
+    graph.add_edge(5, 7, 3, 6 + mid_graph);
     EdgePtr sat_edge_3
-        = graph.add_edge(14, 15, 6, 1, ForcedLeft); // change this capacity
+        = graph.add_edge(14, 15, 6 + mid_graph, 1); // change this capacity
 
-    graph.add_edge(4, 7, 3, 4, ForcedRight);
-    graph.add_edge(12, 10, 4, 6, ForcedLeft);
-    graph.add_edge(6, 10, 6, 6, ForcedRight);
+    graph.add_edge(4, 7, 3, 4 + mid_graph);
+    graph.add_edge(12, 10, 4 + mid_graph, 6);
+    graph.add_edge(6, 10, 6, 6 + mid_graph);
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -414,29 +432,31 @@ TEST(tethys_graph, maxflow_9)
 
 TEST(tethys_graph, maxflow_10)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
     EdgePtr e_source_1
-        = graph.add_edge_from_source(0, 10, 1, 0); // change this capacity
+        = graph.add_edge_from_source(0, 10, 1); // change this capacity
     EdgePtr e_source_2
-        = graph.add_edge_from_source(1, 45, 9, 0); // change this capacity
+        = graph.add_edge_from_source(1, 45, 9); // change this capacity
 
-    graph.add_edge(3, 30, 1, 8, ForcedRight);
+    graph.add_edge(3, 30, 1, 8 + mid_graph);
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
-
-    graph.add_edge(7, 15, 9, 3, ForcedRight);
-    graph.add_edge(11, 15, 3, 3, ForcedLeft);
+    graph.add_edge(7, 15, 9, 3 + mid_graph);
+    graph.add_edge(11, 15, 3 + mid_graph, 3);
     EdgePtr sat_edge_1
-        = graph.add_edge(5, 7, 3, 6, ForcedRight); // saturate here
-    graph.add_edge(14, 15, 6, 1, ForcedLeft);
+        = graph.add_edge(5, 7, 3, 6 + mid_graph); // saturate here
+    graph.add_edge(14, 15, 6 + mid_graph, 1);
 
     EdgePtr sat_edge_2
-        = graph.add_edge(4, 7, 3, 4, ForcedRight); // saturate here
-    graph.add_edge(12, 10, 4, 6, ForcedLeft);
-    graph.add_edge(6, 10, 6, 6, ForcedRight);
+        = graph.add_edge(4, 7, 3, 4 + mid_graph); // saturate here
+    graph.add_edge(12, 10, 4 + mid_graph, 6);
+    graph.add_edge(6, 10, 6, 6 + mid_graph);
+
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();
@@ -466,29 +486,34 @@ TEST(tethys_graph, maxflow_10)
 
 TEST(tethys_graph, maxflow_11)
 {
-    TethysGraph graph(10);
+    const size_t graph_size = 20;
+    const size_t mid_graph  = graph_size / 2;
+    TethysGraph  graph(graph_size);
 
-    EdgePtr e_source_1 = graph.add_edge_from_source(0, 10, 1, 0);
-    EdgePtr e_source_2 = graph.add_edge_from_source(1, 45, 9, 0);
+    EdgePtr e_source_1
+        = graph.add_edge_from_source(0, 10, 1); // change this capacity
+    EdgePtr e_source_2
+        = graph.add_edge_from_source(1, 45, 9); // change this capacity
 
-    graph.add_edge(3, 30, 1, 8, ForcedRight);
+    graph.add_edge(3, 30, 1, 8 + mid_graph);
 
-    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
+    EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7);
+    EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8 + mid_graph);
 
+    graph.add_edge(7, 15, 9, 3 + mid_graph);
+    graph.add_edge(11, 15, 3 + mid_graph, 3);
+    graph.add_edge(5, 7, 3, 6 + mid_graph); // saturate here
+    graph.add_edge(14, 15, 6 + mid_graph, 1);
 
-    graph.add_edge(7, 15, 9, 3, ForcedRight);
-    graph.add_edge(11, 15, 3, 3, ForcedLeft);
-    graph.add_edge(5, 7, 3, 6, ForcedRight);
-    graph.add_edge(14, 15, 6, 1, ForcedLeft);
+    graph.add_edge(4, 7, 3, 4 + mid_graph);
+    graph.add_edge(12, 10, 4 + mid_graph, 6);
+    graph.add_edge(6, 10, 6, 6 + mid_graph);
 
-    graph.add_edge(4, 7, 3, 4, ForcedRight);
-    graph.add_edge(12, 10, 4, 6, ForcedLeft);
-    graph.add_edge(6, 10, 6, 6, ForcedRight);
 
     // add these (useless) edges
-    EdgePtr useless_edge_1 = graph.add_edge(10, 5, 2, 7, ForcedLeft);
-    EdgePtr useless_edge_2 = graph.add_edge(13, 2, 5, 7, ForcedLeft);
+    EdgePtr useless_edge_1 = graph.add_edge(10, 5, 2 + mid_graph, 7);
+    EdgePtr useless_edge_2 = graph.add_edge(13, 2, 5 + mid_graph, 7);
+
 
     graph.compute_residual_maxflow();
     graph.transform_residual_to_flow();

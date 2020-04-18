@@ -13,11 +13,11 @@ struct TethysAllocatorKey
 
     TethysAllocatorKey() = default;
     TethysAllocatorKey(uint64_t v[2], EdgeOrientation o)
-        : h({v[0], v[1]}), orientation(o)
+        : h{v[0], v[1]}, orientation(o)
     {
     }
     TethysAllocatorKey(size_t h0, size_t h1, EdgeOrientation o)
-        : h({h0, h1}), orientation(o)
+        : h{h0, h1}, orientation(o)
     {
     }
 };

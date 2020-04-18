@@ -1,10 +1,17 @@
 #include "tethys/details/tethys_allocator.hpp"
 
+#include <cmath>
+
 #include <stdexcept>
 
 namespace sse {
 namespace tethys {
 namespace details {
+
+size_t tethys_graph_size(size_t n_elements, double epsilon)
+{
+    return 2 * std::ceil((1. + epsilon) * n_elements);
+};
 
 TethysAllocator::TethysAllocator(size_t table_size, size_t page_size)
     : allocation_graph(table_size), tethys_graph_size(table_size),

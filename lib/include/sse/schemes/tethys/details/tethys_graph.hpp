@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <sys/types.h>
 
+#include <stdexcept>
 #include <vector>
 
 namespace sse {
@@ -271,6 +272,10 @@ public:
 
     explicit TethysGraph(size_t n) : graph_size(n), vertices(n)
     {
+        if (n == 0) {
+            throw std::invalid_argument(
+                "The size of the graph has to be non-zero");
+        }
     }
 
     TethysGraph(const TethysGraph&) = delete;

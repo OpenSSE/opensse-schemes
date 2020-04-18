@@ -9,7 +9,6 @@
 
 namespace sse {
 namespace tethys {
-
 namespace details {
 
 template<uint8_t size>
@@ -285,17 +284,17 @@ public:
     TethysGraph& operator=(const TethysGraph&) = delete;
 
     EdgePtr add_edge(size_t          value_index,
-                     ssize_t         cap,
+                     size_t          cap,
                      size_t          start,
                      size_t          end,
                      EdgeOrientation orientation);
 
     EdgePtr add_edge_from_source(size_t  value_index,
-                                 ssize_t cap,
+                                 size_t  cap,
                                  size_t  end,
                                  uint8_t table);
     EdgePtr add_edge_to_sink(size_t  value_index,
-                             ssize_t cap,
+                             size_t  cap,
                              size_t  start,
                              uint8_t table);
 
@@ -335,6 +334,11 @@ public:
 
     size_t get_vertex_in_capacity(VertexPtr v_ptr) const;
     size_t get_vertex_out_capacity(VertexPtr v_ptr) const;
+
+    const VertexVec& inner_vertices() const
+    {
+        return vertices;
+    }
 
 private:
     void reset_parent_edges() const;

@@ -37,7 +37,7 @@ Vertex& TethysGraph::get_vertex(VertexPtr ptr)
 }
 
 EdgePtr TethysGraph::add_edge(size_t          value_index,
-                              ssize_t         cap,
+                              size_t          cap,
                               size_t          start,
                               size_t          end,
                               EdgeOrientation orientation)
@@ -77,7 +77,7 @@ EdgePtr TethysGraph::add_edge(size_t          value_index,
 }
 
 EdgePtr TethysGraph::add_edge_from_source(size_t  value_index,
-                                          ssize_t cap,
+                                          size_t  cap,
                                           size_t  end,
                                           uint8_t table)
 {
@@ -114,7 +114,7 @@ EdgePtr TethysGraph::add_edge_from_source(size_t  value_index,
 }
 
 EdgePtr TethysGraph::add_edge_to_sink(size_t  value_index,
-                                      ssize_t cap,
+                                      size_t  cap,
                                       size_t  start,
                                       uint8_t table)
 {
@@ -243,7 +243,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
 
     if (sink.parent_edge != kNullEdgePtr) {
         // start by computing the size of the path
-        ssize_t       flow = SSIZE_MAX;
+        size_t        flow = SIZE_MAX;
         const Vertex* cur  = &sink;
         size_t        size = 0;
 
@@ -251,7 +251,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
             const Edge& e = edges[cur->parent_edge];
             // be careful here: the flow we are interested in might be the
             // reciprocal flow
-            flow = std::min<ssize_t>(edges.edge_flow(cur->parent_edge), flow);
+            flow = std::min<size_t>(edges.edge_flow(cur->parent_edge), flow);
 
             cur = &get_vertex(e.start);
             size++;

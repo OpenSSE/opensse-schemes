@@ -1,4 +1,4 @@
-#include "oceanus/details/tethys_graph.hpp"
+#include "tethys/details/tethys_graph.hpp"
 
 #include <cassert>
 #include <climits>

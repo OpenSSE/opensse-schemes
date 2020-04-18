@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sse/schemes/oceanus/details/tethys_graph.hpp>
+#include <sse/schemes/tethys/details/tethys_graph.hpp>
 
 #include <set>
 

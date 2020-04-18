@@ -1,4 +1,4 @@
-#include "oceanus/details/tethys_allocator.hpp"
+#include "tethys/details/tethys_allocator.hpp"
 
 #include <stdexcept>
 

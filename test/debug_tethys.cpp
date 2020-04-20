@@ -148,56 +148,6 @@ struct ValueEncoder
     static constexpr size_t kControlBlockSizeEntries
         = 2 * (kAdditionalKeyEntriesNumber + kListLengthEntriesNumber);
 
-    // size_t encode(uint8_t*              buffer,
-    //               size_t                table_index,
-    //               const Key&            key,
-    //               const std::vector<T>& values,
-    //               TethysAssignmentInfo  infos)
-    // {
-    //     (void)table_index;
-    //     if (infos.assigned_list_length == 0) {
-    //         return 0;
-    //     }
-
-    //     uint8_t* write_head = buffer;
-
-    //     // copy the key
-    //     write_head
-    //         = std::copy(reinterpret_cast<const uint8_t*>(&key),
-    //                     reinterpret_cast<const uint8_t*>(&key) + sizeof(Key),
-    //                     write_head);
-    //     // fill with dummy bytes if needed
-    //     std::fill(
-    //         write_head, buffer + kAdditionalKeyEntriesNumber * sizeof(T),
-    //         0x11);
-    //     write_head = buffer + kAdditionalKeyEntriesNumber * sizeof(T);
-
-    //     // append the length of the list
-    //     write_head = std::copy(
-    //         reinterpret_cast<const uint8_t*>(&infos.assigned_list_length),
-    //         reinterpret_cast<const uint8_t*>(&infos.assigned_list_length)
-    //             + sizeof(infos.assigned_list_length),
-    //         write_head);
-
-    //     // now copy the values
-    //     auto it_start = values.begin();
-
-    //     if (infos.edge_orientation == IncomingEdge) {
-    //         it_start += infos.dual_assigned_list_length;
-    //     }
-
-    //     for (auto it = it_start; it != it_start + infos.assigned_list_length;
-    //          ++it) {
-    //         write_head = std::copy(reinterpret_cast<const uint8_t*>(&(*it)),
-    //                                reinterpret_cast<const uint8_t*>(&(*it))
-    //                                    + sizeof(T),
-    //                                write_head);
-    //     }
-
-    //     return write_head - buffer;
-    // }
-
-
     size_t encode(uint8_t*              buffer,
                   size_t                table_index,
                   const Key&            key,
@@ -207,7 +157,10 @@ struct ValueEncoder
         (void)table_index;
         if (infos.assigned_list_length
             < kAdditionalKeyEntriesNumber + kListLengthEntriesNumber) {
-            return 0;
+            // return 0;
+            std::fill(
+                buffer, buffer + infos.assigned_list_length * sizeof(T), 0xDD);
+            return infos.assigned_list_length * sizeof(T);
         }
 
         // we have to pay attention to the difference between the allocated list
@@ -287,7 +240,74 @@ struct ValueEncoder
             offset += sizeof(T);
         }
 
-        return offset;
+        // for debugging, paint the remaining with an other patter
+        std::fill(buffer + offset,
+                  buffer + infos.assigned_list_length * sizeof(T),
+                  0xDD);
+        return infos.assigned_list_length * sizeof(T);
+        // return offset;
+    }
+
+    void serialize_key_value(std::ostream&                           out,
+                             const Key&                              k,
+                             const TethysStashSerializationValue<T>& v)
+    {
+        out.write(reinterpret_cast<const char*>(k.data()), k.size());
+
+        bool bucket_1_uf
+            = (v.assignement_info.assigned_list_length
+               < (kAdditionalKeyEntriesNumber + kListLengthEntriesNumber));
+
+        bool bucket_2_uf
+            = (v.assignement_info.dual_assigned_list_length
+               < (kAdditionalKeyEntriesNumber + kListLengthEntriesNumber));
+
+
+        size_t encoded_list_size_1 = 0;
+        size_t encoded_list_size_2 = 0;
+
+        if (!bucket_1_uf) {
+            encoded_list_size_1
+                = v.assignement_info.assigned_list_length
+                  - (kAdditionalKeyEntriesNumber + kListLengthEntriesNumber);
+
+            if (bucket_2_uf) {
+                // Some control blocks elements of the second were spilled in
+                // the first bucket Do not consider them as real elements
+                encoded_list_size_1
+                    -= kAdditionalKeyEntriesNumber + kListLengthEntriesNumber
+                       - v.assignement_info.dual_assigned_list_length;
+            }
+        }
+        if (!bucket_2_uf) {
+            encoded_list_size_2
+                = v.assignement_info.assigned_list_length
+                  - (kAdditionalKeyEntriesNumber
+                     + kListLengthEntriesNumber); // we know this is positive
+                                                  // because of the previous
+                                                  // test
+
+            if (bucket_1_uf) {
+                // Some control blocks elements of the second were spilled in
+                // the first bucket Do not consider them as real elements
+                encoded_list_size_2
+                    -= kAdditionalKeyEntriesNumber + kListLengthEntriesNumber
+                       - v.assignement_info.assigned_list_length;
+            }
+        }
+
+        uint64_t v_size = v.assignement_info.list_length
+                          - kControlBlockSizeEntries - encoded_list_size_1
+                          - encoded_list_size_2;
+
+
+        // write the size of the vector
+        out.write(reinterpret_cast<const char*>(&v_size), sizeof(v_size));
+
+        // and the elements
+        for (auto it = v.data->end() - v_size; it != v.data->end(); ++it) {
+            out.write(reinterpret_cast<const char*>(&(*it)), sizeof(*it));
+        }
     }
 };
 
@@ -313,8 +333,9 @@ void test_store()
     constexpr size_t kPageSize = 4096; // 4 kB
 
     TethysStoreBuilderParam builder_params;
-    builder_params.max_n_elements    = 10;
+    builder_params.max_n_elements    = 3;
     builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
+    builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
     builder_params.epsilon           = 0.2;
 
 
@@ -329,22 +350,88 @@ void test_store()
                        Hasher>
         store_builder(builder_params);
 
-
-    key_type            key_0 = {{0x00}};
-    std::vector<size_t> v_0(400, 0xABABABABABABABAB);
+    size_t              v_size = 450;
+    key_type            key_0  = {{0x00}};
+    std::vector<size_t> v_0(v_size, 0xABABABABABABABAB);
     for (size_t i = 0; i < v_0.size(); i++) {
         v_0[i] += i;
     }
 
-
+    // force overflow
     key_type key_1 = key_0;
-    key_1[8]       = 0x02;
-    std::vector<size_t> v_1(400, 0xCDCDCDCDCDCDCDCD);
-    for (size_t i = 0; i < v_0.size(); i++) {
+    key_1[8]       = 0x01;
+    std::vector<size_t> v_1(v_size, 0xCDCDCDCDCDCDCDCD);
+    for (size_t i = 0; i < v_1.size(); i++) {
         v_1[i] += i;
     }
+
+    key_type key_2 = key_0;
+    key_2[0]       = 0x01;
+    key_2[8]       = 0x00;
+    std::vector<size_t> v_2(v_size, 0xEFEFEFEFEFEFEFEF);
+    for (size_t i = 0; i < v_2.size(); i++) {
+        v_2[i] += i;
+    }
+
+    key_type key_3 = key_0;
+    key_3[0]       = 0x01;
+    key_3[8]       = 0x01;
+    std::vector<size_t> v_3(v_size, 0x6969696969696969);
+    for (size_t i = 0; i < v_3.size(); i++) {
+        v_3[i] += i;
+    }
+
+    key_type key_4 = key_0;
+    key_4[0]       = 0x01;
+    key_4[8]       = 0x02;
+    std::vector<size_t> v_4(v_size, 0x7070707070707070);
+    for (size_t i = 0; i < v_4.size(); i++) {
+        v_4[i] += i;
+    }
+    key_type key_5 = key_0;
+    key_5[0]       = 0x02;
+    key_5[8]       = 0x01;
+    std::vector<size_t> v_5(v_size, 0x4242424242424242);
+    for (size_t i = 0; i < v_5.size(); i++) {
+        v_5[i] += i;
+    }
+    key_type key_6 = key_0;
+    key_6[0]       = 0x02;
+    key_6[8]       = 0x02;
+    std::vector<size_t> v_6(v_size, 0x5353535353535353);
+    for (size_t i = 0; i < v_6.size(); i++) {
+        v_6[i] += i;
+    }
+
+    // key_type key_2 = key_0;
+    // key_2[0]       = 0x01;
+    // key_2[8]       = 0x00;
+
+
+    // key_type key_3 = key_0;
+    // key_3[0]       = 0x01;
+    // key_3[8]       = 0x01;
+
+    // key_type key_4 = key_0;
+    // key_4[0]       = 0x01;
+    // key_4[8]       = 0x01;
+
+    // key_type key_5 = key_0;
+    // key_5[0]       = 0x01;
+    // key_5[8]       = 0x01;
+
+    // key_type key_6 = key_0;
+    // key_6[0]       = 0x01;
+    // key_6[8]       = 0x01;
+
+
     store_builder.insert_list(key_0, v_0);
     store_builder.insert_list(key_1, v_1);
+    store_builder.insert_list(key_2, v_2);
+    store_builder.insert_list(key_3, v_3);
+    store_builder.insert_list(key_4, v_4);
+    store_builder.insert_list(key_5, v_5);
+    store_builder.insert_list(key_6, v_6);
 
     store_builder.build();
 }

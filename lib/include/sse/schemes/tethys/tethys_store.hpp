@@ -1,8 +1,10 @@
 
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
+#include <sse/schemes/abstractio/kv_serializer.hpp>
 #include <sse/schemes/tethys/details/tethys_allocator.hpp>
 
 #include <array>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -13,6 +15,7 @@ struct TethysStoreBuilderParam
 {
     // std::string value_file_path;
     std::string tethys_table_path;
+    std::string tethys_stash_path;
 
     size_t max_n_elements;
     double epsilon;
@@ -48,6 +51,20 @@ struct TethysAssignmentInfo
         }
     }
 };
+
+template<class T>
+struct TethysStashSerializationValue
+{
+    const std::vector<T>* data;
+    TethysAssignmentInfo  assignement_info;
+
+    TethysStashSerializationValue(const std::vector<T>* d,
+                                  TethysAssignmentInfo  ai)
+        : data(d), assignement_info(std::move(ai))
+    {
+    }
+};
+
 template<size_t PAGE_SIZE,
          class Key,
          class T,
@@ -77,10 +94,13 @@ public:
 private:
     struct TethysData
     {
-        const Key            key;
-        const std::vector<T> values;
+        using key_type   = Key;
+        using value_type = std::vector<T>;
 
-        TethysData(Key k, std::vector<T> v)
+        const key_type   key;
+        const value_type values;
+
+        TethysData(key_type k, value_type v)
             : key(std::move(k)), values(std::move(v))
         {
         }
@@ -234,12 +254,34 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
 
     // now, we have to take care of the stash
     if (allocator.get_stashed_edges().size() > 0) {
+        std::ofstream stash_file;
+        stash_file.open(params.tethys_stash_path);
+
+        abstractio::
+            KVSerializer<Key, TethysStashSerializationValue<T>, ValueEncoder>
+                serializer(stash_file);
+
+        for (const auto& e_ptr : allocator.get_stashed_edges()) {
+            const auto& e = allocator.get_allocation_graph().get_edge(e_ptr);
+            if (e.value_index == details::TethysAllocator::kEmptyIndexValue) {
+                // this is a placeholder edge that we do not need to consider
+                continue;
+            }
+            const TethysData&                d = data[e.value_index];
+            TethysStashSerializationValue<T> v(
+                &d.values,
+                TethysAssignmentInfo(
+                    e, OutgoingEdge)); // the orientation does not matter
+            serializer.serialize(d.key, v, encoder);
+        }
+
+
+        stash_file.close();
+
         std::cerr << "You are going to lose some data: stash storage is still "
                      "unimplemented.\n";
     }
 }
 
 } // namespace tethys
-
-
 } // namespace sse

@@ -130,16 +130,16 @@ void TethysAllocator::allocate()
         for (EdgePtr e_ptr : v.in_edges) {
             Edge& e = allocation_graph.get_edge(e_ptr);
 
-            // we are not interested in the edges whose one the extremity is the
-            // source or the sink
+            // we are not interested in the edges whose one of the extremity is
+            // the source or the sink
             if (e.value_index == kEmptyIndexValue) {
                 continue;
             }
             size_t f = e.rec_flow; // for incoming edges, we look at the
             // reciproqual flow
             if (load + f > page_size) {
-                load       = page_size;
                 e.rec_flow = page_size - load;
+                load       = page_size;
                 // as we reduced the number of elements put in the bins for this
                 // edge, we have to add the edge to the stash
                 stashed_edges.insert(e_ptr);
@@ -150,16 +150,16 @@ void TethysAllocator::allocate()
         // and now through the outgoing edges
         for (EdgePtr e_ptr : v.out_edges) {
             Edge& e = allocation_graph.get_edge(e_ptr);
-            // we are not interested in the edges whose one the extremity is the
-            // source or the sink
+            // we are not interested in the edges whose one of the extremity is
+            // the source or the sink
             if (e.value_index == kEmptyIndexValue) {
                 continue;
             }
             size_t f = e.flow; // for incoming edges, we look at the
             // reciproqual flow
             if (load + f > page_size) {
-                load   = page_size;
                 e.flow = page_size - load;
+                load   = page_size;
                 // as we reduced the number of elements put in the bins for this
                 // edge, we have to add the edge to the stash
                 stashed_edges.insert(e_ptr);

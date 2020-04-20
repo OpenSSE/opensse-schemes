@@ -223,7 +223,11 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
             // reciprocal flow
             flow = std::min<size_t>(edges.edge_flow(cur->parent_edge), flow);
 
-            cur = &get_vertex(e.start);
+            if (cur->parent_edge.is_reciprocal) {
+                cur = &get_vertex(e.end);
+            } else {
+                cur = &get_vertex(e.start);
+            }
             size++;
         }
 
@@ -242,7 +246,11 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
             path[size - i - 1] = cur->parent_edge;
             const Edge& e      = edges[cur->parent_edge];
 
-            cur = &get_vertex(e.start);
+            if (cur->parent_edge.is_reciprocal) {
+                cur = &get_vertex(e.end);
+            } else {
+                cur = &get_vertex(e.start);
+            }
             i++;
         }
 

@@ -156,7 +156,7 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::
     tethys_key.h[0] = tethys_key.h[0] % half_graph_size;
     tethys_key.h[1] = half_graph_size + tethys_key.h[1] % remaining_graphs_size;
 
-    size_t list_length = val.size() + ValueEncoder::kControlBlockSizeEntries;
+    size_t list_length = val.size() + ValueEncoder::kListControlValues;
 
     // TODO always the same edge orientation here
     allocator.insert(tethys_key, list_length, value_index);
@@ -193,6 +193,9 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
         payload_type payload;
         std::fill(payload.begin(), payload.end(), 0xFF);
         size_t written_bytes = 0;
+
+        // declare the start of a new block to the encoder
+        written_bytes += encoder.start_block_encoding(payload.data(), v_index);
 
         // start with incoming edges
         for (auto e_ptr : v.in_edges) {
@@ -240,6 +243,16 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
             }
         }
 
+        // declare the start of a new block to the encoder
+        written_bytes
+            += encoder.finish_block_encoding(payload.data(),
+                                             v_index,
+                                             written_bytes,
+                                             payload.size() - written_bytes);
+
+        if (written_bytes > sizeof(payload_type)) {
+            throw std::out_of_range("Out of bound write during encoding");
+        }
 
         size_t storage_index = tethys_table.push_back(payload);
 

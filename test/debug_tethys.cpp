@@ -1,5 +1,5 @@
 #include <sse/schemes/tethys/details/tethys_graph.hpp>
-#include <sse/schemes/tethys/tethys_store.hpp>
+#include <sse/schemes/tethys/tethys_store_builder.hpp>
 
 #include <sse/crypto/utils.hpp>
 

@@ -175,6 +175,16 @@ struct EncodeSeparateEncoder
                                                   // previous test
         }
 
+
+        uint64_t original_list_size
+            = v.assignement_info.list_length - kListControlValues;
+
+        // be sure we do not overflow the original list length by considering
+        // spilled control values
+        encoded_list_size_1 = std::min(encoded_list_size_1, original_list_size);
+        encoded_list_size_2 = std::min(encoded_list_size_2, original_list_size);
+
+
         uint64_t v_size = v.assignement_info.list_length - kListControlValues
                           - encoded_list_size_1 - encoded_list_size_2;
 
@@ -189,10 +199,17 @@ struct EncodeSeparateEncoder
         out.write(reinterpret_cast<const char*>(&v_size), sizeof(v_size));
 
         // and the elements
-        for (auto it = v.data->begin() + encoded_list_size_1;
-             it != v.data->end() - encoded_list_size_2;
-             ++it) {
-            out.write(reinterpret_cast<const char*>(&(*it)), sizeof(*it));
+        // for (auto it = v.data->begin() + encoded_list_size_1;
+        //      it != v.data->end() - encoded_list_size_2;
+        //      ++it) {
+
+        const std::vector<T>& values = *(v.data);
+
+        for (size_t i = encoded_list_size_1;
+             i < values.size() - encoded_list_size_2;
+             i++) {
+            const T& elt = values[i];
+            out.write(reinterpret_cast<const char*>(&elt), sizeof(elt));
         }
     }
 

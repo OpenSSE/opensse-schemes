@@ -2,6 +2,7 @@
 
 #include <sse/schemes/tethys/types.hpp>
 
+#include <cassert>
 #include <cstring>
 
 #include <array>
@@ -43,7 +44,7 @@ struct EncodeSeparateEncoder
     {
         (void)table_index;
         if (infos.assigned_list_length
-            < kAdditionalKeyEntriesPerList + kListLengthEntriesNumber) {
+            <= kAdditionalKeyEntriesPerList + kListLengthEntriesNumber) {
             return 0;
 
             //         // for debugging only, not a valid encoding
@@ -93,10 +94,12 @@ struct EncodeSeparateEncoder
         offset += sizeof(encoded_list_size); // offset = 8
 
         // fill with dummy bytes if needed
-        std::fill(buffer + offset,
-                  buffer + kAdditionalKeyEntriesPerList * sizeof(T),
-                  0x11);
-        offset = kListLengthEntriesNumber * sizeof(T); // offset = 8
+        if (offset < kListLengthEntriesNumber * sizeof(T)) {
+            std::fill(buffer + offset,
+                      buffer + kAdditionalKeyEntriesPerList * sizeof(T),
+                      0x11);
+            offset = kListLengthEntriesNumber * sizeof(T); // offset = 8
+        }
 
         // copy the key
         std::copy(reinterpret_cast<const uint8_t*>(&key),
@@ -106,11 +109,13 @@ struct EncodeSeparateEncoder
 
 
         // fill with dummy bytes if needed
-        std::fill(
-            buffer + offset, buffer + kListControlValues * sizeof(T), 0x22);
-        offset = (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber)
-                 * sizeof(T); // offset = 24
-
+        if (offset < (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber)
+                         * sizeof(T)) {
+            std::fill(
+                buffer + offset, buffer + kListControlValues * sizeof(T), 0x22);
+            offset = (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber)
+                     * sizeof(T); // offset = 24
+        }
         // now copy the values
         for (auto it = sublist_begin; it != sublist_end; ++it) {
             const T& v = *it;
@@ -127,6 +132,12 @@ struct EncodeSeparateEncoder
         //           buffer + infos.assigned_list_length * sizeof(T),
         //           0xDD);
         // return infos.assigned_list_length * sizeof(T);
+
+        // std::cerr << offset << " / " << infos.list_length * sizeof(T) <<
+        // "\n";
+
+        // assert(offset <= infos.list_length * sizeof(T));
+
         return offset;
     }
 
@@ -151,11 +162,11 @@ struct EncodeSeparateEncoder
     {
         bool bucket_1_uf
             = (v.assignement_info.assigned_list_length
-               < (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber));
+               <= (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber));
 
         bool bucket_2_uf
             = (v.assignement_info.dual_assigned_list_length
-               < (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber));
+               <= (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber));
 
 
         size_t encoded_list_size_1 = 0;

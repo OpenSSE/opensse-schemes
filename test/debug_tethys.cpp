@@ -3,6 +3,7 @@
 #include <sse/schemes/tethys/tethys_store.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
 
+#include <sse/crypto/prf.hpp>
 #include <sse/crypto/utils.hpp>
 
 #include <cassert>
@@ -12,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
 
 using namespace sse::tethys;
 using namespace sse::tethys::details;
@@ -323,12 +325,159 @@ void test_store()
     }
 }
 
+
+void generate_random_store(size_t n_elements)
+{
+    const std::string test_dir = "tethys_test";
+
+    if (sse::utility::is_directory(test_dir)) {
+        std::cerr << "Random store already created\n";
+        return;
+    }
+    sse::utility::create_directory(test_dir, static_cast<mode_t>(0700));
+
+    constexpr size_t kPageSize = 4096; // 4 kB
+
+    using value_type = uint64_t;
+    using encoder_type
+        = encoders::EncodeSeparateEncoder<key_type, value_type, kPageSize>;
+
+    constexpr size_t kMaxListSize
+        = kPageSize / sizeof(value_type) - encoder_type::kListControlValues;
+    const size_t average_n_lists = 2 * (n_elements / kMaxListSize + 1);
+
+
+    const size_t expected_tot_n_elements
+        = n_elements + encoder_type::kListControlValues * average_n_lists;
+
+    TethysStoreBuilderParam builder_params;
+    builder_params.max_n_elements    = expected_tot_n_elements;
+    builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
+    builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
+    builder_params.epsilon           = 0.2;
+
+    size_t                                remaining_elts = n_elements;
+    std::random_device                    rd;
+    std::mt19937                          gen;
+    std::uniform_int_distribution<size_t> dist(1, kMaxListSize);
+    size_t                                list_index = 0;
+
+
+    constexpr size_t kKeySize = sse::crypto::Prf<kTableKeySize>::kKeySize;
+    std::array<uint8_t, kKeySize> prf_key;
+    std::fill(prf_key.begin(), prf_key.end(), 0x00);
+    sse::crypto::Prf<kTableKeySize> prf(
+        sse::crypto::Key<kKeySize>(prf_key.data()));
+
+    // generate a seed and display it (for replay in case of bugs)
+    size_t seed = rd();
+    // seed the random number generator
+    seed = 4171019158;
+    gen.seed(seed);
+
+    std::cerr << "RNG seed: " << seed << "\n";
+
+    // key_type key;
+    // key[0] = 'K';
+    // key[1] = 'e';
+    // key[2] = 'y';
+    // key[3] = ':';
+    // std::fill(key.begin() + 4, key.end(), 0x00);
+    // size_t index_offset = 5;
+    // // size_t index_offset = key.size() - sizeof(list_index);
+
+    TethysStoreBuilder<kPageSize, key_type, value_type, Hasher, encoder_type>
+        store_builder(builder_params);
+
+    while (remaining_elts) {
+        size_t list_size = dist(gen);
+
+        std::array<uint8_t, kTableKeySize> prf_out = prf.prf(
+            reinterpret_cast<uint8_t*>(&list_index), sizeof(list_index));
+
+
+        if (list_size > remaining_elts) {
+            // avoid overflows
+            list_size = remaining_elts;
+        }
+        // // copy the list index
+        // *reinterpret_cast<size_t*>(key.data() + index_offset) = list_index;
+
+        std::vector<value_type> list(list_size, (uint64_t)list_index);
+
+        store_builder.insert_list(prf_out, list);
+
+        list_index++;
+        remaining_elts -= list_size;
+    }
+
+    store_builder.build();
+}
+
+void store_queries(const size_t n_elements)
+{
+    const std::string test_dir = "tethys_test";
+
+    if (!sse::utility::is_directory(test_dir)) {
+        std::cerr << "Random store not created\n";
+        return;
+    }
+
+    constexpr size_t kPageSize = 4096; // 4 kB
+
+    using value_type = uint64_t;
+    using encoder_type
+        = encoders::EncodeSeparateEncoder<key_type, value_type, kPageSize>;
+
+    constexpr size_t kMaxListSize
+        = kPageSize / sizeof(value_type) - encoder_type::kListControlValues;
+    const size_t average_n_lists = 2 * (n_elements / kMaxListSize + 1);
+
+    constexpr size_t kKeySize = sse::crypto::Prf<kTableKeySize>::kKeySize;
+    std::array<uint8_t, kKeySize> prf_key;
+    std::fill(prf_key.begin(), prf_key.end(), 0x00);
+    sse::crypto::Prf<kTableKeySize> prf(
+        sse::crypto::Key<kKeySize>(prf_key.data()));
+
+    using decoder_type
+        = encoders::EncodeSeparateDecoder<key_type, value_type, kPageSize>;
+
+    TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type> store(
+        test_dir + "/tethys_table.bin", test_dir + "/tethys_stash.bin");
+
+    for (size_t i = 0; i < average_n_lists / 2; i++) {
+        std::array<uint8_t, kTableKeySize> prf_out
+            = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(size_t));
+
+        auto res = store.get_list(prf_out);
+
+        if (res.size() > kMaxListSize) {
+            std::cerr << "List too large??\n";
+        }
+        std::set<value_type> set(res.begin(), res.end());
+        if (set.size() != 1) {
+            std::cerr << set.size()
+                      << " different results, while 1 was expected\n";
+        }
+        if (*set.begin() != i) {
+            std::cerr << "Invalid element in the list: " << *set.begin()
+                      << " was found instead of " << i << "\n";
+        }
+    }
+}
+
+
 int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
     // test_dfs();
     // test_graphs();
-    test_store();
+    // test_store();
+
+    const size_t n_elts = 1 << 19;
+    generate_random_store(n_elts);
+    store_queries(n_elts);
+
     sse::crypto::cleanup_crypto_lib();
 
     return 0;

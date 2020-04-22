@@ -46,11 +46,14 @@ struct EncodeSeparateEncoder
             < kAdditionalKeyEntriesPerList + kListLengthEntriesNumber) {
             return 0;
 
-            // for debugging only, not a valid encoding
-            // std::fill(
-            // buffer, buffer + infos.assigned_list_length * sizeof(T), 0xDD);
-            // return infos.assigned_list_length * sizeof(T);
+            //         // for debugging only, not a valid encoding
+            //         // std::fill(
+            //         // buffer, buffer + infos.assigned_list_length *
+            //         sizeof(T), 0xDD);
+            //         // return infos.assigned_list_length * sizeof(T);
         }
+
+        uint64_t original_list_size = infos.list_length - kListControlValues;
 
         // we have to pay attention to the difference between the allocated list
         // size and the values' list size
@@ -60,30 +63,23 @@ struct EncodeSeparateEncoder
                  + kListLengthEntriesNumber); // we know this is positive
                                               // because of the previous test
 
-        if (infos.dual_assigned_list_length
-            < kAdditionalKeyEntriesPerList + kListLengthEntriesNumber) {
-            // Some control blocks elements were spilled into our bucket
-            // Do not consider them as real elements
-            encoded_list_size -= kAdditionalKeyEntriesPerList
-                                 + kListLengthEntriesNumber
-                                 - infos.dual_assigned_list_length;
-        }
-        size_t encoded_list_offset = 0;
+        // be sure we do not overflow the original list length by considering
+        // spilled control values
+        encoded_list_size = std::min(encoded_list_size, original_list_size);
 
+        auto sublist_begin = values.begin();
+        auto sublist_end   = values.end();
+        // size_t sublist_begin = 0;
+        // size_t sublist_end   = values.size();
+
+        // the elements in the list are encoded the following order:
+        // IncomingEdge || Stashed Edge || Outgoing Edge
         if (infos.edge_orientation == IncomingEdge) {
-            // Some of the first entries of the list might alread have been
-            // encoded in an other bucket. infos.dual_assigned_list_length
-            // (logical) elements have been allocated to the other bucket.
-
-            // How many physical elements does that represent?
-            if (infos.dual_assigned_list_length
-                < kAdditionalKeyEntriesPerList + kListLengthEntriesNumber) {
-                // no actual elements have been put in the other bucket
-            } else {
-                encoded_list_offset = infos.dual_assigned_list_length
-                                      - (kAdditionalKeyEntriesPerList
-                                         + kListLengthEntriesNumber);
-            }
+            sublist_end = values.begin() + encoded_list_size;
+            // sublist_end = encoded_list_size;
+        } else {
+            sublist_begin = values.end() - encoded_list_size;
+            // sublist_begin = values.size() - encoded_list_size;
         }
 
 
@@ -116,13 +112,9 @@ struct EncodeSeparateEncoder
                  * sizeof(T); // offset = 24
 
         // now copy the values
-        auto it_start = values.begin();
+        for (auto it = sublist_begin; it != sublist_end; ++it) {
+            const T& v = *it;
 
-
-        it_start += encoded_list_offset;
-
-        for (auto it = it_start; it != it_start + encoded_list_size; ++it) {
-            T v = *it;
             std::copy(reinterpret_cast<const uint8_t*>(&v),
                       reinterpret_cast<const uint8_t*>(&v) + sizeof(T),
                       buffer + offset);
@@ -157,8 +149,6 @@ struct EncodeSeparateEncoder
                              const Key&                              k,
                              const TethysStashSerializationValue<T>& v)
     {
-        out.write(reinterpret_cast<const char*>(k.data()), k.size());
-
         bool bucket_1_uf
             = (v.assignement_info.assigned_list_length
                < (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber));
@@ -175,41 +165,33 @@ struct EncodeSeparateEncoder
             encoded_list_size_1
                 = v.assignement_info.assigned_list_length
                   - (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber);
-
-            if (bucket_2_uf) {
-                // Some control blocks elements of the second were spilled in
-                // the first bucket Do not consider them as real elements
-                encoded_list_size_1
-                    -= kAdditionalKeyEntriesPerList + kListLengthEntriesNumber
-                       - v.assignement_info.dual_assigned_list_length;
-            }
         }
         if (!bucket_2_uf) {
             encoded_list_size_2
-                = v.assignement_info.assigned_list_length
+                = v.assignement_info.dual_assigned_list_length
                   - (kAdditionalKeyEntriesPerList
-                     + kListLengthEntriesNumber); // we know this is positive
-                                                  // because of the previous
-                                                  // test
-
-            if (bucket_1_uf) {
-                // Some control blocks elements of the second were spilled in
-                // the first bucket Do not consider them as real elements
-                encoded_list_size_2
-                    -= kAdditionalKeyEntriesPerList + kListLengthEntriesNumber
-                       - v.assignement_info.assigned_list_length;
-            }
+                     + kListLengthEntriesNumber); // we know this is
+                                                  // positive because of the
+                                                  // previous test
         }
 
         uint64_t v_size = v.assignement_info.list_length - kListControlValues
                           - encoded_list_size_1 - encoded_list_size_2;
 
+        if (v_size == 0) {
+            return;
+        }
+
+        // write the key
+        out.write(reinterpret_cast<const char*>(k.data()), k.size());
 
         // write the size of the vector
         out.write(reinterpret_cast<const char*>(&v_size), sizeof(v_size));
 
         // and the elements
-        for (auto it = v.data->end() - v_size; it != v.data->end(); ++it) {
+        for (auto it = v.data->begin() + encoded_list_size_1;
+             it != v.data->end() - encoded_list_size_2;
+             ++it) {
             out.write(reinterpret_cast<const char*>(&(*it)), sizeof(*it));
         }
     }

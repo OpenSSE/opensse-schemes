@@ -22,9 +22,9 @@ struct TethysStoreBuilderParam
     size_t max_n_elements;
     double epsilon;
 
-    size_t graph_size() const
+    size_t graph_size(size_t bucket_size) const
     {
-        return details::tethys_graph_size(max_n_elements, epsilon);
+        return details::tethys_graph_size(max_n_elements, bucket_size, epsilon);
     }
 };
 
@@ -40,6 +40,7 @@ public:
     static constexpr size_t kPayloadSize = PAGE_SIZE;
     using payload_type                   = std::array<uint8_t, kPayloadSize>;
 
+    static constexpr size_t kBucketSize = PAGE_SIZE / sizeof(T);
 
     explicit TethysStoreBuilder(TethysStoreBuilderParam p);
 
@@ -84,7 +85,7 @@ TethysStoreBuilder<PAGE_SIZE,
                    ValueEncoder,
                    StashEncoder>::TethysStoreBuilder(TethysStoreBuilderParam p)
     : params(std::move(p)),
-      allocator(params.graph_size(), PAGE_SIZE / sizeof(T))
+      allocator(params.graph_size(kBucketSize), PAGE_SIZE / sizeof(T))
 {
 }
 
@@ -118,8 +119,9 @@ void TethysStoreBuilder<PAGE_SIZE,
         = TethysHasher()(data[value_index].key); // avoid copies
 
     // we have to update the hashed key to ensure we have a bipartite graph
-    size_t half_graph_size       = params.graph_size() / 2;
-    size_t remaining_graphs_size = params.graph_size() - half_graph_size;
+    size_t half_graph_size = params.graph_size(kBucketSize) / 2;
+    size_t remaining_graphs_size
+        = params.graph_size(kBucketSize) - half_graph_size;
 
     tethys_key.h[0] = tethys_key.h[0] % half_graph_size;
     tethys_key.h[1] = half_graph_size + tethys_key.h[1] % remaining_graphs_size;
@@ -167,11 +169,11 @@ void TethysStoreBuilder<PAGE_SIZE,
         throw std::runtime_error(
             "The Tethys builder has already been commited");
     }
-    size_t graph_size = params.graph_size();
+    size_t graph_size = params.graph_size(kBucketSize);
 
     abstractio::awonvm_vector<payload_type, PAGE_SIZE> tethys_table(
         params.tethys_table_path);
-    tethys_table.reserve(params.graph_size());
+    tethys_table.reserve(params.graph_size(kBucketSize));
 
     // run the allocation algorithm
     allocator.allocate();
@@ -285,15 +287,13 @@ void TethysStoreBuilder<PAGE_SIZE,
             TethysStashSerializationValue<T> v(
                 &d.values,
                 TethysAssignmentInfo(
-                    e, OutgoingEdge)); // the orientation does not matter
+                    e, IncomingEdge)); // the orientation does not matter. Yet,
+                                       // we have a specified convention
             serializer.serialize(d.key, v, stash_encoder);
         }
 
 
         stash_file.close();
-
-        std::cerr << "You are going to lose some data: stash storage is still "
-                     "unimplemented.\n";
     }
 
     encoder.finish_tethys_encoding();

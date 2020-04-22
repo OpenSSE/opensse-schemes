@@ -8,7 +8,7 @@ namespace sse {
 namespace tethys {
 namespace details {
 
-size_t tethys_graph_size(size_t n_elements, double epsilon);
+size_t tethys_graph_size(size_t n_elements, size_t bucket_size, double epsilon);
 
 struct TethysAllocatorKey
 {

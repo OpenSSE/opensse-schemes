@@ -158,11 +158,13 @@ void test_store()
     constexpr size_t kPageSize = 4096; // 4 kB
 
     TethysStoreBuilderParam builder_params;
-    builder_params.max_n_elements    = 3;
+    builder_params.max_n_elements    = 0;
     builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
     builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
     builder_params.epsilon           = 0.2;
 
+    using encoder_type
+        = encoders::EncodeSeparateEncoder<key_type, size_t, kPageSize>;
 
     sse::utility::remove_directory(test_dir);
     sse::utility::create_directory(test_dir, static_cast<mode_t>(0700));
@@ -174,6 +176,8 @@ void test_store()
     for (size_t i = 0; i < v_0.size(); i++) {
         v_0[i] += i;
     }
+    builder_params.max_n_elements
+        += v_0.size() + encoder_type::kBucketControlValues;
 
     // force overflow
     key_type key_1 = key_0;
@@ -182,6 +186,8 @@ void test_store()
     for (size_t i = 0; i < v_1.size(); i++) {
         v_1[i] += i;
     }
+    builder_params.max_n_elements
+        += v_1.size() + encoder_type::kBucketControlValues;
 
     key_type key_2 = key_0;
     key_2[0]       = 0x01;
@@ -190,6 +196,8 @@ void test_store()
     for (size_t i = 0; i < v_2.size(); i++) {
         v_2[i] += i;
     }
+    builder_params.max_n_elements
+        += v_2.size() + encoder_type::kBucketControlValues;
 
     key_type key_3 = key_0;
     key_3[0]       = 0x01;
@@ -198,6 +206,8 @@ void test_store()
     for (size_t i = 0; i < v_3.size(); i++) {
         v_3[i] += i;
     }
+    builder_params.max_n_elements
+        += v_3.size() + encoder_type::kBucketControlValues;
 
     key_type key_4 = key_0;
     key_4[0]       = 0x01;
@@ -206,6 +216,9 @@ void test_store()
     for (size_t i = 0; i < v_4.size(); i++) {
         v_4[i] += i;
     }
+    builder_params.max_n_elements
+        += v_4.size() + encoder_type::kBucketControlValues;
+
     key_type key_5 = key_0;
     key_5[0]       = 0x02;
     key_5[8]       = 0x01;
@@ -213,6 +226,9 @@ void test_store()
     for (size_t i = 0; i < v_5.size(); i++) {
         v_5[i] += i;
     }
+    builder_params.max_n_elements
+        += v_5.size() + encoder_type::kBucketControlValues;
+
     key_type key_6 = key_0;
     key_6[0]       = 0x02;
     key_6[8]       = 0x02;
@@ -220,6 +236,8 @@ void test_store()
     for (size_t i = 0; i < v_6.size(); i++) {
         v_6[i] += i;
     }
+    builder_params.max_n_elements
+        += v_6.size() + encoder_type::kBucketControlValues;
 
     // key_type key_2 = key_0;
     // key_2[0]       = 0x01;
@@ -243,12 +261,7 @@ void test_store()
     // key_6[8]       = 0x01;
 
     {
-        TethysStoreBuilder<
-            kPageSize,
-            key_type,
-            size_t,
-            Hasher,
-            encoders::EncodeSeparateEncoder<key_type, size_t, kPageSize>>
+        TethysStoreBuilder<kPageSize, key_type, size_t, Hasher, encoder_type>
             store_builder(builder_params);
 
         store_builder.insert_list(key_0, v_0);
@@ -279,25 +292,32 @@ void test_store()
         std::vector<size_t> res_5 = store.get_list(key_5);
         std::vector<size_t> res_6 = store.get_list(key_6);
 
-        if (res_0 != v_0) {
+        if (std::set<size_t>(res_0.begin(), res_0.end())
+            != std::set<size_t>(v_0.begin(), v_0.end())) {
             std::cerr << "Invalid list 0\n";
         }
-        if (res_1 != v_1) {
+        if (std::set<size_t>(res_1.begin(), res_1.end())
+            != std::set<size_t>(v_1.begin(), v_1.end())) {
             std::cerr << "Invalid list 1\n";
         }
-        if (res_2 != v_2) {
+        if (std::set<size_t>(res_2.begin(), res_2.end())
+            != std::set<size_t>(v_2.begin(), v_2.end())) {
             std::cerr << "Invalid list 2\n";
         }
-        if (res_3 != v_3) {
+        if (std::set<size_t>(res_3.begin(), res_3.end())
+            != std::set<size_t>(v_3.begin(), v_3.end())) {
             std::cerr << "Invalid list 3\n";
         }
-        if (res_4 != v_4) {
+        if (std::set<size_t>(res_4.begin(), res_4.end())
+            != std::set<size_t>(v_4.begin(), v_4.end())) {
             std::cerr << "Invalid list 4\n";
         }
-        if (res_5 != v_5) {
+        if (std::set<size_t>(res_5.begin(), res_5.end())
+            != std::set<size_t>(v_5.begin(), v_5.end())) {
             std::cerr << "Invalid list 5\n";
         }
-        if (res_6 != v_6) {
+        if (std::set<size_t>(res_6.begin(), res_6.end())
+            != std::set<size_t>(v_6.begin(), v_6.end())) {
             std::cerr << "Invalid list 6\n";
         }
     }

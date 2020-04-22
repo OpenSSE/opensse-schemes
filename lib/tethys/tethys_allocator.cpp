@@ -8,9 +8,11 @@ namespace sse {
 namespace tethys {
 namespace details {
 
-size_t tethys_graph_size(size_t n_elements, double epsilon)
+size_t tethys_graph_size(size_t n_elements, size_t bucket_size, double epsilon)
 {
-    return 2 * std::ceil((1. + epsilon) * n_elements);
+    size_t n_buckets
+        = n_elements / bucket_size + ((n_elements % bucket_size == 0) ? 0 : 1);
+    return 2 * std::ceil((1. + epsilon) * n_buckets);
 };
 
 TethysAllocator::TethysAllocator(size_t table_size, size_t page_size)

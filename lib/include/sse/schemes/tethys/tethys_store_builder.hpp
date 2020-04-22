@@ -13,7 +13,6 @@ namespace tethys {
 
 struct TethysStoreBuilderParam
 {
-    // std::string value_file_path;
     std::string tethys_table_path;
     std::string tethys_stash_path;
 
@@ -68,8 +67,9 @@ struct TethysStashSerializationValue
 template<size_t PAGE_SIZE,
          class Key,
          class T,
+         class TethysHasher,
          class ValueEncoder,
-         class TethysHasher>
+         class StashEncoder = ValueEncoder>
 class TethysStoreBuilder
 {
 public:
@@ -81,15 +81,8 @@ public:
 
     void insert_list(const Key& key, const std::vector<T>& val);
 
-    typename std::enable_if<
-        std::is_default_constructible<ValueEncoder>::value>::type
-    build()
-    {
-        ValueEncoder encoder;
-        build(encoder);
-    }
-
-    void build(ValueEncoder& encoder);
+    void build();
+    void build(ValueEncoder& encoder, StashEncoder& stash_encoder);
 
 private:
     struct TethysData
@@ -117,10 +110,15 @@ private:
 template<size_t PAGE_SIZE,
          class Key,
          class T,
+         class TethysHasher,
          class ValueEncoder,
-         class TethysHasher>
-TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::
-    TethysStoreBuilder(TethysStoreBuilderParam p)
+         class StashEncoder>
+TethysStoreBuilder<PAGE_SIZE,
+                   Key,
+                   T,
+                   TethysHasher,
+                   ValueEncoder,
+                   StashEncoder>::TethysStoreBuilder(TethysStoreBuilderParam p)
     : params(std::move(p)),
       allocator(params.graph_size(), PAGE_SIZE / sizeof(T))
 {
@@ -129,10 +127,16 @@ TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::
 template<size_t PAGE_SIZE,
          class Key,
          class T,
+         class TethysHasher,
          class ValueEncoder,
-         class TethysHasher>
-void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::
-    insert_list(const Key& key, const std::vector<T>& val)
+         class StashEncoder>
+void TethysStoreBuilder<PAGE_SIZE,
+                        Key,
+                        T,
+                        TethysHasher,
+                        ValueEncoder,
+                        StashEncoder>::insert_list(const Key&            key,
+                                                   const std::vector<T>& val)
 {
     if (is_built) {
         throw std::runtime_error(
@@ -165,10 +169,35 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::
 template<size_t PAGE_SIZE,
          class Key,
          class T,
+         class TethysHasher,
          class ValueEncoder,
-         class TethysHasher>
-void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
-    ValueEncoder& encoder)
+         class StashEncoder>
+void TethysStoreBuilder<PAGE_SIZE,
+                        Key,
+                        T,
+                        TethysHasher,
+                        ValueEncoder,
+                        StashEncoder>::build()
+{
+    ValueEncoder encoder;
+    StashEncoder stash_encoder;
+    build(encoder, stash_encoder);
+}
+
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueEncoder,
+         class StashEncoder>
+void TethysStoreBuilder<PAGE_SIZE,
+                        Key,
+                        T,
+                        TethysHasher,
+                        ValueEncoder,
+                        StashEncoder>::build(ValueEncoder& encoder,
+                                             StashEncoder& stash_encoder)
 {
     if (is_built) {
         throw std::runtime_error(
@@ -183,7 +212,9 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
     // run the allocation algorithm
     allocator.allocate();
 
-    is_built = true;
+
+    // tell the encoder that we are about to start the encoding of the graph
+    encoder.start_tethys_encoding(allocator.get_allocation_graph());
 
     for (size_t v_index = 0; v_index < graph_size; v_index++) {
         const details::Vertex& v
@@ -202,7 +233,8 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
             const auto& e = allocator.get_allocation_graph().get_edge(e_ptr);
 
             if (e.value_index == details::TethysAllocator::kEmptyIndexValue) {
-                // this is a placeholder edge that we do not need to consider
+                // this is a placeholder edge that we do not need to
+                // consider
                 continue;
             }
 
@@ -225,7 +257,8 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
         for (auto e_ptr : v.out_edges) {
             const auto& e = allocator.get_allocation_graph().get_edge(e_ptr);
             if (e.value_index == details::TethysAllocator::kEmptyIndexValue) {
-                // this is a placeholder edge that we do not need to consider
+                // this is a placeholder edge that we do not need to
+                // consider
                 continue;
             }
             const TethysData& d = data[e.value_index];
@@ -262,8 +295,11 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
         }
     }
 
+    encoder.finish_tethys_table_encoding();
+
     // commit the table
     tethys_table.commit();
+
 
     // now, we have to take care of the stash
     if (allocator.get_stashed_edges().size() > 0) {
@@ -271,13 +307,14 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
         stash_file.open(params.tethys_stash_path);
 
         abstractio::
-            KVSerializer<Key, TethysStashSerializationValue<T>, ValueEncoder>
+            KVSerializer<Key, TethysStashSerializationValue<T>, StashEncoder>
                 serializer(stash_file);
 
         for (const auto& e_ptr : allocator.get_stashed_edges()) {
             const auto& e = allocator.get_allocation_graph().get_edge(e_ptr);
             if (e.value_index == details::TethysAllocator::kEmptyIndexValue) {
-                // this is a placeholder edge that we do not need to consider
+                // this is a placeholder edge that we do not need to
+                // consider
                 continue;
             }
             const TethysData&                d = data[e.value_index];
@@ -285,7 +322,7 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
                 &d.values,
                 TethysAssignmentInfo(
                     e, OutgoingEdge)); // the orientation does not matter
-            serializer.serialize(d.key, v, encoder);
+            serializer.serialize(d.key, v, stash_encoder);
         }
 
 
@@ -294,6 +331,11 @@ void TethysStoreBuilder<PAGE_SIZE, Key, T, ValueEncoder, TethysHasher>::build(
         std::cerr << "You are going to lose some data: stash storage is still "
                      "unimplemented.\n";
     }
+
+    encoder.finish_tethys_encoding();
+
+
+    is_built = true;
 }
 
 } // namespace tethys

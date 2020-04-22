@@ -415,6 +415,18 @@ struct ValueEncoder
         decode_single_bucket(key, bucket_1, res);
         return res;
     }
+
+    void start_tethys_encoding(const TethysGraph&)
+    {
+    }
+
+    void finish_tethys_table_encoding()
+    {
+    }
+
+    void finish_tethys_encoding()
+    {
+    }
 };
 
 struct Hasher
@@ -527,8 +539,8 @@ void test_store()
         TethysStoreBuilder<kPageSize,
                            key_type,
                            size_t,
-                           ValueEncoder<key_type, size_t, kPageSize>,
-                           Hasher>
+                           Hasher,
+                           ValueEncoder<key_type, size_t, kPageSize>>
             store_builder(builder_params);
 
         store_builder.insert_list(key_0, v_0);
@@ -545,8 +557,8 @@ void test_store()
         TethysStore<kPageSize,
                     key_type,
                     size_t,
-                    ValueEncoder<key_type, size_t, kPageSize>,
-                    Hasher>
+                    Hasher,
+                    ValueEncoder<key_type, size_t, kPageSize>>
             store(builder_params.tethys_table_path,
                   builder_params.tethys_stash_path);
 

@@ -16,8 +16,8 @@ namespace tethys {
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
+         class TethysHasher,
+         class ValueDecoder>
 class TethysStore
 {
 public:
@@ -26,9 +26,27 @@ public:
 
 
     TethysStore(const std::string& table_path, const std::string& stash_path);
+
+    // we have to specificy templated constructors inside the class definition
+    // (they do not have a name that can be 'templated')
+
+    template<class StashDecoder = ValueDecoder>
     TethysStore(const std::string& table_path,
                 const std::string& stash_path,
-                ValueDecoder&      stash_decoder);
+                StashDecoder&      stash_decoder)
+        : table(table_path, false)
+    {
+        if (!table.is_committed()) {
+            throw std::runtime_error("Table not committed");
+        }
+        table_size = table.size();
+
+        load_stash(stash_path, stash_decoder);
+
+        std::cerr << "Tethys storage initialization succeeded!\n";
+        std::cerr << "Tethys table size: " << table_size << "\n";
+        std::cerr << "Stash size: " << stash.size() << "\n";
+    }
 
 
     static std::vector<T> decode_list(const Key&          key,
@@ -54,6 +72,9 @@ public:
     std::vector<T> get_list(const Key& key);
 
 private:
+    template<class StashDecoder>
+    void load_stash(const std::string& stash_path, StashDecoder& stash_decoder);
+
     using table_type = abstractio::awonvm_vector<payload_type, PAGE_SIZE>;
     table_type table;
 
@@ -61,13 +82,12 @@ private:
     std::map<Key, std::vector<T>> stash;
 };
 
-
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::TethysStore(
+         class TethysHasher,
+         class ValueDecoder>
+TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::TethysStore(
     const std::string& table_path,
     const std::string& stash_path)
     : table(table_path, false)
@@ -77,17 +97,9 @@ TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::TethysStore(
     }
     table_size = table.size();
 
+    ValueDecoder stash_decoder;
 
-    if (utility::is_file(stash_path)) {
-        std::ifstream input_stream;
-
-        input_stream.open(stash_path);
-
-        stash = abstractio::deserialize_map<Key, std::vector<T>, ValueDecoder>(
-            input_stream);
-
-        input_stream.close();
-    }
+    load_stash(stash_path, stash_decoder);
 
     std::cerr << "Tethys storage initialization succeeded!\n";
     std::cerr << "Tethys table size: " << table_size << "\n";
@@ -97,20 +109,13 @@ TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::TethysStore(
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::TethysStore(
-    const std::string& table_path,
+         class TethysHasher,
+         class ValueDecoder>
+template<class StashDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::load_stash(
     const std::string& stash_path,
-    ValueDecoder&      stash_decoder)
-    : table(table_path, false)
+    StashDecoder&      stash_decoder)
 {
-    if (!table.is_committed()) {
-        throw std::runtime_error("Table not committed");
-    }
-    table_size = table.size();
-
-
     if (utility::is_file(stash_path)) {
         std::ifstream input_stream;
 
@@ -121,18 +126,14 @@ TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::TethysStore(
 
         input_stream.close();
     }
-
-    std::cerr << "Tethys storage initialization succeeded!\n";
-    std::cerr << "Tethys table size: " << table_size << "\n";
-    std::cerr << "Stash size: " << stash.size() << "\n";
 }
 
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
+         class TethysHasher,
+         class ValueDecoder>
+std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
     decode_list(const Key&          key,
                 ValueDecoder&       decoder,
                 const payload_type& bucket_0,
@@ -147,9 +148,9 @@ std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
+         class TethysHasher,
+         class ValueDecoder>
+std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
     decode_list(const Key&          key,
                 const payload_type& bucket_0,
                 size_t              bucket_0_index,
@@ -165,9 +166,9 @@ std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-void TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::get_buckets(
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::get_buckets(
     const Key&    key,
     payload_type& bucket_0,
     size_t&       bucket_0_index,
@@ -189,9 +190,9 @@ void TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::get_buckets(
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
+         class TethysHasher,
+         class ValueDecoder>
+std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
     get_list(const Key& key, ValueDecoder& decoder)
 {
     std::vector<T> stash_res;
@@ -218,9 +219,9 @@ std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
 template<size_t PAGE_SIZE,
          class Key,
          class T,
-         class ValueDecoder,
-         class TethysHasher>
-std::vector<T> TethysStore<PAGE_SIZE, Key, T, ValueDecoder, TethysHasher>::
+         class TethysHasher,
+         class ValueDecoder>
+std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
     get_list(const Key& key)
 {
     ValueDecoder decoder;

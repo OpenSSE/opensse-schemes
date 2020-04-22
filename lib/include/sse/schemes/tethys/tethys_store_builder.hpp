@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
 #include <sse/schemes/abstractio/kv_serializer.hpp>
 #include <sse/schemes/tethys/details/tethys_allocator.hpp>

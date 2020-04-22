@@ -1,6 +1,12 @@
 #pragma once
 
-#include <sse/schemes/tethys/tethys_store_builder.hpp>
+#include <sse/schemes/tethys/types.hpp>
+
+#include <cstring>
+
+#include <array>
+#include <istream>
+#include <ostream>
 
 namespace sse {
 namespace tethys {

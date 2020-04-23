@@ -143,8 +143,9 @@ void TethysGraph::reset_parent_edges() const
 
 std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
 {
-    reset_parent_edges();
+    sink.parent_edge = kNullEdgePtr;
 
+    std::vector<bool>     visited(vertices.size(), false);
     std::deque<VertexPtr> queue;
     queue.push_front(kSourcePtr);
 
@@ -170,17 +171,21 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
                 const VertexPtr dest_ptr = e.end;
                 const Vertex&   dest     = get_vertex(dest_ptr);
 
-                if (dest.parent_edge == kNullEdgePtr
-                    && dest_ptr != kSourcePtr) {
+                if (dest_ptr == kSinkPtr) {
+                    found_sink       = true;
+                    dest.parent_edge = e_ptr;
+                    break;
+                }
+                if (dest_ptr == kSourcePtr) {
+                    // this was the first visited vertex, we can continue
+                    continue;
+                }
+                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr) {
                     // TODO : add a flag to choose between DFS and BFS
                     // DFS for now
                     queue.push_front(dest_ptr);
-                    dest.parent_edge = e_ptr;
-
-                    if (dest_ptr == kSinkPtr) {
-                        found_sink = true;
-                        break;
-                    }
+                    dest.parent_edge        = e_ptr;
+                    visited[dest_ptr.index] = true;
                 }
             }
         }
@@ -193,19 +198,28 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
                 const VertexPtr dest_ptr = e.start;
                 const Vertex&   dest     = get_vertex(dest_ptr);
 
-                if (dest.parent_edge == kNullEdgePtr
-                    && dest_ptr != kSourcePtr) {
+                if (dest_ptr == kSinkPtr) {
+                    found_sink       = true;
+                    dest.parent_edge = e_ptr.reciprocal();
+                    break;
+                }
+                if (dest_ptr == kSourcePtr) {
+                    // this was the first visited vertex, we can continue
+                    continue;
+                }
+                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr) {
                     // TODO : add a flag to choose between DFS and BFS
                     // DFS for now
                     queue.push_front(dest_ptr);
                     // mark the parent edge as the reciprocal of the current
                     // edge
-                    dest.parent_edge = e_ptr.reciprocal();
+                    dest.parent_edge        = e_ptr.reciprocal();
+                    visited[dest_ptr.index] = true;
 
-                    if (dest_ptr == kSinkPtr) {
-                        found_sink = true;
-                        break;
-                    }
+                    // if (dest_ptr == kSinkPtr) {
+                    //     found_sink = true;
+                    //     break;
+                    // }
                 }
             }
         }

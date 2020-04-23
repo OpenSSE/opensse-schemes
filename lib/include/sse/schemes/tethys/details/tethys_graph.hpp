@@ -211,6 +211,12 @@ public:
     explicit VertexVec(size_t n) : vertices(n)
     {
     }
+
+    size_t size() const
+    {
+        return vertices.size();
+    }
+
     Vertex& operator[](VertexPtr ptr)
     {
         return vertices[ptr.index];

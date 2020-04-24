@@ -76,7 +76,7 @@ struct EdgePtr_Templ
                || (index == ptr.index && is_reciprocal < ptr.is_reciprocal);
     }
 
-    EdgePtr_Templ reciprocal()
+    EdgePtr_Templ reciprocal() const
     {
         return EdgePtr_Templ(!is_reciprocal, index);
     }

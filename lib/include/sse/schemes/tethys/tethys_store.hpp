@@ -26,6 +26,8 @@ public:
     static constexpr size_t kPayloadSize = PAGE_SIZE;
     using payload_type                   = std::array<uint8_t, kPayloadSize>;
 
+    using get_buckets_callback_type
+        = std::function<void(std::unique_ptr<payload_type>, size_t)>;
 
     TethysStore(const std::string& table_path, const std::string& stash_path);
 
@@ -50,6 +52,7 @@ public:
         std::cerr << "Stash size: " << stash.size() << "\n";
     }
 
+    void use_direct_IO(bool flag);
 
     static std::vector<T> decode_list(const Key&          key,
                                       ValueDecoder&       decoder,
@@ -72,6 +75,9 @@ public:
     std::vector<T> get_list(const Key& key, ValueDecoder& decoder);
 
     std::vector<T> get_list(const Key& key);
+
+
+    void async_get_buckets(const Key& key, get_buckets_callback_type callback);
 
 private:
     template<class StashDecoder>
@@ -128,6 +134,17 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::load_stash(
 
         input_stream.close();
     }
+}
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::use_direct_IO(
+    bool flag)
+{
+    table.set_use_direct_access(flag);
 }
 
 template<size_t PAGE_SIZE,
@@ -229,6 +246,42 @@ std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
     ValueDecoder decoder;
     return get_list(key, decoder);
 }
+
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
+    async_get_buckets(const Key& key, get_buckets_callback_type callback)
+{
+    details::TethysAllocatorKey tethys_key = TethysHasher()(key);
+
+    size_t half_graph_size       = table_size / 2;
+    size_t remaining_graphs_size = table_size - half_graph_size;
+
+    size_t bucket_0_index = tethys_key.h[0] % half_graph_size;
+    size_t bucket_1_index
+        = half_graph_size + tethys_key.h[1] % remaining_graphs_size;
+
+
+    auto bucket_0_cb
+        = [bucket_0_index, callback](std::unique_ptr<payload_type> bucket) {
+              callback(std::move(bucket), bucket_0_index);
+          };
+
+    auto bucket_1_cb
+        = [bucket_1_index, callback](std::unique_ptr<payload_type> bucket) {
+              callback(std::move(bucket), bucket_1_index);
+          };
+
+
+    using GetRequest = typename table_type::GetRequest;
+    table.async_gets({GetRequest(bucket_0_index, bucket_0_cb),
+                      GetRequest(bucket_1_index, bucket_1_cb)});
+}
+
 
 } // namespace tethys
 } // namespace sse

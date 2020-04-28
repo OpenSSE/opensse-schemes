@@ -144,7 +144,7 @@ static void generation_job(
         size_t   ind         = dist(rng);
         uint32_t new_entries = 0;
 
-        double w_d = (static_cast<double>(ind)) / (static_cast<uint64_t>(~0));
+        double w_d = (static_cast<double>(ind)) / (static_cast<double>(~0UL));
         std::list<std::string> insertions;
 
         uint32_t ind_01 = ind % 1000;

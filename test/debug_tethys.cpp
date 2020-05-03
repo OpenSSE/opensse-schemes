@@ -58,51 +58,6 @@ void test_dfs()
     assert(path_index == std::vector<size_t>({0, 1, 4, 5, 6}));
 }
 
-// void test_graphs()
-// {
-//     TethysGraph graph(10);
-
-//     EdgePtr e_source_1 = graph.add_edge_from_source(0, 10, 1, 0);
-//     EdgePtr e_source_2 = graph.add_edge_from_source(1, 40, 9, 0);
-
-//     graph.add_edge(3, 30, 1, 8, ForcedRight);
-
-//     EdgePtr e_sink_2 = graph.add_edge_to_sink(15, 30, 8, 1);
-//     EdgePtr e_sink_1 = graph.add_edge_to_sink(8, 10, 7, 0);
-
-//     graph.add_edge(7, 15, 9, 3, ForcedRight);
-//     graph.add_edge(11, 15, 3, 3, ForcedLeft);
-//     graph.add_edge(5, 7, 3, 6, ForcedRight);
-//     graph.add_edge(14, 15, 6, 1, ForcedLeft);
-
-//     graph.add_edge(4, 7, 3, 4, ForcedRight);
-//     graph.add_edge(12, 10, 4, 6, ForcedLeft);
-//     graph.add_edge(6, 10, 6, 6, ForcedRight);
-
-
-//     // graph.add_edge(2, 6, 1, 4, ForcedRight);
-//     // graph.add_edge(21, 6, 1, 2, ForcedRight);
-
-
-//     // graph.add_edge(10, 5, 2, 7, ForcedLeft);
-
-
-//     // graph.add_edge(13, 2, 5, 7, ForcedLeft);
-
-
-//     graph.compute_residual_maxflow();
-//     graph.transform_residual_to_flow();
-
-
-//     size_t flow = graph.get_flow();
-
-//     std::cerr << "Flow: " << flow << "\n";
-//     std::cerr << "Source(1): " << graph.get_edge_flow(e_source_1) << "\n";
-//     std::cerr << "Source(2): " << graph.get_edge_flow(e_source_2) << "\n";
-//     std::cerr << "Sink(1): " << graph.get_edge_flow(e_sink_1) << "\n";
-//     std::cerr << "Sink(2): " << graph.get_edge_flow(e_sink_2) << "\n";
-// }
-
 void test_graphs()
 {
     const size_t graph_size = 6;

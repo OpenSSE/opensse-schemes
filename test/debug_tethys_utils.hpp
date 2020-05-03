@@ -144,24 +144,24 @@ void store_read_queries(const size_t n_elements, const std::string test_dir)
 
         auto res = store.get_list(prf_out);
 
-        if (res.size() > kMaxListSize) {
-            std::cerr << "List too large??\n";
-        }
-        std::set<value_type> set(res.begin(), res.end());
-        bool                 failure = false;
-        if (set.size() != 1) {
-            std::cerr << set.size()
-                      << " different results, while 1 was expected\n";
-            failure = true;
-        }
-        if (*set.begin() != i) {
-            std::cerr << "Invalid element in the list: " << *set.begin()
-                      << " was found instead of " << i << "\n";
-            failure = true;
-        }
-        if (!failure) {
-            std::cerr << "OK\n";
-        }
+        // if (res.size() > kMaxListSize) {
+        //     std::cerr << "List too large??\n";
+        // }
+        // std::set<value_type> set(res.begin(), res.end());
+        // bool                 failure = false;
+        // if (set.size() != 1) {
+        //     std::cerr << set.size()
+        //               << " different results, while 1 was expected\n";
+        //     failure = true;
+        // }
+        // if (*set.begin() != i) {
+        //     std::cerr << "Invalid element in the list: " << *set.begin()
+        //               << " was found instead of " << i << "\n";
+        //     failure = true;
+        // }
+        // if (!failure) {
+        //     std::cerr << "OK\n";
+        // }
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> time_ms = end - begin;
@@ -173,8 +173,10 @@ void store_read_queries(const size_t n_elements, const std::string test_dir)
 
 template<class Store>
 void async_store_read_queries(const size_t      n_elements,
-                              const std::string test_dir)
+                              const std::string test_dir,
+                              bool              decode)
 {
+    (void)decode;
     static_assert(std::is_same<uint64_t, typename Store::value_type>::value,
                   "Store value type must be uint64_t");
 
@@ -206,25 +208,67 @@ void async_store_read_queries(const size_t      n_elements,
     std::promise<void> notifier;
     std::future<void>  notifier_future = notifier.get_future();
 
-    auto callback
-        = [&notifier, n_queries, &completed_queries](
-              std::unique_ptr<std::array<uint8_t, kPageSize>> /*bucket*/,
-              size_t /*b_index*/) {
-              size_t query_count = completed_queries.fetch_add(1) + 1;
-
-              if (query_count == n_queries) {
-                  notifier.set_value();
-              }
-          };
-
     auto begin = std::chrono::high_resolution_clock::now();
 
     for (size_t i = 0; i < n_queries; i++) {
         std::array<uint8_t, kTableKeySize> prf_out
             = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(size_t));
 
-        store.async_get_buckets(prf_out, callback);
+        if (decode) {
+            // auto callback = [](std::vector<uint64_t>) {};
+
+            auto callback = [&notifier, n_queries, &completed_queries, i](
+                                std::vector<uint64_t> res) {
+                (void)res;
+                (void)i;
+                size_t query_count = completed_queries.fetch_add(1) + 1;
+
+                // if (res.size() > kMaxListSize) {
+                //     std::cerr << "List too large??\n";
+                // }
+                // (void)i;
+
+                // std::set<value_type> set(res.begin(), res.end());
+                // bool                 failure = false;
+                // if (set.size() != 1) {
+                //     std::cerr << set.size()
+                //               << " different results, while 1 was expected\n
+                //               ";
+                //     failure = true;
+                // }
+                // if (*set.begin() != i) {
+                //     std::cerr
+                //         << "Invalid element in the  list : " << *set.begin()
+                //         << " was found instead of " << i << "\n";
+                //     failure = true;
+                // }
+                // if (!failure) {
+                //     // std::cerr << "OK\n";
+                // }
+
+                if (query_count == n_queries) {
+                    notifier.set_value();
+                }
+            };
+
+            store.async_get_list(prf_out, callback);
+        } else {
+            auto callback =
+                [&notifier, n_queries, &completed_queries](
+                    std::unique_ptr<std::array<uint8_t, kPageSize>> /*bucket*/,
+                    size_t /*b_index*/) {
+                    size_t query_count = completed_queries.fetch_add(1) + 1;
+
+
+                    if (query_count == 2 * n_queries) {
+                        notifier.set_value();
+                    }
+                };
+
+            store.async_get_buckets(prf_out, callback);
+        }
     }
+
 
     // wait for completion of the queries
     notifier_future.get();
@@ -234,5 +278,6 @@ void async_store_read_queries(const size_t      n_elements,
 
     std::cout << "Async read duration: " << time_ms.count() << " ms\n";
     std::cout << 1000 * time_ms.count() / n_queries << " mus/buckets_pairs\n";
-    std::cout << 1000 * n_queries / time_ms.count() << " buckets_pairs/s\n\n";
+    std::cout << 1000 * n_queries / time_ms.count() << " buckets_pairs/s\n";
+    std::cout << "Number of read lists: " << n_queries << "\n";
 }

@@ -33,6 +33,8 @@ public:
     using get_buckets_callback_type
         = std::function<void(std::unique_ptr<payload_type>, size_t)>;
 
+    using get_list_callback_type = std::function<void(std::vector<T>)>;
+
     TethysStore(const std::string& table_path, const std::string& stash_path);
 
     // we have to specificy templated constructors inside the class definition
@@ -82,6 +84,10 @@ public:
 
 
     void async_get_buckets(const Key& key, get_buckets_callback_type callback);
+    void async_get_list(const Key&             key,
+                        ValueDecoder&          decoder,
+                        get_list_callback_type callback);
+    void async_get_list(const Key& key, get_list_callback_type callback);
 
 private:
     template<class StashDecoder>
@@ -286,6 +292,87 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
                       GetRequest(bucket_1_index, bucket_1_cb)});
 }
 
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
+    const Key&             key,
+    get_list_callback_type callback)
+{
+    ValueDecoder decoder;
+    return async_get_list(key, decoder, std::move(callback));
+}
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
+    const Key&             key,
+    ValueDecoder&          decoder,
+    get_list_callback_type callback)
+{
+    struct CallBackState
+    {
+        Key                           key;
+        std::unique_ptr<payload_type> bucket_0;
+        std::unique_ptr<payload_type> bucket_1;
+        size_t                        index_0;
+        size_t                        index_1;
+        std::atomic_uint8_t           completion_counter{0};
+        ValueDecoder                  decoder;
+
+        CallBackState(const Key& k, const ValueDecoder& dec)
+            : key(k), decoder(dec){};
+    };
+
+    CallBackState* state = new CallBackState(key, decoder);
+
+    (void)decoder;
+    (void)callback;
+    auto bucket_cb = [this, callback, state](
+                         std::unique_ptr<payload_type> bucket, size_t index) {
+        uint8_t completed = state->completion_counter.fetch_add(1) + 1;
+
+        if (completed == 1) {
+            state->index_0  = index;
+            state->bucket_0 = std::move(bucket);
+        } else if (completed == 2) {
+            state->index_1  = index;
+            state->bucket_1 = std::move(bucket);
+
+
+            std::vector<T> stash_res;
+
+            auto stash_it = stash.find(state->key);
+
+            if (stash_it != stash.end()) {
+                stash_res = stash_it->second;
+            }
+
+            std::vector<T> bucket_res = this->decode_list(state->key,
+                                                          state->decoder,
+                                                          *(state->bucket_0),
+                                                          state->index_0,
+                                                          *(state->bucket_1),
+                                                          state->index_1);
+
+            bucket_res.reserve(bucket_res.size() + stash_res.size());
+            bucket_res.insert(
+                bucket_res.end(), stash_res.begin(), stash_res.end());
+
+
+            delete state;
+            callback(bucket_res);
+        }
+    };
+
+
+    async_get_buckets(key, bucket_cb);
+}
 
 } // namespace tethys
 } // namespace sse

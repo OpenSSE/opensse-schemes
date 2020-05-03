@@ -354,7 +354,7 @@ void store_queries(const size_t n_elements)
     store_read_queries<store_type>(n_elements, test_dir);
 }
 
-void async_store_queries(const size_t n_elements)
+void async_store_queries(const size_t n_elements, bool decode)
 {
     const std::string test_dir = "tethys_test";
     using value_type           = uint64_t;
@@ -365,7 +365,7 @@ void async_store_queries(const size_t n_elements)
     using store_type
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
 
-    async_store_read_queries<store_type>(n_elements, test_dir);
+    async_store_read_queries<store_type>(n_elements, test_dir, decode);
 }
 
 int main(int /*argc*/, const char** /*argv*/)
@@ -375,10 +375,10 @@ int main(int /*argc*/, const char** /*argv*/)
     // test_graphs();
     // test_store();
 
-    const size_t n_elts = 1 << 15;
+    const size_t n_elts = 1 << 26;
     generate_random_unencrypted_store(n_elts);
     // store_queries(n_elts);
-    async_store_queries(n_elts);
+    async_store_queries(n_elts, true);
     sse::crypto::cleanup_crypto_lib();
 
     return 0;

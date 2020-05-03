@@ -408,7 +408,7 @@ void CuckooHashTable<PAGE_SIZE,
 
             if (completed == 1) {
                 // We can use the caller callback, and delete the state
-                // Be careful though: we want to destruct the state before we
+                // Be careful though: we want to destruct the state before
                 // calling the callback, while still having a pointer to the
                 // retrieved data
                 // So we first need to move the smart pointer.

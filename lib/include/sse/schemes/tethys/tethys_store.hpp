@@ -26,6 +26,10 @@ public:
     static constexpr size_t kPayloadSize = PAGE_SIZE;
     using payload_type                   = std::array<uint8_t, kPayloadSize>;
 
+    using key_type     = Key;
+    using value_type   = T;
+    using decoder_type = ValueDecoder;
+
     using get_buckets_callback_type
         = std::function<void(std::unique_ptr<payload_type>, size_t)>;
 

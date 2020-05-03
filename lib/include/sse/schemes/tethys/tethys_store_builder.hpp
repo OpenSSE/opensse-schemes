@@ -37,6 +37,12 @@ template<size_t PAGE_SIZE,
 class TethysStoreBuilder
 {
 public:
+    using key_type           = Key;
+    using value_type         = T;
+    using value_encoder_type = ValueEncoder;
+    using stash_encoder_type = StashEncoder;
+
+
     static constexpr size_t kPayloadSize = PAGE_SIZE;
     using payload_type                   = std::array<uint8_t, kPayloadSize>;
 
@@ -242,7 +248,7 @@ void TethysStoreBuilder<PAGE_SIZE,
             }
         }
 
-        // declare the start of a new block to the encoder
+        // declare the end of the block to the encoder
         written_bytes
             += encoder.finish_block_encoding(payload.data(),
                                              v_index,

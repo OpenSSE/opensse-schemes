@@ -407,6 +407,8 @@ int main(int /*argc*/, const char** /*argv*/)
     // test_graphs();
     // test_store();
 
+    sse::Benchmark::set_benchmark_file("benchmark_lat_tethys.out");
+
     const size_t n_elts = 1 << 26;
     // generate_random_unencrypted_store(n_elts);
     // // unencrypted_store_queries(n_elts, true, false);

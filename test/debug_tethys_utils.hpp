@@ -1,4 +1,5 @@
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
+#include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
 #include <sse/crypto/prf.hpp>
@@ -324,58 +325,70 @@ void async_store_read_queries(const size_t                  n_elements,
     auto begin = std::chrono::high_resolution_clock::now();
 
     for (size_t i = 0; i < n_queries; i++) {
+        sse::SearchBenchmark* benchmark
+            = new sse::SearchBenchmark("Tethys E2E latency");
+
         std::array<uint8_t, kTableKeySize> prf_out
             = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(size_t));
 
         if (decode) {
             // auto callback = [](std::vector<uint64_t>) {};
 
-            auto callback
-                = [&notifier, n_queries, &completed_queries, i, check_results](
-                      std::vector<uint64_t> res) {
-                      (void)res;
-                      (void)i;
-                      size_t query_count = completed_queries.fetch_add(1) + 1;
+            auto callback = [&notifier,
+                             n_queries,
+                             &completed_queries,
+                             i,
+                             check_results,
+                             benchmark](std::vector<uint64_t> res) {
+                (void)i;
 
-                      if (check_results) {
-                          if (res.size() > kMaxListSize) {
-                              std::cerr << "List too large??\n";
-                          }
-                          (void)i;
+                benchmark->set_count(res.size());
+                delete benchmark;
 
-                          std::set<value_type> set(res.begin(), res.end());
-                          bool                 failure = false;
-                          if (set.size() != 1) {
-                              std::cerr << set.size()
-                                        << " different results, while 1 was  "
-                                           "expected\n ";
-                              failure = true;
-                          }
-                          if (*set.begin() != i) {
-                              std::cerr << "Invalid element in the  list : "
-                                        << *set.begin()
-                                        << " was found instead of " << i
-                                        << "\n";
-                              failure = true;
-                          }
-                          if (!failure) {
-                              // std::cerr << "OK\n";
-                          }
-                      }
+                size_t query_count = completed_queries.fetch_add(1) + 1;
 
-                      if (query_count == n_queries) {
-                          notifier.set_value();
-                      }
-                  };
+                if (check_results) {
+                    if (res.size() > kMaxListSize) {
+                        std::cerr << "List too large??\n";
+                    }
+                    (void)i;
+
+                    std::set<value_type> set(res.begin(), res.end());
+                    bool                 failure = false;
+                    if (set.size() != 1) {
+                        std::cerr << set.size()
+                                  << " different results, while 1 was  "
+                                     "expected\n ";
+                        failure = true;
+                    }
+                    if (*set.begin() != i) {
+                        std::cerr
+                            << "Invalid element in the  list : " << *set.begin()
+                            << " was found instead of " << i << "\n";
+                        failure = true;
+                    }
+                    if (!failure) {
+                        // std::cerr << "OK\n";
+                    }
+                }
+
+
+                if (query_count == n_queries) {
+                    notifier.set_value();
+                }
+            };
 
             store.async_get_list(prf_out, value_decoder, callback);
         } else {
             auto callback =
-                [&notifier, n_queries, &completed_queries](
+                [&notifier, n_queries, &completed_queries, benchmark](
                     std::unique_ptr<std::array<uint8_t, kPageSize>> /*bucket*/,
                     size_t /*b_index*/) {
                     size_t query_count = completed_queries.fetch_add(1) + 1;
 
+
+                    benchmark->set_count(1);
+                    delete benchmark;
 
                     if (query_count == 2 * n_queries) {
                         notifier.set_value();

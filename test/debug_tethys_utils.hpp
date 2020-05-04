@@ -20,7 +20,106 @@ using key_type                 = std::array<uint8_t, kTableKeySize>;
 using namespace sse::tethys;
 
 template<class StoreBuilder>
+void generate_random_store(
+    size_t                                     n_elements,
+    const std::string                          test_dir,
+    typename StoreBuilder::value_encoder_type& value_encoder,
+    typename StoreBuilder::stash_encoder_type& stash_encoder);
+
+
+template<class StoreBuilder>
 void generate_random_store(size_t n_elements, const std::string test_dir)
+{
+    typename StoreBuilder::value_encoder_type value_encoder;
+    typename StoreBuilder::stash_encoder_type stash_encoder;
+
+    generate_random_store<StoreBuilder>(
+        n_elements, test_dir, value_encoder, stash_encoder);
+}
+
+template<class StoreBuilder>
+void generate_random_store(
+    size_t                                     n_elements,
+    const std::string                          test_dir,
+    typename StoreBuilder::value_encoder_type& value_encoder)
+{
+    generate_random_store<StoreBuilder>(
+        n_elements, test_dir, value_encoder, value_encoder);
+}
+
+template<class Store, class StashDecoder>
+void store_read_queries(const size_t                  n_elements,
+                        const std::string             test_dir,
+                        bool                          check_results,
+                        typename Store::decoder_type& value_decoder,
+                        StashDecoder&                 stash_decoder);
+
+template<class Store>
+void store_read_queries(const size_t                  n_elements,
+                        const std::string             test_dir,
+                        bool                          check_results,
+                        typename Store::decoder_type& value_decoder)
+{
+    store_read_queries<Store, typename Store::decoder_type>(
+        n_elements, test_dir, check_results, value_decoder, value_decoder);
+}
+
+template<class Store>
+void store_read_queries(const size_t      n_elements,
+                        const std::string test_dir,
+                        bool              check_results)
+{
+    typename Store::decoder_type value_decoder;
+    store_read_queries<Store, typename Store::decoder_type>(
+        n_elements, test_dir, check_results, value_decoder, value_decoder);
+}
+
+template<class Store, class StashDecoder>
+void async_store_read_queries(const size_t                  n_elements,
+                              const std::string             test_dir,
+                              bool                          check_results,
+                              bool                          decode,
+                              typename Store::decoder_type& value_decoder,
+                              StashDecoder&                 stash_decoder);
+
+template<class Store>
+void async_store_read_queries(const size_t      n_elements,
+                              const std::string test_dir,
+                              bool              check_results,
+                              bool              decode)
+{
+    typename Store::decoder_type value_decoder;
+    async_store_read_queries<Store, typename Store::decoder_type>(
+        n_elements,
+        test_dir,
+        check_results,
+        decode,
+        value_decoder,
+        value_decoder);
+}
+
+template<class Store>
+void async_store_read_queries(const size_t                  n_elements,
+                              const std::string             test_dir,
+                              bool                          check_results,
+                              bool                          decode,
+                              typename Store::decoder_type& value_decoder)
+{
+    async_store_read_queries<Store, typename Store::decoder_type>(
+        n_elements,
+        test_dir,
+        check_results,
+        decode,
+        value_decoder,
+        value_decoder);
+}
+
+template<class StoreBuilder>
+void generate_random_store(
+    size_t                                     n_elements,
+    const std::string                          test_dir,
+    typename StoreBuilder::value_encoder_type& value_encoder,
+    typename StoreBuilder::stash_encoder_type& stash_encoder)
 {
     static_assert(
         std::is_same<uint64_t, typename StoreBuilder::value_type>::value,
@@ -68,8 +167,8 @@ void generate_random_store(size_t n_elements, const std::string test_dir)
     // generate a seed and display it (for replay in case of bugs)
     size_t seed = rd();
     // seed the random number generator
-    // seed = 1267674774; // this is useful when you want to replay a previously
-    // failing seed
+    // seed = 1267674774; // this is useful when you want to replay a
+    // previously failing seed
     gen.seed(seed);
 
     std::cerr << "RNG seed: " << seed << "\n";
@@ -88,7 +187,8 @@ void generate_random_store(size_t n_elements, const std::string test_dir)
             list_size = remaining_elts;
         }
         // // copy the list index
-        // *reinterpret_cast<size_t*>(key.data() + index_offset) = list_index;
+        // *reinterpret_cast<size_t*>(key.data() + index_offset) =
+        // list_index;
 
         std::vector<value_type> list(list_size, (uint64_t)list_index);
 
@@ -101,14 +201,18 @@ void generate_random_store(size_t n_elements, const std::string test_dir)
     std::cerr << list_index << " generated lists (" << average_n_lists
               << " expected average). Starting to build the data structure \n";
 
-    store_builder.build();
+    store_builder.build(value_encoder, stash_encoder);
 
     std::cerr << "Built completed\n";
 }
 
 
-template<class Store>
-void store_read_queries(const size_t n_elements, const std::string test_dir)
+template<class Store, class StashDecoder>
+void store_read_queries(const size_t                  n_elements,
+                        const std::string             test_dir,
+                        bool                          check_results,
+                        typename Store::decoder_type& value_decoder,
+                        StashDecoder&                 stash_decoder)
 {
     static_assert(std::is_same<uint64_t, typename Store::value_type>::value,
                   "Store value type must be uint64_t");
@@ -132,7 +236,9 @@ void store_read_queries(const size_t n_elements, const std::string test_dir)
         sse::crypto::Key<kKeySize>(prf_key.data()));
 
 
-    Store store(test_dir + "/tethys_table.bin", test_dir + "/tethys_stash.bin");
+    Store store(test_dir + "/tethys_table.bin",
+                test_dir + "/tethys_stash.bin",
+                stash_decoder);
 
     const size_t n_queries = 0.8 * average_n_lists;
 
@@ -142,26 +248,28 @@ void store_read_queries(const size_t n_elements, const std::string test_dir)
         std::array<uint8_t, kTableKeySize> prf_out
             = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(size_t));
 
-        auto res = store.get_list(prf_out);
+        auto res = store.get_list(prf_out, value_decoder);
 
-        // if (res.size() > kMaxListSize) {
-        //     std::cerr << "List too large??\n";
-        // }
-        // std::set<value_type> set(res.begin(), res.end());
-        // bool                 failure = false;
-        // if (set.size() != 1) {
-        //     std::cerr << set.size()
-        //               << " different results, while 1 was expected\n";
-        //     failure = true;
-        // }
-        // if (*set.begin() != i) {
-        //     std::cerr << "Invalid element in the list: " << *set.begin()
-        //               << " was found instead of " << i << "\n";
-        //     failure = true;
-        // }
-        // if (!failure) {
-        //     std::cerr << "OK\n";
-        // }
+        if (check_results) {
+            if (res.size() > kMaxListSize) {
+                std::cerr << "List too large??\n";
+            }
+            std::set<value_type> set(res.begin(), res.end());
+            bool                 failure = false;
+            if (set.size() != 1) {
+                std::cerr << set.size()
+                          << " different results, while 1 was expected\n";
+                failure = true;
+            }
+            if (*set.begin() != i) {
+                std::cerr << "Invalid element in the list: " << *set.begin()
+                          << " was found instead of " << i << "\n";
+                failure = true;
+            }
+            if (!failure) {
+                // std::cerr << "OK\n";
+            }
+        }
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> time_ms = end - begin;
@@ -171,10 +279,13 @@ void store_read_queries(const size_t n_elements, const std::string test_dir)
     std::cout << 1000 * n_queries / time_ms.count() << " buckets_pairs/s\n\n";
 }
 
-template<class Store>
-void async_store_read_queries(const size_t      n_elements,
-                              const std::string test_dir,
-                              bool              decode)
+template<class Store, class StashDecoder>
+void async_store_read_queries(const size_t                  n_elements,
+                              const std::string             test_dir,
+                              bool                          check_results,
+                              bool                          decode,
+                              typename Store::decoder_type& value_decoder,
+                              StashDecoder&                 stash_decoder)
 {
     (void)decode;
     static_assert(std::is_same<uint64_t, typename Store::value_type>::value,
@@ -197,7 +308,9 @@ void async_store_read_queries(const size_t      n_elements,
     sse::crypto::Prf<kTableKeySize> prf(
         sse::crypto::Key<kKeySize>(prf_key.data()));
 
-    Store store(test_dir + "/tethys_table.bin", test_dir + "/tethys_stash.bin");
+    Store store(test_dir + "/tethys_table.bin",
+                test_dir + "/tethys_stash.bin",
+                stash_decoder);
 
     store.use_direct_IO(true);
 
@@ -217,41 +330,45 @@ void async_store_read_queries(const size_t      n_elements,
         if (decode) {
             // auto callback = [](std::vector<uint64_t>) {};
 
-            auto callback = [&notifier, n_queries, &completed_queries, i](
-                                std::vector<uint64_t> res) {
-                (void)res;
-                (void)i;
-                size_t query_count = completed_queries.fetch_add(1) + 1;
+            auto callback
+                = [&notifier, n_queries, &completed_queries, i, check_results](
+                      std::vector<uint64_t> res) {
+                      (void)res;
+                      (void)i;
+                      size_t query_count = completed_queries.fetch_add(1) + 1;
 
-                // if (res.size() > kMaxListSize) {
-                //     std::cerr << "List too large??\n";
-                // }
-                // (void)i;
+                      if (check_results) {
+                          if (res.size() > kMaxListSize) {
+                              std::cerr << "List too large??\n";
+                          }
+                          (void)i;
 
-                // std::set<value_type> set(res.begin(), res.end());
-                // bool                 failure = false;
-                // if (set.size() != 1) {
-                //     std::cerr << set.size()
-                //               << " different results, while 1 was expected\n
-                //               ";
-                //     failure = true;
-                // }
-                // if (*set.begin() != i) {
-                //     std::cerr
-                //         << "Invalid element in the  list : " << *set.begin()
-                //         << " was found instead of " << i << "\n";
-                //     failure = true;
-                // }
-                // if (!failure) {
-                //     // std::cerr << "OK\n";
-                // }
+                          std::set<value_type> set(res.begin(), res.end());
+                          bool                 failure = false;
+                          if (set.size() != 1) {
+                              std::cerr << set.size()
+                                        << " different results, while 1 was  "
+                                           "expected\n ";
+                              failure = true;
+                          }
+                          if (*set.begin() != i) {
+                              std::cerr << "Invalid element in the  list : "
+                                        << *set.begin()
+                                        << " was found instead of " << i
+                                        << "\n";
+                              failure = true;
+                          }
+                          if (!failure) {
+                              // std::cerr << "OK\n";
+                          }
+                      }
 
-                if (query_count == n_queries) {
-                    notifier.set_value();
-                }
-            };
+                      if (query_count == n_queries) {
+                          notifier.set_value();
+                      }
+                  };
 
-            store.async_get_list(prf_out, callback);
+            store.async_get_list(prf_out, value_decoder, callback);
         } else {
             auto callback =
                 [&notifier, n_queries, &completed_queries](

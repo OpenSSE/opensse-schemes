@@ -1,6 +1,7 @@
 #include "debug_tethys_utils.hpp"
 
 #include <sse/schemes/tethys/details/tethys_graph.hpp>
+#include <sse/schemes/tethys/encoders/encode_encrypt.hpp>
 #include <sse/schemes/tethys/encoders/encode_separate.hpp>
 #include <sse/schemes/tethys/tethys_store.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
@@ -276,11 +277,10 @@ void test_store()
     }
 }
 
+using value_type = uint64_t;
 
 void generate_random_unencrypted_store(size_t n_elements)
 {
-    using value_type = uint64_t;
-
     using encoder_type
         = encoders::EncodeSeparateEncoder<key_type, value_type, kPageSize>;
     using store_builder_type = TethysStoreBuilder<kPageSize,
@@ -295,10 +295,9 @@ void generate_random_unencrypted_store(size_t n_elements)
     generate_random_store<store_builder_type>(n_elements, test_dir);
 }
 
-void store_queries(const size_t n_elements)
+void unencrypted_store_queries(const size_t n_elements, bool check_results)
 {
     const std::string test_dir = "tethys_test";
-    using value_type           = uint64_t;
 
     using decoder_type
         = encoders::EncodeSeparateDecoder<key_type, value_type, kPageSize>;
@@ -306,13 +305,14 @@ void store_queries(const size_t n_elements)
     using store_type
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
 
-    store_read_queries<store_type>(n_elements, test_dir);
+    store_read_queries<store_type>(n_elements, test_dir, check_results);
 }
 
-void async_store_queries(const size_t n_elements, bool decode)
+void async_unencrypted_store_queries(const size_t n_elements,
+                                     bool         decode,
+                                     bool         check_results)
 {
     const std::string test_dir = "tethys_test";
-    using value_type           = uint64_t;
 
     using decoder_type
         = encoders::EncodeSeparateDecoder<key_type, value_type, kPageSize>;
@@ -320,7 +320,79 @@ void async_store_queries(const size_t n_elements, bool decode)
     using store_type
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
 
-    async_store_read_queries<store_type>(n_elements, test_dir, decode);
+    async_store_read_queries<store_type>(
+        n_elements, test_dir, decode, check_results);
+}
+
+
+void generate_random_encrypted_store(size_t n_elements)
+{
+    using inner_encoder_type
+        = encoders::EncodeSeparateEncoder<key_type, value_type, kPageSize>;
+    using encoder_type
+        = encoders::EncryptEncoder<inner_encoder_type, kPageSize>;
+    using store_builder_type = TethysStoreBuilder<kPageSize,
+                                                  key_type,
+                                                  value_type,
+                                                  Hasher,
+                                                  encoder_type>;
+
+
+    const std::string test_dir = "encrypted_tethys_test";
+
+    std::array<uint8_t, 32> prf_key;
+    std::fill(prf_key.begin(), prf_key.end(), 0x00);
+
+    encoder_type encryption_encoder(sse::crypto::Key<32>(prf_key.data()));
+
+    generate_random_store<store_builder_type>(
+        n_elements, test_dir, encryption_encoder, encryption_encoder);
+}
+
+void encrypted_store_queries(const size_t n_elements, bool check_results)
+{
+    const std::string test_dir = "encrypted_tethys_test";
+
+
+    using inner_decoder_type
+        = encoders::EncodeSeparateDecoder<key_type, value_type, kPageSize>;
+    using decoder_type
+        = encoders::DecryptDecoder<inner_decoder_type, kPageSize>;
+
+    std::array<uint8_t, 32> prf_key;
+    std::fill(prf_key.begin(), prf_key.end(), 0x00);
+
+    decoder_type encryption_decoder(sse::crypto::Key<32>(prf_key.data()));
+
+    using store_type
+        = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
+
+    store_read_queries<store_type>(
+        n_elements, test_dir, check_results, encryption_decoder);
+}
+
+void async_encrypted_store_queries(const size_t n_elements,
+                                   bool         decode,
+                                   bool         check_results)
+{
+    const std::string test_dir = "encrypted_tethys_test";
+
+
+    using inner_decoder_type
+        = encoders::EncodeSeparateDecoder<key_type, value_type, kPageSize>;
+    using decoder_type
+        = encoders::DecryptDecoder<inner_decoder_type, kPageSize>;
+
+    std::array<uint8_t, 32> prf_key;
+    std::fill(prf_key.begin(), prf_key.end(), 0x00);
+
+    decoder_type encryption_decoder(sse::crypto::Key<32>(prf_key.data()));
+
+    using store_type
+        = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
+
+    async_store_read_queries<store_type>(
+        n_elements, test_dir, decode, check_results, encryption_decoder);
 }
 
 int main(int /*argc*/, const char** /*argv*/)
@@ -331,9 +403,16 @@ int main(int /*argc*/, const char** /*argv*/)
     // test_store();
 
     const size_t n_elts = 1 << 26;
-    generate_random_unencrypted_store(n_elts);
-    // store_queries(n_elts);
-    async_store_queries(n_elts, true);
+    // generate_random_unencrypted_store(n_elts);
+    // // unencrypted_store_queries(n_elts, true, false);
+    // async_unencrypted_store_queries(n_elts, true,  false);
+
+
+    generate_random_encrypted_store(n_elts);
+    // encrypted_store_queries(n_elts, true);
+    async_encrypted_store_queries(1 << 18, true, true);
+
+
     sse::crypto::cleanup_crypto_lib();
 
     return 0;

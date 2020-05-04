@@ -16,6 +16,9 @@ namespace encoders {
 template<class Key, class T, size_t PAGESIZE>
 struct EncodeSeparateEncoder
 {
+    using key_type   = Key;
+    using value_type = T;
+
     static constexpr size_t kAdditionalKeyEntriesPerList
         = sizeof(Key) / sizeof(T) + (sizeof(Key) % sizeof(T) == 0 ? 0 : 1);
 
@@ -250,6 +253,9 @@ struct EncodeSeparateDecoder
 
     static constexpr size_t kListControlValues
         = EncodeSeparateEncoder<Key, T, PAGESIZE>::kListControlValues;
+
+    using key_type   = Key;
+    using value_type = T;
 
     void decode_single_bucket(const Key&                           key,
                               const std::array<uint8_t, PAGESIZE>& bucket,

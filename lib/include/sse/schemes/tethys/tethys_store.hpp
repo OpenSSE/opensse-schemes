@@ -93,6 +93,10 @@ private:
     template<class StashDecoder>
     void load_stash(const std::string& stash_path, StashDecoder& stash_decoder);
 
+    template<class CallbackState>
+    void async_get_list_helper(get_list_callback_type callback,
+                               CallbackState*         state);
+
     using table_type = abstractio::awonvm_vector<payload_type, PAGE_SIZE>;
     table_type table;
 
@@ -297,42 +301,10 @@ template<size_t PAGE_SIZE,
          class T,
          class TethysHasher,
          class ValueDecoder>
-void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
-    const Key&             key,
-    get_list_callback_type callback)
+template<class CallbackState>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
+    async_get_list_helper(get_list_callback_type callback, CallbackState* state)
 {
-    ValueDecoder decoder;
-    return async_get_list(key, decoder, std::move(callback));
-}
-
-template<size_t PAGE_SIZE,
-         class Key,
-         class T,
-         class TethysHasher,
-         class ValueDecoder>
-void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
-    const Key&             key,
-    ValueDecoder&          decoder,
-    get_list_callback_type callback)
-{
-    struct CallBackState
-    {
-        Key                           key;
-        std::unique_ptr<payload_type> bucket_0;
-        std::unique_ptr<payload_type> bucket_1;
-        size_t                        index_0;
-        size_t                        index_1;
-        std::atomic_uint8_t           completion_counter{0};
-        ValueDecoder                  decoder;
-
-        CallBackState(const Key& k, const ValueDecoder& dec)
-            : key(k), decoder(dec){};
-    };
-
-    CallBackState* state = new CallBackState(key, decoder);
-
-    (void)decoder;
-    (void)callback;
     auto bucket_cb = [this, callback, state](
                          std::unique_ptr<payload_type> bucket, size_t index) {
         uint8_t completed = state->completion_counter.fetch_add(1) + 1;
@@ -354,7 +326,7 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
             }
 
             std::vector<T> bucket_res = this->decode_list(state->key,
-                                                          state->decoder,
+                                                          state->get_decoder(),
                                                           *(state->bucket_0),
                                                           state->index_0,
                                                           *(state->bucket_1),
@@ -371,7 +343,72 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
     };
 
 
-    async_get_buckets(key, bucket_cb);
+    async_get_buckets(state->key, bucket_cb);
+}
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
+    const Key&             key,
+    get_list_callback_type callback)
+{
+    struct CallBackState
+    {
+        Key                           key;
+        std::unique_ptr<payload_type> bucket_0;
+        std::unique_ptr<payload_type> bucket_1;
+        size_t                        index_0;
+        size_t                        index_1;
+        std::atomic_uint8_t           completion_counter{0};
+        ValueDecoder                  decoder;
+
+        CallBackState(const Key& k) : key(k){};
+
+        ValueDecoder& get_decoder()
+        {
+            return decoder;
+        }
+    };
+
+    CallBackState* state = new CallBackState(key);
+
+    async_get_list_helper<CallBackState>(std::move(callback), state);
+}
+
+template<size_t PAGE_SIZE,
+         class Key,
+         class T,
+         class TethysHasher,
+         class ValueDecoder>
+void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
+    const Key&             key,
+    ValueDecoder&          decoder,
+    get_list_callback_type callback)
+{
+    struct CallBackState
+    {
+        Key                           key;
+        std::unique_ptr<payload_type> bucket_0;
+        std::unique_ptr<payload_type> bucket_1;
+        size_t                        index_0;
+        size_t                        index_1;
+        std::atomic_uint8_t           completion_counter{0};
+        ValueDecoder*                 decoder;
+
+        CallBackState(const Key& k, ValueDecoder& dec)
+            : key(k), decoder(&dec){};
+
+        ValueDecoder& get_decoder()
+        {
+            return *decoder;
+        }
+    };
+
+    CallBackState* state = new CallBackState(key, decoder);
+
+    async_get_list_helper<CallBackState>(std::move(callback), state);
 }
 
 } // namespace tethys

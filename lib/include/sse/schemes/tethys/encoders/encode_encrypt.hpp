@@ -6,6 +6,8 @@
 
 #include <cassert>
 #include <cstring>
+#include <sodium/crypto_stream_chacha20.h>
+#include <sodium/utils.h>
 
 #include <array>
 #include <istream>
@@ -25,14 +27,19 @@ public:
     static constexpr size_t kBucketControlValues
         = BaseEncoder::kBucketControlValues;
 
-    static constexpr size_t kKeySize = sse::crypto::Prf<BLOCK_SIZE>::kKeySize;
-    using key_type                   = sse::crypto::Key<kKeySize>;
+    // static constexpr size_t kKeySize =
+    // sse::crypto::Prf<BLOCK_SIZE>::kKeySize; using key_type =
+    // sse::crypto::Key<kKeySize>;
 
+    static constexpr size_t kKeySize = crypto_stream_chacha20_KEYBYTES;
+    using key_type                   = std::array<uint8_t, kKeySize>;
 
     using keyword_type = typename BaseEncoder::key_type;
     using value_type   = typename BaseEncoder::value_type;
 
-    EncryptEncoder(key_type&& key) : encoder(), mask_prf(std::move(key))
+    EncryptEncoder(key_type key)
+        : encoder(),
+          encryption_key(std::move(key)) /*, mask_prf(std::move(key))*/
     {
     }
 
@@ -65,12 +72,19 @@ public:
 
         // encrypt the block
 
-        std::array<uint8_t, BLOCK_SIZE> mask = mask_prf.prf(
-            reinterpret_cast<uint8_t*>(&table_index), sizeof(size_t));
+        uint8_t nonce[crypto_stream_chacha20_NONCEBYTES];
+        memset(nonce, 0x00, sizeof(nonce));
+        memcpy(nonce, reinterpret_cast<uint8_t*>(&table_index), sizeof(size_t));
 
-        for (size_t i = 0; i < BLOCK_SIZE; i++) {
-            buffer[i] ^= mask[i];
-        }
+        crypto_stream_chacha20_xor(
+            buffer, buffer, BLOCK_SIZE, nonce, encryption_key.data());
+
+        // std::array<uint8_t, BLOCK_SIZE> mask = mask_prf.prf(
+        //     reinterpret_cast<uint8_t*>(&table_index), sizeof(size_t));
+
+        // for (size_t i = 0; i < BLOCK_SIZE; i++) {
+        //     buffer[i] ^= mask[i];
+        // }
 
         return BLOCK_SIZE - written_bytes;
     }
@@ -98,8 +112,9 @@ public:
     }
 
 private:
-    BaseEncoder                  encoder;
-    sse::crypto::Prf<BLOCK_SIZE> mask_prf;
+    BaseEncoder encoder;
+    key_type    encryption_key;
+    // sse::crypto::Prf<BLOCK_SIZE> mask_prf;
 };
 
 
@@ -107,8 +122,11 @@ template<class BaseDecoder, size_t BLOCK_SIZE>
 class DecryptDecoder
 {
 public:
-    static constexpr size_t kKeySize = sse::crypto::Prf<BLOCK_SIZE>::kKeySize;
-    using key_type                   = sse::crypto::Key<kKeySize>;
+    // static constexpr size_t kKeySize =
+    // sse::crypto::Prf<BLOCK_SIZE>::kKeySize; using key_type =
+    // sse::crypto::Key<kKeySize>;
+    static constexpr size_t kKeySize = crypto_stream_chacha20_KEYBYTES;
+    using key_type                   = std::array<uint8_t, kKeySize>;
 
     static constexpr size_t kListControlValues
         = BaseDecoder::kListControlValues;
@@ -116,9 +134,12 @@ public:
     using keyword_type = typename BaseDecoder::key_type;
     using value_type   = typename BaseDecoder::value_type;
 
-    DecryptDecoder(key_type&& key) : decoder(), mask_prf(std::move(key))
+    DecryptDecoder(key_type key) : decoder(), decryption_key(std::move(key))
     {
     }
+    // DecryptDecoder(key_type&& key) : decoder(), mask_prf(std::move(key))
+    // {
+    // }
     std::vector<value_type> decode_buckets(
         const keyword_type&                    key,
         const std::array<uint8_t, BLOCK_SIZE>& bucket_0,
@@ -127,23 +148,47 @@ public:
         size_t                                 index_1)
     {
         // start by decrypting the buckets
-        std::array<uint8_t, BLOCK_SIZE> mask_0 = mask_prf.prf(
-            reinterpret_cast<uint8_t*>(&index_0), sizeof(size_t));
+        // std::array<uint8_t, BLOCK_SIZE> mask_0 = mask_prf.prf(
+        //     reinterpret_cast<uint8_t*>(&index_0), sizeof(size_t));
+
+        // std::array<uint8_t, BLOCK_SIZE> mask_1 = mask_prf.prf(
+        //     reinterpret_cast<uint8_t*>(&index_1), sizeof(size_t));
+
+
+        std::array<uint8_t, BLOCK_SIZE> mask_0;
+        std::array<uint8_t, BLOCK_SIZE> mask_1;
+        uint8_t nonce[crypto_stream_chacha20_NONCEBYTES];
+
+        memset(nonce, 0x00, sizeof(nonce));
+        memcpy(nonce, reinterpret_cast<uint8_t*>(&index_0), sizeof(size_t));
+
+        crypto_stream_chacha20(
+            mask_0.data(), mask_0.size(), nonce, decryption_key.data());
+
+        memset(nonce, 0x00, sizeof(nonce));
+        memcpy(nonce, reinterpret_cast<uint8_t*>(&index_1), sizeof(size_t));
+
+        crypto_stream_chacha20(
+            mask_1.data(), mask_1.size(), nonce, decryption_key.data());
+
 
         for (size_t i = 0; i < BLOCK_SIZE; i++) {
             mask_0[i] ^= bucket_0[i]; // to avoid copies, we put the result in
                                       // the keystream
         }
 
-        std::array<uint8_t, BLOCK_SIZE> mask_1 = mask_prf.prf(
-            reinterpret_cast<uint8_t*>(&index_1), sizeof(size_t));
-
         for (size_t i = 0; i < BLOCK_SIZE; i++) {
             mask_1[i] ^= bucket_1[i]; // to avoid copies, we put the result in
                                       // the keystream
         }
 
-        return decoder.decode_buckets(key, mask_0, index_0, mask_1, index_1);
+        auto res
+            = decoder.decode_buckets(key, mask_0, index_0, mask_1, index_1);
+
+        sodium_memzero(mask_0.data(), mask_0.size());
+        sodium_memzero(mask_1.data(), mask_1.size());
+
+        return res;
     }
 
     std::pair<keyword_type, std::vector<value_type>> deserialize_key_value(
@@ -171,8 +216,10 @@ public:
     }
 
 private:
-    BaseDecoder                  decoder;
-    sse::crypto::Prf<BLOCK_SIZE> mask_prf;
+    BaseDecoder decoder;
+    key_type    decryption_key;
+
+    // sse::crypto::Prf<BLOCK_SIZE> mask_prf;
 };
 
 } // namespace encoders

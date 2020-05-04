@@ -343,7 +343,9 @@ void generate_random_encrypted_store(size_t n_elements)
     std::array<uint8_t, 32> prf_key;
     std::fill(prf_key.begin(), prf_key.end(), 0x00);
 
-    encoder_type encryption_encoder(sse::crypto::Key<32>(prf_key.data()));
+    // encoder_type encryption_encoder(sse::crypto::Key<32>(prf_key.data()));
+
+    encoder_type encryption_encoder(prf_key);
 
     generate_random_store<store_builder_type>(
         n_elements, test_dir, encryption_encoder, encryption_encoder);
@@ -362,7 +364,8 @@ void encrypted_store_queries(const size_t n_elements, bool check_results)
     std::array<uint8_t, 32> prf_key;
     std::fill(prf_key.begin(), prf_key.end(), 0x00);
 
-    decoder_type encryption_decoder(sse::crypto::Key<32>(prf_key.data()));
+    // decoder_type encryption_decoder(sse::crypto::Key<32>(prf_key.data()));
+    decoder_type encryption_decoder(prf_key);
 
     using store_type
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
@@ -386,7 +389,9 @@ void async_encrypted_store_queries(const size_t n_elements,
     std::array<uint8_t, 32> prf_key;
     std::fill(prf_key.begin(), prf_key.end(), 0x00);
 
-    decoder_type encryption_decoder(sse::crypto::Key<32>(prf_key.data()));
+    // decoder_type encryption_decoder(sse::crypto::Key<32>(prf_key.data()));
+    decoder_type encryption_decoder(prf_key);
+
 
     using store_type
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
@@ -410,7 +415,7 @@ int main(int /*argc*/, const char** /*argv*/)
 
     generate_random_encrypted_store(n_elts);
     // encrypted_store_queries(n_elts, true);
-    async_encrypted_store_queries(1 << 18, true, true);
+    async_encrypted_store_queries(n_elts, true, true);
 
 
     sse::crypto::cleanup_crypto_lib();

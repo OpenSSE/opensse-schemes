@@ -115,7 +115,7 @@ void test_store()
     builder_params.max_n_elements    = 0;
     builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
     builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
-    builder_params.epsilon           = 0.2;
+    builder_params.epsilon           = 0.1;
 
     using encoder_type
         = encoders::EncodeSeparateEncoder<key_type, size_t, kPageSize>;
@@ -308,7 +308,8 @@ void unencrypted_store_queries(const size_t n_elements, bool check_results)
     store_read_queries<store_type>(n_elements, test_dir, check_results);
 }
 
-void async_unencrypted_store_queries(const size_t n_elements,
+void async_unencrypted_store_queries(const size_t n_queries,
+                                     const size_t n_elements,
                                      bool         decode,
                                      bool         check_results)
 {
@@ -321,7 +322,7 @@ void async_unencrypted_store_queries(const size_t n_elements,
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
 
     async_store_read_queries<store_type>(
-        n_elements, test_dir, decode, check_results);
+        n_queries, n_elements, test_dir, decode, check_results);
 }
 
 
@@ -374,7 +375,8 @@ void encrypted_store_queries(const size_t n_elements, bool check_results)
         n_elements, test_dir, check_results, encryption_decoder);
 }
 
-void async_encrypted_store_queries(const size_t n_elements,
+void async_encrypted_store_queries(const size_t n_queries,
+                                   const size_t n_elements,
                                    bool         decode,
                                    bool         check_results)
 {
@@ -396,8 +398,12 @@ void async_encrypted_store_queries(const size_t n_elements,
     using store_type
         = TethysStore<kPageSize, key_type, value_type, Hasher, decoder_type>;
 
-    async_store_read_queries<store_type>(
-        n_elements, test_dir, decode, check_results, encryption_decoder);
+    async_store_read_queries<store_type>(n_queries,
+                                         n_elements,
+                                         test_dir,
+                                         decode,
+                                         check_results,
+                                         encryption_decoder);
 }
 
 int main(int /*argc*/, const char** /*argv*/)
@@ -409,7 +415,8 @@ int main(int /*argc*/, const char** /*argv*/)
 
     sse::Benchmark::set_benchmark_file("benchmark_lat_tethys.out");
 
-    const size_t n_elts = 1 << 26;
+    const size_t n_elts    = 1 << 27;
+    const size_t n_queries = 1 << 20;
     // generate_random_unencrypted_store(n_elts);
     // // unencrypted_store_queries(n_elts, true, false);
     // async_unencrypted_store_queries(n_elts, true,  false);
@@ -417,7 +424,7 @@ int main(int /*argc*/, const char** /*argv*/)
 
     generate_random_encrypted_store(n_elts);
     // encrypted_store_queries(n_elts, true);
-    async_encrypted_store_queries(n_elts, true, true);
+    async_encrypted_store_queries(n_queries, n_elts, true, true);
 
 
     sse::crypto::cleanup_crypto_lib();

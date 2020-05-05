@@ -76,7 +76,8 @@ void store_read_queries(const size_t      n_elements,
 }
 
 template<class Store, class StashDecoder>
-void async_store_read_queries(const size_t                  n_elements,
+void async_store_read_queries(const size_t                  n_queries,
+                              const size_t                  n_elements,
                               const std::string             test_dir,
                               bool                          check_results,
                               bool                          decode,
@@ -84,13 +85,15 @@ void async_store_read_queries(const size_t                  n_elements,
                               StashDecoder&                 stash_decoder);
 
 template<class Store>
-void async_store_read_queries(const size_t      n_elements,
+void async_store_read_queries(const size_t      n_queries,
+                              const size_t      n_elements,
                               const std::string test_dir,
                               bool              check_results,
                               bool              decode)
 {
     typename Store::decoder_type value_decoder;
     async_store_read_queries<Store, typename Store::decoder_type>(
+        n_queries,
         n_elements,
         test_dir,
         check_results,
@@ -100,13 +103,15 @@ void async_store_read_queries(const size_t      n_elements,
 }
 
 template<class Store>
-void async_store_read_queries(const size_t                  n_elements,
+void async_store_read_queries(const size_t                  n_queries,
+                              const size_t                  n_elements,
                               const std::string             test_dir,
                               bool                          check_results,
                               bool                          decode,
                               typename Store::decoder_type& value_decoder)
 {
     async_store_read_queries<Store, typename Store::decoder_type>(
+        n_queries,
         n_elements,
         test_dir,
         check_results,
@@ -149,7 +154,7 @@ void generate_random_store(
     builder_params.max_n_elements    = expected_tot_n_elements;
     builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
     builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
-    builder_params.epsilon           = 0.2;
+    builder_params.epsilon           = 0.1;
 
 
     size_t                                remaining_elts = n_elements;
@@ -281,7 +286,8 @@ void store_read_queries(const size_t                  n_elements,
 }
 
 template<class Store, class StashDecoder>
-void async_store_read_queries(const size_t                  n_elements,
+void async_store_read_queries(const size_t                  n_queries,
+                              const size_t                  n_elements,
                               const std::string             test_dir,
                               bool                          check_results,
                               bool                          decode,
@@ -315,7 +321,7 @@ void async_store_read_queries(const size_t                  n_elements,
 
     store.use_direct_IO(true);
 
-    const size_t n_queries = 0.8 * average_n_lists;
+    const size_t n_unique_queries = 0.8 * average_n_lists;
 
     std::atomic_size_t completed_queries(0);
 
@@ -328,8 +334,9 @@ void async_store_read_queries(const size_t                  n_elements,
         sse::SearchBenchmark* benchmark
             = new sse::SearchBenchmark("Tethys E2E latency");
 
+        size_t                             query_index = i % n_unique_queries;
         std::array<uint8_t, kTableKeySize> prf_out
-            = prf.prf(reinterpret_cast<uint8_t*>(&i), sizeof(size_t));
+            = prf.prf(reinterpret_cast<uint8_t*>(&query_index), sizeof(size_t));
 
         if (decode) {
             // auto callback = [](std::vector<uint64_t>) {};
@@ -337,11 +344,9 @@ void async_store_read_queries(const size_t                  n_elements,
             auto callback = [&notifier,
                              n_queries,
                              &completed_queries,
-                             i,
+                             query_index,
                              check_results,
                              benchmark](std::vector<uint64_t> res) {
-                (void)i;
-
                 benchmark->set_count(res.size());
                 delete benchmark;
 
@@ -351,7 +356,6 @@ void async_store_read_queries(const size_t                  n_elements,
                     if (res.size() > kMaxListSize) {
                         std::cerr << "List too large??\n";
                     }
-                    (void)i;
 
                     std::set<value_type> set(res.begin(), res.end());
                     bool                 failure = false;
@@ -361,10 +365,10 @@ void async_store_read_queries(const size_t                  n_elements,
                                      "expected\n ";
                         failure = true;
                     }
-                    if (*set.begin() != i) {
+                    if (*set.begin() != query_index) {
                         std::cerr
                             << "Invalid element in the  list : " << *set.begin()
-                            << " was found instead of " << i << "\n";
+                            << " was found instead of " << query_index << "\n";
                         failure = true;
                     }
                     if (!failure) {

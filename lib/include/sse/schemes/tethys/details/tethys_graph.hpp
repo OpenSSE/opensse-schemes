@@ -320,6 +320,7 @@ public:
     void compute_connected_components();
 
     void compute_residual_maxflow();
+    void parallel_compute_residual_maxflow();
     void transform_residual_to_flow();
 
 

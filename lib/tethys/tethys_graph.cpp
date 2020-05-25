@@ -354,6 +354,31 @@ void TethysGraph::compute_residual_maxflow()
             "Invalid inner state. State should be Building.");
     }
 
+    while (true) {
+        // find a path from source to sink
+        size_t path_capacity;
+        auto   path = find_source_sink_path(0, &path_capacity);
+
+        if (path.size() == 0) {
+            // no path found
+            break;
+        }
+
+        for (EdgePtr e_ptr : path) {
+            // update flows
+            edges.update_flow(e_ptr, path_capacity);
+        }
+    }
+    state = ResidualComputed;
+}
+
+void TethysGraph::parallel_compute_residual_maxflow()
+{
+    if (state != Building) {
+        throw std::invalid_argument(
+            "Invalid inner state. State should be Building.");
+    }
+
     compute_connected_components();
 
     for (size_t component_index = 0; component_index <= n_components;

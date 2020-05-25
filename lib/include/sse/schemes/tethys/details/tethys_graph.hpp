@@ -188,6 +188,7 @@ struct Vertex
     std::vector<EdgePtr> in_edges;
     std::vector<EdgePtr> out_edges;
     mutable EdgePtr      parent_edge;
+    size_t               component{0};
 
     bool operator==(const Vertex& v) const
     {
@@ -293,7 +294,8 @@ public:
     EdgePtr add_edge_from_source(size_t value_index, size_t cap, size_t end);
     EdgePtr add_edge_to_sink(size_t value_index, size_t cap, size_t start);
 
-    std::vector<EdgePtr> find_source_sink_path(size_t* path_capacity) const;
+    std::vector<EdgePtr> find_source_sink_path(const size_t component,
+                                               size_t* path_capacity) const;
 
     const Vertex& get_vertex(VertexPtr ptr) const;
     Vertex&       get_vertex(VertexPtr ptr);
@@ -314,6 +316,8 @@ public:
                && (sink == g.sink) && (vertices == g.vertices)
                && (edges == g.edges);
     }
+
+    void compute_connected_components();
 
     void compute_residual_maxflow();
     void transform_residual_to_flow();
@@ -351,6 +355,8 @@ private:
     Vertex    sink;
     VertexVec vertices;
     EdgeVec   edges;
+
+    size_t n_components{0};
 };
 
 } // namespace details

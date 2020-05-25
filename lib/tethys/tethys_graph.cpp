@@ -141,7 +141,8 @@ void TethysGraph::reset_parent_edges() const
     vertices.reset_parent_edges();
 }
 
-std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
+std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
+                                                        size_t* path_flow) const
 {
     sink.parent_edge = kNullEdgePtr;
 
@@ -180,7 +181,8 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
                     // this was the first visited vertex, we can continue
                     continue;
                 }
-                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr) {
+                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr
+                    && dest.component == component) {
                     // TODO : add a flag to choose between DFS and BFS
                     // DFS for now
                     queue.push_front(dest_ptr);
@@ -207,7 +209,8 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
                     // this was the first visited vertex, we can continue
                     continue;
                 }
-                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr) {
+                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr
+                    && dest.component == component) {
                     // TODO : add a flag to choose between DFS and BFS
                     // DFS for now
                     queue.push_front(dest_ptr);
@@ -279,6 +282,71 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(size_t* path_flow) const
     return {};
 }
 
+void TethysGraph::compute_connected_components()
+{
+    size_t component_index = 1;
+    for (size_t vi = 0; vi < vertices.size(); vi++) {
+        VertexPtr vp(vi);
+        if (vertices[vp].component != 0) {
+            continue;
+        }
+        vertices[vp].component = component_index;
+
+        std::deque<VertexPtr> queue;
+
+        queue.push_front(vp);
+
+        while (queue.size() > 0) {
+            const Vertex& v = get_vertex(queue.front());
+            queue.pop_front();
+
+
+            // go through the outgoing edges of the selected vertex
+            const std::vector<EdgePtr>& out_edges = v.out_edges;
+
+            for (EdgePtr e_ptr : out_edges) {
+                const Edge&     e        = edges[e_ptr];
+                const VertexPtr dest_ptr = e.end;
+
+                if (dest_ptr == kSinkPtr || dest_ptr == kSourcePtr) {
+                    continue;
+                }
+
+                Vertex& dest = get_vertex(dest_ptr);
+
+                if (dest.component == 0) {
+                    // TODO : add a flag to choose between DFS and BFS
+                    // DFS for now
+                    queue.push_front(dest_ptr);
+                    dest.component = component_index;
+                }
+            }
+
+            // we also need to do the same thing for the reciprocal graph
+            const std::vector<EdgePtr> in_edges = v.in_edges;
+            for (EdgePtr e_ptr : in_edges) {
+                const Edge&     e        = edges[e_ptr];
+                const VertexPtr dest_ptr = e.start;
+
+                if (dest_ptr == kSinkPtr || dest_ptr == kSourcePtr) {
+                    continue;
+                }
+
+                Vertex& dest = get_vertex(dest_ptr);
+                if (dest.component == 0) {
+                    // TODO : add a flag to choose between DFS and BFS
+                    // DFS for now
+                    queue.push_front(dest_ptr);
+                    dest.component = component_index;
+                }
+            }
+        }
+        component_index++;
+    }
+
+    n_components = component_index - 1;
+} // namespace details
+
 void TethysGraph::compute_residual_maxflow()
 {
     if (state != Building) {
@@ -286,22 +354,26 @@ void TethysGraph::compute_residual_maxflow()
             "Invalid inner state. State should be Building.");
     }
 
-    while (true) {
-        // find a path from source to sink
-        size_t path_capacity;
-        auto   path = find_source_sink_path(&path_capacity);
+    compute_connected_components();
 
-        if (path.size() == 0) {
-            // no path found
-            break;
-        }
+    for (size_t component_index = 0; component_index <= n_components;
+         component_index++) {
+        while (true) {
+            // find a path from source to sink
+            size_t path_capacity;
+            auto path = find_source_sink_path(component_index, &path_capacity);
 
-        for (EdgePtr e_ptr : path) {
-            // update flows
-            edges.update_flow(e_ptr, path_capacity);
+            if (path.size() == 0) {
+                // no path found
+                break;
+            }
+
+            for (EdgePtr e_ptr : path) {
+                // update flows
+                edges.update_flow(e_ptr, path_capacity);
+            }
         }
     }
-
     state = ResidualComputed;
 }
 

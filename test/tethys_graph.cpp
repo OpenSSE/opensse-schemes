@@ -28,7 +28,7 @@ TEST(tethys_graph, dfs_1)
     graph.add_edge_to_sink(6, 1, 1 + mid_graph);
 
     size_t cap  = 0;
-    auto   path = graph.find_source_sink_path(&cap);
+    auto   path = graph.find_source_sink_path(0, &cap);
 
     std::vector<std::size_t> path_index;
     std::transform(path.begin(),
@@ -60,7 +60,7 @@ TEST(tethys_graph, dfs_2)
     graph.add_edge_to_sink(3, 1, 1);
 
     size_t cap  = 0;
-    auto   path = graph.find_source_sink_path(&cap);
+    auto   path = graph.find_source_sink_path(0, &cap);
 
     std::vector<std::size_t> path_index;
     std::transform(path.begin(),

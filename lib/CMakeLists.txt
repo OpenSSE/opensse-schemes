@@ -56,7 +56,7 @@ target_link_libraries(
     OpenSSE::crypto
     OpenSSE::dbparser
     ${ROCKSDB_LIBRARIES}
-    spdlog::spdlog
+    spdlog::spdlog_header_only
     ${LIBAIO_LIBRARIES}
 )
 
@@ -126,5 +126,5 @@ target_link_libraries(
     OpenSSE::schemes
     gRPC::grpc++
     protobuf::libprotobuf
-    spdlog::spdlog
+    spdlog::spdlog_header_only
 )

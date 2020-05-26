@@ -144,7 +144,7 @@ void TethysGraph::reset_parent_edges() const
 std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
                                                         size_t* path_flow) const
 {
-    sink.parent_edge = kNullEdgePtr;
+    EdgePtr sink_parent_edge = kNullEdgePtr;
 
     std::vector<bool>     visited(vertices.size(), false);
     std::deque<VertexPtr> queue;
@@ -160,7 +160,8 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
         }
 
         // get and pop the first element of the queue
-        const Vertex& v = get_vertex(queue.front());
+        const VertexPtr v_ptr = queue.front();
+        const Vertex&   v     = get_vertex(v_ptr);
         queue.pop_front();
 
         // go through the outgoing edges of the selected vertex
@@ -174,20 +175,26 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
 
                 if (dest_ptr == kSinkPtr) {
                     found_sink       = true;
-                    dest.parent_edge = e_ptr;
+                    sink_parent_edge = e_ptr;
+                    //  dest.parent_edge = e_ptr;
                     break;
                 }
                 if (dest_ptr == kSourcePtr) {
                     // this was the first visited vertex, we can continue
                     continue;
                 }
-                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr
-                    && dest.component == component) {
-                    // TODO : add a flag to choose between DFS and BFS
-                    // DFS for now
-                    queue.push_front(dest_ptr);
-                    dest.parent_edge        = e_ptr;
-                    visited[dest_ptr.index] = true;
+                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr) {
+                    if (dest.component != component && v_ptr != kSourcePtr) {
+                        std::cerr << "ERROR: vertex should be in the same "
+                                     "component\n";
+                    }
+                    if (dest.component == component) {
+                        // TODO : add a flag to choose between DFS and BFS
+                        // DFS for now
+                        queue.push_front(dest_ptr);
+                        dest.parent_edge        = e_ptr;
+                        visited[dest_ptr.index] = true;
+                    }
                 }
             }
         }
@@ -201,38 +208,58 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
                 const Vertex&   dest     = get_vertex(dest_ptr);
 
                 if (dest_ptr == kSinkPtr) {
-                    found_sink       = true;
-                    dest.parent_edge = e_ptr.reciprocal();
+                    found_sink = true;
+                    // dest.parent_edge = e_ptr.reciprocal();
+                    sink_parent_edge = e_ptr.reciprocal();
+
                     break;
                 }
                 if (dest_ptr == kSourcePtr) {
                     // this was the first visited vertex, we can continue
                     continue;
                 }
-                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr
-                    && dest.component == component) {
-                    // TODO : add a flag to choose between DFS and BFS
-                    // DFS for now
-                    queue.push_front(dest_ptr);
-                    // mark the parent edge as the reciprocal of the current
-                    // edge
-                    dest.parent_edge        = e_ptr.reciprocal();
-                    visited[dest_ptr.index] = true;
+                if (!visited[dest_ptr.index] && dest_ptr != kSourcePtr) {
+                    if (dest.component != component && v_ptr != kSourcePtr) {
+                        std::cerr << "ERROR: vertex should be in the same "
+                                     "component\n";
+                    }
+                    if (dest.component == component) {
+                        // TODO : add a flag to choose between DFS and BFS
+                        // DFS for now
+                        queue.push_front(dest_ptr);
+                        // mark the parent edge as the reciprocal of the current
+                        // edge
+                        dest.parent_edge        = e_ptr.reciprocal();
+                        visited[dest_ptr.index] = true;
 
-                    // if (dest_ptr == kSinkPtr) {
-                    //     found_sink = true;
-                    //     break;
-                    // }
+                        // if (dest_ptr == kSinkPtr) {
+                        //     found_sink = true;
+                        //     break;
+                        // }
+                    }
                 }
             }
         }
     }
 
-    if (sink.parent_edge != kNullEdgePtr) {
+    if (sink_parent_edge != kNullEdgePtr) {
         // start by computing the size of the path
         size_t        flow = SIZE_MAX;
         const Vertex* cur  = &sink;
         size_t        size = 0;
+
+        // treat the first vertex (the sink) a bit differently
+        const Edge& e = edges[sink_parent_edge];
+        // be careful here: the flow we are interested in might be the
+        // reciprocal flow
+        flow = std::min<size_t>(edges.edge_flow(sink_parent_edge), flow);
+
+        if (sink_parent_edge.is_reciprocal) {
+            cur = &get_vertex(e.end);
+        } else {
+            cur = &get_vertex(e.start);
+        }
+        size++;
 
         while (cur->parent_edge != kNullEdgePtr) {
             const Edge& e = edges[cur->parent_edge];
@@ -256,9 +283,20 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
 
         std::vector<EdgePtr> path(size);
 
+        // again, treat the first vertex (the sink) a bit differently
 
-        cur      = &sink;
-        size_t i = 0;
+        cur                = &sink;
+        size_t i           = 0;
+        path[size - i - 1] = sink_parent_edge;
+        // const Edge& e      = edges[sink_parent_edge];
+
+        if (sink_parent_edge.is_reciprocal) {
+            cur = &get_vertex(e.end);
+        } else {
+            cur = &get_vertex(e.start);
+        }
+        i++;
+
         while (cur->parent_edge != kNullEdgePtr) {
             path[size - i - 1] = cur->parent_edge;
             const Edge& e      = edges[cur->parent_edge];
@@ -285,11 +323,13 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
 void TethysGraph::compute_connected_components()
 {
     size_t component_index = 1;
+    size_t max_size        = 1;
     for (size_t vi = 0; vi < vertices.size(); vi++) {
         VertexPtr vp(vi);
         if (vertices[vp].component != 0) {
             continue;
         }
+        size_t component_size  = 0;
         vertices[vp].component = component_index;
 
         std::deque<VertexPtr> queue;
@@ -299,7 +339,7 @@ void TethysGraph::compute_connected_components()
         while (queue.size() > 0) {
             const Vertex& v = get_vertex(queue.front());
             queue.pop_front();
-
+            component_size++;
 
             // go through the outgoing edges of the selected vertex
             const std::vector<EdgePtr>& out_edges = v.out_edges;
@@ -341,11 +381,19 @@ void TethysGraph::compute_connected_components()
                 }
             }
         }
-        component_index++;
+        if (component_size == 1) {
+            vertices[vp].component = 0;
+        } else {
+            // std::cout << component_size << "\n";
+            max_size = std::max(max_size, component_size);
+            component_index++;
+        }
     }
 
     n_components = component_index - 1;
-} // namespace details
+    std::cout << n_components << "\n";
+    std::cout << max_size << "\n";
+}
 
 void TethysGraph::compute_residual_maxflow()
 {
@@ -372,7 +420,7 @@ void TethysGraph::compute_residual_maxflow()
     state = ResidualComputed;
 }
 
-void TethysGraph::parallel_compute_residual_maxflow()
+void TethysGraph::parallel_compute_residual_maxflow(ThreadPool& thread_pool)
 {
     if (state != Building) {
         throw std::invalid_argument(
@@ -381,24 +429,49 @@ void TethysGraph::parallel_compute_residual_maxflow()
 
     compute_connected_components();
 
+    std::vector<std::future<void>> jobs;
+
+    std::cout << "Spawning " << n_components + 1 << " jobs\n";
+
+    jobs.reserve(n_components + 1);
+
     for (size_t component_index = 0; component_index <= n_components;
          component_index++) {
-        while (true) {
-            // find a path from source to sink
-            size_t path_capacity;
-            auto path = find_source_sink_path(component_index, &path_capacity);
+        auto job = [&, component_index]() {
+            size_t it = 0;
+            while (true) {
+                // find a path from source to sink
+                size_t path_capacity;
+                auto   path
+                    = find_source_sink_path(component_index, &path_capacity);
 
-            if (path.size() == 0) {
-                // no path found
-                break;
-            }
+                if (path.size() == 0) {
+                    // no path found
+                    break;
+                }
 
-            for (EdgePtr e_ptr : path) {
-                // update flows
-                edges.update_flow(e_ptr, path_capacity);
+                for (EdgePtr e_ptr : path) {
+                    // update flows
+                    edges.update_flow(e_ptr, path_capacity);
+                }
+                it++;
             }
-        }
+        };
+        std::future<void> job_fut = thread_pool.enqueue(job);
+        // job_fut.get();
+
+        jobs.push_back(std::move(job_fut));
     }
+
+    std::cout << "Wait for jobs completion\n";
+
+    // wait for completion of the jobs
+    for (auto& j : jobs) {
+        j.get();
+    }
+
+    std::cout << "Maxflow jobs completed\n";
+
     state = ResidualComputed;
 }
 

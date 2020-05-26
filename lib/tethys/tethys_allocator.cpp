@@ -19,6 +19,7 @@ TethysAllocator::TethysAllocator(size_t table_size, size_t page_size)
     : allocation_graph(table_size), tethys_graph_size(table_size),
       page_size(page_size)
 {
+    std::cerr << "Allocator table size: " << table_size << "\n";
 }
 
 
@@ -106,7 +107,9 @@ void TethysAllocator::allocate()
     }
 
     // Step 2.: Compute max flow on the graph
-    allocation_graph.compute_residual_maxflow();
+    // allocation_graph.compute_residual_maxflow();
+    allocation_graph.parallel_compute_residual_maxflow();
+
     // here, we should transform the residual maxflow graph, obtained from the
     // Ford-Fulkerson algorithm to the real maxflow graph using the following
     // line: allocation_graph.transform_residual_to_flow();

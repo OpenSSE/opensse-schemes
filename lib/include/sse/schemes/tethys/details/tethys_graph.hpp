@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sse/schemes/utils/concat_iterator.hpp>
+#include <sse/schemes/utils/thread_pool.hpp>
 
 #include <cstdint>
 #include <sys/types.h>
@@ -320,7 +321,8 @@ public:
     void compute_connected_components();
 
     void compute_residual_maxflow();
-    void parallel_compute_residual_maxflow();
+    void parallel_compute_residual_maxflow(ThreadPool& thread_pool
+                                           = ThreadPool::global_thread_pool());
     void transform_residual_to_flow();
 
 

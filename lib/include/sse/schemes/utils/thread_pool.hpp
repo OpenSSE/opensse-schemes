@@ -45,6 +45,8 @@ public:
     void join();
     ~ThreadPool();
 
+    static ThreadPool& global_thread_pool();
+
 private:
     void register_thread(uint32_t id_pool);
 
@@ -60,6 +62,13 @@ private:
     std::condition_variable condition;
     bool                    stop;
 };
+
+inline ThreadPool& ThreadPool::global_thread_pool()
+{
+    static ThreadPool pool(std::thread::hardware_concurrency());
+
+    return pool;
+}
 
 // the constructor just launches some amount of workers
 inline ThreadPool::ThreadPool(uint32_t threads)
@@ -154,6 +163,6 @@ inline ThreadPool::~ThreadPool()
         }
     }
 
-    //    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
+    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
 }
 #endif

@@ -135,7 +135,14 @@ template<typename T, size_t ALIGNMENT>
 void awonvm_vector<T, ALIGNMENT>::reserve(size_t n)
 {
     if (!m_is_committed && n > size()) {
-        ftruncate(m_fd, n * sizeof(T));
+        int ret = ftruncate(m_fd, n * sizeof(T));
+        if (ret != 0) {
+            sse::logger::logger()->warn(
+                "Unable to reserver space for "
+                "awonvm_vector. ftrunctate returned {}. Error: {}",
+                ret,
+                strerror(errno));
+        }
     }
 }
 

@@ -154,7 +154,7 @@ void generate_random_store(
     builder_params.max_n_elements    = expected_tot_n_elements;
     builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
     builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
-    builder_params.epsilon           = 0.1;
+    builder_params.epsilon           = 0.3;
 
 
     size_t                                remaining_elts = n_elements;
@@ -203,6 +203,15 @@ void generate_random_store(
         list_index++;
         remaining_elts -= list_size;
     }
+
+    std::cerr
+        << "n = "
+        << n_elements
+               + list_index
+                     * StoreBuilder::value_encoder_type::kListControlValues
+        << "\n";
+    std::cerr << "setup n = " << builder_params.max_n_elements << "\n";
+
 
     std::cerr << list_index << " generated lists (" << average_n_lists
               << " expected average). Starting to build the data structure \n";

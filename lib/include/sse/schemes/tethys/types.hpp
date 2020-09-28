@@ -1,47 +1,22 @@
 #pragma once
 
+#include <sse/crypto/prf.hpp>
+
 namespace sse {
 namespace tethys {
 
 
-enum TethysAssignmentEdgeOrientation : uint8_t
-{
-    IncomingEdge = 0,
-    OutgoingEdge
-};
-struct TethysAssignmentInfo
-{
-    size_t                          list_length;
-    size_t                          assigned_list_length;
-    size_t                          dual_assigned_list_length;
-    TethysAssignmentEdgeOrientation edge_orientation;
+constexpr size_t kIdSize = 16; // 128 bits ids
+using id_type            = std::array<uint8_t, kIdSize>;
 
-    TethysAssignmentInfo(const details::Edge&            e,
-                         TethysAssignmentEdgeOrientation o)
-        : list_length(e.capacity), edge_orientation(o)
-    {
-        if (edge_orientation == OutgoingEdge) {
-            assigned_list_length      = e.flow;
-            dual_assigned_list_length = e.rec_flow;
-        } else {
-            assigned_list_length      = e.rec_flow;
-            dual_assigned_list_length = e.flow;
-        }
-    }
-};
+using id_prf_type = crypto::Prf<kIdSize>;
 
-template<class T>
-struct TethysStashSerializationValue
-{
-    const std::vector<T>* data;
-    TethysAssignmentInfo  assignement_info;
+constexpr size_t kSearchTokenSize = id_prf_type::kKeySize;
 
-    TethysStashSerializationValue(const std::vector<T>* d,
-                                  TethysAssignmentInfo  ai)
-        : data(d), assignement_info(std::move(ai))
-    {
-    }
-};
+using master_prf_type = crypto::Prf<kSearchTokenSize>;
+
+constexpr size_t kMasterPrfKeySize = master_prf_type::kKeySize;
+
 
 } // namespace tethys
 } // namespace sse

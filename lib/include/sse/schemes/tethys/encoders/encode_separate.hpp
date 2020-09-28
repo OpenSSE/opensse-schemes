@@ -159,6 +159,8 @@ struct EncodeSeparateEncoder
         return remaining_bytes;
     }
 
+    // This is the serialization algorithm for the stash, called from
+    // KVSerializer
     void serialize_key_value(std::ostream&                           out,
                              const Key&                              k,
                              const TethysStashSerializationValue<T>& v)

@@ -3,8 +3,8 @@
 
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
 #include <sse/schemes/abstractio/kv_serializer.hpp>
+#include <sse/schemes/tethys/core_types.hpp>
 #include <sse/schemes/tethys/details/tethys_allocator.hpp>
-#include <sse/schemes/tethys/types.hpp>
 
 #include <array>
 #include <fstream>

@@ -429,7 +429,8 @@ void test_tethys_builder(size_t n_elements)
         = n_elements + encoder_type::kListControlValues * average_n_lists;
 
 
-    const std::string test_dir = "encrypted_tethys_test";
+    const std::string test_dir       = "encrypted_tethys_test";
+    const std::string counter_db_dir = test_dir + "/counters";
 
     TethysStoreBuilderParam builder_params;
     builder_params.max_n_elements    = expected_tot_n_elements;
@@ -442,7 +443,9 @@ void test_tethys_builder(size_t n_elements)
     std::fill(prf_key.begin(), prf_key.end(), 0x00);
 
     TethysBuilder<store_builder_type> tethys_builder(
-        builder_params, sse::crypto::Key<kKeySize>(prf_key.data()));
+        builder_params,
+        counter_db_dir,
+        sse::crypto::Key<kKeySize>(prf_key.data()));
 }
 
 int main(int /*argc*/, const char** /*argv*/)

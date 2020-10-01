@@ -21,6 +21,7 @@ template<class BaseEncoder, size_t BLOCK_SIZE>
 class EncryptEncoder
 {
 public:
+    static constexpr size_t kEncodedPayloadSize = BLOCK_SIZE;
     static constexpr size_t kListControlValues
         = BaseEncoder::kListControlValues;
 

@@ -15,11 +15,15 @@
 namespace sse {
 namespace tethys {
 
+class EmptyDecoder
+{
+};
+
 template<size_t PAGE_SIZE,
          class Key,
          class T,
          class TethysHasher,
-         class ValueDecoder>
+         class ValueDecoder = EmptyDecoder>
 class TethysStore
 {
 public:
@@ -34,6 +38,14 @@ public:
         = std::function<void(std::unique_ptr<payload_type>, size_t)>;
 
     using get_list_callback_type = std::function<void(std::vector<T>)>;
+
+    struct BucketPair
+    {
+        size_t       index_0;
+        size_t       index_1;
+        payload_type payload_0;
+        payload_type payload_1;
+    };
 
     TethysStore(const std::string& table_path, const std::string& stash_path);
 
@@ -72,11 +84,7 @@ public:
                                       const payload_type& bucket_1,
                                       size_t              bucket_1_index);
 
-    void get_buckets(const Key&    key,
-                     payload_type& bucket_0,
-                     size_t&       bucket_0_index,
-                     payload_type& bucket_1,
-                     size_t&       bucket_1_index);
+    BucketPair get_buckets(const Key& key);
 
     std::vector<T> get_list(const Key& key, ValueDecoder& decoder);
 
@@ -90,8 +98,13 @@ public:
     void async_get_list(const Key& key, get_list_callback_type callback);
 
 private:
+    void load_stash(const std::string& stash_path, EmptyDecoder& stash_decoder)
+    {
+    }
+
     template<class StashDecoder>
     void load_stash(const std::string& stash_path, StashDecoder& stash_decoder);
+
 
     template<class CallbackState>
     void async_get_list_helper(get_list_callback_type callback,
@@ -150,6 +163,19 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::load_stash(
     }
 }
 
+// template<size_t PAGE_SIZE,
+//          class Key,
+//          class T,
+//          class TethysHasher,
+//          class ValueDecoder>
+// template<>
+// void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::load_stash(
+//     const std::string& stash_path,
+//     EmptyDecoder&      stash_decoder)
+// {
+//     // do nothing
+// }
+
 template<size_t PAGE_SIZE,
          class Key,
          class T,
@@ -201,23 +227,25 @@ template<size_t PAGE_SIZE,
          class T,
          class TethysHasher,
          class ValueDecoder>
-void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::get_buckets(
-    const Key&    key,
-    payload_type& bucket_0,
-    size_t&       bucket_0_index,
-    payload_type& bucket_1,
-    size_t&       bucket_1_index)
+typename TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::BucketPair
+TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::get_buckets(
+    const Key& key)
 {
     details::TethysAllocatorKey tethys_key = TethysHasher()(key);
+
+    BucketPair bucket_pair;
 
     size_t half_graph_size       = table_size / 2;
     size_t remaining_graphs_size = table_size - half_graph_size;
 
-    bucket_0_index = tethys_key.h[0] % half_graph_size;
-    bucket_1_index = half_graph_size + tethys_key.h[1] % remaining_graphs_size;
+    bucket_pair.index_0 = tethys_key.h[0] % half_graph_size;
+    bucket_pair.index_1
+        = half_graph_size + tethys_key.h[1] % remaining_graphs_size;
 
-    bucket_0 = table.get(bucket_0_index);
-    bucket_1 = table.get(bucket_1_index);
+    bucket_pair.payload_0 = table.get(bucket_pair.index_0);
+    bucket_pair.payload_1 = table.get(bucket_pair.index_1);
+
+    return bucket_pair;
 }
 
 template<size_t PAGE_SIZE,
@@ -236,12 +264,13 @@ std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
         stash_res = stash_it->second;
     }
 
-    payload_type bucket_0, bucket_1;
-    size_t       index_0, index_1;
-
-    get_buckets(key, bucket_0, index_0, bucket_1, index_1);
-    std::vector<T> bucket_res
-        = decode_list(key, decoder, bucket_0, index_0, bucket_1, index_1);
+    BucketPair     buckets    = get_buckets(key);
+    std::vector<T> bucket_res = decode_list(key,
+                                            decoder,
+                                            buckets.payload_0,
+                                            buckets.index_0,
+                                            buckets.payload_1,
+                                            buckets.index_1);
 
     bucket_res.reserve(bucket_res.size() + stash_res.size());
     bucket_res.insert(bucket_res.end(), stash_res.begin(), stash_res.end());

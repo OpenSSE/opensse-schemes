@@ -5,6 +5,8 @@
 namespace sse {
 namespace tethys {
 
+using index_type = uint64_t;
+
 constexpr size_t kTethysCoreKeySize
     = 16; // 128 bits key that will be splitted in two 64 bits bucket indices
 using tethys_core_key_type = std::array<uint8_t, kTethysCoreKeySize>;
@@ -18,6 +20,11 @@ using master_prf_type = crypto::Prf<kSearchTokenSize>;
 
 constexpr size_t kMasterPrfKeySize = master_prf_type::kKeySize;
 
+struct SearchRequest
+{
+    search_token_type search_token;
+    uint32_t          block_count;
+};
 
 } // namespace tethys
 } // namespace sse

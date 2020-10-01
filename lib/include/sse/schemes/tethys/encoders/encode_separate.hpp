@@ -16,6 +16,8 @@ namespace encoders {
 template<class Key, class T, size_t PAGESIZE>
 struct EncodeSeparateEncoder
 {
+    static constexpr size_t kEncodedPayloadSize = PAGESIZE;
+
     using key_type   = Key;
     using value_type = T;
 

@@ -24,6 +24,10 @@ public:
     using value_encoder_type = typename builder_type::value_encoder_type;
     using stash_encoder_type = typename builder_type::stash_encoder_type;
 
+    static_assert(
+        std::is_same<index_type, typename StoreBuilder::value_type>::value,
+        "Store value type must be index_type");
+
     TethysBuilder(const TethysStoreBuilderParam&   params,
                   const std::string&               counter_db_path,
                   crypto::Key<kMasterPrfKeySize>&& master_key);
@@ -67,8 +71,8 @@ void TethysBuilder<StoreBuilder>::build(value_encoder_type& encoder,
 
 
 template<class StoreBuilder>
-void TethysBuilder<StoreBuilder>::insert_list(const std::string&  keyword,
-                                              std::list<uint64_t> indexes)
+void TethysBuilder<StoreBuilder>::insert_list(const std::string&    keyword,
+                                              std::list<index_type> indexes)
 {
     size_t counter       = 0;
     size_t block_counter = 0;
@@ -106,8 +110,9 @@ void TethysBuilder<StoreBuilder>::insert_list(const std::string&  keyword,
     // insert the list
     store_builder.insert_list(key, block);
 
-    // add the counter to the counter db
-    counter_db.set(keyword, counter);
+    // add the block counter to the counter db
+    // counter_db.set(keyword, counter);
+    counter_db.set(keyword, block_counter);
 }
 
 } // namespace tethys

@@ -8,6 +8,7 @@
 
 #include <sse/crypto/key.hpp>
 #include <sse/crypto/prf.hpp>
+#include <sse/dbparser/json/DBParserJSON.h>
 
 #include <array>
 #include <list>
@@ -155,6 +156,8 @@ public:
     void insert_list(const std::string&         keyword,
                      const std::list<uint64_t>& indexes);
 
+    bool load_inverted_index(const std::string& path);
+
     void build();
 
 private:
@@ -194,6 +197,48 @@ void TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::build()
 {
     stash_encoder_type stash_encoder;
     generic_builder.build(encryption_encoder, stash_encoder);
+}
+
+
+template<size_t PAGE_SIZE,
+         class ValueEncoder,
+         class StashEncoder,
+         class TethysHasher>
+bool TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
+    load_inverted_index(const std::string& path)
+{
+    try {
+        dbparser::DBParserJSON parser(path.c_str());
+
+        std::atomic_size_t counter(0);
+
+        auto add_list_callback
+            = [this, &counter](const std::string         kw,
+                               const std::list<unsigned> docs) {
+                  this->insert_list(
+                      kw, std::list<index_type>(docs.begin(), docs.end()));
+                  counter++;
+
+                  if ((counter % 100) == 0) {
+                      logger::logger()->info("Loading: {} keywords processed",
+                                             counter);
+                  }
+              };
+
+
+        parser.addCallbackList(add_list_callback);
+
+        parser.parse();
+
+        logger::logger()->info("Loading: {} keywords processed", counter);
+
+        return true;
+    } catch (std::exception& e) {
+        logger::logger()->error("Failed to load file " + path + ": "
+                                + e.what());
+        return false;
+    }
+    return false;
 }
 
 } // namespace tethys

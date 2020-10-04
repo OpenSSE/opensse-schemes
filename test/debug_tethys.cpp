@@ -87,6 +87,7 @@ void test_tethys_builder(size_t n_elements)
         tethys_builder.insert_list("alpha", long_list);
         tethys_builder.insert_list("beta", {5, 6, 7, 8});
 
+        tethys_builder.load_inverted_index("../inverted_index_test.json");
 
         tethys_builder.build();
     }
@@ -104,6 +105,15 @@ void test_tethys_builder(size_t n_elements)
         auto sr  = client.search_request("alpha");
         auto bl  = server.search(sr);
         auto res = client.decode_search_results(sr, bl);
+
+        for (index_type i : res) {
+            std::cerr << i << ",";
+        }
+        std::cerr << "\n";
+
+        sr  = client.search_request("igualada");
+        bl  = server.search(sr);
+        res = client.decode_search_results(sr, bl);
 
         for (index_type i : res) {
             std::cerr << i << ",";

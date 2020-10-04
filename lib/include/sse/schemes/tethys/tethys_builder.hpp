@@ -15,9 +15,9 @@
 namespace sse {
 namespace tethys {
 
-
+namespace details {
 template<class StoreBuilder>
-class TethysBuilder
+class GenericTethysBuilder
 {
 public:
     using builder_type       = StoreBuilder;
@@ -28,12 +28,13 @@ public:
         std::is_same<index_type, typename StoreBuilder::value_type>::value,
         "Store value type must be index_type");
 
-    TethysBuilder(const TethysStoreBuilderParam&   params,
-                  const std::string&               counter_db_path,
-                  crypto::Key<kMasterPrfKeySize>&& master_key);
+    GenericTethysBuilder(const TethysStoreBuilderParam&   params,
+                         const std::string&               counter_db_path,
+                         crypto::Key<kMasterPrfKeySize>&& master_key);
 
 
-    void insert_list(const std::string& keyword, std::list<uint64_t> indexes);
+    void insert_list(const std::string&         keyword,
+                     const std::list<uint64_t>& indexes);
 
     void build();
     void build(value_encoder_type& encoder, stash_encoder_type& stash_encoder);
@@ -45,7 +46,7 @@ private:
 };
 
 template<class StoreBuilder>
-TethysBuilder<StoreBuilder>::TethysBuilder(
+GenericTethysBuilder<StoreBuilder>::GenericTethysBuilder(
     const TethysStoreBuilderParam&   builder_params,
     const std::string&               counter_db_path,
     crypto::Key<kMasterPrfKeySize>&& master_key)
@@ -55,15 +56,16 @@ TethysBuilder<StoreBuilder>::TethysBuilder(
 }
 
 template<class StoreBuilder>
-void TethysBuilder<StoreBuilder>::build()
+void GenericTethysBuilder<StoreBuilder>::build()
 {
     store_builder.build();
     counter_db.flush(true);
 }
 
 template<class StoreBuilder>
-void TethysBuilder<StoreBuilder>::build(value_encoder_type& encoder,
-                                        stash_encoder_type& stash_encoder)
+void GenericTethysBuilder<StoreBuilder>::build(
+    value_encoder_type& encoder,
+    stash_encoder_type& stash_encoder)
 {
     store_builder.build(encoder, stash_encoder);
     counter_db.flush(true);
@@ -71,8 +73,9 @@ void TethysBuilder<StoreBuilder>::build(value_encoder_type& encoder,
 
 
 template<class StoreBuilder>
-void TethysBuilder<StoreBuilder>::insert_list(const std::string&    keyword,
-                                              std::list<index_type> indexes)
+void GenericTethysBuilder<StoreBuilder>::insert_list(
+    const std::string&         keyword,
+    const std::list<uint64_t>& indexes)
 {
     size_t counter       = 0;
     size_t block_counter = 0;
@@ -113,6 +116,81 @@ void TethysBuilder<StoreBuilder>::insert_list(const std::string&    keyword,
     // add the block counter to the counter db
     // counter_db.set(keyword, counter);
     counter_db.set(keyword, block_counter);
+}
+} // namespace details
+
+
+template<size_t PAGE_SIZE,
+         class ValueEncoder,
+         class StashEncoder = ValueEncoder,
+         class TethysHasher = IdentityHasher>
+class TethysBuilder
+{
+public:
+    static constexpr size_t kPageSize = PAGE_SIZE;
+
+    using inner_encoder_type = ValueEncoder;
+    using encrypt_encoder_type
+        = encoders::EncryptEncoder<inner_encoder_type, kPageSize>;
+    using stash_encoder_type = StashEncoder;
+
+    using tethys_store_type = TethysStoreBuilder<kPageSize,
+                                                 tethys_core_key_type,
+                                                 index_type,
+                                                 TethysHasher,
+                                                 encrypt_encoder_type,
+                                                 stash_encoder_type>;
+    ;
+
+    static constexpr size_t kEncryptionKeySize = encrypt_encoder_type::kKeySize;
+
+    TethysBuilder(const TethysStoreBuilderParam&    params,
+                  const std::string&                counter_db_path,
+                  crypto::Key<kMasterPrfKeySize>&&  master_key,
+                  crypto::Key<kEncryptionKeySize>&& encryption_key);
+
+    void insert_list(const std::string&         keyword,
+                     const std::list<uint64_t>& indexes);
+
+    void build();
+
+private:
+    details::GenericTethysBuilder<tethys_store_type> generic_builder;
+    encrypt_encoder_type                             encryption_encoder;
+};
+
+template<size_t PAGE_SIZE,
+         class ValueEncoder,
+         class StashEncoder,
+         class TethysHasher>
+TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
+    TethysBuilder(const TethysStoreBuilderParam&    params,
+                  const std::string&                counter_db_path,
+                  crypto::Key<kMasterPrfKeySize>&&  master_key,
+                  crypto::Key<kEncryptionKeySize>&& encryption_key)
+    : generic_builder(params, counter_db_path, master_key),
+      encryption_encoder(encryption_key)
+{
+}
+
+template<size_t PAGE_SIZE,
+         class ValueEncoder,
+         class StashEncoder,
+         class TethysHasher>
+void TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
+    insert_list(const std::string& keyword, const std::list<uint64_t>& indexes)
+{
+    generic_builder.insert_list(keyword, indexes);
+}
+
+template<size_t PAGE_SIZE,
+         class ValueEncoder,
+         class StashEncoder,
+         class TethysHasher>
+void TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::build()
+{
+    stash_encoder_type stash_encoder;
+    generic_builder.build(encryption_encoder, stash_encoder);
 }
 
 } // namespace tethys

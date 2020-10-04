@@ -444,7 +444,7 @@ void test_tethys_builder(size_t n_elements)
     std::array<uint8_t, kKeySize> prf_key;
     std::fill(prf_key.begin(), prf_key.end(), 0x00);
 
-    TethysBuilder<store_builder_type> tethys_builder(
+    GenericTethysBuilder<store_builder_type> tethys_builder(
         builder_params,
         counter_db_dir,
         sse::crypto::Key<kKeySize>(prf_key.data()));

@@ -42,5 +42,19 @@ struct KeyedBucketPair
     BucketPair<N>        buckets;
 };
 
+struct IdentityHasher
+{
+    details::TethysAllocatorKey operator()(const tethys_core_key_type& key)
+    {
+        details::TethysAllocatorKey tk;
+        static_assert(sizeof(tk.h) == sizeof(tethys_core_key_type),
+                      "Invalid source key size");
+
+        memcpy(tk.h, key.data(), sizeof(tk.h));
+
+        return tk;
+    }
+};
+
 } // namespace tethys
 } // namespace sse

@@ -78,8 +78,13 @@ void test_tethys_builder(size_t n_elements)
             sse::crypto::Key<kKeySize>(prf_key.data()),
             encryption_key);
 
+        std::list<index_type> long_list;
+        for (size_t i = 0; i < 3 * kMaxListSize + 7; i++) {
+            long_list.push_back(i);
+        }
 
-        tethys_builder.insert_list("alpha", {1, 2, 3, 4});
+
+        tethys_builder.insert_list("alpha", long_list);
         tethys_builder.insert_list("beta", {5, 6, 7, 8});
 
 
@@ -100,7 +105,7 @@ void test_tethys_builder(size_t n_elements)
         auto bl  = server.search(sr);
         auto res = client.decode_search_results(sr, bl);
 
-        for (auto&& i : res) {
+        for (index_type i : res) {
             std::cerr << i << ",";
         }
         std::cerr << "\n";

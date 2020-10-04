@@ -90,7 +90,7 @@ void GenericTethysBuilder<StoreBuilder>::insert_list(
         counter++;
         block.push_back(id);
 
-        if (block.size() == StoreBuilder::kBucketSize) {
+        if (block.size() == StoreBuilder::kMaxListSize) {
             // generate the core key
             tethys_core_key_type key
                 = details::derive_core_key(keyword_token, block_counter);
@@ -107,8 +107,10 @@ void GenericTethysBuilder<StoreBuilder>::insert_list(
     }
 
     // take care of the incomplete block
-    typename StoreBuilder::key_type key;
     // generate the key
+    tethys_core_key_type key
+        = details::derive_core_key(keyword_token, block_counter);
+
 
     // insert the list
     store_builder.insert_list(key, block);

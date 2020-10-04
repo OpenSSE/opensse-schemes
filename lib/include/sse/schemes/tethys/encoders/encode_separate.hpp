@@ -37,7 +37,7 @@ struct EncodeSeparateEncoder
     static constexpr size_t kListControlValues
         = 2 * (kAdditionalKeyEntriesPerList + kListLengthEntriesNumber);
 
-    static constexpr size_t kBucketControlValues = 1;
+    static constexpr size_t kBucketControlValues = 0;
 
     size_t start_block_encoding(uint8_t* buffer, size_t table_index)
     {

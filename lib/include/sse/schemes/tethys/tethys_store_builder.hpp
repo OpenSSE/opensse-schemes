@@ -47,6 +47,8 @@ public:
     using payload_type                   = std::array<uint8_t, kPayloadSize>;
 
     static constexpr size_t kBucketSize = PAGE_SIZE / sizeof(T);
+    static constexpr size_t kMaxListSize
+        = kBucketSize - value_encoder_type::kListControlValues;
 
     explicit TethysStoreBuilder(TethysStoreBuilderParam p);
 
@@ -91,7 +93,7 @@ TethysStoreBuilder<PAGE_SIZE,
                    ValueEncoder,
                    StashEncoder>::TethysStoreBuilder(TethysStoreBuilderParam p)
     : params(std::move(p)),
-      allocator(params.graph_size(kBucketSize), PAGE_SIZE / sizeof(T))
+      allocator(params.graph_size(kBucketSize), kBucketSize)
 {
 }
 

@@ -19,16 +19,8 @@ class TethysClient
 {
 public:
     static constexpr size_t kServerBucketSize = ValueDecoder::kPayloadSize;
-    using server_bucket_type = std::array<uint8_t, kServerBucketSize>;
+    using keyed_bucket_pair_type = KeyedBucketPair<kServerBucketSize>;
 
-    struct KeyedBucketPair
-    {
-        tethys_core_key_type key;
-        size_t               index_0;
-        size_t               index_1;
-        server_bucket_type   payload_0;
-        server_bucket_type   payload_1;
-    };
 
     TethysClient(const std::string&               counter_db_path,
                  const std::string&               stash_path,
@@ -56,9 +48,9 @@ public:
                                  bool               log_not_found = true) const;
 
     std::vector<index_type> decode_search_results(
-        const SearchRequest&         req,
-        std::vector<KeyedBucketPair> bucket_pairs,
-        ValueDecoder&                decoder);
+        const SearchRequest&                req,
+        std::vector<keyed_bucket_pair_type> bucket_pairs,
+        ValueDecoder&                       decoder);
 
 private:
     template<class StashDecoder>
@@ -109,19 +101,19 @@ void TethysClient<ValueDecoder>::load_stash(const std::string& stash_path,
 template<class ValueDecoder>
 
 std::vector<index_type> TethysClient<ValueDecoder>::decode_search_results(
-    const SearchRequest&         req,
-    std::vector<KeyedBucketPair> keyed_bucket_pairs,
-    ValueDecoder&                decoder)
+    const SearchRequest&                req,
+    std::vector<keyed_bucket_pair_type> keyed_bucket_pairs,
+    ValueDecoder&                       decoder)
 {
     std::vector<index_type> results;
 
-    for (const KeyedBucketPair& key_bucket : keyed_bucket_pairs) {
+    for (const keyed_bucket_pair_type& key_bucket : keyed_bucket_pairs) {
         std::vector<index_type> bucket_res
             = decoder.decode_buckets(key_bucket.key,
-                                     key_bucket.payload_0,
-                                     key_bucket.index_0,
-                                     key_bucket.payload_1,
-                                     key_bucket.index_1);
+                                     key_bucket.buckets.payload_0,
+                                     key_bucket.buckets.index_0,
+                                     key_bucket.buckets.payload_1,
+                                     key_bucket.buckets.index_1);
 
         results.reserve(results.size() + bucket_res.size());
         results.insert(results.end(), bucket_res.begin(), bucket_res.end());

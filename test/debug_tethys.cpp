@@ -5,6 +5,7 @@
 #include <sse/schemes/tethys/encoders/encode_separate.hpp>
 #include <sse/schemes/tethys/tethys_builder.hpp>
 #include <sse/schemes/tethys/tethys_client.hpp>
+#include <sse/schemes/tethys/tethys_server.hpp>
 #include <sse/schemes/tethys/tethys_store.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
 

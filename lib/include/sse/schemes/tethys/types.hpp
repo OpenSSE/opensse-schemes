@@ -26,5 +26,21 @@ struct SearchRequest
     uint32_t          block_count;
 };
 
+template<size_t N>
+struct BucketPair
+{
+    size_t                 index_0;
+    size_t                 index_1;
+    std::array<uint8_t, N> payload_0;
+    std::array<uint8_t, N> payload_1;
+};
+
+template<size_t N>
+struct KeyedBucketPair
+{
+    tethys_core_key_type key;
+    BucketPair<N>        buckets;
+};
+
 } // namespace tethys
 } // namespace sse

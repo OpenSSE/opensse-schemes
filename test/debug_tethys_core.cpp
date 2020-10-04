@@ -1,4 +1,4 @@
-#include "debug_tethys_utils.hpp"
+#include "debug_tethys_core_utils.hpp"
 
 #include <sse/schemes/tethys/details/tethys_graph.hpp>
 #include <sse/schemes/tethys/encoders/encode_encrypt.hpp>

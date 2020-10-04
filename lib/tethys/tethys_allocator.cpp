@@ -107,8 +107,8 @@ void TethysAllocator::allocate()
     }
 
     // Step 2.: Compute max flow on the graph
-    // allocation_graph.compute_residual_maxflow();
-    allocation_graph.parallel_compute_residual_maxflow();
+    allocation_graph.compute_residual_maxflow();
+    // allocation_graph.parallel_compute_residual_maxflow();
 
     // here, we should transform the residual maxflow graph, obtained from the
     // Ford-Fulkerson algorithm to the real maxflow graph using the following

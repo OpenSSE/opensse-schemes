@@ -127,5 +127,6 @@ add_sanitizers(diana_debug)
 add_sanitizers(janus_debug)
 add_sanitizers(oceanus_debug)
 add_sanitizers(tethys_core_debug)
+add_sanitizers(tethys_debug)
 
 coverage_evaluate()

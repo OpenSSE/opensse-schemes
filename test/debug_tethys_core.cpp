@@ -3,9 +3,6 @@
 #include <sse/schemes/tethys/details/tethys_graph.hpp>
 #include <sse/schemes/tethys/encoders/encode_encrypt.hpp>
 #include <sse/schemes/tethys/encoders/encode_separate.hpp>
-#include <sse/schemes/tethys/tethys_builder.hpp>
-#include <sse/schemes/tethys/tethys_client.hpp>
-#include <sse/schemes/tethys/tethys_server.hpp>
 #include <sse/schemes/tethys/tethys_store.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
 
@@ -409,47 +406,6 @@ void async_encrypted_store_queries(const size_t n_queries,
                                          encryption_decoder);
 }
 
-void test_tethys_builder(size_t n_elements)
-{
-    using inner_encoder_type
-        = encoders::EncodeSeparateEncoder<key_type, value_type, kPageSize>;
-    using encoder_type
-        = encoders::EncryptEncoder<inner_encoder_type, kPageSize>;
-    using store_builder_type = TethysStoreBuilder<kPageSize,
-                                                  key_type,
-                                                  value_type,
-                                                  Hasher,
-                                                  encoder_type>;
-
-
-    constexpr size_t kMaxListSize
-        = kPageSize / sizeof(value_type)
-          - store_builder_type::value_encoder_type::kListControlValues;
-    const size_t average_n_lists = 2 * (n_elements / kMaxListSize + 1);
-
-    const size_t expected_tot_n_elements
-        = n_elements + encoder_type::kListControlValues * average_n_lists;
-
-
-    const std::string test_dir       = "encrypted_tethys_test";
-    const std::string counter_db_dir = test_dir + "/counters";
-
-    TethysStoreBuilderParam builder_params;
-    builder_params.max_n_elements    = expected_tot_n_elements;
-    builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
-    builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
-    builder_params.epsilon           = 0.3;
-
-    constexpr size_t              kKeySize = master_prf_type::kKeySize;
-    std::array<uint8_t, kKeySize> prf_key;
-    std::fill(prf_key.begin(), prf_key.end(), 0x00);
-
-    GenericTethysBuilder<store_builder_type> tethys_builder(
-        builder_params,
-        counter_db_dir,
-        sse::crypto::Key<kKeySize>(prf_key.data()));
-}
-
 int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
@@ -457,7 +413,7 @@ int main(int /*argc*/, const char** /*argv*/)
     // test_graphs();
     // test_store();
 
-    sse::Benchmark::set_benchmark_file("benchmark_lat_tethys.out");
+    sse::Benchmark::set_benchmark_file("benchmark_lat_tethys_core.out");
 
     const size_t n_elts = 1 << 23;
     // const size_t n_elts    = 1 << 27;

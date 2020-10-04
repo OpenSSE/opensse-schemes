@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sse/schemes/tethys/details/tethys_allocator.hpp>
+
 #include <sse/crypto/prf.hpp>
 
 namespace sse {

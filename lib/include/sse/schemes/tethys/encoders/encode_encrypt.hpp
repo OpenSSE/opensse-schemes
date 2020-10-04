@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sse/schemes/tethys/types.hpp>
+#include <sse/schemes/tethys/core_types.hpp>
 
 #include <sse/crypto/prf.hpp>
 

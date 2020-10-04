@@ -8,6 +8,9 @@ add_executable(oceanus_debug debug_oceanus.cpp)
 target_link_libraries(oceanus_debug OpenSSE::schemes)
 add_executable(tethys_core_debug debug_tethys_core.cpp)
 target_link_libraries(tethys_core_debug OpenSSE::schemes)
+add_executable(tethys_debug debug_tethys.cpp)
+target_link_libraries(tethys_debug OpenSSE::schemes)
+
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     include(GoogleTest)

@@ -144,10 +144,10 @@ public:
 
     static constexpr size_t kEncryptionKeySize = encrypt_encoder_type::kKeySize;
 
-    TethysBuilder(const TethysStoreBuilderParam&    params,
-                  const std::string&                counter_db_path,
-                  crypto::Key<kMasterPrfKeySize>&&  master_key,
-                  crypto::Key<kEncryptionKeySize>&& encryption_key);
+    TethysBuilder(const TethysStoreBuilderParam&          params,
+                  const std::string&                      counter_db_path,
+                  crypto::Key<kMasterPrfKeySize>&&        master_key,
+                  std::array<uint8_t, kEncryptionKeySize> encryption_key);
 
     void insert_list(const std::string&         keyword,
                      const std::list<uint64_t>& indexes);
@@ -164,11 +164,11 @@ template<size_t PAGE_SIZE,
          class StashEncoder,
          class TethysHasher>
 TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
-    TethysBuilder(const TethysStoreBuilderParam&    params,
-                  const std::string&                counter_db_path,
-                  crypto::Key<kMasterPrfKeySize>&&  master_key,
-                  crypto::Key<kEncryptionKeySize>&& encryption_key)
-    : generic_builder(params, counter_db_path, master_key),
+    TethysBuilder(const TethysStoreBuilderParam&          params,
+                  const std::string&                      counter_db_path,
+                  crypto::Key<kMasterPrfKeySize>&&        master_key,
+                  std::array<uint8_t, kEncryptionKeySize> encryption_key)
+    : generic_builder(params, counter_db_path, std::move(master_key)),
       encryption_encoder(encryption_key)
 {
 }

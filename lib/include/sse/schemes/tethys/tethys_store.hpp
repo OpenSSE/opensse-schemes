@@ -39,14 +39,6 @@ public:
 
     using get_list_callback_type = std::function<void(std::vector<T>)>;
 
-    struct BucketPair
-    {
-        size_t       index_0;
-        size_t       index_1;
-        payload_type payload_0;
-        payload_type payload_1;
-    };
-
     TethysStore(const std::string& table_path, const std::string& stash_path);
 
     // we have to specificy templated constructors inside the class definition
@@ -84,7 +76,7 @@ public:
                                       const payload_type& bucket_1,
                                       size_t              bucket_1_index);
 
-    BucketPair get_buckets(const Key& key);
+    BucketPair<PAGE_SIZE> get_buckets(const Key& key);
 
     std::vector<T> get_list(const Key& key, ValueDecoder& decoder);
 
@@ -100,6 +92,8 @@ public:
 private:
     void load_stash(const std::string& stash_path, EmptyDecoder& stash_decoder)
     {
+        (void)stash_path;
+        (void)stash_decoder;
     }
 
     template<class StashDecoder>
@@ -227,13 +221,15 @@ template<size_t PAGE_SIZE,
          class T,
          class TethysHasher,
          class ValueDecoder>
-typename TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::BucketPair
-TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::get_buckets(
-    const Key& key)
+BucketPair<PAGE_SIZE> TethysStore<PAGE_SIZE,
+                                  Key,
+                                  T,
+                                  TethysHasher,
+                                  ValueDecoder>::get_buckets(const Key& key)
 {
     details::TethysAllocatorKey tethys_key = TethysHasher()(key);
 
-    BucketPair bucket_pair;
+    BucketPair<PAGE_SIZE> bucket_pair;
 
     size_t half_graph_size       = table_size / 2;
     size_t remaining_graphs_size = table_size - half_graph_size;
@@ -264,8 +260,8 @@ std::vector<T> TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::
         stash_res = stash_it->second;
     }
 
-    BucketPair     buckets    = get_buckets(key);
-    std::vector<T> bucket_res = decode_list(key,
+    BucketPair<PAGE_SIZE> buckets    = get_buckets(key);
+    std::vector<T>        bucket_res = decode_list(key,
                                             decoder,
                                             buckets.payload_0,
                                             buckets.index_0,

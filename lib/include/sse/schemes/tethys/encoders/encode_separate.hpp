@@ -14,12 +14,17 @@ namespace tethys {
 namespace encoders {
 
 template<class Key, class T, size_t PAGESIZE>
+struct EncodeSeparateDecoder;
+
+template<class Key, class T, size_t PAGESIZE>
 struct EncodeSeparateEncoder
 {
     static constexpr size_t kEncodedPayloadSize = PAGESIZE;
 
     using key_type   = Key;
     using value_type = T;
+
+    using decoder_type = EncodeSeparateDecoder<Key, T, PAGESIZE>;
 
     static constexpr size_t kAdditionalKeyEntriesPerList
         = sizeof(Key) / sizeof(T) + (sizeof(Key) % sizeof(T) == 0 ? 0 : 1);
@@ -248,6 +253,11 @@ struct EncodeSeparateEncoder
 template<class Key, class T, size_t PAGESIZE>
 struct EncodeSeparateDecoder
 {
+    using encoder_type = EncodeSeparateEncoder<Key, T, PAGESIZE>;
+
+
+    static constexpr size_t kEncodedPayloadSize = PAGESIZE;
+
     static constexpr size_t kAdditionalKeyEntriesPerList
         = EncodeSeparateEncoder<Key, T, PAGESIZE>::kAdditionalKeyEntriesPerList;
 

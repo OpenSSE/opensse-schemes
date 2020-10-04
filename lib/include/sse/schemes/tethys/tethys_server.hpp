@@ -2,6 +2,7 @@
 
 
 #include <sse/schemes/tethys/details/tethys_utils.hpp>
+#include <sse/schemes/tethys/tethys_store.hpp>
 #include <sse/schemes/tethys/types.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
 
@@ -13,6 +14,14 @@
 
 namespace sse {
 namespace tethys {
+
+
+template<size_t PAGE_SIZE>
+using tethys_server_store_type = TethysStore<PAGE_SIZE,
+                                             tethys_core_key_type,
+                                             index_type,
+                                             IdentityHasher,
+                                             EmptyDecoder>;
 
 template<class Store>
 class TethysServer

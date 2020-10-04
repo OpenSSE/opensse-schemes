@@ -18,29 +18,30 @@ template<class ValueDecoder>
 class TethysClient
 {
 public:
-    static constexpr size_t kServerBucketSize = ValueDecoder::kPayloadSize;
+    static constexpr size_t kServerBucketSize
+        = ValueDecoder::kEncodedPayloadSize;
     using keyed_bucket_pair_type = KeyedBucketPair<kServerBucketSize>;
 
     using decrypt_decoder_type
         = encoders::DecryptDecoder<ValueDecoder, kServerBucketSize>;
     static constexpr size_t kDecryptionKeySize = decrypt_decoder_type::kKeySize;
 
-    TethysClient(const std::string&                counter_db_path,
-                 const std::string&                stash_path,
-                 crypto::Key<kMasterPrfKeySize>&&  master_key,
-                 crypto::Key<kDecryptionKeySize>&& decryption_key);
+    TethysClient(const std::string&                      counter_db_path,
+                 const std::string&                      stash_path,
+                 crypto::Key<kMasterPrfKeySize>&&        master_key,
+                 std::array<uint8_t, kDecryptionKeySize> decryption_key);
 
 
     // we have to specificy templated constructors inside the class definition
     // (they do not have a name that can be 'templated')
 
     template<class StashDecoder = ValueDecoder>
-    TethysClient(const std::string&                counter_db_path,
-                 const std::string&                stash_path,
-                 StashDecoder&                     stash_decoder,
-                 crypto::Key<kMasterPrfKeySize>&&  master_key,
-                 crypto::Key<kDecryptionKeySize>&& decryption_key)
-        : counter_db(counter_db_path), master_prf(master_key),
+    TethysClient(const std::string&                      counter_db_path,
+                 const std::string&                      stash_path,
+                 StashDecoder&                           stash_decoder,
+                 crypto::Key<kMasterPrfKeySize>&&        master_key,
+                 std::array<uint8_t, kDecryptionKeySize> decryption_key)
+        : counter_db(counter_db_path), master_prf(std::move(master_key)),
           decrypt_decoder(decryption_key)
     {
         load_stash(stash_path, stash_decoder);
@@ -71,11 +72,11 @@ private:
 
 template<class ValueDecoder>
 TethysClient<ValueDecoder>::TethysClient(
-    const std::string&                counter_db_path,
-    const std::string&                stash_path,
-    crypto::Key<kMasterPrfKeySize>&&  master_key,
-    crypto::Key<kDecryptionKeySize>&& decryption_key)
-    : counter_db(counter_db_path), master_prf(master_key),
+    const std::string&                      counter_db_path,
+    const std::string&                      stash_path,
+    crypto::Key<kMasterPrfKeySize>&&        master_key,
+    std::array<uint8_t, kDecryptionKeySize> decryption_key)
+    : counter_db(counter_db_path), master_prf(std::move(master_key)),
       decrypt_decoder(decryption_key)
 {
     ValueDecoder stash_decoder;
@@ -107,10 +108,34 @@ void TethysClient<ValueDecoder>::load_stash(const std::string& stash_path,
 }
 
 template<class ValueDecoder>
+SearchRequest TethysClient<ValueDecoder>::search_request(
+    const std::string& keyword,
+    bool               log_not_found) const
+{
+    uint32_t block_counter;
+    bool     found = counter_db.get(keyword, block_counter);
+
+    if (!found) {
+        if (log_not_found) {
+            logger::logger()->info("No matching counter found for keyword "
+                                   + keyword);
+        }
+        block_counter = 0;
+    }
+
+    SearchRequest sr;
+    sr.block_count  = block_counter;
+    sr.search_token = master_prf.prf(keyword);
+
+    return sr;
+}
+
+template<class ValueDecoder>
 std::vector<index_type> TethysClient<ValueDecoder>::decode_search_results(
     const SearchRequest&                req,
     std::vector<keyed_bucket_pair_type> keyed_bucket_pairs)
 {
+    (void)req;
     std::vector<index_type> results;
 
     for (const keyed_bucket_pair_type& key_bucket : keyed_bucket_pairs) {

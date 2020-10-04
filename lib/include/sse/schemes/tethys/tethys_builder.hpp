@@ -114,8 +114,9 @@ void GenericTethysBuilder<StoreBuilder>::insert_list(
     store_builder.insert_list(key, block);
 
     // add the block counter to the counter db
+    // this represents the number of blocks in the db (hence the +1)
     // counter_db.set(keyword, counter);
-    counter_db.set(keyword, block_counter);
+    counter_db.set(keyword, block_counter + 1);
 }
 } // namespace details
 

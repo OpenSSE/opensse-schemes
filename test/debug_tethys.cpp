@@ -25,39 +25,94 @@ using namespace sse::tethys::details;
 
 constexpr size_t kPageSize = 4096; // 4 kB
 
+using inner_encoder_type = encoders::
+    EncodeSeparateEncoder<tethys_core_key_type, index_type, kPageSize>;
+using inner_decoder_type = inner_encoder_type::decoder_type;
 
-void test_tethys_builder(size_t n_elements)
+using tethys_builder_type = TethysBuilder<kPageSize, inner_encoder_type>;
+
+using value_encoder_type
+    = tethys_builder_type::tethys_store_type::value_encoder_type;
+
+
+constexpr size_t kMaxListSize
+    = kPageSize / sizeof(index_type) - value_encoder_type::kListControlValues;
+
+
+std::string counter_path(std::string path)
 {
-    using inner_encoder_type = encoders::
-        EncodeSeparateEncoder<tethys_core_key_type, index_type, kPageSize>;
-    using inner_decoder_type = inner_encoder_type::decoder_type;
-
-    using tethys_builder_type = TethysBuilder<kPageSize, inner_encoder_type>;
-
-    using value_encoder_type
-        = tethys_builder_type::tethys_store_type::value_encoder_type;
-
-    constexpr size_t kMaxListSize = kPageSize / sizeof(index_type)
-                                    - value_encoder_type::kListControlValues;
-    const size_t average_n_lists = 2 * (n_elements / kMaxListSize + 1);
-
-    const size_t expected_tot_n_elements
-        = n_elements + value_encoder_type::kListControlValues * average_n_lists;
+    return path + "/counters";
+}
 
 
-    const std::string test_dir = "encrypted_tethys_test";
+std::string table_path(std::string path)
+{
+    return path + "/tethys_table.bin";
+}
 
-    if (!sse::utility::create_directory(test_dir, static_cast<mode_t>(0700))) {
-        throw std::runtime_error(test_dir + ": unable to create directory");
+
+std::string stash_path(std::string path)
+{
+    return path + "/tethys_stash.bin";
+}
+
+
+tethys_builder_type create_tethys_builder(
+    const std::string&      path,
+    sse::crypto::Key<32>&&  derivation_key,
+    std::array<uint8_t, 32> encryption_key,
+    size_t                  n_elts)
+{
+    if (!sse::utility::create_directory(path, static_cast<mode_t>(0700))) {
+        throw std::runtime_error(path + ": unable to create directory");
     }
 
-    const std::string counter_db_dir = test_dir + "/counters";
+    const size_t average_n_lists = 2 * (n_elts / kMaxListSize + 1);
+
+    const size_t expected_tot_n_elements
+        = n_elts + value_encoder_type::kListControlValues * average_n_lists;
+
+    const std::string counter_db_dir = counter_path(path);
 
     TethysStoreBuilderParam builder_params;
     builder_params.max_n_elements    = expected_tot_n_elements;
-    builder_params.tethys_table_path = test_dir + "/tethys_table.bin";
-    builder_params.tethys_stash_path = test_dir + "/tethys_stash.bin";
+    builder_params.tethys_table_path = table_path(path);
+    builder_params.tethys_stash_path = stash_path(path);
     builder_params.epsilon           = 0.3;
+
+
+    return tethys_builder_type(builder_params,
+                               counter_db_dir,
+                               std::move(derivation_key),
+                               encryption_key);
+}
+
+
+tethys_builder_type create_load_tethys_builder(
+    const std::string&      path,
+    sse::crypto::Key<32>&&  derivation_key,
+    std::array<uint8_t, 32> encryption_key,
+    size_t                  n_elts,
+    const std::string&      json_path)
+{
+    auto builder = create_tethys_builder(
+        path, std::move(derivation_key), std::move(encryption_key), n_elts);
+
+    builder.load_inverted_index(json_path);
+
+    return builder;
+}
+
+void print_list(const std::vector<index_type>& list)
+{
+    for (index_type i : list) {
+        std::cerr << i << ",";
+    }
+    std::cerr << "\n";
+}
+void test_tethys_builder(size_t n_elements)
+{
+    const std::string test_dir = "encrypted_tethys_test";
 
     constexpr size_t              kKeySize = master_prf_type::kKeySize;
     std::array<uint8_t, kKeySize> prf_key;
@@ -72,11 +127,11 @@ void test_tethys_builder(size_t n_elements)
     std::fill(encryption_key.begin(), encryption_key.end(), 0x11);
 
     {
-        tethys_builder_type tethys_builder(
-            builder_params,
-            counter_db_dir,
-            sse::crypto::Key<kKeySize>(prf_key.data()),
-            encryption_key);
+        auto tethys_builder
+            = create_tethys_builder(test_dir,
+                                    sse::crypto::Key<kKeySize>(prf_key.data()),
+                                    encryption_key,
+                                    n_elements);
 
         std::list<index_type> long_list;
         for (size_t i = 0; i < 3 * kMaxListSize + 7; i++) {
@@ -94,34 +149,77 @@ void test_tethys_builder(size_t n_elements)
     std::cerr << "Launch client & server\n";
     {
         TethysServer<tethys_server_store_type<kPageSize>> server(
-            builder_params.tethys_table_path);
+            table_path(test_dir));
 
         TethysClient<inner_decoder_type> client(
-            counter_db_dir,
-            builder_params.tethys_stash_path,
+            counter_path(test_dir),
+            stash_path(test_dir),
             sse::crypto::Key<kKeySize>(client_prf_key.data()),
             encryption_key);
 
         auto sr  = client.search_request("alpha");
         auto bl  = server.search(sr);
         auto res = client.decode_search_results(sr, bl);
+        print_list(res);
 
-        for (index_type i : res) {
-            std::cerr << i << ",";
-        }
-        std::cerr << "\n";
 
         sr  = client.search_request("igualada");
         bl  = server.search(sr);
         res = client.decode_search_results(sr, bl);
-
-        for (index_type i : res) {
-            std::cerr << i << ",";
-        }
-        std::cerr << "\n";
+        print_list(res);
     }
 }
 
+
+void test_wikipedia(const std::string& db_path,
+                    const std::string& wp_inverted_index)
+{
+    constexpr size_t              kKeySize = master_prf_type::kKeySize;
+    std::array<uint8_t, kKeySize> prf_key;
+    std::fill(prf_key.begin(), prf_key.end(), 0x00);
+
+    std::array<uint8_t, kKeySize> client_prf_key = prf_key;
+
+    constexpr size_t kEncryptionKeySize
+        = tethys_builder_type::kEncryptionKeySize;
+
+    std::array<uint8_t, kEncryptionKeySize> encryption_key;
+    std::fill(encryption_key.begin(), encryption_key.end(), 0x11);
+
+    {
+        auto builder = create_load_tethys_builder(
+            db_path,
+            sse::crypto::Key<kKeySize>(prf_key.data()),
+            encryption_key,
+            140E6,
+            wp_inverted_index);
+
+        builder.build();
+    }
+    std::cerr << "Launch client & server\n";
+    {
+        TethysServer<tethys_server_store_type<kPageSize>> server(
+            table_path(db_path));
+
+        TethysClient<inner_decoder_type> client(
+            counter_path(db_path),
+            stash_path(db_path),
+            sse::crypto::Key<kKeySize>(client_prf_key.data()),
+            encryption_key);
+
+        auto sr  = client.search_request("tripolitan");
+        auto bl  = server.search(sr);
+        auto res = client.decode_search_results(sr, bl);
+
+        print_list(res);
+
+        sr  = client.search_request("dvdfutur");
+        bl  = server.search(sr);
+        res = client.decode_search_results(sr, bl);
+
+        print_list(res);
+    }
+}
 
 int main(int /*argc*/, const char** /*argv*/)
 {
@@ -135,9 +233,14 @@ int main(int /*argc*/, const char** /*argv*/)
     const size_t n_elts = 1 << 23;
     // const size_t n_elts    = 1 << 27;
     const size_t n_queries = 1 << 20;
+    (void)n_elts;
     (void)n_queries;
 
-    test_tethys_builder(n_elts);
+    // test_tethys_builder(n_elts);
+    test_wikipedia(
+        "wp_tethys",
+        // "../inverted_index_test.json");
+        "/home/rbost/Documents/WP_inv_index/inverted_index_full.json");
 
     sse::crypto::cleanup_crypto_lib();
 

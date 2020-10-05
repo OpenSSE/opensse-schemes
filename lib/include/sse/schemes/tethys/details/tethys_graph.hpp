@@ -287,8 +287,10 @@ public:
     }
 
     TethysGraph(const TethysGraph&) = delete;
+    TethysGraph(TethysGraph&&)      = default;
 
     TethysGraph& operator=(const TethysGraph&) = delete;
+    TethysGraph& operator=(TethysGraph&&) = default;
 
     EdgePtr add_edge(size_t value_index, size_t cap, size_t start, size_t end);
 

@@ -210,18 +210,22 @@ bool TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
     try {
         dbparser::DBParserJSON parser(path.c_str());
 
-        std::atomic_size_t counter(0);
+        std::atomic_size_t kw_counter(0);
+        std::atomic_size_t entries_counter(0);
 
         auto add_list_callback
             = [this, &counter](const std::string         kw,
                                const std::list<unsigned> docs) {
                   this->insert_list(
                       kw, std::list<index_type>(docs.begin(), docs.end()));
-                  counter++;
+                  kw_counter++;
+                  entries_counter += docs.size();
 
-                  if ((counter % 100) == 0) {
-                      logger::logger()->info("Loading: {} keywords processed",
-                                             counter);
+                  if ((kw_counter % 1000) == 0) {
+                      logger::logger()->info(
+                          "Loading: {} keywords processed, {} entries",
+                          kw_counter,
+                          entries_counter);
                   }
               };
 
@@ -230,7 +234,9 @@ bool TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
 
         parser.parse();
 
-        logger::logger()->info("Loading: {} keywords processed", counter);
+        logger::logger()->info("Loading: {} keywords processed, {} entries",
+                               kw_counter,
+                               entries_counter);
 
         return true;
     } catch (std::exception& e) {

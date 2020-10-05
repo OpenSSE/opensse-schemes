@@ -1,5 +1,7 @@
 #include "tethys/details/tethys_graph.hpp"
 
+#include <sse/schemes/utils/logger.hpp>
+
 #include <cassert>
 #include <climits>
 
@@ -402,6 +404,9 @@ void TethysGraph::compute_residual_maxflow()
             "Invalid inner state. State should be Building.");
     }
 
+    size_t computed_capacity = 0;
+    size_t it                = 0;
+
     while (true) {
         // find a path from source to sink
         size_t path_capacity;
@@ -416,7 +421,23 @@ void TethysGraph::compute_residual_maxflow()
             // update flows
             edges.update_flow(e_ptr, path_capacity);
         }
+
+        it++;
+        computed_capacity += path_capacity;
+
+        if ((it % 1000) == 0) {
+            logger::logger()->info(
+                "maxflow computation: {} iterations, computed capacity: {}",
+                it,
+                computed_capacity);
+        }
     }
+
+    logger::logger()->info(
+        "maxflow computation completed: {} iterations, computed capacity: {}",
+        it,
+        computed_capacity);
+
     state = ResidualComputed;
 }
 
@@ -435,10 +456,12 @@ void TethysGraph::parallel_compute_residual_maxflow(ThreadPool& thread_pool)
 
     jobs.reserve(n_components + 1);
 
+    std::atomic_size_t computed_capacity{0};
+    std::atomic_size_t it{0};
+
     for (size_t component_index = 0; component_index <= n_components;
          component_index++) {
         auto job = [&, component_index]() {
-            size_t it = 0;
             while (true) {
                 // find a path from source to sink
                 size_t path_capacity;
@@ -455,6 +478,14 @@ void TethysGraph::parallel_compute_residual_maxflow(ThreadPool& thread_pool)
                     edges.update_flow(e_ptr, path_capacity);
                 }
                 it++;
+                computed_capacity += path_capacity;
+
+                if ((it % 1000) == 0) {
+                    logger::logger()->info("parallel maxflow computation: {} "
+                                           "iterations, computed capacity: {}",
+                                           it,
+                                           computed_capacity);
+                }
             }
         };
         std::future<void> job_fut = thread_pool.enqueue(job);
@@ -469,6 +500,11 @@ void TethysGraph::parallel_compute_residual_maxflow(ThreadPool& thread_pool)
     for (auto& j : jobs) {
         j.get();
     }
+
+    logger::logger()->info("parallel maxflow computation completed: {} "
+                           "iterations, computed capacity: {}",
+                           it,
+                           computed_capacity);
 
     std::cout << "Maxflow jobs completed\n";
 

@@ -4,6 +4,7 @@
 #include <sse/schemes/tethys/details/tethys_utils.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
 #include <sse/schemes/tethys/types.hpp>
+#include <sse/schemes/utils/logger.hpp>
 #include <sse/schemes/utils/rocksdb_wrapper.hpp>
 
 #include <sse/crypto/key.hpp>
@@ -214,8 +215,8 @@ bool TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
         std::atomic_size_t entries_counter(0);
 
         auto add_list_callback
-            = [this, &counter](const std::string         kw,
-                               const std::list<unsigned> docs) {
+            = [this, &kw_counter, &entries_counter](
+                  const std::string kw, const std::list<unsigned> docs) {
                   this->insert_list(
                       kw, std::list<index_type>(docs.begin(), docs.end()));
                   kw_counter++;

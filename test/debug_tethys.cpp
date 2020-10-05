@@ -239,7 +239,6 @@ int main(int /*argc*/, const char** /*argv*/)
     // test_tethys_builder(n_elts);
     test_wikipedia(
         "wp_tethys",
-        // "../inverted_index_test.json");
         "/home/rbost/Documents/WP_inv_index/inverted_index_full.json");
 
     sse::crypto::cleanup_crypto_lib();

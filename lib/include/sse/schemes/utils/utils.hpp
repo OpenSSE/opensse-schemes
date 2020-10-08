@@ -54,6 +54,7 @@ bool is_directory(const std::string& path);
 bool exists(const std::string& path);
 bool create_directory(const std::string& path, mode_t mode);
 bool remove_directory(const std::string& path);
+bool remove_file(const std::string& path);
 
 int     open_fd(const std::string& filename, bool direct_io);
 ssize_t file_size(int fd);

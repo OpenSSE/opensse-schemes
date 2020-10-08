@@ -11,6 +11,8 @@ target_link_libraries(tethys_core_debug OpenSSE::schemes)
 add_executable(tethys_debug debug_tethys.cpp)
 target_link_libraries(tethys_debug OpenSSE::schemes)
 
+add_executable(pluto_debug debug_pluto.cpp)
+target_link_libraries(pluto_debug OpenSSE::schemes)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     include(GoogleTest)

@@ -150,6 +150,11 @@ bool remove_directory(const std::string& path)
 }
 
 
+bool remove_file(const std::string& path)
+{
+    return unlink(path.c_str()) == 0;
+}
+
 int open_fd(const std::string& filename, bool direct_io)
 {
     int flags = (O_CREAT | O_RDWR);

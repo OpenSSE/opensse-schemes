@@ -44,6 +44,8 @@ public:
     awonvm_vector(const std::string& path, bool direct_io = false);
     ~awonvm_vector();
 
+    awonvm_vector(awonvm_vector&&);
+
     size_t push_back(const T& val);
     size_t async_push_back(const T& val);
 
@@ -122,6 +124,14 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
 
         m_size.store(file_size / sizeof(T));
     }
+}
+template<typename T, size_t ALIGNMENT>
+awonvm_vector<T, ALIGNMENT>::awonvm_vector(awonvm_vector&& vec)
+    : m_filename(vec.m_filename), m_use_direct_io(vec.m_use_direct_io),
+      m_fd(vec.m_fd), m_device_page_size(vec.m_device_page_size),
+      m_io_scheduler(std::move(vec.m_io_scheduler))
+{
+    vec.m_fd = 0;
 }
 
 template<typename T, size_t ALIGNMENT>

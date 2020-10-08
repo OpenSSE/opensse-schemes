@@ -3,6 +3,7 @@
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
 #include <sse/schemes/oceanus/details/cuckoo.hpp>
 #include <sse/schemes/utils/optional.hpp>
+#include <sse/schemes/utils/utils.hpp>
 
 #include <cmath>
 
@@ -45,6 +46,8 @@ public:
     using payload_type = std::array<uint8_t, kPayloadSize>;
 
     explicit CuckooBuilder(CuckooBuilderParam p);
+    CuckooBuilder(CuckooBuilder&&) = default;
+
     ~CuckooBuilder();
 
     void insert(const Key& key, const T& val);
@@ -234,6 +237,9 @@ void CuckooBuilder<PAGE_SIZE,
         }
     }
     cuckoo_table.commit();
+
+    // delete the data file
+    utility::remove_file(params.value_file_path);
 }
 
 template<size_t PAGE_SIZE,

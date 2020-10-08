@@ -170,6 +170,13 @@ void test_tethys_builder(size_t n_elements)
     }
 }
 
+// const std::string wp_path = "/home/rbost/Documents/WP_inv_index/"
+//                             "inverted_index_100000.json";
+// const size_t kDBSize = 1E5;
+
+const std::string wp_path = "/home/rbost/Documents/WP_inv_index/"
+                            "inverted_index_full.json";
+const size_t kDBSize = 150e6;
 
 void test_wikipedia(const std::string& db_path,
                     const std::string& wp_inverted_index)
@@ -186,12 +193,14 @@ void test_wikipedia(const std::string& db_path,
     std::array<uint8_t, kEncryptionKeySize> encryption_key;
     std::fill(encryption_key.begin(), encryption_key.end(), 0x11);
 
+    (void)wp_inverted_index;
+
     {
         auto builder = create_load_tethys_builder(
             db_path,
             sse::crypto::Key<kKeySize>(prf_key.data()),
             encryption_key,
-            140E6,
+            kDBSize,
             wp_inverted_index);
 
         builder.build();
@@ -207,11 +216,12 @@ void test_wikipedia(const std::string& db_path,
             sse::crypto::Key<kKeySize>(client_prf_key.data()),
             encryption_key);
 
-        auto sr  = client.search_request("tripolitan");
+        auto sr  = client.search_request("excav");
         auto bl  = server.search(sr);
         auto res = client.decode_search_results(sr, bl);
 
         print_list(res);
+        std::cerr << "Size : " << res.size() << "\n";
 
         sr  = client.search_request("dvdfutur");
         bl  = server.search(sr);
@@ -224,22 +234,12 @@ void test_wikipedia(const std::string& db_path,
 int main(int /*argc*/, const char** /*argv*/)
 {
     sse::crypto::init_crypto_lib();
-    // test_dfs();
-    // test_graphs();
-    // test_store();
 
     sse::Benchmark::set_benchmark_file("benchmark_lat_tethys.out");
 
-    const size_t n_elts = 1 << 23;
-    // const size_t n_elts    = 1 << 27;
-    const size_t n_queries = 1 << 20;
-    (void)n_elts;
-    (void)n_queries;
 
     // test_tethys_builder(n_elts);
-    test_wikipedia(
-        "wp_tethys",
-        "/home/rbost/Documents/WP_inv_index/inverted_index_full.json");
+    test_wikipedia("wp_tethys", wp_path);
 
     sse::crypto::cleanup_crypto_lib();
 

@@ -220,7 +220,13 @@ bool TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
                   this->insert_list(
                       kw, std::list<index_type>(docs.begin(), docs.end()));
                   kw_counter++;
-                  entries_counter += docs.size();
+                  size_t size = docs.size();
+
+                  //   if (size > 512) {
+                  //   logger::logger()->info(
+                  //   "Large list. Keyword: {}, {} matches", kw, size);
+                  //   }
+                  entries_counter += size;
 
                   if ((kw_counter % 1000) == 0) {
                       logger::logger()->info(

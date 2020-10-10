@@ -61,13 +61,24 @@ ssize_t file_size(int fd);
 
 std::string hex_string(const std::string& in);
 
-template<size_t N>
-std::string hex_string(const std::array<uint8_t, N>& in)
+// template<size_t N>
+// std::string hex_string(const std::array<uint8_t, N>& in)
+// {
+//     std::ostringstream out;
+//     for (unsigned char c : in) {
+//         out << std::hex << std::setw(2) << std::setfill('0')
+//             << static_cast<uint>(c);
+//     }
+//     return out.str();
+// }
+
+template<typename T, size_t N>
+std::string hex_string(const std::array<T, N>& in)
 {
     std::ostringstream out;
     for (unsigned char c : in) {
-        out << std::hex << std::setw(2) << std::setfill('0')
-            << static_cast<uint>(c);
+        out << std::hex << std::setw(2 * sizeof(T)) << std::setfill('0')
+            << static_cast<uint64_t>(c);
     }
     return out.str();
 }

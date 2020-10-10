@@ -18,6 +18,7 @@ add_library(
     oceanus/cuckoo.cpp
     tethys/tethys_graph.cpp
     tethys/tethys_allocator.cpp
+    pluto/rocksdb_store.cpp
 )
 # Add an alias
 add_library(OpenSSE::schemes ALIAS schemes)

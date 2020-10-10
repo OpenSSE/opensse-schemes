@@ -1,4 +1,5 @@
 #include <sse/schemes/pluto/pluto_builder.hpp>
+#include <sse/schemes/pluto/rocksdb_store.hpp>
 #include <sse/schemes/tethys/details/tethys_graph.hpp>
 #include <sse/schemes/tethys/encoders/encode_encrypt.hpp>
 #include <sse/schemes/tethys/encoders/encode_separate.hpp>
@@ -27,11 +28,14 @@ using namespace sse::oceanus;
 
 constexpr size_t kPageSize = 4096; // 4 kB
 
-using param_type = DefaultPlutoParams<kPageSize>;
+using default_param_type = DefaultPlutoParams<kPageSize>;
+using rocksdb_param_type = RocksDBPlutoParams<kPageSize>;
 
-constexpr size_t kTethysMaxListLength = param_type::kTethysMaxListLength;
+constexpr size_t kTethysMaxListLength
+    = default_param_type::kTethysMaxListLength;
 
-using pluto_builder_type = PlutoBuilder<param_type>;
+using pluto_builder_type         = PlutoBuilder<default_param_type>;
+using rocksdb_pluto_builder_type = PlutoBuilder<rocksdb_param_type>;
 
 std::string cuckoo_table_path(std::string path)
 {
@@ -43,6 +47,11 @@ std::string cuckoo_value_file_path(std::string path)
     return path + "/cuckoo_table.bin.tmp";
 }
 
+
+std::string rocksdb_path(std::string path)
+{
+    return path + "/full_blocks";
+}
 
 std::string tethys_table_path(std::string path)
 {
@@ -69,7 +78,7 @@ pluto_builder_type create_pluto_builder(const std::string&      path,
 
     const size_t expected_tot_n_elements
         = n_elts
-          + param_type::tethys_encoder_type::kListControlValues
+          + default_param_type::tethys_encoder_type::kListControlValues
                 * average_n_lists;
 
     TethysStoreBuilderParam tethys_builder_params;
@@ -83,7 +92,7 @@ pluto_builder_type create_pluto_builder(const std::string&      path,
     cuckoo_builder_params.cuckoo_table_path = cuckoo_table_path(path);
 
     cuckoo_builder_params.max_n_elements
-        = n_elts / param_type::kPlutoListLength;
+        = n_elts / default_param_type::kPlutoListLength;
     cuckoo_builder_params.epsilon          = 0.3;
     cuckoo_builder_params.max_search_depth = 200;
 
@@ -94,15 +103,52 @@ pluto_builder_type create_pluto_builder(const std::string&      path,
 }
 
 
-pluto_builder_type create_load_pluto_builder(
+rocksdb_pluto_builder_type create_rocksdb_pluto_builder(
     const std::string&      path,
     sse::crypto::Key<32>&&  derivation_key,
     std::array<uint8_t, 32> encryption_key,
-    size_t                  n_elts,
-    const std::string&      json_path)
+    size_t                  n_elts)
 {
-    auto builder = create_pluto_builder(
+    if (!sse::utility::create_directory(path, static_cast<mode_t>(0700))) {
+        throw std::runtime_error(path + ": unable to create directory");
+    }
+
+    const size_t average_n_lists = 2 * (n_elts / kTethysMaxListLength + 1);
+
+    const size_t expected_tot_n_elements
+        = n_elts
+          + default_param_type::tethys_encoder_type::kListControlValues
+                * average_n_lists;
+
+    TethysStoreBuilderParam tethys_builder_params;
+    tethys_builder_params.max_n_elements    = expected_tot_n_elements;
+    tethys_builder_params.tethys_table_path = tethys_table_path(path);
+    tethys_builder_params.tethys_stash_path = tethys_stash_path(path);
+    tethys_builder_params.epsilon           = 0.3;
+
+    GenericRocksDBStoreParams rocksdb_builder_params;
+    rocksdb_builder_params.path = rocksdb_path(path);
+    rocksdb_builder_params.rocksdb_options
+        = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
+
+
+    return rocksdb_pluto_builder_type(tethys_builder_params,
+                                      rocksdb_builder_params,
+                                      std::move(derivation_key),
+                                      encryption_key);
+}
+
+auto create_load_pluto_builder(const std::string&      path,
+                               sse::crypto::Key<32>&&  derivation_key,
+                               std::array<uint8_t, 32> encryption_key,
+                               size_t                  n_elts,
+                               const std::string&      json_path)
+{
+    // auto builder = create_pluto_builder(
+    //     path, std::move(derivation_key), std::move(encryption_key), n_elts);
+    auto builder = create_rocksdb_pluto_builder(
         path, std::move(derivation_key), std::move(encryption_key), n_elts);
+
 
     builder.load_inverted_index(json_path);
 

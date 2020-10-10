@@ -12,7 +12,7 @@ namespace oceanus {
 
 namespace details {
 
-size_t cuckoo_table_size(size_t n_elements, double epsilon)
+inline size_t cuckoo_table_size(size_t n_elements, double epsilon)
 {
     return std::ceil((1. + epsilon / 2.) * n_elements);
 };

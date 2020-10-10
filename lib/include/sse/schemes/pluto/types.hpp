@@ -9,7 +9,7 @@
 namespace sse {
 namespace pluto {
 
-using index_type = uint64_t;
+using index_type = tethys::index_type;
 
 struct PlutoKeySerializer
 {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <sse/schemes/oceanus/cuckoo.hpp>
 #include <sse/schemes/oceanus/oceanus_server_builder.hpp>
 #include <sse/schemes/pluto/types.hpp>
 #include <sse/schemes/tethys/details/tethys_utils.hpp>
@@ -32,13 +31,10 @@ public:
     static constexpr size_t kTethysMaxListSize
         = tethys_store_builder_type::kMaxListSize;
 
-    using cuckoo_builder_type
-        = oceanus::CuckooBuilder<Params::kPageSize,
-                                 tethys::tethys_core_key_type,
-                                 typename Params::cuckoo_value_type,
-                                 PlutoKeySerializer,
-                                 PlutoValueSerializer<Params>,
-                                 PlutoCuckooHasher>;
+    using ht_builder_type = typename Params::ht_builder_type;
+
+
+    using ht_builder_param_type = typename ht_builder_type::param_type;
 
 
     static constexpr size_t kEncryptionKeySize
@@ -46,7 +42,7 @@ public:
     static constexpr size_t kMasterPrfKeySize = tethys::kMasterPrfKeySize;
 
     PlutoBuilder(const tethys::TethysStoreBuilderParam&  tethys_builder_param,
-                 const oceanus::CuckooBuilderParam&      cuckoo_builder_param,
+                 const ht_builder_param_type&            ht_builder_param,
                  crypto::Key<kMasterPrfKeySize>&&        master_key,
                  std::array<uint8_t, kEncryptionKeySize> encryption_key);
 
@@ -60,7 +56,7 @@ public:
 
 private:
     tethys_store_builder_type tethys_store_builder;
-    cuckoo_builder_type       cuckoo_builder;
+    ht_builder_type           ht_builder;
 
     tethys::master_prf_type master_prf;
 
@@ -77,11 +73,11 @@ private:
 template<class Params>
 PlutoBuilder<Params>::PlutoBuilder(
     const tethys::TethysStoreBuilderParam&  tethys_builder_param,
-    const oceanus::CuckooBuilderParam&      cuckoo_builder_param,
+    const ht_builder_param_type&            ht_builder_param,
     crypto::Key<kMasterPrfKeySize>&&        master_key,
     std::array<uint8_t, kEncryptionKeySize> encryption_key)
-    : tethys_store_builder(tethys_builder_param),
-      cuckoo_builder(cuckoo_builder_param), master_prf(std::move(master_key)),
+    : tethys_store_builder(tethys_builder_param), ht_builder(ht_builder_param),
+      master_prf(std::move(master_key)),
       tethys_encryption_encoder(encryption_key)
 {
 }
@@ -94,7 +90,7 @@ void PlutoBuilder<Params>::build()
 
     logger::logger()->info("Commiting the cuckoo table");
 
-    cuckoo_builder.commit();
+    ht_builder.commit();
 
     logger::logger()->info("Finished commiting the cuckoo table");
 
@@ -134,11 +130,11 @@ void PlutoBuilder<Params>::insert_list(const std::string&         keyword,
                 keyword_token, block_counter);
 
             // transform the list an array
-            typename Params::cuckoo_value_type v = {0x00};
+            typename Params::ht_value_type v = {0x00};
             std::copy(block.begin(), block.end(), v.begin());
 
             // insert the list
-            cuckoo_builder.insert(key, v);
+            ht_builder.insert(key, v);
 
             block_counter++;
             block.clear();

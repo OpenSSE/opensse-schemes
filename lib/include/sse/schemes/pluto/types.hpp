@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sse/schemes/oceanus/cuckoo.hpp>
 #include <sse/schemes/oceanus/types.hpp>
 #include <sse/schemes/tethys/encoders/encode_encrypt.hpp>
 #include <sse/schemes/tethys/encoders/encode_separate.hpp>
@@ -9,6 +10,58 @@ namespace sse {
 namespace pluto {
 
 using index_type = uint64_t;
+
+struct PlutoKeySerializer
+{
+    static constexpr size_t serialization_length()
+    {
+        return tethys::kTethysCoreKeySize;
+    }
+    void serialize(const tethys::tethys_core_key_type& key, uint8_t* buffer)
+    {
+        memcpy(buffer, key.data(), tethys::kTethysCoreKeySize);
+    }
+};
+
+template<class PlutoParams>
+struct PlutoValueSerializer
+{
+    using value_type = typename PlutoParams::ht_value_type;
+    static_assert(
+        std::is_same<index_type, typename value_type::value_type>::value,
+        "Value types are not the same");
+    static constexpr size_t serialization_length()
+    {
+        return PlutoParams::kCuckooListLength * sizeof(index_type);
+    }
+    void serialize(const value_type& value, uint8_t* buffer)
+    {
+        assert(value.size() * sizeof(index_type) == serialization_length());
+        memcpy(buffer, value.data(), value.size() * sizeof(index_type));
+    }
+
+    value_type deserialize(const uint8_t* buffer)
+    {
+        value_type res;
+        memcpy(res.data(), buffer, res.size() * sizeof(index_type));
+
+        return res;
+    }
+};
+struct PlutoCuckooHasher
+{
+    oceanus::CuckooKey operator()(const tethys::tethys_core_key_type& key)
+    {
+        oceanus::CuckooKey ck;
+        static_assert(sizeof(ck.h) == sizeof(tethys::tethys_core_key_type),
+                      "Invalid source key size");
+
+        memcpy(ck.h, key.data(), sizeof(ck.h));
+
+        return ck;
+    }
+};
+
 
 template<size_t PAGE_SIZE>
 struct DefaultPlutoParams
@@ -41,60 +94,19 @@ struct DefaultPlutoParams
     static constexpr size_t kCuckooListLength
         = kPageSize / sizeof(index_type) - kCuckooKeyOverhead;
 
+    using ht_value_type   = std::array<index_type, kCuckooListLength>;
+    using ht_builder_type = oceanus::CuckooBuilder<
+        kPageSize,
+        tethys::tethys_core_key_type,
+        ht_value_type,
+        PlutoKeySerializer,
+        PlutoValueSerializer<DefaultPlutoParams<kPageSize>>,
+        PlutoCuckooHasher>;
 
-    using cuckoo_value_type = std::array<index_type, kCuckooListLength>;
 
     static constexpr size_t kPlutoListLength
         = std::min(kCuckooListLength, kTethysMaxListLength);
 };
 
-struct PlutoKeySerializer
-{
-    static constexpr size_t serialization_length()
-    {
-        return tethys::kTethysCoreKeySize;
-    }
-    void serialize(const tethys::tethys_core_key_type& key, uint8_t* buffer)
-    {
-        memcpy(buffer, key.data(), tethys::kTethysCoreKeySize);
-    }
-};
-
-template<class PlutoParams>
-struct PlutoValueSerializer
-{
-    using value_type = typename PlutoParams::cuckoo_value_type;
-    static constexpr size_t serialization_length()
-    {
-        return PlutoParams::kCuckooListLength * sizeof(index_type);
-    }
-    void serialize(const value_type& value, uint8_t* buffer)
-    {
-        assert(value.size() * sizeof(value_type::value_type)
-               == serialization_length());
-        memcpy(buffer, value.data(), value.size() * sizeof(index_type));
-    }
-
-    value_type deserialize(const uint8_t* buffer)
-    {
-        value_type res;
-        memcpy(res.data(), buffer, res.size() * sizeof(index_type));
-
-        return res;
-    }
-};
-struct PlutoCuckooHasher
-{
-    oceanus::CuckooKey operator()(const tethys::tethys_core_key_type& key)
-    {
-        oceanus::CuckooKey ck;
-        static_assert(sizeof(ck.h) == sizeof(tethys::tethys_core_key_type),
-                      "Invalid source key size");
-
-        memcpy(ck.h, key.data(), sizeof(ck.h));
-
-        return ck;
-    }
-};
 } // namespace pluto
 } // namespace sse

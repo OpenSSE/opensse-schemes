@@ -44,6 +44,7 @@ public:
                   "Cuckoo payload size incompatible with the page size");
 
     using payload_type = std::array<uint8_t, kPayloadSize>;
+    using param_type   = CuckooBuilderParam;
 
     explicit CuckooBuilder(CuckooBuilderParam p);
     CuckooBuilder(CuckooBuilder&&) = default;

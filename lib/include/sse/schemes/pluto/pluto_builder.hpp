@@ -65,6 +65,13 @@ private:
     tethys::master_prf_type master_prf;
 
     typename Params::tethys_encoder_type tethys_encryption_encoder;
+
+    size_t incomplete_lists{0};
+    size_t complete_lists{0};
+    size_t large_lists{0};
+
+    size_t incomplete_lists_entries{0};
+    size_t complete_lists_entries{0};
 };
 
 template<class Params>
@@ -83,9 +90,22 @@ PlutoBuilder<Params>::PlutoBuilder(
 template<class Params>
 void PlutoBuilder<Params>::build()
 {
+    logger::logger()->info("Start building Pluto");
+
+    logger::logger()->info("Commiting the cuckoo table");
+
     cuckoo_builder.commit();
+
+    logger::logger()->info("Finished commiting the cuckoo table");
+
+
     typename Params::tethys_stash_encoder_type stash_encoder;
+
+    logger::logger()->info("Building the Tethys store");
+
     tethys_store_builder.build(tethys_encryption_encoder, stash_encoder);
+
+    logger::logger()->info("Tethys store built");
 }
 
 
@@ -107,6 +127,8 @@ void PlutoBuilder<Params>::insert_list(const std::string&         keyword,
         block.push_back(id);
 
         if (block.size() == Params::kPlutoListLength) {
+            complete_lists++;
+            complete_lists_entries += block.size();
             // generate the core key
             tethys::tethys_core_key_type key = tethys::details::derive_core_key(
                 keyword_token, block_counter);
@@ -126,14 +148,23 @@ void PlutoBuilder<Params>::insert_list(const std::string&         keyword,
         }
     }
 
+    if (block_counter > 1) {
+        large_lists++;
+    }
     // take care of the incomplete block
-    // generate the key
-    tethys::tethys_core_key_type key
-        = tethys::details::derive_core_key(keyword_token, 0);
+
+    if (block.size() > 0) {
+        incomplete_lists++;
+        incomplete_lists_entries += block.size();
+
+        // generate the key
+        tethys::tethys_core_key_type key
+            = tethys::details::derive_core_key(keyword_token, 0);
 
 
-    // insert the list
-    tethys_store_builder.insert_list(key, block);
+        // insert the list
+        tethys_store_builder.insert_list(key, block);
+    }
 }
 
 
@@ -160,7 +191,7 @@ bool PlutoBuilder<Params>::load_inverted_index(const std::string& path)
                   //   }
                   entries_counter += size;
 
-                  if ((kw_counter % 1000) == 0) {
+                  if ((kw_counter % 10000) == 0) {
                       logger::logger()->info(
                           "Loading: {} keywords processed, {} entries",
                           kw_counter,
@@ -176,6 +207,15 @@ bool PlutoBuilder<Params>::load_inverted_index(const std::string& path)
         logger::logger()->info("Loading: {} keywords processed, {} entries",
                                kw_counter,
                                entries_counter);
+
+        logger::logger()->info(
+            "Loading: {} complete blocks for {} keywords, {} entries",
+            complete_lists,
+            large_lists,
+            complete_lists_entries);
+        logger::logger()->info("Loading: {} incomplete blocks, {} entries",
+                               incomplete_lists,
+                               incomplete_lists_entries);
 
         return true;
     } catch (std::exception& e) {

@@ -91,12 +91,13 @@ pluto_builder_type create_pluto_builder(const std::string&      path,
     cuckoo_builder_params.value_file_path   = cuckoo_value_file_path(path);
     cuckoo_builder_params.cuckoo_table_path = cuckoo_table_path(path);
 
-    cuckoo_builder_params.max_n_elements
-        = n_elts / default_param_type::kPlutoListLength;
+    cuckoo_builder_params.max_n_elements = (size_t)ceil(
+        ((double)n_elts) / ((double)default_param_type::kPlutoListLength));
     cuckoo_builder_params.epsilon          = 0.3;
     cuckoo_builder_params.max_search_depth = 200;
 
-    return pluto_builder_type(tethys_builder_params,
+    return pluto_builder_type(n_elts,
+                              tethys_builder_params,
                               cuckoo_builder_params,
                               std::move(derivation_key),
                               encryption_key);
@@ -132,7 +133,8 @@ rocksdb_pluto_builder_type create_rocksdb_pluto_builder(
         = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
 
 
-    return rocksdb_pluto_builder_type(tethys_builder_params,
+    return rocksdb_pluto_builder_type(n_elts,
+                                      tethys_builder_params,
                                       rocksdb_builder_params,
                                       std::move(derivation_key),
                                       encryption_key);
@@ -145,7 +147,7 @@ auto create_load_pluto_builder(const std::string&      path,
                                const std::string&      json_path)
 {
     // auto builder = create_pluto_builder(
-    //     path, std::move(derivation_key), std::move(encryption_key), n_elts);
+    // path, std::move(derivation_key), std::move(encryption_key), n_elts);
     auto builder = create_rocksdb_pluto_builder(
         path, std::move(derivation_key), std::move(encryption_key), n_elts);
 

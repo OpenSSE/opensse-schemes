@@ -41,7 +41,8 @@ public:
         = Params::tethys_encoder_type::kKeySize;
     static constexpr size_t kMasterPrfKeySize = tethys::kMasterPrfKeySize;
 
-    PlutoBuilder(const tethys::TethysStoreBuilderParam&  tethys_builder_param,
+    PlutoBuilder(size_t                                  n_elts,
+                 const tethys::TethysStoreBuilderParam&  tethys_builder_param,
                  const ht_builder_param_type&            ht_builder_param,
                  crypto::Key<kMasterPrfKeySize>&&        master_key,
                  std::array<uint8_t, kEncryptionKeySize> encryption_key);
@@ -62,9 +63,10 @@ private:
 
     typename Params::tethys_encoder_type tethys_encryption_encoder;
 
-    size_t incomplete_lists{0};
-    size_t complete_lists{0};
-    size_t large_lists{0};
+    const size_t n_elts;
+    size_t       incomplete_lists{0};
+    size_t       complete_lists{0};
+    size_t       large_lists{0};
 
     size_t incomplete_lists_entries{0};
     size_t complete_lists_entries{0};
@@ -72,13 +74,14 @@ private:
 
 template<class Params>
 PlutoBuilder<Params>::PlutoBuilder(
+    size_t                                  n_elts,
     const tethys::TethysStoreBuilderParam&  tethys_builder_param,
     const ht_builder_param_type&            ht_builder_param,
     crypto::Key<kMasterPrfKeySize>&&        master_key,
     std::array<uint8_t, kEncryptionKeySize> encryption_key)
     : tethys_store_builder(tethys_builder_param), ht_builder(ht_builder_param),
       master_prf(std::move(master_key)),
-      tethys_encryption_encoder(encryption_key)
+      tethys_encryption_encoder(encryption_key), n_elts(n_elts)
 {
 }
 
@@ -87,6 +90,22 @@ template<class Params>
 void PlutoBuilder<Params>::build()
 {
     logger::logger()->info("Start building Pluto");
+
+
+    logger::logger()->info("Filling the HT with empty blocks");
+
+    // for the security of the scheme, because we do not want to leak the
+    // number of full blocks, we have to insert a dummy block in the hash
+    // table
+    const size_t n_full_blocks = 1 + ((n_elts - 1) / Params::kPlutoListLength);
+
+    typename Params::ht_value_type v = {0x00};
+
+    for (size_t i = complete_lists; i < n_full_blocks; i++) {
+        tethys::tethys_core_key_type rand_key
+            = sse::crypto::random_bytes<uint8_t, tethys::kTethysCoreKeySize>();
+        ht_builder.insert(rand_key, v);
+    }
 
     logger::logger()->info("Commiting the cuckoo table");
 

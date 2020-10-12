@@ -66,29 +66,15 @@ std::string tethys_stash_path(std::string path)
     return path + "/tethys_stash.bin";
 }
 
+template<class Params>
+typename Params::ht_builder_type::param_type make_pluto_ht_params(
+    const std::string& path,
+    size_t             n_elts);
 
-pluto_builder_type create_pluto_builder(const std::string&      path,
-                                        sse::crypto::Key<32>&&  derivation_key,
-                                        std::array<uint8_t, 32> encryption_key,
-                                        size_t                  n_elts)
+template<>
+typename default_param_type::ht_builder_type::param_type make_pluto_ht_params<
+    default_param_type>(const std::string& path, size_t n_elts)
 {
-    if (!sse::utility::create_directory(path, static_cast<mode_t>(0700))) {
-        throw std::runtime_error(path + ": unable to create directory");
-    }
-
-    const size_t average_n_lists = 2 * (n_elts / kTethysMaxListLength + 1);
-
-    const size_t expected_tot_n_elements
-        = n_elts
-          + default_param_type::tethys_encoder_type::kListControlValues
-                * average_n_lists;
-
-    TethysStoreBuilderParam tethys_builder_params;
-    tethys_builder_params.max_n_elements    = expected_tot_n_elements;
-    tethys_builder_params.tethys_table_path = tethys_table_path(path);
-    tethys_builder_params.tethys_stash_path = tethys_stash_path(path);
-    tethys_builder_params.epsilon           = 0.3;
-
     CuckooBuilderParam cuckoo_builder_params;
     cuckoo_builder_params.value_file_path   = cuckoo_value_file_path(path);
     cuckoo_builder_params.cuckoo_table_path = cuckoo_table_path(path);
@@ -98,15 +84,24 @@ pluto_builder_type create_pluto_builder(const std::string&      path,
     cuckoo_builder_params.epsilon          = 0.3;
     cuckoo_builder_params.max_search_depth = 200;
 
-    return pluto_builder_type(n_elts,
-                              tethys_builder_params,
-                              cuckoo_builder_params,
-                              std::move(derivation_key),
-                              encryption_key);
+    return cuckoo_builder_params;
 }
 
+template<>
+typename rocksdb_param_type::ht_builder_type::param_type make_pluto_ht_params<
+    rocksdb_param_type>(const std::string& path, size_t n_elts)
+{
+    (void)n_elts;
+    GenericRocksDBStoreParams rocksdb_builder_params;
+    rocksdb_builder_params.path = rocksdb_path(path);
+    rocksdb_builder_params.rocksdb_options
+        = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
 
-rocksdb_pluto_builder_type create_rocksdb_pluto_builder(
+    return rocksdb_builder_params;
+}
+
+template<class Params>
+PlutoBuilder<Params> create_pluto_builder(
     const std::string&      path,
     sse::crypto::Key<32>&&  derivation_key,
     std::array<uint8_t, 32> encryption_key,
@@ -129,17 +124,12 @@ rocksdb_pluto_builder_type create_rocksdb_pluto_builder(
     tethys_builder_params.tethys_stash_path = tethys_stash_path(path);
     tethys_builder_params.epsilon           = 0.3;
 
-    GenericRocksDBStoreParams rocksdb_builder_params;
-    rocksdb_builder_params.path = rocksdb_path(path);
-    rocksdb_builder_params.rocksdb_options
-        = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
 
-
-    return rocksdb_pluto_builder_type(n_elts,
-                                      tethys_builder_params,
-                                      rocksdb_builder_params,
-                                      std::move(derivation_key),
-                                      encryption_key);
+    return PlutoBuilder<Params>(n_elts,
+                                tethys_builder_params,
+                                make_pluto_ht_params<Params>(path, n_elts),
+                                std::move(derivation_key),
+                                encryption_key);
 }
 
 auto create_load_pluto_builder(const std::string&      path,
@@ -148,10 +138,10 @@ auto create_load_pluto_builder(const std::string&      path,
                                size_t                  n_elts,
                                const std::string&      json_path)
 {
-    // auto builder = create_pluto_builder(
-    // path, std::move(derivation_key), std::move(encryption_key), n_elts);
-    auto builder = create_rocksdb_pluto_builder(
+    auto builder = create_pluto_builder<default_param_type>(
         path, std::move(derivation_key), std::move(encryption_key), n_elts);
+    // auto builder = create_rocksdb_pluto_builder(
+    // path, std::move(derivation_key), std::move(encryption_key), n_elts);
 
 
     builder.load_inverted_index(json_path);
@@ -262,30 +252,29 @@ void test_wikipedia(const std::string& db_path,
 
         builder.build();
     }
-    // std::cerr << "Launch client & server\n";
-    // {
-    //     TethysServer<tethys_server_store_type<kPageSize>> server(
-    //         table_path(db_path));
+    std::cerr << "Launch client & server\n";
+    {
+        // PlutoServer<tethys_server_store_type<kPageSize>> server(
+        // table_path(db_path));
 
-    //     TethysClient<inner_decoder_type> client(
-    //         counter_path(db_path),
-    //         stash_path(db_path),
-    //         sse::crypto::Key<kKeySize>(client_prf_key.data()),
-    //         encryption_key);
+        // PlutoClient<inner_decoder_type> client(
+        // stash_path(db_path),
+        // sse::crypto::Key<kKeySize>(client_prf_key.data()),
+        // encryption_key);
 
-    //     auto sr  = client.search_request("excav");
-    //     auto bl  = server.search(sr);
-    //     auto res = client.decode_search_results(sr, bl);
+        // auto sr  = client.search_request("excav");
+        // auto bl  = server.search(sr);
+        // auto res = client.decode_search_results(sr, bl);
 
-    //     print_list(res);
-    //     std::cerr << "Size : " << res.size() << "\n";
+        // print_list(res);
+        // std::cerr << "Size : " << res.size() << "\n";
 
-    //     sr  = client.search_request("dvdfutur");
-    //     bl  = server.search(sr);
-    //     res = client.decode_search_results(sr, bl);
+        // sr  = client.search_request("dvdfutur");
+        // bl  = server.search(sr);
+        // res = client.decode_search_results(sr, bl);
 
-    //     print_list(res);
-    // }
+        // print_list(res);
+    }
 }
 
 

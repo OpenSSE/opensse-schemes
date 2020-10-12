@@ -26,6 +26,8 @@ public:
         = encoders::DecryptDecoder<ValueDecoder, kServerBucketSize>;
     static constexpr size_t kDecryptionKeySize = decrypt_decoder_type::kKeySize;
 
+    using stash_type = std::map<tethys_core_key_type, std::vector<index_type>>;
+
     TethysClient(const std::string&                      counter_db_path,
                  const std::string&                      stash_path,
                  crypto::Key<kMasterPrfKeySize>&&        master_key,
@@ -58,13 +60,19 @@ public:
         const SearchRequest&                req,
         std::vector<keyed_bucket_pair_type> bucket_pairs);
 
+    static std::vector<index_type> decode_search_results(
+        const SearchRequest&                req,
+        std::vector<keyed_bucket_pair_type> bucket_pairs,
+        const stash_type&                   stash,
+        decrypt_decoder_type&               decrypt_decoder);
+
 private:
     template<class StashDecoder>
     void load_stash(const std::string& stash_path, StashDecoder& stash_decoder);
 
 
-    std::map<tethys_core_key_type, std::vector<index_type>> stash;
-    sophos::RocksDBCounter                                  counter_db;
+    stash_type             stash;
+    sophos::RocksDBCounter counter_db;
 
     master_prf_type      master_prf;
     decrypt_decoder_type decrypt_decoder;
@@ -134,6 +142,17 @@ template<class ValueDecoder>
 std::vector<index_type> TethysClient<ValueDecoder>::decode_search_results(
     const SearchRequest&                req,
     std::vector<keyed_bucket_pair_type> keyed_bucket_pairs)
+{
+    return TethysClient<ValueDecoder>::decode_search_results(
+        req, keyed_bucket_pairs, stash, decrypt_decoder);
+}
+
+template<class ValueDecoder>
+std::vector<index_type> TethysClient<ValueDecoder>::decode_search_results(
+    const SearchRequest&                req,
+    std::vector<keyed_bucket_pair_type> keyed_bucket_pairs,
+    const stash_type&                   stash,
+    decrypt_decoder_type&                       decrypt_decoder)
 {
     (void)req;
     std::vector<index_type> results;

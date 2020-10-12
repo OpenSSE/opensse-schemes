@@ -1,4 +1,6 @@
 #include <sse/schemes/pluto/pluto_builder.hpp>
+#include <sse/schemes/pluto/pluto_client.hpp>
+#include <sse/schemes/pluto/pluto_server.hpp>
 #include <sse/schemes/pluto/rocksdb_store.hpp>
 #include <sse/schemes/tethys/details/tethys_graph.hpp>
 #include <sse/schemes/tethys/encoders/encode_encrypt.hpp>

@@ -11,6 +11,18 @@ namespace pluto {
 
 using index_type = tethys::index_type;
 
+struct SearchRequest
+{
+    tethys::search_token_type search_token;
+};
+
+template<size_t PAGE_SIZE>
+struct SearchResponse
+{
+    std::vector<index_type>            complete_lists;
+    tethys::KeyedBucketPair<PAGE_SIZE> tethys_bucket_pair;
+};
+
 struct PlutoKeySerializer
 {
     static constexpr size_t serialization_length()

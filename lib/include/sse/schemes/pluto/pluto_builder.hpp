@@ -23,10 +23,6 @@ public:
         typename Params::tethys_hasher_type,
         typename Params::tethys_encoder_type,
         typename Params::tethys_stash_encoder_type>;
-    // = tethys::TethysSBuilder<Params::kPageSize,
-    //                         Params::tethys_inner_value_encoder_type,
-    //                         Params::stash_encoder_type,
-    //                         Params::tethys_hasher_type>;
 
     static constexpr size_t kTethysMaxListSize
         = tethys_store_builder_type::kMaxListSize;

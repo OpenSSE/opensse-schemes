@@ -61,7 +61,8 @@ auto PlutoServer<Params>::search(const SearchRequest& search_request)
             typename Params::ht_value_type v = hash_table.get(key);
 
             res.complete_lists.reserve(res.complete_lists.size() + v.size());
-            res.complete_lists.insert(v.end(), v.begin(), v.end());
+            res.complete_lists.insert(
+                res.complete_lists.end(), v.begin(), v.end());
         } catch (const std::out_of_range& e) {
             break;
         }

@@ -50,8 +50,7 @@ public:
     }
 
 
-    SearchRequest search_request(const std::string& keyword,
-                                 bool               log_not_found = true) const;
+    SearchRequest search_request(const std::string& keyword) const;
 
     std::vector<index_type> decode_search_results(
         const SearchRequest&                    req,
@@ -106,14 +105,25 @@ void PlutoClient<TethysValueDecoder>::load_stash(
 }
 
 template<class TethysValueDecoder>
+SearchRequest PlutoClient<TethysValueDecoder>::search_request(
+    const std::string& keyword) const
+{
+    SearchRequest sr;
+    sr.search_token = master_prf.prf(keyword);
+
+    return sr;
+}
+
+template<class TethysValueDecoder>
 std::vector<index_type> PlutoClient<TethysValueDecoder>::decode_search_results(
     const SearchRequest&                    req,
     const SearchResponse<kServerBucketSize> response)
 {
     // first get the results stored in Tethys
+    tethys::SearchRequest   treq = {req.search_token, 1};
     std::vector<index_type> results
         = tethys::TethysClient<TethysValueDecoder>::decode_search_results(
-            req, {response.tethys_bucket_pair}, stash, decrypt_decoder);
+            treq, {response.tethys_bucket_pair}, stash, decrypt_decoder);
 
     // and append the results from the hash table
     results.reserve(results.size() + response.complete_lists.size());

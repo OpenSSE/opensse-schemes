@@ -258,7 +258,7 @@ void test_wikipedia(const std::string& db_path,
     std::array<uint8_t, kKeySize> prf_key;
     std::fill(prf_key.begin(), prf_key.end(), 0x00);
 
-    // std::array<uint8_t, kKeySize> client_prf_key = prf_key;
+    std::array<uint8_t, kKeySize> client_prf_key = prf_key;
 
     constexpr size_t kEncryptionKeySize
         = pluto_builder_type::kEncryptionKeySize;
@@ -283,23 +283,25 @@ void test_wikipedia(const std::string& db_path,
         PlutoServer<Params> server(tethys_table_path(db_path),
                                    make_pluto_ht_params<Params>(db_path));
 
-        // PlutoClient<inner_decoder_type> client(
-        // stash_path(db_path),
-        // sse::crypto::Key<kKeySize>(client_prf_key.data()),
-        // encryption_key);
+        using inner_decoder_type =
+            typename Params::tethys_inner_encoder_type::decoder_type;
+        PlutoClient<inner_decoder_type> client(
+            tethys_stash_path(db_path),
+            sse::crypto::Key<kKeySize>(client_prf_key.data()),
+            encryption_key);
 
-        // auto sr  = client.search_request("excav");
-        // auto bl  = server.search(sr);
-        // auto res = client.decode_search_results(sr, bl);
+        auto sr  = client.search_request("excav");
+        auto bl  = server.search(sr);
+        auto res = client.decode_search_results(sr, bl);
 
-        // print_list(res);
-        // std::cerr << "Size : " << res.size() << "\n";
+        print_list(res);
+        std::cerr << "Size : " << res.size() << "\n";
 
-        // sr  = client.search_request("dvdfutur");
-        // bl  = server.search(sr);
-        // res = client.decode_search_results(sr, bl);
+        sr  = client.search_request("dvdfutur");
+        bl  = server.search(sr);
+        res = client.decode_search_results(sr, bl);
 
-        // print_list(res);
+        print_list(res);
     }
 }
 

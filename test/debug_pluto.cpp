@@ -67,13 +67,14 @@ std::string tethys_stash_path(std::string path)
 }
 
 template<class Params>
-typename Params::ht_builder_type::param_type make_pluto_ht_params(
+typename Params::ht_builder_type::param_type make_pluto_ht_builder_params(
     const std::string& path,
     size_t             n_elts);
 
 template<>
-typename default_param_type::ht_builder_type::param_type make_pluto_ht_params<
-    default_param_type>(const std::string& path, size_t n_elts)
+typename default_param_type::ht_builder_type::param_type
+make_pluto_ht_builder_params<default_param_type>(const std::string& path,
+                                                 size_t             n_elts)
 {
     CuckooBuilderParam cuckoo_builder_params;
     cuckoo_builder_params.value_file_path   = cuckoo_value_file_path(path);
@@ -88,10 +89,35 @@ typename default_param_type::ht_builder_type::param_type make_pluto_ht_params<
 }
 
 template<>
-typename rocksdb_param_type::ht_builder_type::param_type make_pluto_ht_params<
-    rocksdb_param_type>(const std::string& path, size_t n_elts)
+typename rocksdb_param_type::ht_builder_type::param_type
+make_pluto_ht_builder_params<rocksdb_param_type>(const std::string& path,
+                                                 size_t             n_elts)
 {
     (void)n_elts;
+    GenericRocksDBStoreParams rocksdb_builder_params;
+    rocksdb_builder_params.path = rocksdb_path(path);
+    rocksdb_builder_params.rocksdb_options
+        = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
+
+    return rocksdb_builder_params;
+}
+
+template<class Params>
+typename Params::ht_type::param_type make_pluto_ht_params(
+    const std::string& path);
+
+
+template<>
+typename default_param_type::ht_type::param_type make_pluto_ht_params<
+    default_param_type>(const std::string& path)
+{
+    return cuckoo_table_path(path);
+}
+
+template<>
+typename rocksdb_param_type::ht_type::param_type make_pluto_ht_params<
+    rocksdb_param_type>(const std::string& path)
+{
     GenericRocksDBStoreParams rocksdb_builder_params;
     rocksdb_builder_params.path = rocksdb_path(path);
     rocksdb_builder_params.rocksdb_options
@@ -125,24 +151,23 @@ PlutoBuilder<Params> create_pluto_builder(
     tethys_builder_params.epsilon           = 0.3;
 
 
-    return PlutoBuilder<Params>(n_elts,
-                                tethys_builder_params,
-                                make_pluto_ht_params<Params>(path, n_elts),
-                                std::move(derivation_key),
-                                encryption_key);
+    return PlutoBuilder<Params>(
+        n_elts,
+        tethys_builder_params,
+        make_pluto_ht_builder_params<Params>(path, n_elts),
+        std::move(derivation_key),
+        encryption_key);
 }
 
+template<class Params>
 auto create_load_pluto_builder(const std::string&      path,
                                sse::crypto::Key<32>&&  derivation_key,
                                std::array<uint8_t, 32> encryption_key,
                                size_t                  n_elts,
                                const std::string&      json_path)
 {
-    auto builder = create_pluto_builder<default_param_type>(
+    auto builder = create_pluto_builder<Params>(
         path, std::move(derivation_key), std::move(encryption_key), n_elts);
-    // auto builder = create_rocksdb_pluto_builder(
-    // path, std::move(derivation_key), std::move(encryption_key), n_elts);
-
 
     builder.load_inverted_index(json_path);
 
@@ -225,6 +250,7 @@ const std::string wp_path = "/home/rbost/Documents/WP_inv_index/"
                             "inverted_index_full.json";
 const size_t kDBSize = 150e6;
 
+template<class Params>
 void test_wikipedia(const std::string& db_path,
                     const std::string& wp_inverted_index)
 {
@@ -243,7 +269,7 @@ void test_wikipedia(const std::string& db_path,
     (void)wp_inverted_index;
 
     {
-        auto builder = create_load_pluto_builder(
+        auto builder = create_load_pluto_builder<Params>(
             db_path,
             sse::crypto::Key<kKeySize>(prf_key.data()),
             encryption_key,
@@ -254,8 +280,8 @@ void test_wikipedia(const std::string& db_path,
     }
     std::cerr << "Launch client & server\n";
     {
-        // PlutoServer<tethys_server_store_type<kPageSize>> server(
-        // table_path(db_path));
+        PlutoServer<Params> server(tethys_table_path(db_path),
+                                   make_pluto_ht_params<Params>(db_path));
 
         // PlutoClient<inner_decoder_type> client(
         // stash_path(db_path),
@@ -286,7 +312,7 @@ int main(int /*argc*/, const char** /*argv*/)
 
 
     // test_tethys_builder(n_elts);
-    test_wikipedia("wp_pluto", wp_path);
+    test_wikipedia<default_param_type>("wp_pluto", wp_path);
 
     sse::crypto::cleanup_crypto_lib();
 

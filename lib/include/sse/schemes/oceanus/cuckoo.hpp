@@ -283,6 +283,8 @@ public:
         = std::function<void(std::experimental::optional<T>)>;
 
 
+    using param_type = std::string;
+
     CuckooHashTable(const std::string& path);
 
 

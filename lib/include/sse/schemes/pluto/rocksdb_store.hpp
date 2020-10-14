@@ -109,6 +109,8 @@ struct RocksDBPlutoParams
 
     using ht_value_type   = std::array<index_type, kPlutoListLength>;
     using ht_builder_type = RocksDBStoreBuilder<kPlutoListLength>;
+
+    using ht_type = RocksDBStoreBuilder<kPlutoListLength>;
 };
 
 } // namespace pluto

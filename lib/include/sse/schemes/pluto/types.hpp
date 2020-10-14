@@ -116,6 +116,14 @@ struct DefaultPlutoParams
         PlutoCuckooHasher>;
 
 
+    using ht_type = oceanus::CuckooHashTable<
+        kPageSize,
+        tethys::tethys_core_key_type,
+        ht_value_type,
+        PlutoKeySerializer,
+        PlutoValueSerializer<DefaultPlutoParams<kPageSize>>,
+        PlutoCuckooHasher>;
+
     static constexpr size_t kPlutoListLength
         = std::min(kCuckooListLength, kTethysMaxListLength);
 };

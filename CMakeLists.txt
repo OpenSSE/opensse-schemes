@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5.1)
 project(opensse-schemes VERSION 0.3 DESCRIPTION "OpenSSE's Schemes Implementation")
 
 
@@ -23,6 +23,8 @@ option(
     "Enable compiler optimizations for the native processor architecture (if available)"
     ON
 )
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Load modules
 

@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "diana.grpc.pb.h"
+#include "protos/diana.grpc.pb.h"
 
 #include <sse/schemes/diana/diana_server.hpp>
 

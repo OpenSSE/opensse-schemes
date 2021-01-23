@@ -19,7 +19,7 @@
 //
 
 #define DIANA_CLIENT_RUNNER_CPP
-#include "diana.grpc.pb.h"
+#include "protos/diana.grpc.pb.h"
 
 #include <sse/runners/diana/client_runner.hpp>
 #include <sse/schemes/diana/diana_client.hpp>

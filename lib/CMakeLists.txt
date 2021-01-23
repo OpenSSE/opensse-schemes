@@ -116,7 +116,7 @@ target_link_libraries(
     OpenSSE::crypto
     OpenSSE::dbparser
     OpenSSE::schemes
-    gRPC::grpc++
-    protobuf::libprotobuf
+    ${PROTOBUF_LIBPROTOBUF}
+    ${GRPC_LIBRARY}
     spdlog::spdlog
 )

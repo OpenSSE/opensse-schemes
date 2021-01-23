@@ -55,15 +55,15 @@ function(GRPC_GENERATE_CPP SRCS HDRS DEST)
     get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
     get_filename_component(FIL_WE ${FIL} NAME_WE)
 
-    list(APPEND ${SRCS} "${DEST}/${FIL_WE}.grpc.pb.cc")
-    list(APPEND ${HDRS} "${DEST}/${FIL_WE}.grpc.pb.h")
+    list(APPEND ${SRCS} "${DEST}/protos/${FIL_WE}.grpc.pb.cc")
+    list(APPEND ${HDRS} "${DEST}/protos/${FIL_WE}.grpc.pb.h")
 
     add_custom_command(
-      OUTPUT "${DEST}/${FIL_WE}.grpc.pb.cc"
-             "${DEST}/${FIL_WE}.grpc.pb.h"
+      OUTPUT "${DEST}/protos/${FIL_WE}.grpc.pb.cc"
+             "${DEST}/protos/${FIL_WE}.grpc.pb.h"
       # COMMAND protobuf::protoc      
       COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-      ARGS --grpc_out ${DEST} ${_protobuf_include_path} --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} ${ABS_FIL}
+      ARGS --grpc_out ${DEST} ${_protobuf_include_path}  --cpp_out ${DEST} --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN} ${ABS_FIL}
       # DEPENDS ${ABS_FIL} protobuf::protoc gRPC::grpc_cpp_plugin
       DEPENDS ${ABS_FIL} ${Protobuf_PROTOC_EXECUTABLE} gRPC::grpc_cpp_plugin
       COMMENT "Running C++ gRPC compiler on ${FIL}"
@@ -75,58 +75,87 @@ function(GRPC_GENERATE_CPP SRCS HDRS DEST)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-# By default have GRPC_GENERATE_CPP macro pass -I to protoc
-# for each directory where a proto file is referenced.
-if(NOT DEFINED GRPC_GENERATE_CPP_APPEND_PATH)
-  set(GRPC_GENERATE_CPP_APPEND_PATH TRUE)
-endif()
 
-# Find gRPC include directory
-find_path(GRPC_INCLUDE_DIR grpc/grpc.h)
-mark_as_advanced(GRPC_INCLUDE_DIR)
+set(protobuf_MODULE_COMPATIBLE TRUE)
+  find_package(Protobuf CONFIG REQUIRED)
+  message(STATUS "Using protobuf ${Protobuf_VERSION}")
 
-# Find gRPC C++ include directory
-find_path(GRPCPP_INCLUDE_DIR grpcpp/grpcpp.h)
-mark_as_advanced(GRPCPP_INCLUDE_DIR)
+  set(PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
+  set(GRPC_GRPC++_REFLECTION_LIBRARY gRPC::grpc++_reflection)
+  if(CMAKE_CROSSCOMPILING)
+    find_program(PROTOBUF_PROTOC protoc)
+  else()
+    set(PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
+  endif()
 
-# Find gRPC library
-find_library(GRPC_LIBRARY NAMES grpc)
-mark_as_advanced(GRPC_LIBRARY)
-add_library(gRPC::grpc UNKNOWN IMPORTED)
-set_target_properties(gRPC::grpc PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIR}
-    INTERFACE_LINK_LIBRARIES "-lpthread;-ldl"
-    IMPORTED_LOCATION ${GRPC_LIBRARY}
-)
+  # Find gRPC installation
+  # Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+  find_package(gRPC CONFIG REQUIRED)
+  message(STATUS "Using gRPC ${gRPC_VERSION}")
 
-# Find gRPC C++ library
-find_library(GRPC_GRPC++_LIBRARY NAMES grpc++)
-mark_as_advanced(GRPC_GRPC++_LIBRARY)
-add_library(gRPC::grpc++ UNKNOWN IMPORTED)
-set_target_properties(gRPC::grpc++ PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${GRPCPP_INCLUDE_DIR}
-    INTERFACE_LINK_LIBRARIES gRPC::grpc
-    IMPORTED_LOCATION ${GRPC_GRPC++_LIBRARY}
-)
+  set(GRPC_LIBRARY gRPC::grpc++)
+  if(CMAKE_CROSSCOMPILING)
+    find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
+  else()
+    set(GRPC_CPP_PLUGIN $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+  endif()
 
-# Find gRPC C++ reflection library
-find_library(GRPC_GRPC++_REFLECTION_LIBRARY NAMES grpc++_reflection)
-mark_as_advanced(GRPC_GRPC++_REFLECTION_LIBRARY)
-add_library(gRPC::grpc++_reflection UNKNOWN IMPORTED)
-set_target_properties(gRPC::grpc++_reflection PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIR}
-    INTERFACE_LINK_LIBRARIES gRPC::grpc++
-    IMPORTED_LOCATION ${GRPC_GRPC++_REFLECTION_LIBRARY}
-)
 
-# Find gRPC CPP generator
-find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
-mark_as_advanced(GRPC_CPP_PLUGIN)
-add_executable(gRPC::grpc_cpp_plugin IMPORTED)
-set_target_properties(gRPC::grpc_cpp_plugin PROPERTIES
-    IMPORTED_LOCATION ${GRPC_CPP_PLUGIN}
-)
 
-include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(gRPC DEFAULT_MSG
-    GRPC_LIBRARY GRPC_INCLUDE_DIR GRPC_GRPC++_REFLECTION_LIBRARY GRPC_CPP_PLUGIN)
+
+
+# # By default have GRPC_GENERATE_CPP macro pass -I to protoc
+# # for each directory where a proto file is referenced.
+# if(NOT DEFINED GRPC_GENERATE_CPP_APPEND_PATH)
+#   set(GRPC_GENERATE_CPP_APPEND_PATH TRUE)
+# endif()
+
+# # Find gRPC include directory
+# find_path(GRPC_INCLUDE_DIR grpc/grpc.h)
+# mark_as_advanced(GRPC_INCLUDE_DIR)
+
+# # Find gRPC C++ include directory
+# find_path(GRPCPP_INCLUDE_DIR grpcpp/grpcpp.h)
+# mark_as_advanced(GRPCPP_INCLUDE_DIR)
+
+# # Find gRPC library
+# find_library(GRPC_LIBRARY NAMES grpc)
+# mark_as_advanced(GRPC_LIBRARY)
+# add_library(gRPC::grpc UNKNOWN IMPORTED)
+# set_target_properties(gRPC::grpc PROPERTIES
+#     INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIR}
+#     INTERFACE_LINK_LIBRARIES "-lpthread;-ldl"
+#     IMPORTED_LOCATION ${GRPC_LIBRARY}
+# )
+
+# # Find gRPC C++ library
+# find_library(GRPC_GRPC++_LIBRARY NAMES grpc++)
+# mark_as_advanced(GRPC_GRPC++_LIBRARY)
+# add_library(gRPC::grpc++ UNKNOWN IMPORTED)
+# set_target_properties(gRPC::grpc++ PROPERTIES
+#     INTERFACE_INCLUDE_DIRECTORIES ${GRPCPP_INCLUDE_DIR}
+#     INTERFACE_LINK_LIBRARIES gRPC::grpc
+#     IMPORTED_LOCATION ${GRPC_GRPC++_LIBRARY}
+# )
+
+# # Find gRPC C++ reflection library
+# find_library(GRPC_GRPC++_REFLECTION_LIBRARY NAMES grpc++_reflection)
+# mark_as_advanced(GRPC_GRPC++_REFLECTION_LIBRARY)
+# add_library(gRPC::grpc++_reflection UNKNOWN IMPORTED)
+# set_target_properties(gRPC::grpc++_reflection PROPERTIES
+#     INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INCLUDE_DIR}
+#     INTERFACE_LINK_LIBRARIES gRPC::grpc++
+#     IMPORTED_LOCATION ${GRPC_GRPC++_REFLECTION_LIBRARY}
+# )
+
+# # Find gRPC CPP generator
+# find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
+# mark_as_advanced(GRPC_CPP_PLUGIN)
+# add_executable(gRPC::grpc_cpp_plugin IMPORTED)
+# set_target_properties(gRPC::grpc_cpp_plugin PROPERTIES
+#     IMPORTED_LOCATION ${GRPC_CPP_PLUGIN}
+# )
+
+# include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
+# FIND_PACKAGE_HANDLE_STANDARD_ARGS(gRPC DEFAULT_MSG
+#     GRPC_LIBRARY GRPC_INCLUDE_DIR GRPC_GRPC++_REFLECTION_LIBRARY GRPC_CPP_PLUGIN)

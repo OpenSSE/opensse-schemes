@@ -46,12 +46,13 @@ before_install:
   - INSTALL_DIR=$HOME/deps
   - CPATH=$CPATH:$INSTALL_DIR/include
   - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib
-  - PATH=$PATH:$INSTALL_DIR/bin
+  - PATH=$INSTALL_DIR/bin:$HOME/installs/cmake/bin:$PATH
   - echo $CPATH
   - echo $LD_LIBRARY_PATH
   - echo $PATH
 
 install:
+  - ./ci/install_cmake.sh
   - ./ci/install_crypto_tk_deps.sh
   - ./ci/install_grpc.sh
   - ./ci/install_rocksdb.sh

@@ -1,31 +1,31 @@
 language: cpp
 
 os: linux
-dist: trusty
+dist: xenial
 sudo: required
 
 cache:
-   directories:
-     - $HOME/deps
+  directories:
+    - $HOME/deps
 
 addons:
-   apt:
-     sources: &basic_sources
-       - ubuntu-toolchain-r-test
-       - sourceline: 'deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
-       - sourceline: 'deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main'
-         key_url: 'https://llvm.org/apt/llvm-snapshot.gpg.key'
-     packages: &basic_deps
-       - libssl-dev
-       - yasm
-       - libgmp-dev
-       - libgflags-dev
-       - libsnappy-dev
-       - zlib1g-dev
-       - libbz2-dev
-       - autoconf
-       - libtool
-       - lcov
+  apt:
+    sources: &basic_sources
+      - ubuntu-toolchain-r-test
+      - sourceline: "deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty main"
+      - sourceline: "deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main"
+        key_url: "https://llvm.org/apt/llvm-snapshot.gpg.key"
+    packages: &basic_deps
+      - libssl-dev
+      - yasm
+      - libgmp-dev
+      - libgflags-dev
+      - libsnappy-dev
+      - zlib1g-dev
+      - libbz2-dev
+      - autoconf
+      - libtool
+      - lcov
 env:
   global:
     - ENABLE_COVERAGE=Off
@@ -41,7 +41,6 @@ env:
 #       after_success:
 #         - ./ci/gen_coverage.sh # get the code coverage
 #         - ./ci/upload_report.sh # upload the report to coveralls
-
 
 before_install:
   - INSTALL_DIR=$HOME/deps
@@ -59,52 +58,51 @@ install:
   - gem install coveralls-lcov
 
 matrix:
-   include:
-      - env:
-          - STATIC_ANALYSIS=false
-          - RUN_CHECKS=true
-          - COMPILER=gcc
-          - ENABLE_COVERAGE=On
-        compiler: gcc
-        addons:
-            apt:
-              sources: *basic_sources
-              packages:
-                 - *basic_deps
-        after_success:
-          - ./ci/gen_coverage.sh # get the code coverage
-          - ./ci/upload_report.sh # upload the report to coveralls
+  include:
+    - env:
+        - STATIC_ANALYSIS=false
+        - RUN_CHECKS=true
+        - COMPILER=gcc
+        - ENABLE_COVERAGE=On
+      compiler: gcc
+      addons:
+        apt:
+          sources: *basic_sources
+          packages:
+            - *basic_deps
+      after_success:
+        - ./ci/gen_coverage.sh # get the code coverage
+        - ./ci/upload_report.sh # upload the report to coveralls
 
-      - env:
-          - STATIC_ANALYSIS=true
-          - RUN_CHECKS=false
-          - CLANG_TIDY=clang-tidy-5.0
-        addons:
-           apt:
-              sources: *basic_sources
-              packages:
-                 - *basic_deps
-                 - cppcheck
-                 - libclang-common-5.0-dev # to get the headers right
-                 - clang-tidy-5.0
-        script:
-           - ./scripts/cppcheck.sh
-           - ./scripts/tidy.sh
+    - env:
+        - STATIC_ANALYSIS=true
+        - RUN_CHECKS=false
+        - CLANG_TIDY=clang-tidy-5.0
+      addons:
+        apt:
+          sources: *basic_sources
+          packages:
+            - *basic_deps
+            - cppcheck
+            - libclang-common-5.0-dev # to get the headers right
+            - clang-tidy-5.0
+      script:
+        - ./scripts/cppcheck.sh
+        - ./scripts/tidy.sh
 
-      - env:
-          - STATIC_ANALYSIS=false
-          - RUN_CHECKS=false
-          - CLANG_FORMAT=clang-format-5.0
-        addons:
-           apt:
-              sources: *basic_sources
-              packages:
-                 - clang-format-5.0
-        install: # do not compile the dependencies
-        script:
-           - ./scripts/check_format.sh
+    - env:
+        - STATIC_ANALYSIS=false
+        - RUN_CHECKS=false
+        - CLANG_FORMAT=clang-format-5.0
+      addons:
+        apt:
+          sources: *basic_sources
+          packages:
+            - clang-format-5.0
+      install: # do not compile the dependencies
+      script:
+        - ./scripts/check_format.sh
 
 script:
   - ./ci/build.sh
   - if [ "${RUN_CHECKS}" == "true" ]; then (cd build && ./test/check); fi
-

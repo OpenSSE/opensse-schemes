@@ -359,6 +359,7 @@ private:
 
 template<typename T, class Serializer>
 RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
+    : db_(nullptr)
 {
     rocksdb::Options options;
     options.create_if_missing = true;

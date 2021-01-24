@@ -53,6 +53,8 @@ public:
 
     static constexpr size_t kTreeDepth = 48;
 
+    // issue with cppcheck on Xenial
+    // cppcheck-suppress noExplicitConstructor
     DianaClient(const std::string&      token_map_path,
                 crypto::Key<kKeySize>&& derivation_master_key,
                 crypto::Key<kKeySize>&& kw_token_master_key);

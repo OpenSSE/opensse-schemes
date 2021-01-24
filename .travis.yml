@@ -12,9 +12,9 @@ addons:
   apt:
     sources: &basic_sources
       - ubuntu-toolchain-r-test
-      - sourceline: "deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty main"
-      - sourceline: "deb https://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main"
-        key_url: "https://llvm.org/apt/llvm-snapshot.gpg.key"
+      - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial main"
+      - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main"
+        key_url: "http://llvm.org/apt/llvm-snapshot.gpg.key"
     packages: &basic_deps
       - libssl-dev
       - yasm
@@ -78,15 +78,15 @@ matrix:
     - env:
         - STATIC_ANALYSIS=true
         - RUN_CHECKS=false
-        - CLANG_TIDY=clang-tidy-5.0
+        - CLANG_TIDY=clang-tidy-10
       addons:
         apt:
           sources: *basic_sources
           packages:
             - *basic_deps
             - cppcheck
-            - libclang-common-5.0-dev # to get the headers right
-            - clang-tidy-5.0
+            - libclang-common-10-dev # to get the headers right
+            - clang-tidy-10
       script:
         - ./scripts/cppcheck.sh
         - ./scripts/tidy.sh
@@ -94,12 +94,12 @@ matrix:
     - env:
         - STATIC_ANALYSIS=false
         - RUN_CHECKS=false
-        - CLANG_FORMAT=clang-format-5.0
+        - CLANG_FORMAT=clang-format-10
       addons:
         apt:
           sources: *basic_sources
           packages:
-            - clang-format-5.0
+            - clang-format-10
       install: # do not compile the dependencies
       script:
         - ./scripts/check_format.sh

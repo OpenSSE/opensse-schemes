@@ -95,12 +95,12 @@ Benchmark::~Benchmark()
 {
     stop();
 
-    std::chrono::duration<double, std::milli> time_ms = end_ - begin_;
+    std::chrono::duration<long double, std::milli> time_ms = end_ - begin_;
 
     auto time_per_item = time_ms;
 
     if (count_ > 1) {
-        time_per_item /= count_;
+        time_per_item /= static_cast<long double>(count_);
     }
 
     if (benchmark_logger_) {

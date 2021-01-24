@@ -76,8 +76,6 @@ public:
     const crypto::Prf<kSearchTokenKeySize>& root_prf() const;
     const crypto::Prf<kKeywordTokenSize>&   kw_token_prf() const;
 
-    static const std::string derivation_keys_file__;
-
 private:
     std::list<std::tuple<std::string, T, uint32_t>> get_counters_and_increment(
         const std::list<std::pair<std::string, index_type>>& update_list);
@@ -181,7 +179,7 @@ UpdateRequest<T> DianaClient<T>::insertion_request(const std::string& keyword,
     bool success = counter_map_.get_and_increment(keyword, kw_counter);
 
     if (!success) {
-        std::runtime_error(
+        throw std::runtime_error(
             "Unable to increment the keyword counter for keyword \"" + keyword
             + "\"");
     }
@@ -273,7 +271,7 @@ std::list<std::tuple<std::string, T, uint32_t>> DianaClient<T>::
         bool     success = counter_map_.get_and_increment(keyword, kw_counter);
 
         if (!success) {
-            std::runtime_error(
+            throw std::runtime_error(
                 "Unable to increment the keyword counter for keyword \""
                 + keyword + "\"");
         }

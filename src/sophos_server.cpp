@@ -15,14 +15,14 @@
 #include <cstdio>
 #include <unistd.h>
 
-sse::sophos::SophosServerRunner* server_ptr__ = nullptr;
+sse::sophos::SophosServerRunner* g_sophos_server_ptr_ = nullptr;
 
 void exit_handler(__attribute__((unused)) int signal)
 {
     sse::logger::logger()->info("Exiting... ");
 
-    if (server_ptr__ != nullptr) {
-        server_ptr__->shutdown();
+    if (g_sophos_server_ptr_ != nullptr) {
+        g_sophos_server_ptr_->shutdown();
     }
 };
 
@@ -82,13 +82,13 @@ int main(int argc, char** argv)
                                     + server_db);
     }
 
-    server_ptr__
+    g_sophos_server_ptr_
         = new sse::sophos::SophosServerRunner("0.0.0.0:4240", server_db);
-    server_ptr__->set_async_search(async_search);
+    g_sophos_server_ptr_->set_async_search(async_search);
     //    sse::sophos::run_sophos_server("0.0.0.0:4242",
-    //    "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &server_ptr__);
+    //    "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &g_sophos_server_ptr_);
 
-    server_ptr__->wait();
+    g_sophos_server_ptr_->wait();
 
     sse::crypto::cleanup_crypto_lib();
 

@@ -73,7 +73,8 @@ bool remove_directory(const std::string& path)
     // Cast needed (in C) because fts_open() takes a "char * const *",
     // instead of a "const char * const *", which is only allowed in C++.
     // fts_open() does not modify the argument.
-    char* files[] = {const_cast<char*>(dir), nullptr};
+    // char* files[] = {const_cast<char*>(dir), nullptr};
+    std::array<char*, 2> files = {const_cast<char*>(dir), nullptr};
 
     // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected
     // behavior
@@ -82,7 +83,8 @@ bool remove_directory(const std::string& path)
     // outside
     //                of the specified directory
     // FTS_XDEV     - Don't cross filesystem boundaries
-    FTS* ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, nullptr);
+    FTS* ftsp = fts_open(
+        files.data(), FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, nullptr);
     if (ftsp == nullptr) {
         std::string message = "When deleting directory " + path;
         message += ": fts_open failed: ";
@@ -113,7 +115,7 @@ bool remove_directory(const std::string& path)
         case FTS_NSOK:
             // Not reached unless FTS_LOGICAL, FTS_SEEDOT, or FTS_NOSTAT
             // were passed to fts_open()
-            break;
+            // break;
 
         case FTS_D:
             // Do nothing. Need depth-first search, so directories are

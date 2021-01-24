@@ -73,7 +73,7 @@ JanusClient::JanusClient(const std::string&         search_counter_map_path,
 }
 
 std::string JanusClient::meta_keyword(const std::string& kw,
-                                      uint32_t           search_counter) const
+                                      uint32_t           search_counter)
 {
     return utility::hex_string(search_counter) + kw;
 }

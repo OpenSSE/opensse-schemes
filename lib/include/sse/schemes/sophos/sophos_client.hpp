@@ -60,8 +60,8 @@ public:
 
     size_t keyword_count() const;
 
-    const std::string private_key() const;
-    const std::string public_key() const;
+    std::string private_key() const;
+    std::string public_key() const;
 
     //            void write_keys(const std::string& dir_path) const;
 
@@ -72,18 +72,18 @@ public:
     const crypto::Prf<kDerivationKeySize>& derivation_prf() const;
     const sse::crypto::TdpInverse&         inverse_tdp() const;
 
-    static const char* tdp_sk_file__;
-    static const char* derivation_key_file__;
+    static const char* kTdpSkFile;
+    static const char* kDerivationKeyFile;
 
 private:
-    static const char* rsa_prg_key_file__;
-    static const char* counter_map_file__;
+    static const char* kRsaPrgKeyFile;
+    static const char* kCounterMapFile;
 
     crypto::Prf<kDerivationKeySize> k_prf_;
     sse::crypto::TdpInverse         inverse_tdp_;
 
 
-    std::string get_keyword_index(const std::string& kw) const;
+    static std::string get_keyword_index(const std::string& kw);
 
     crypto::Prf<crypto::Tdp::kRSAPrfSize> rsa_prg_;
 

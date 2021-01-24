@@ -47,12 +47,12 @@
 namespace sse {
 namespace sophos {
 
-const char* tdp_sk_file__         = "tdp_sk.key";
-const char* derivation_key_file__ = "derivation_master.key";
+const char* kTdpSkFile         = "tdp_sk.key";
+const char* kDerivationKeyFile = "derivation_master.key";
 
 
-const char* rsa_prg_key_file__ = "rsa_prg.key";
-const char* counter_map_file__ = "counters.dat";
+const char* kRsaPrgKeyFile  = "rsa_prg.key";
+const char* kCounterMapFile = "counters.dat";
 
 static std::unique_ptr<SophosClient> init_client_in_directory(
     const std::string& dir_path)
@@ -62,10 +62,10 @@ static std::unique_ptr<SophosClient> init_client_in_directory(
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
-    std::string counter_map_path = dir_path + "/" + counter_map_file__;
-    std::string sk_path          = dir_path + "/" + tdp_sk_file__;
-    std::string master_key_path  = dir_path + "/" + derivation_key_file__;
-    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
+    std::string counter_map_path = dir_path + "/" + kCounterMapFile;
+    std::string sk_path          = dir_path + "/" + kTdpSkFile;
+    std::string master_key_path  = dir_path + "/" + kDerivationKeyFile;
+    std::string rsa_prg_key_path = dir_path + "/" + kRsaPrgKeyFile;
 
     // generate the keys
     std::array<uint8_t, SophosClient::kKeySize> derivation_master_key
@@ -120,10 +120,10 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
         throw std::runtime_error(dir_path + ": not a directory");
     }
 
-    std::string sk_path          = dir_path + "/" + tdp_sk_file__;
-    std::string master_key_path  = dir_path + "/" + derivation_key_file__;
-    std::string counter_map_path = dir_path + "/" + counter_map_file__;
-    std::string rsa_prg_key_path = dir_path + "/" + rsa_prg_key_file__;
+    std::string sk_path          = dir_path + "/" + kTdpSkFile;
+    std::string master_key_path  = dir_path + "/" + kDerivationKeyFile;
+    std::string counter_map_path = dir_path + "/" + kCounterMapFile;
+    std::string rsa_prg_key_path = dir_path + "/" + kRsaPrgKeyFile;
 
     if (!utility::is_file(sk_path)) {
         // error, the secret key file is not there
@@ -148,13 +148,16 @@ static std::unique_ptr<SophosClient> construct_client_from_directory(
     std::ifstream     sk_in(sk_path.c_str());
     std::ifstream     master_key_in(master_key_path.c_str());
     std::ifstream     rsa_prg_key_in(rsa_prg_key_path.c_str());
-    std::stringstream sk_buf, master_key_buf, rsa_prg_key_buf;
+    std::stringstream sk_buf;
+    std::stringstream master_key_buf;
+    std::stringstream rsa_prg_key_buf;
 
     sk_buf << sk_in.rdbuf();
     master_key_buf << master_key_in.rdbuf();
     rsa_prg_key_buf << rsa_prg_key_in.rdbuf();
 
-    std::array<uint8_t, 32> client_master_key_array, client_tdp_prg_key_array;
+    std::array<uint8_t, 32> client_master_key_array;
+    std::array<uint8_t, 32> client_tdp_prg_key_array;
 
     if (master_key_buf.str().size() != client_master_key_array.size()) {
         throw std::runtime_error(
@@ -386,8 +389,8 @@ bool SophosClientRunner::load_inverted_index(const std::string& path)
         std::atomic_size_t counter(0);
 
         auto add_list_callback = [this, &pool, &counter](
-                                     const std::string         kw,
-                                     const std::list<unsigned> docs) {
+                                     const std::string&         kw,
+                                     const std::list<unsigned>& docs) {
             auto work = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                 for (unsigned doc : documents) {

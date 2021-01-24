@@ -28,8 +28,8 @@ public:
                 const std::string&         del_map_path,
                 crypto::Key<kPRFKeySize>&& master_key);
 
-    std::string meta_keyword(const std::string& kw,
-                             uint32_t           search_counter) const;
+    static std::string meta_keyword(const std::string& kw,
+                             uint32_t           search_counter);
 
     SearchRequest    search_request(const std::string& keyword);
     InsertionRequest insertion_request(const std::string& keyword,

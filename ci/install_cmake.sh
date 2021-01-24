@@ -1,3 +1,5 @@
+set -ex
+
 version=3.19
 build=3
 CMAKE_INSTALL_DIR=$HOME/installs/cmake

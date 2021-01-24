@@ -17,13 +17,20 @@ else
 	git clone -b v1.34.0 --single-branch --depth 1 https://github.com/grpc/grpc
 
 	cd grpc
-	git submodule update --init
+	git submodule update --init --recursive
 
-	PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" make prefix="$INSTALL_DIR"  -j4
-	PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" sudo -E make prefix="$INSTALL_DIR" install
+	mkdir -p cmake/build
+	cd cmake/build
+	cmake ../.. -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR"
+	
+	make -j4
+	make install
 
-	cd third_party/protobuf
-	sudo -E make install
+	# PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" make prefix="$INSTALL_DIR"  -j4
+	# PROTOBUF_CONFIG_OPTS="--prefix=$INSTALL_DIR" sudo -E make prefix="$INSTALL_DIR" install
+
+	# cd third_party/protobuf
+	# sudo -E make install
 
 	# make clean
 fi

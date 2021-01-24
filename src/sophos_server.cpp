@@ -86,7 +86,8 @@ int main(int argc, char** argv)
         = new sse::sophos::SophosServerRunner("0.0.0.0:4240", server_db);
     g_sophos_server_ptr_->set_async_search(async_search);
     //    sse::sophos::run_sophos_server("0.0.0.0:4242",
-    //    "/Users/raphaelbost/Code/sse/sophos/test.ssdb", &g_sophos_server_ptr_);
+    //    "/Users/raphaelbost/Code/sse/sophos/test.ssdb",
+    //    &g_sophos_server_ptr_);
 
     g_sophos_server_ptr_->wait();
 

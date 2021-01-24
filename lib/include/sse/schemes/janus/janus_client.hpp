@@ -29,7 +29,7 @@ public:
                 crypto::Key<kPRFKeySize>&& master_key);
 
     static std::string meta_keyword(const std::string& kw,
-                             uint32_t           search_counter);
+                                    uint32_t           search_counter);
 
     SearchRequest    search_request(const std::string& keyword);
     InsertionRequest insertion_request(const std::string& keyword,

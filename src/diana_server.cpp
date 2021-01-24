@@ -82,7 +82,8 @@ int main(int argc, char** argv)
         sse::logger::logger()->info("Running server with database "
                                     + server_db);
     }
-    g_diana_server_ptr_ = new sse::diana::DianaServerRunner("0.0.0.0:4241", server_db);
+    g_diana_server_ptr_
+        = new sse::diana::DianaServerRunner("0.0.0.0:4241", server_db);
     g_diana_server_ptr_->set_async_search(async_search);
 
     g_diana_server_ptr_->wait();

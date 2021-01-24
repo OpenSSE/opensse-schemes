@@ -52,10 +52,10 @@ before_install:
   - echo $PATH
 
 install:
-  - ./ci/install_cmake.sh
-  - ./ci/install_crypto_tk_deps.sh
-  - ./ci/install_grpc.sh
-  - ./ci/install_rocksdb.sh
+  - bash ci/install_cmake.sh
+  - bash ci/install_crypto_tk_deps.sh
+  - bash ci/install_grpc.sh
+  - bash ci/install_rocksdb.sh
   - gem install coveralls-lcov
 
 matrix:

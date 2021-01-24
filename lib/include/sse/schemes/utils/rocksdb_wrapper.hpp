@@ -358,6 +358,8 @@ private:
 };
 
 template<typename T, class Serializer>
+// cppcheck (on Xenial) can be annoying with lineskips
+// cppcheck-suppress uninitMemberVar
 RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
     : db_(nullptr)
 {

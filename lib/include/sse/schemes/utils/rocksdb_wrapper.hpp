@@ -466,6 +466,7 @@ bool RockDBListStore<T, Serializer>::get(const uint8_t* key,
 }
 
 template<typename T, class Serializer>
+// cppcheck-suppress syntaxError
 template<size_t N>
 bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
                                          const std::list<T>&           data,

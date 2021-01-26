@@ -33,10 +33,12 @@ Take a look at the [build instructions](https://github.com/OpenSSE/crypto-tk#bui
 OpenSSE uses Google's [gRPC](http://grpc.io) as its RPC machinery.
 On Linux, there is, for now, no other way than installing gRPC from source.
 The procedure is described [here](https://github.com/grpc/grpc/blob/master/BUILDING.md).
+Note that OpenSSE has been tested with gRPC v1.34.
 
 ### Installing RocksDB
 
 OpenSSE uses Facebook's [RocksDB](http://rocksdb.org) as its storage engine. See the [installation guide](https://github.com/facebook/rocksdb/blob/master/INSTALL.md).
+Note that the build system currently used by this project does not support static builds of RocksDB. If you see linker errors involving compression libraries (`libzstd`, `libz4`, `libsnappy`, ...), it probably comes from OpenSSE linking against RocksDB's static library.
 
 ## Mac OS X
 
@@ -106,7 +108,7 @@ To see all the available options, and interactively edit them, you can also use 
 
 For more information about how to use CMake, take a look at [CMake's FAQ](https://gitlab.kitware.com/cmake/community/wikis/FAQ), or at the [documentation](https://cmake.org/cmake/help/v3.0/index.html).
 
-In this project, CMake can also be used to configure the cryptographic toolkit. Namely it supports the `RSA_IMPL_OPENSSL` and `OPENSSL_ROOT_DIR` options to switch between the trapdoor permutation implementations (see [`crypto-tk`'s documentation](https://github.com/OpenSSE/crypto-tk#options) for details).
+In this project, CMake can also be used to configure the cryptographic toolkit. See [`crypto-tk`'s documentation](https://github.com/OpenSSE/crypto-tk#options) for details and configuration points.
 
 # Usage
 

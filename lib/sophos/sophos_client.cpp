@@ -30,12 +30,12 @@
 namespace sse {
 namespace sophos {
 
-const char* SophosClient::tdp_sk_file__         = "tdp_sk.key";
-const char* SophosClient::derivation_key_file__ = "derivation_master.key";
+const char* SophosClient::kTdpSkFile         = "tdp_sk.key";
+const char* SophosClient::kDerivationKeyFile = "derivation_master.key";
 
 
-const char* SophosClient::rsa_prg_key_file__ = "rsa_prg.key";
-const char* SophosClient::counter_map_file__ = "counters.dat";
+const char* SophosClient::kRsaPrgKeyFile  = "rsa_prg.key";
+const char* SophosClient::kCounterMapFile = "counters.dat";
 
 constexpr size_t SophosClient::kKeywordIndexSize;
 
@@ -55,12 +55,12 @@ size_t SophosClient::keyword_count() const
     return counter_map_.approximate_size();
 }
 
-const std::string SophosClient::public_key() const
+std::string SophosClient::public_key() const
 {
     return inverse_tdp_.public_key();
 }
 
-const std::string SophosClient::private_key() const
+std::string SophosClient::private_key() const
 {
     return inverse_tdp_.private_key();
 }
@@ -74,7 +74,7 @@ const sse::crypto::TdpInverse& SophosClient::inverse_tdp() const
     return inverse_tdp_;
 }
 
-std::string SophosClient::get_keyword_index(const std::string& kw) const
+std::string SophosClient::get_keyword_index(const std::string& kw)
 {
     std::string hash_string = crypto::Hash::hash(kw);
     return hash_string.erase(kKeywordIndexSize);
@@ -128,7 +128,7 @@ UpdateRequest SophosClient::insertion_request(const std::string& keyword,
     bool success = counter_map_.get_and_increment(keyword, kw_counter);
 
     if (!success) {
-        std::runtime_error(
+        throw std::runtime_error(
             "Unable to increment the keyword counter for keyword \"" + keyword
             + "\"");
     }

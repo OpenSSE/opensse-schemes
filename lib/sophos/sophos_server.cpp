@@ -38,7 +38,7 @@ SophosServer::SophosServer(const std::string& db_path,
 {
 }
 
-const std::string SophosServer::public_key() const
+std::string SophosServer::public_key() const
 {
     return public_tdp_.public_key();
 }
@@ -209,11 +209,11 @@ std::list<index_type> SophosServer::search_parallel(SearchRequest& req,
     unsigned n_rsa_threads
         = std::max<unsigned>(std::thread::hardware_concurrency(), 2);
 
-    for (uint8_t t = 0; t < n_rsa_threads; t++) {
+    for (unsigned t = 0; t < n_rsa_threads; t++) {
         rsa_threads.emplace_back(rsa_job, t, req.add_count, n_rsa_threads);
     }
 
-    for (uint8_t t = 0; t < n_rsa_threads; t++) {
+    for (unsigned t = 0; t < n_rsa_threads; t++) {
         rsa_threads[t].join();
     }
 

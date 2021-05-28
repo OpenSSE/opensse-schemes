@@ -19,7 +19,8 @@
 #include <list>
 #include <mutex>
 
-__thread std::list<std::pair<std::string, uint64_t>>* buffer_list__ = nullptr;
+__thread std::list<std::pair<std::string, uint64_t>>* g_diana_buffer_list_
+    = nullptr;
 
 int main(int argc, char** argv)
 {
@@ -105,16 +106,16 @@ int main(int argc, char** argv)
                                     rnd_entries_count);
 
         auto gen_callback = [&client_runner](const std::string& s, size_t i) {
-            if (buffer_list__ == nullptr) {
-                buffer_list__
+            if (g_diana_buffer_list_ == nullptr) {
+                g_diana_buffer_list_
                     = new std::list<std::pair<std::string, uint64_t>>();
             }
-            buffer_list__->push_back(std::make_pair(s, i));
+            g_diana_buffer_list_->push_back(std::make_pair(s, i));
 
-            if (buffer_list__->size() >= 50) {
-                client_runner->insert_in_session(*buffer_list__);
+            if (g_diana_buffer_list_->size() >= 50) {
+                client_runner->insert_in_session(*g_diana_buffer_list_);
 
-                buffer_list__->clear();
+                g_diana_buffer_list_->clear();
             }
         };
 

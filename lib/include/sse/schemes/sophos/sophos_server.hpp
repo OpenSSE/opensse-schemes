@@ -41,7 +41,7 @@ class SophosServer
 public:
     SophosServer(const std::string& db_path, const std::string& tdp_pk);
 
-    const std::string public_key() const;
+    std::string public_key() const;
 
     std::list<index_type> search(SearchRequest& req);
     void                  search_callback(SearchRequest&                         req,

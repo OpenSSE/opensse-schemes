@@ -274,13 +274,9 @@ grpc::Status DianaImpl::async_search(__attribute__((unused))
         SearchBenchmark bench("Diana asynchronous search");
 
 
-        if (mes->add_count() >= 40) { // run the search algorithm in parallel
-                                      // only if there are more than 2 results
+        if (mes->add_count() >= 2) { // run the search algorithm in parallel
+                                     // only if there are more than 2 results
 
-            server_->search_parallel(
-                req, post_callback, std::thread::hardware_concurrency());
-
-        } else if (mes->add_count() >= 2) {
             server_->search_parallel(
                 req, post_callback, std::thread::hardware_concurrency());
 

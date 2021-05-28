@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "sophos.grpc.pb.h"
+#include "protos/sophos.grpc.pb.h"
 
 #include <sse/schemes/sophos/sophos_server.hpp>
 

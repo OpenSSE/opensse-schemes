@@ -86,7 +86,7 @@ protected:
 
 using RunnerTypes = ::testing::Types<sse::sophos::test::SophosRunner,
                                      sse::diana::test::DianaRunner>;
-TYPED_TEST_CASE(RunnerTest, RunnerTypes);
+TYPED_TEST_SUITE(RunnerTest, RunnerTypes);
 
 
 TYPED_TEST(RunnerTest, insertion_search)

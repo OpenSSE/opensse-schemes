@@ -174,7 +174,7 @@ std::list<index_type> JanusServer::search_parallel(SearchRequest& req,
 
     // merge the result lists
     std::list<index_type> results(std::move(result_lists[0]));
-    for (uint8_t i = 1; i < result_lists.size(); i++) {
+    for (size_t i = 1; i < result_lists.size(); i++) {
         results.splice(results.end(), result_lists[i]);
     }
 
@@ -209,7 +209,8 @@ void JanusServer::search_parallel(
         std::make_move_iterator(std::begin(key_shares)),
         std::make_move_iterator(std::end(key_shares))});
 
-    std::list<cached_result_type> new_cache, filtered_cache;
+    std::list<cached_result_type> new_cache;
+    std::list<cached_result_type> filtered_cache;
     std::mutex                    cache_mtx;
 
     auto decryption_callback

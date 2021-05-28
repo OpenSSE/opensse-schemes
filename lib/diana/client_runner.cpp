@@ -19,7 +19,7 @@
 //
 
 #define DIANA_CLIENT_RUNNER_CPP
-#include "diana.grpc.pb.h"
+#include "protos/diana.grpc.pb.h"
 
 #include <sse/runners/diana/client_runner.hpp>
 #include <sse/schemes/diana/diana_client.hpp>
@@ -91,14 +91,17 @@ static std::unique_ptr<DC> construct_client_from_directory(
     std::ifstream wrapping_key_in(wrapping_key_path.c_str());
 
 
-    std::stringstream master_key_buf, kw_token_key_buf, wrapping_key_buf;
+    std::stringstream master_key_buf;
+    std::stringstream kw_token_key_buf;
+    std::stringstream wrapping_key_buf;
 
     master_key_buf << master_key_in.rdbuf();
     kw_token_key_buf << kw_token_key_in.rdbuf();
     wrapping_key_buf << wrapping_key_in.rdbuf();
 
-    std::array<uint8_t, DC::kKeySize> client_master_key_array,
-        client_kw_token_key_array, client_wrapping_key_array;
+    std::array<uint8_t, DC::kKeySize> client_master_key_array;
+    std::array<uint8_t, DC::kKeySize> client_kw_token_key_array;
+    std::array<uint8_t, DC::kKeySize> client_wrapping_key_array;
 
 
     if (master_key_buf.str().size() != client_master_key_array.size()) {
@@ -439,8 +442,8 @@ bool DianaClientRunner::load_inverted_index(const std::string& path)
         std::atomic_size_t counter(0);
 
         auto add_list_callback = [this, &pool, &counter](
-                                     const std::string         kw,
-                                     const std::list<unsigned> docs) {
+                                     const std::string&         kw,
+                                     const std::list<unsigned>& docs) {
             auto work = [this, &counter](const std::string&         keyword,
                                          const std::list<unsigned>& documents) {
                 std::list<std::pair<std::string, uint64_t>> update_list;

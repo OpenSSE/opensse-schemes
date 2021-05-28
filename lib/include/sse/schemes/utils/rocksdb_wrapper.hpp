@@ -358,7 +358,10 @@ private:
 };
 
 template<typename T, class Serializer>
+// cppcheck (on Xenial) can be annoying with lineskips
+// cppcheck-suppress uninitMemberVar
 RockDBListStore<T, Serializer>::RockDBListStore(const std::string& path)
+    : db_(nullptr)
 {
     rocksdb::Options options;
     options.create_if_missing = true;
@@ -466,6 +469,7 @@ bool RockDBListStore<T, Serializer>::get(const uint8_t* key,
 }
 
 template<typename T, class Serializer>
+// cppcheck-suppress syntaxError
 template<size_t N>
 bool RockDBListStore<T, Serializer>::put(const std::array<uint8_t, N>& key,
                                          const std::list<T>&           data,

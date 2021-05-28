@@ -70,6 +70,7 @@ void Benchmark::set_benchmark_file(const std::string& path)
     benchmark_logger_->set_pattern("[%Y-%m-%d %T.%e] %v");
 }
 
+// cppcheck-suppress passedByValue
 Benchmark::Benchmark(std::string format)
     : format_(std::move(format)), count_(0), stopped_(false),
       begin_(std::chrono::high_resolution_clock::now())
@@ -95,12 +96,12 @@ Benchmark::~Benchmark()
 {
     stop();
 
-    std::chrono::duration<double, std::milli> time_ms = end_ - begin_;
+    std::chrono::duration<long double, std::milli> time_ms = end_ - begin_;
 
     auto time_per_item = time_ms;
 
     if (count_ > 1) {
-        time_per_item /= count_;
+        time_per_item /= static_cast<long double>(count_);
     }
 
     if (benchmark_logger_) {
@@ -114,6 +115,7 @@ constexpr auto search_JSON_begin
 constexpr auto search_JSON_end
     = "\", \"items\" : {0}, \"time\" : {1}, \"time/item\" : {2} }}";
 
+// cppcheck-suppress passedByValue
 SearchBenchmark::SearchBenchmark(std::string message)
     : Benchmark(search_JSON_begin + std::move(message) + search_JSON_end)
 {

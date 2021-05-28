@@ -1,9 +1,6 @@
-cmake_minimum_required(VERSION 3.1)
-project(
-    opensse-schemes
-    VERSION 0.3
-    DESCRIPTION "OpenSSE's Schemes Implementation"
-)
+cmake_minimum_required(VERSION 3.5.1)
+project(opensse-schemes VERSION 0.3 DESCRIPTION "OpenSSE's Schemes Implementation")
+
 
 list(APPEND CMAKE_MODULE_PATH
      "${CMAKE_SOURCE_DIR}/externals/CMake-codecov/cmake"
@@ -24,6 +21,8 @@ option(
     "Enable compiler optimizations for the native processor architecture (if available)"
     ON
 )
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Load modules
 

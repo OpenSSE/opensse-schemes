@@ -16,14 +16,14 @@
 #include <grpcpp/grpcpp.h>
 #include <unistd.h>
 
-sse::diana::DianaServerRunner* server_ptr__ = nullptr;
+sse::diana::DianaServerRunner* g_diana_server_ptr_ = nullptr;
 
 void exit_handler(__attribute__((unused)) int signal)
 {
     sse::logger::logger()->info("Exiting ... ");
 
-    if (server_ptr__ != nullptr) {
-        server_ptr__->shutdown();
+    if (g_diana_server_ptr_ != nullptr) {
+        g_diana_server_ptr_->shutdown();
     }
 };
 
@@ -82,10 +82,11 @@ int main(int argc, char** argv)
         sse::logger::logger()->info("Running server with database "
                                     + server_db);
     }
-    server_ptr__ = new sse::diana::DianaServerRunner("0.0.0.0:4241", server_db);
-    server_ptr__->set_async_search(async_search);
+    g_diana_server_ptr_
+        = new sse::diana::DianaServerRunner("0.0.0.0:4241", server_db);
+    g_diana_server_ptr_->set_async_search(async_search);
 
-    server_ptr__->wait();
+    g_diana_server_ptr_->wait();
 
     sse::crypto::cleanup_crypto_lib();
 

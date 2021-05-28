@@ -42,12 +42,14 @@
 namespace sse {
 namespace sophos {
 
-static uint64_t optimal_num_group(size_t N_entries,
+static uint64_t optimal_num_group(double fraction,
+                                  size_t N_entries,
                                   size_t step,
                                   size_t group_size)
 {
-    return floorl((static_cast<long double>(N_entries))
-                  / (1.2 * step * group_size));
+    return static_cast<uint64_t>(
+        floorl(fraction * (static_cast<long double>(N_entries))
+               / (1.2 * static_cast<long double>(step * group_size))));
 }
 
 const char* kKeyword01PercentBase = "0.1";
@@ -60,6 +62,8 @@ const char* kKeywordRand10GroupBase = "Group-rand-10^";
 
 constexpr uint32_t max_10_counter = ~0;
 
+// This function is very badly implemented, I know ...
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 static void generation_job(
     unsigned int                                           thread_id,
     size_t                                                 N_entries,
@@ -75,14 +79,29 @@ static void generation_job(
     size_t      counter   = thread_id;
     std::string id_string = std::to_string(thread_id);
 
-    uint32_t counter_10_1 = 0, counter_20 = 0, counter_30 = 0, counter_60 = 0,
-             counter_10_2 = 0, counter_10_3 = 0, counter_10_4 = 0,
-             counter_10_5 = 0, counter_10_6 = 0;
+    uint32_t counter_10_1 = 0;
+    uint32_t counter_20   = 0;
+    uint32_t counter_30   = 0;
+    uint32_t counter_60   = 0;
+    uint32_t counter_10_2 = 0;
+    uint32_t counter_10_3 = 0;
+    uint32_t counter_10_4 = 0;
+    uint32_t counter_10_5 = 0;
+    uint32_t counter_10_6 = 0;
 
 
-    std::string keyword_01, keyword_1, keyword_10;
-    std::string kw_10_1, kw_10_2, kw_10_3, kw_10_4, kw_10_5, kw_10_6, kw_20,
-        kw_30, kw_60;
+    std::string keyword_01;
+    std::string keyword_1;
+    std::string keyword_10;
+    std::string kw_10_1;
+    std::string kw_10_2;
+    std::string kw_10_3;
+    std::string kw_10_4;
+    std::string kw_10_5;
+    std::string kw_10_6;
+    std::string kw_20;
+    std::string kw_30;
+    std::string kw_60;
 
 
     bool use_rnd_group_2 = true;
@@ -91,18 +110,21 @@ static void generation_job(
     bool use_rnd_group_5 = true;
     bool use_rnd_group_6 = true;
 
-    const uint64_t size_group_2 = 1e2, size_group_3 = 1e3, size_group_4 = 1e4,
-                   size_group_5 = 1e5, size_group_6 = 1e6;
+    const uint64_t size_group_2 = 1e2;
+    const uint64_t size_group_3 = 1e3;
+    const uint64_t size_group_4 = 1e4;
+    const uint64_t size_group_5 = 1e5;
+    const uint64_t size_group_6 = 1e6;
     const uint64_t n_groups_2
-        = 0.9 * optimal_num_group(N_entries, step, size_group_2);
+        = optimal_num_group(0.9, N_entries, step, size_group_2);
     const uint64_t n_groups_3
-        = optimal_num_group(N_entries, step, size_group_3);
+        = optimal_num_group(1.0, N_entries, step, size_group_3);
     const uint64_t n_groups_4
-        = optimal_num_group(N_entries, step, size_group_4);
+        = optimal_num_group(1.0, N_entries, step, size_group_4);
     const uint64_t n_groups_5
-        = optimal_num_group(N_entries, step, size_group_5);
+        = optimal_num_group(1.0, N_entries, step, size_group_5);
     const uint64_t n_groups_6
-        = optimal_num_group(N_entries, step, size_group_6);
+        = optimal_num_group(1.0, N_entries, step, size_group_6);
 
 
     // use_rnd_group_2
@@ -116,21 +138,21 @@ static void generation_job(
     // use_rnd_group_6
     //     = true || (1.5 * N_entries >= n_groups_6 * size_group_6 * step);
 
-    const double r_threshold_2
-        = 1.4 * (static_cast<double>(n_groups_2) * size_group_2 * step)
-          / (static_cast<double>(N_entries));
-    const double r_threshold_3
-        = 1.2 * (static_cast<double>(n_groups_3) * size_group_3 * step)
-          / (static_cast<double>(N_entries));
-    const double r_threshold_4
-        = 1.2 * (static_cast<double>(n_groups_4) * size_group_4 * step)
-          / (static_cast<double>(N_entries));
-    const double r_threshold_5
-        = 1.2 * (static_cast<double>(n_groups_5) * size_group_5 * step)
-          / (static_cast<double>(N_entries));
-    const double r_threshold_6
-        = 1.2 * (static_cast<double>(n_groups_6) * size_group_6 * step)
-          / (static_cast<double>(N_entries));
+    const long double r_threshold_2
+        = 1.4 * (static_cast<long double>(n_groups_2) * size_group_2 * step)
+          / (static_cast<long double>(N_entries));
+    const long double r_threshold_3
+        = 1.2 * (static_cast<long double>(n_groups_3) * size_group_3 * step)
+          / (static_cast<long double>(N_entries));
+    const long double r_threshold_4
+        = 1.2 * (static_cast<long double>(n_groups_4) * size_group_4 * step)
+          / (static_cast<long double>(N_entries));
+    const long double r_threshold_5
+        = 1.2 * (static_cast<long double>(n_groups_5) * size_group_5 * step)
+          / (static_cast<long double>(N_entries));
+    const long double r_threshold_6
+        = 1.2 * (static_cast<long double>(n_groups_6) * size_group_6 * step)
+          / (static_cast<long double>(N_entries));
 
     std::vector<uint64_t> group_rand_10_2(n_groups_2, 0);
     std::vector<uint64_t> group_rand_10_3(n_groups_3, 0);
@@ -489,8 +511,8 @@ static void generation_job(
 }
 
 
-void gen_db(size_t                                          N_entries,
-            std::function<void(const std::string&, size_t)> callback)
+void gen_db(size_t                                                 N_entries,
+            const std::function<void(const std::string&, size_t)>& callback)
 {
     std::atomic_size_t entries_counter(0);
     std::atomic_size_t docs_counter(0);

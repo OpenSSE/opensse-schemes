@@ -152,7 +152,7 @@ std::vector<index_type> TethysClient<ValueDecoder>::decode_search_results(
     const SearchRequest&                req,
     std::vector<keyed_bucket_pair_type> keyed_bucket_pairs,
     const stash_type&                   stash,
-    decrypt_decoder_type&                       decrypt_decoder)
+    decrypt_decoder_type&               decrypt_decoder)
 {
     (void)req;
     std::vector<index_type> results;

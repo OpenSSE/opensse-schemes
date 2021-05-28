@@ -76,9 +76,9 @@ private:
     std::thread      m_notify_thread;
     std::atomic_bool m_stop_flag;
 
-    std::atomic_uint64_t m_submitted_queries_count;
-    uint64_t             m_completed_queries_count;
-    std::atomic_uint64_t m_failed_queries_count;
+    std::atomic<uint64_t> m_submitted_queries_count;
+    uint64_t              m_completed_queries_count;
+    std::atomic<uint64_t> m_failed_queries_count;
 
     std::mutex              m_cv_lock;
     std::condition_variable m_cv_submission;

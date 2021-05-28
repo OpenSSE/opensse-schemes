@@ -539,6 +539,7 @@ public:
 
     // 20.5.5.1, constructors
     constexpr optional() noexcept : OptionalBase<T>(){};
+    // cppcheck-suppress noExplicitConstructor
     constexpr optional(nullopt_t) noexcept : OptionalBase<T>(){};
 
     optional(const optional& rhs) : OptionalBase<T>()
@@ -558,10 +559,12 @@ public:
         }
     }
 
+    // cppcheck-suppress noExplicitConstructor
     constexpr optional(const T& v) : OptionalBase<T>(v)
     {
     }
 
+    // cppcheck-suppress noExplicitConstructor
     constexpr optional(T&& v) : OptionalBase<T>(constexpr_move(v))
     {
     }
@@ -824,10 +827,12 @@ public:
     {
     }
 
+    // cppcheck-suppress noExplicitConstructor
     constexpr optional(nullopt_t) noexcept : ref(nullptr)
     {
     }
 
+    // cppcheck-suppress noExplicitConstructor
     constexpr optional(T& v) noexcept : ref(detail_::static_addressof(v))
     {
     }

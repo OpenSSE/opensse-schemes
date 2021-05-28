@@ -41,7 +41,7 @@ public:
         }
     };
 
-    awonvm_vector(const std::string& path, bool direct_io = false);
+    explicit awonvm_vector(const std::string& path, bool direct_io = false);
     ~awonvm_vector();
 
     awonvm_vector(awonvm_vector&&);
@@ -206,13 +206,13 @@ size_t awonvm_vector<T, ALIGNMENT>::async_push_back(const T& val)
     void* buf;
 
     int ret = posix_memalign((&buf), ALIGNMENT, std::max(ALIGNMENT, sizeof(T)));
-    memcpy(buf, &val, sizeof(T));
 
     if (ret != 0 || buf == NULL) {
         throw std::runtime_error("Error when allocating aligned memory: errno "
                                  + std::to_string(ret) + "(" + strerror(ret)
                                  + ")");
     }
+    memcpy(buf, &val, sizeof(T));
 
     auto cb = [](void* b, size_t /*res*/) {
         // std::cerr << (int)((uint8_t*)b)[0] << "\t" << res << "\n";

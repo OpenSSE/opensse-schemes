@@ -380,7 +380,7 @@ void DianaClientRunner::insert_in_session(
     bool success = std::all_of(
         message_list.begin(),
         message_list.end(),
-        [this](UpdateRequest<DianaClientRunner::index_type>& req) {
+        [this](const UpdateRequest<DianaClientRunner::index_type>& req) {
             return this->bulk_update_state_.writer->Write(
                 request_to_message(req));
         });

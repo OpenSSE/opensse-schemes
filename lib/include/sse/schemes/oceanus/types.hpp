@@ -62,7 +62,7 @@ struct CuckooKey
     uint64_t h[2]{~0UL, ~0UL};
 
     CuckooKey() = default;
-    CuckooKey(const key_type& key)
+    explicit CuckooKey(const key_type& key)
     {
         static_assert(sizeof(h) == sizeof(key_type), "Invalid source key size");
         memcpy(h, key.data(), sizeof(h));

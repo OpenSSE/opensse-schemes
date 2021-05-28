@@ -257,6 +257,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
         flow = std::min<size_t>(edges.edge_flow(sink_parent_edge), flow);
 
         if (sink_parent_edge.is_reciprocal) {
+            // cppcheck-suppress redundantInitialization
             cur = &get_vertex(e.end);
         } else {
             cur = &get_vertex(e.start);
@@ -264,15 +265,15 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
         size++;
 
         while (cur->parent_edge != kNullEdgePtr) {
-            const Edge& e = edges[cur->parent_edge];
+            const Edge& edge = edges[cur->parent_edge];
             // be careful here: the flow we are interested in might be the
             // reciprocal flow
             flow = std::min<size_t>(edges.edge_flow(cur->parent_edge), flow);
 
             if (cur->parent_edge.is_reciprocal) {
-                cur = &get_vertex(e.end);
+                cur = &get_vertex(edge.end);
             } else {
-                cur = &get_vertex(e.start);
+                cur = &get_vertex(edge.start);
             }
             size++;
         }
@@ -293,6 +294,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
         // const Edge& e      = edges[sink_parent_edge];
 
         if (sink_parent_edge.is_reciprocal) {
+            // cppcheck-suppress redundantAssignment
             cur = &get_vertex(e.end);
         } else {
             cur = &get_vertex(e.start);
@@ -301,12 +303,12 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
 
         while (cur->parent_edge != kNullEdgePtr) {
             path[size - i - 1] = cur->parent_edge;
-            const Edge& e      = edges[cur->parent_edge];
+            const Edge& edge   = edges[cur->parent_edge];
 
             if (cur->parent_edge.is_reciprocal) {
-                cur = &get_vertex(e.end);
+                cur = &get_vertex(edge.end);
             } else {
-                cur = &get_vertex(e.start);
+                cur = &get_vertex(edge.start);
             }
             i++;
         }
@@ -534,6 +536,7 @@ size_t TethysGraph::get_flow() const
 
     size_t flow = 0;
     for (const EdgePtr e_ptr : source.out_edges) {
+        // cppcheck-suppress useStlAlgorithm
         flow += edges[e_ptr].flow;
     }
 

@@ -30,7 +30,7 @@ LinuxAIOScheduler::LinuxAIOScheduler(const size_t   page_size,
 
 LinuxAIOScheduler::~LinuxAIOScheduler()
 {
-    wait_completions();
+    this->wait_completions();
 
     io_destroy(m_ioctx);
 
@@ -105,6 +105,7 @@ void LinuxAIOScheduler::wait_completions()
 
 int LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
 {
+    // cppcheck-suppress unreadVariable
     int           res            = -EAGAIN;
     size_t        remaining_subs = n_iocbs;
     struct iocb** iocbs_head     = iocbs;
@@ -272,7 +273,7 @@ struct destructive_copy_constructible
     {
     }
 
-    destructive_copy_constructible(T&& v) : value(std::move(v))
+    explicit destructive_copy_constructible(T&& v) : value(std::move(v))
     {
     }
 

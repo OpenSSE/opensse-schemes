@@ -118,14 +118,14 @@ grpc::Status SophosImpl::setup(__attribute__((unused))
     try {
         logger::logger()->info("Setting up server");
         server_.reset(new SophosServer(pairs_map_path, message->public_key()));
-    } catch (std::exception& e) {
+    } catch (std::exception& err) {
         logger::logger()->error("Error when setting up the server's core:\n"
-                                + std::string(e.what()));
+                                + std::string(err.what()));
 
         server_.reset();
         return grpc::Status(grpc::FAILED_PRECONDITION,
                             "Unable to create the server's core. Exception: "
-                                + std::string(e.what()));
+                                + std::string(err.what()));
     }
 
     // write the public key in a file

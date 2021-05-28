@@ -86,7 +86,6 @@ private:
     crypto::Prf<kKeywordTokenSize>   kw_token_prf_;
 
     sophos::RocksDBCounter counter_map_;
-    std::atomic_uint       keyword_counter_;
 };
 
 } // namespace diana
@@ -211,17 +210,14 @@ template<typename T>
 std::list<UpdateRequest<T>> DianaClient<T>::bulk_insertion_request(
     const std::list<std::pair<std::string, index_type>>& update_list)
 {
-    std::string keyword;
-    index_type  index;
-
     std::list<UpdateRequest<T>> req_list;
 
     std::list<std::tuple<std::string, T, uint32_t>> counter_list
         = get_counters_and_increment(update_list);
 
     for (auto it = counter_list.begin(); it != counter_list.end(); ++it) {
-        keyword = std::get<0>(*it);
-        index   = std::get<1>(*it);
+        std::string           keyword = std::get<0>(*it);
+        index_type            index   = std::get<1>(*it);
         UpdateRequest<T>      req;
         search_token_key_type st;
         index_type            mask;
@@ -259,14 +255,11 @@ std::list<std::tuple<std::string, T, uint32_t>> DianaClient<T>::
     get_counters_and_increment(
         const std::list<std::pair<std::string, index_type>>& update_list)
 {
-    std::string keyword;
-    index_type  index;
-
     std::list<std::tuple<std::string, index_type, uint32_t>> res;
 
     for (auto it = update_list.begin(); it != update_list.end(); ++it) {
-        keyword = it->first;
-        index   = it->second;
+        std::string keyword = it->first;
+        index_type  index   = it->second;
 
         // retrieve the counter
         uint32_t kw_counter;

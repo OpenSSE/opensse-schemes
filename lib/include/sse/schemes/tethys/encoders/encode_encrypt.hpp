@@ -38,7 +38,7 @@ public:
     using keyword_type = typename BaseEncoder::key_type;
     using value_type   = typename BaseEncoder::value_type;
 
-    EncryptEncoder(key_type key)
+    explicit EncryptEncoder(key_type key)
         : encoder(),
           encryption_key(std::move(key)) /*, mask_prf(std::move(key))*/
     {
@@ -55,8 +55,7 @@ public:
                   const std::vector<value_type>& values,
                   TethysAssignmentInfo           infos)
     {
-        return encoder.encode(
-            buffer, table_index, key, values, std::move(infos));
+        return encoder.encode(buffer, table_index, key, values, infos);
     }
 
     size_t finish_block_encoding(uint8_t* buffer,
@@ -73,6 +72,7 @@ public:
 
         // encrypt the block
 
+        // NOLINTNEXTLINE(modernize-avoid-c-arrays)
         uint8_t nonce[crypto_stream_chacha20_NONCEBYTES];
         memset(nonce, 0x00, sizeof(nonce));
         memcpy(nonce, reinterpret_cast<uint8_t*>(&table_index), sizeof(size_t));

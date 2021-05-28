@@ -20,7 +20,7 @@ struct VertexPtr
     // static constexpr size_t index_mask = ~0UL >> 1;
     constexpr VertexPtr() : index(~0UL){}; // null pointer by default
 
-    constexpr VertexPtr(size_t i) : index(i)
+    constexpr explicit VertexPtr(size_t i) : index(i)
     {
     }
 
@@ -56,7 +56,7 @@ struct EdgePtr_Templ
     constexpr explicit EdgePtr_Templ(size_t i)
         : is_reciprocal(false), index(i & index_mask){};
     constexpr EdgePtr_Templ(bool r, size_t i)
-        : is_reciprocal(r & 1), index(i & index_mask){};
+        : is_reciprocal((r & 1) != 0), index(i & index_mask){};
 
 
     bool operator==(const EdgePtr_Templ<size>& ptr) const
@@ -120,7 +120,7 @@ class EdgeVec
 public:
     EdgePtr push_back(Edge e)
     {
-        edges.push_back(std::move(e));
+        edges.push_back(e);
         return EdgePtr(edges.size() - 1);
     }
 
@@ -139,9 +139,8 @@ public:
         const Edge& e = (*this)[ptr];
         if (ptr.is_reciprocal) {
             return e.rec_flow;
-        } else {
-            return e.flow;
         }
+        return e.flow;
     }
 
     void update_flow(EdgePtr ptr, size_t c)
@@ -290,7 +289,7 @@ public:
     TethysGraph(TethysGraph&&)      = default;
 
     TethysGraph& operator=(const TethysGraph&) = delete;
-    TethysGraph& operator=(TethysGraph&&) = default;
+    // TethysGraph& operator=(TethysGraph&&) = default;
 
     EdgePtr add_edge(size_t value_index, size_t cap, size_t start, size_t end);
 
@@ -298,7 +297,7 @@ public:
     EdgePtr add_edge_to_sink(size_t value_index, size_t cap, size_t start);
 
     std::vector<EdgePtr> find_source_sink_path(const size_t component,
-                                               size_t* path_capacity) const;
+                                               size_t*      path_flow) const;
 
     const Vertex& get_vertex(VertexPtr ptr) const;
     Vertex&       get_vertex(VertexPtr ptr);

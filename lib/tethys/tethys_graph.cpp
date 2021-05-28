@@ -157,7 +157,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
     // is necessary
 
     while (!found_sink) {
-        if (queue.size() == 0) {
+        if (queue.empty()) {
             break;
         }
 
@@ -340,7 +340,7 @@ void TethysGraph::compute_connected_components()
 
         queue.push_front(vp);
 
-        while (queue.size() > 0) {
+        while (!queue.empty()) {
             const Vertex& v = get_vertex(queue.front());
             queue.pop_front();
             component_size++;
@@ -470,7 +470,7 @@ void TethysGraph::parallel_compute_residual_maxflow(ThreadPool& thread_pool)
                 auto   path
                     = find_source_sink_path(component_index, &path_capacity);
 
-                if (path.size() == 0) {
+                if (path.empty()) {
                     // no path found
                     break;
                 }

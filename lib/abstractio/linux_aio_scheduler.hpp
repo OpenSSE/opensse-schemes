@@ -49,7 +49,7 @@ public:
 private:
     void notify_loop();
 
-    int check_args(void* buf, size_t len, off_t offset);
+    int check_args(void* buf, size_t len, off_t offset) const;
 
     int submit_iocbs(struct iocb** iocbs, size_t n_iocbs);
 

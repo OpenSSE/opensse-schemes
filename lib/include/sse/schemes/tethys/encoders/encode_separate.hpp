@@ -39,10 +39,10 @@ struct EncodeSeparateEncoder
 
     static constexpr size_t kBucketControlValues = 0;
 
-    size_t start_block_encoding(uint8_t* buffer, size_t table_index)
+    size_t start_block_encoding(uint8_t* /*buffer*/, size_t /*table_index*/)
     {
-        (void)buffer;
-        (void)table_index;
+        // (void)buffer;
+        // (void)table_index;
         return 0;
     }
 
@@ -236,7 +236,7 @@ struct EncodeSeparateEncoder
         }
     }
 
-    void start_tethys_encoding(const details::TethysGraph&)
+    void start_tethys_encoding(const details::TethysGraph& /*g*/)
     {
     }
 
@@ -316,9 +316,9 @@ struct EncodeSeparateDecoder
 
     std::vector<T> decode_buckets(const Key&                           key,
                                   const std::array<uint8_t, PAGESIZE>& bucket_0,
-                                  size_t,
+                                  size_t /*unused*/,
                                   const std::array<uint8_t, PAGESIZE>& bucket_1,
-                                  size_t)
+                                  size_t /*unused*/)
     {
         std::vector<T> res;
 

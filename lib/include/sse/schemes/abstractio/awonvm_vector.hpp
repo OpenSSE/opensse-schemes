@@ -44,7 +44,7 @@ public:
     explicit awonvm_vector(const std::string& path, bool direct_io = false);
     ~awonvm_vector();
 
-    awonvm_vector(awonvm_vector&&);
+    awonvm_vector(awonvm_vector&& vec) noexcept;
 
     size_t push_back(const T& val);
     size_t async_push_back(const T& val);
@@ -126,7 +126,7 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
     }
 }
 template<typename T, size_t ALIGNMENT>
-awonvm_vector<T, ALIGNMENT>::awonvm_vector(awonvm_vector&& vec)
+awonvm_vector<T, ALIGNMENT>::awonvm_vector(awonvm_vector&& vec) noexcept
     : m_filename(vec.m_filename), m_use_direct_io(vec.m_use_direct_io),
       m_fd(vec.m_fd), m_device_page_size(vec.m_device_page_size),
       m_io_scheduler(std::move(vec.m_io_scheduler))
@@ -207,7 +207,7 @@ size_t awonvm_vector<T, ALIGNMENT>::async_push_back(const T& val)
 
     int ret = posix_memalign((&buf), ALIGNMENT, std::max(ALIGNMENT, sizeof(T)));
 
-    if (ret != 0 || buf == NULL) {
+    if (ret != 0 || buf == nullptr) {
         throw std::runtime_error("Error when allocating aligned memory: errno "
                                  + std::to_string(ret) + "(" + strerror(ret)
                                  + ")");
@@ -335,7 +335,7 @@ void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
     int   ret
         = posix_memalign((&buffer), ALIGNMENT, std::max(ALIGNMENT, sizeof(T)));
 
-    if (ret != 0 || buffer == NULL) {
+    if (ret != 0 || buffer == nullptr) {
         throw std::runtime_error("Error when allocating aligned memory: errno "
                                  + std::to_string(ret) + "(" + strerror(ret)
                                  + ")");

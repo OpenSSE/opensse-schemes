@@ -59,6 +59,7 @@ inline bool match_key(const payload_type<PAGE_SIZE>& pl, const key_type& key)
 
 struct CuckooKey
 {
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     uint64_t h[2]{~0UL, ~0UL};
 
     CuckooKey() = default;

@@ -12,10 +12,12 @@ size_t tethys_graph_size(size_t n_elements, size_t bucket_size, double epsilon);
 
 struct TethysAllocatorKey
 {
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     uint64_t        h[2]{~0UL, ~0UL};
     EdgeOrientation orientation;
 
     TethysAllocatorKey() = default;
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     TethysAllocatorKey(uint64_t v[2], EdgeOrientation o)
         : h{v[0], v[1]}, orientation(o)
     {

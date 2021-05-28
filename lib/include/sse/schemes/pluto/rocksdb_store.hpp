@@ -64,7 +64,7 @@ class RocksDBStoreBuilder
 {
 public:
     using param_type = GenericRocksDBStoreParams;
-    RocksDBStoreBuilder(const param_type& params) : store(params)
+    explicit RocksDBStoreBuilder(const param_type& params) : store(params)
     {
     }
 

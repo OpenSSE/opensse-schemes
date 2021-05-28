@@ -47,7 +47,7 @@ public:
     using param_type   = CuckooBuilderParam;
 
     explicit CuckooBuilder(CuckooBuilderParam p);
-    CuckooBuilder(CuckooBuilder&&) = default;
+    CuckooBuilder(CuckooBuilder&&) noexcept = default;
 
     ~CuckooBuilder();
 
@@ -117,7 +117,7 @@ CuckooBuilder<PAGE_SIZE, Key, T, KeySerializer, ValueSerializer, CuckooHasher>::
     CuckooBuilder(CuckooBuilderParam p)
     : params(std::move(p)),
       allocator(params.table_size(), params.max_search_depth),
-      data(params.value_file_path), spilled_data(), n_elements(0)
+      data(params.value_file_path), n_elements(0)
 {
     data.reserve(params.max_n_elements);
 }
@@ -285,7 +285,7 @@ public:
 
     using param_type = std::string;
 
-    CuckooHashTable(const std::string& path);
+    explicit CuckooHashTable(const std::string& path);
 
 
     T    get(const Key& key);
@@ -355,17 +355,16 @@ T CuckooHashTable<PAGE_SIZE,
     payload_type val_0 = table.get(loc);
     if (details::match_key<PAGE_SIZE>(val_0, ser_key)) {
         return ValueSerializer().deserialize(val_0.data() + kKeySize);
-    } else {
-        loc = search_key.h[1] % table_size;
-
-        payload_type val_1 = table.get(loc + table_size);
-
-        if (details::match_key<PAGE_SIZE>(val_1, ser_key)) {
-            return ValueSerializer().deserialize(val_1.data() + kKeySize);
-        } else {
-            throw std::out_of_range("Key not found");
-        }
     }
+
+    loc = search_key.h[1] % table_size;
+
+    payload_type val_1 = table.get(loc + table_size);
+
+    if (details::match_key<PAGE_SIZE>(val_1, ser_key)) {
+        return ValueSerializer().deserialize(val_1.data() + kKeySize);
+    }
+    throw std::out_of_range("Key not found");
 }
 
 

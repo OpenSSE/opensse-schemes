@@ -91,9 +91,10 @@ GenericRocksDBStore::GenericRocksDBStore(
 
         throw std::runtime_error("Unable to open the database located at "
                                  + params.path);
-    } else {
-        db.reset(db_ptr);
     }
+
+    db.reset(db_ptr);
+
     /* LCOV_EXCL_STOP */
 }
 

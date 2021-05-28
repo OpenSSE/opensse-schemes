@@ -3,6 +3,7 @@
 #include "utils/utils.hpp"
 
 #include <cassert>
+#include <climits>
 #include <libaio.h>
 
 #include <iostream>
@@ -14,11 +15,13 @@ static constexpr size_t kMaxNr = 128;
 
 LinuxAIOScheduler::LinuxAIOScheduler(const size_t   page_size,
                                      const unsigned nr_events)
-    : Scheduler(), m_ioctx(0), m_page_size(page_size), m_stop_flag(false),
+    : m_ioctx(nullptr), m_page_size(page_size), m_stop_flag(false),
       m_submitted_queries_count(0), m_completed_queries_count(0)
 {
+    // NOLINTNEXTLINE(bugprone-sizeof-expression)
     memset(&m_ioctx, 0, sizeof(m_ioctx));
-    int res = io_setup(nr_events, &m_ioctx);
+    int nevents = (nr_events > INT_MAX) ? INT_MAX : nr_events;
+    int res     = io_setup(nevents, &m_ioctx);
 
     if (res != 0) {
         throw std::runtime_error("Error initializing io context: "
@@ -77,7 +80,7 @@ void LinuxAIOScheduler::notify_loop()
     std::cerr << "Shut down\n";
 }
 
-int LinuxAIOScheduler::check_args(void* buf, size_t len, off_t offset)
+int LinuxAIOScheduler::check_args(void* buf, size_t len, off_t offset) const
 {
     if (!utility::is_aligned(buf, m_page_size)) {
         return -EINVAL_UNALIGNED_BUFFER;
@@ -134,10 +137,11 @@ int LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
         } else {
             // m_failed_queries_count.fetch_add(remaining_subs);
             std::cerr << "Submission error: " << res << "\n";
-            if (res < 0)
+            if (res < 0) {
                 perror("io_submit");
-            else
+            } else {
                 fprintf(stderr, "io_submit failed\n");
+            }
             return -1;
         }
     }
@@ -188,12 +192,12 @@ int LinuxAIOScheduler::submit_preads(const std::vector<PReadSumission>& subs)
     }
 
     struct iocb** iocbs
-        = (struct iocb**)calloc(subs.size(), sizeof(struct iocb*));
+        = static_cast<struct iocb**>(calloc(subs.size(), sizeof(struct iocb*)));
     size_t iocbs_count = 0;
 
     // pre-allocate the actual iocb structures
     struct iocb* flat_iocbs
-        = (struct iocb*)calloc(subs.size(), sizeof(struct iocb));
+        = static_cast<struct iocb*>(calloc(subs.size(), sizeof(struct iocb)));
 
 
     // fill in all the iocbs needed
@@ -269,9 +273,7 @@ struct destructive_copy_constructible
 {
     mutable T value;
 
-    destructive_copy_constructible()
-    {
-    }
+    destructive_copy_constructible() = default;
 
     explicit destructive_copy_constructible(T&& v) : value(std::move(v))
     {
@@ -282,8 +284,8 @@ struct destructive_copy_constructible
     {
     }
 
-    destructive_copy_constructible(destructive_copy_constructible<T>&& rhs)
-        = default;
+    destructive_copy_constructible(
+        destructive_copy_constructible<T>&& rhs) noexcept = default;
 
     destructive_copy_constructible& operator=(
         const destructive_copy_constructible<T>& rhs)
@@ -301,6 +303,7 @@ using dcc_t
 template<typename T>
 inline dcc_t<T> move_to_dcc(T&& r)
 {
+    // NOLINTNEXTLINE(bugprone-move-forwarding-reference)
     return dcc_t<T>(std::move(r));
 }
 
@@ -319,14 +322,14 @@ std::future<ReadBuffer> LinuxAIOScheduler::async_read(int    fd,
                              std::max(kMemoryAlignment, kMinBufferSize));
 
 
-    if (ret != 0 || buffer == NULL) {
+    if (ret != 0 || buffer == nullptr) {
         throw std::runtime_error("Error when allocating aligned memory: errno "
                                  + std::to_string(ret) + "(" + strerror(ret)
                                  + ")");
     }
 
     assert(ret == 0);
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
 
     std::future<ReadBuffer> read_future = read_promise.get_future();
 

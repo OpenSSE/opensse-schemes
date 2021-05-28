@@ -85,7 +85,7 @@ private:
 
     std::atomic_size_t m_size{0};
 
-    std::atomic_bool m_is_committed{false};
+    std::atomic<bool> m_is_committed{false};
 
     std::unique_ptr<Scheduler> m_io_scheduler;
     bool                       m_io_warn_flag{false};

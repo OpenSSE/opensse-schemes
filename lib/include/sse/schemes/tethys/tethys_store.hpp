@@ -386,7 +386,7 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
         std::unique_ptr<payload_type> bucket_1;
         size_t                        index_0;
         size_t                        index_1;
-        std::atomic_uint8_t           completion_counter{0};
+        std::atomic<uint8_t>          completion_counter{0};
         ValueDecoder                  decoder;
 
         CallBackState(const Key& k) : key(k){};
@@ -419,7 +419,7 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
         std::unique_ptr<payload_type> bucket_1;
         size_t                        index_0;
         size_t                        index_1;
-        std::atomic_uint8_t           completion_counter{0};
+        std::atomic<uint8_t>          completion_counter{0};
         ValueDecoder*                 decoder;
 
         CallBackState(const Key& k, ValueDecoder& dec)

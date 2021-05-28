@@ -385,7 +385,7 @@ void CuckooHashTable<PAGE_SIZE,
     struct CallBackState
     {
         std::unique_ptr<payload_type> result{nullptr};
-        std::atomic_uint8_t           completion_counter{0};
+        std::atomic<uint8_t>          completion_counter{0};
     };
 
     CuckooKey search_key = CuckooHasher()(key);

@@ -90,7 +90,7 @@ std::vector<index_type> OceanusServer<PAGE_SIZE>::search_async(
 
     std::vector<index_type> res;
 
-    std::atomic_bool   stop_flag(false);
+    std::atomic<bool>  stop_flag(false);
     std::atomic_size_t submitted_queries(0);
     std::atomic_size_t completed_queries(0);
 

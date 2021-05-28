@@ -73,8 +73,8 @@ private:
     const size_t m_page_size;
     // std::vector<LinuxAIOSchedulerState> m_state;
 
-    std::thread      m_notify_thread;
-    std::atomic_bool m_stop_flag;
+    std::thread       m_notify_thread;
+    std::atomic<bool> m_stop_flag;
 
     std::atomic<uint64_t> m_submitted_queries_count;
     uint64_t              m_completed_queries_count;

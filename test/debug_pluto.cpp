@@ -160,13 +160,14 @@ PlutoBuilder<Params> create_pluto_builder(
 }
 
 template<class Params>
-auto create_load_pluto_builder(const std::string&      path,
-                               sse::crypto::Key<32>&&  derivation_key,
-                               std::array<uint8_t, 32> encryption_key,
-                               size_t                  n_elts,
-                               const std::string&      json_path)
+PlutoBuilder<Params> create_load_pluto_builder(
+    const std::string&      path,
+    sse::crypto::Key<32>&&  derivation_key,
+    std::array<uint8_t, 32> encryption_key,
+    size_t                  n_elts,
+    const std::string&      json_path)
 {
-    auto builder = create_pluto_builder<Params>(
+    PlutoBuilder<Params> builder = create_pluto_builder<Params>(
         path, std::move(derivation_key), std::move(encryption_key), n_elts);
 
     builder.load_inverted_index(json_path);

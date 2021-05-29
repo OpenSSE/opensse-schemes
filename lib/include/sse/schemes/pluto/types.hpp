@@ -125,7 +125,8 @@ struct DefaultPlutoParams
         PlutoCuckooHasher>;
 
     static constexpr size_t kPlutoListLength
-        = std::min(kCuckooListLength, kTethysMaxListLength);
+        = ((kCuckooListLength < kTethysMaxListLength) ? kCuckooListLength
+                                                      : kTethysMaxListLength);
 };
 
 } // namespace pluto

@@ -101,6 +101,7 @@
 #define OPTIONAL_MUTABLE_CONSTEXPR constexpr
 #endif
 
+// NOLINTNEXTLINE(cert-dcl58-cpp)
 namespace std {
 
 namespace experimental {
@@ -235,13 +236,14 @@ template<typename T>
 struct has_overloaded_addressof
 {
     template<class X>
+    // NOLINTNEXTLINE(cert-dcl50-cpp)
     constexpr static bool has_overload(...)
     {
         return false;
     }
 
     template<class X, size_t S = sizeof(std::declval<X&>().operator&())>
-    constexpr static bool has_overload(bool)
+    constexpr static bool has_overload(bool /*unused*/)
     {
         return true;
     }
@@ -302,7 +304,8 @@ struct nullopt_t
     struct init
     {
     };
-    constexpr explicit nullopt_t(init)
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr nullopt_t(init /*unused*/)
     {
     }
 };
@@ -328,17 +331,16 @@ union storage_t
     unsigned char dummy_;
     T             value_;
 
-    constexpr storage_t(trivial_init_t) noexcept : dummy_(){};
+    constexpr explicit storage_t(trivial_init_t /*unused*/) noexcept
+        : dummy_(){};
 
     template<class... Args>
-    constexpr storage_t(Args&&... args)
+    constexpr explicit storage_t(Args&&... args)
         : value_(constexpr_forward<Args>(args)...)
     {
     }
 
-    ~storage_t()
-    {
-    }
+    ~storage_t() = default;
 };
 
 
@@ -348,10 +350,11 @@ union constexpr_storage_t
     unsigned char dummy_;
     T             value_;
 
-    constexpr constexpr_storage_t(trivial_init_t) noexcept : dummy_(){};
+    constexpr explicit constexpr_storage_t(trivial_init_t /*unused*/) noexcept
+        : dummy_(){};
 
     template<class... Args>
-    constexpr constexpr_storage_t(Args&&... args)
+    constexpr explicit constexpr_storage_t(Args&&... args)
         : value_(constexpr_forward<Args>(args)...)
     {
     }
@@ -363,10 +366,10 @@ union constexpr_storage_t
 template<class T>
 struct optional_base
 {
-    bool         init_;
+    bool         init_{false};
     storage_t<T> storage_;
 
-    constexpr optional_base() noexcept : init_(false), storage_(trivial_init){};
+    constexpr optional_base() noexcept : storage_(trivial_init){};
 
     explicit constexpr optional_base(const T& v) : init_(true), storage_(v)
     {
@@ -378,7 +381,7 @@ struct optional_base
     }
 
     template<class... Args>
-    explicit optional_base(in_place_t, Args&&... args)
+    explicit optional_base(in_place_t /*unused*/, Args&&... args)
         : init_(true), storage_(constexpr_forward<Args>(args)...)
     {
     }
@@ -387,7 +390,7 @@ struct optional_base
         class U,
         class... Args,
         TR2_OPTIONAL_REQUIRES(is_constructible<T, std::initializer_list<U>>)>
-    explicit optional_base(in_place_t,
+    explicit optional_base(in_place_t /*unused*/,
                            std::initializer_list<U> il,
                            Args&&... args)
         : init_(true), storage_(il, std::forward<Args>(args)...)
@@ -396,8 +399,11 @@ struct optional_base
 
     ~optional_base()
     {
-        if (init_)
-            storage_.value_.T::~T();
+        if (init_) {
+            {
+                storage_.value_.T::~T();
+            }
+        }
     }
 };
 
@@ -405,11 +411,10 @@ struct optional_base
 template<class T>
 struct constexpr_optional_base
 {
-    bool                   init_;
+    bool                   init_{false};
     constexpr_storage_t<T> storage_;
 
-    constexpr constexpr_optional_base() noexcept
-        : init_(false), storage_(trivial_init){};
+    constexpr constexpr_optional_base() noexcept : storage_(trivial_init){};
 
     explicit constexpr constexpr_optional_base(const T& v)
         : init_(true), storage_(v)
@@ -422,7 +427,8 @@ struct constexpr_optional_base
     }
 
     template<class... Args>
-    explicit constexpr constexpr_optional_base(in_place_t, Args&&... args)
+    explicit constexpr constexpr_optional_base(in_place_t /*unused*/,
+                                               Args&&... args)
         : init_(true), storage_(constexpr_forward<Args>(args)...)
     {
     }
@@ -432,7 +438,7 @@ struct constexpr_optional_base
         class... Args,
         TR2_OPTIONAL_REQUIRES(is_constructible<T, std::initializer_list<U>>)>
     OPTIONAL_CONSTEXPR_INIT_LIST explicit constexpr_optional_base(
-        in_place_t,
+        in_place_t /*unused*/,
         std::initializer_list<U> il,
         Args&&... args)
         : init_(true), storage_(il, std::forward<Args>(args)...)
@@ -510,8 +516,11 @@ class optional : private OptionalBase<T>
 
     void clear() noexcept
     {
-        if (initialized())
-            dataptr()->T::~T();
+        if (initialized()) {
+            {
+                dataptr()->T::~T();
+            }
+        }
         OptionalBase<T>::init_ = false;
     }
 
@@ -535,12 +544,13 @@ class optional : private OptionalBase<T>
     }
 
 public:
-    typedef T value_type;
+    using value_type = T;
 
     // 20.5.5.1, constructors
     constexpr optional() noexcept : OptionalBase<T>(){};
     // cppcheck-suppress noExplicitConstructor
-    constexpr optional(nullopt_t) noexcept : OptionalBase<T>(){};
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr optional(nullopt_t /*unused*/) noexcept : OptionalBase<T>(){};
 
     optional(const optional& rhs) : OptionalBase<T>()
     {
@@ -560,17 +570,20 @@ public:
     }
 
     // cppcheck-suppress noExplicitConstructor
+    // NOLINTNEXTLINE(google-explicit-constructor)
     constexpr optional(const T& v) : OptionalBase<T>(v)
     {
     }
 
     // cppcheck-suppress noExplicitConstructor
+    // NOLINTNEXTLINE(google-explicit-constructor)
     constexpr optional(T&& v) : OptionalBase<T>(constexpr_move(v))
     {
     }
 
     template<class... Args>
-    explicit constexpr optional(in_place_t, Args&&... args)
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    constexpr optional(in_place_t /*unused*/, Args&&... args)
         : OptionalBase<T>(in_place_t{}, constexpr_forward<Args>(args)...)
     {
     }
@@ -579,9 +592,9 @@ public:
         class U,
         class... Args,
         TR2_OPTIONAL_REQUIRES(is_constructible<T, std::initializer_list<U>>)>
-    OPTIONAL_CONSTEXPR_INIT_LIST explicit optional(in_place_t,
-                                                   std::initializer_list<U> il,
-                                                   Args&&... args)
+    OPTIONAL_CONSTEXPR_INIT_LIST optional(in_place_t /*unused*/,
+                                          std::initializer_list<U> il,
+                                          Args&&... args)
         : OptionalBase<T>(in_place_t{}, il, constexpr_forward<Args>(args)...)
     {
     }
@@ -590,20 +603,35 @@ public:
     ~optional() = default;
 
     // 20.5.4.3, assignment
-    optional& operator=(nullopt_t) noexcept
+    optional& operator=(nullopt_t /*unused*/) noexcept
     {
         clear();
         return *this;
     }
 
+    // clang-tidy falsely states that self-assignment is not handled properly
+    // NOLINTNEXTLINE(cert-oop54-cpp)
     optional& operator=(const optional& rhs)
     {
-        if (initialized() == true && rhs.initialized() == false)
-            clear();
-        else if (initialized() == false && rhs.initialized() == true)
-            initialize(*rhs);
-        else if (initialized() == true && rhs.initialized() == true)
-            contained_val() = *rhs;
+        if (initialized() == true && rhs.initialized() == false) {
+            {
+                clear();
+            }
+        } else if (initialized() == false && rhs.initialized() == true) {
+            {
+                initialize(*rhs);
+            }
+        } else if (initialized() == true
+                   && rhs.initialized()
+                          == true) { // if self-assigning and not empty, we rely
+                                     // on the correctness of the value's
+                                     // self-assignment
+            {
+                contained_val() = *rhs;
+            }
+        }
+        // if self-assigning and empty, there is nothing to do. This is
+        // equivalent to assigning an empty optional to an empty optional
         return *this;
     }
 
@@ -611,16 +639,24 @@ public:
         is_nothrow_move_assignable<T>::value&&
             is_nothrow_move_constructible<T>::value)
     {
-        if (initialized() == true && rhs.initialized() == false)
-            clear();
-        else if (initialized() == false && rhs.initialized() == true)
-            initialize(std::move(*rhs));
-        else if (initialized() == true && rhs.initialized() == true)
-            contained_val() = std::move(*rhs);
+        if (initialized() == true && rhs.initialized() == false) {
+            {
+                clear();
+            }
+        } else if (initialized() == false && rhs.initialized() == true) {
+            {
+                initialize(std::move(*rhs));
+            }
+        } else if (initialized() == true && rhs.initialized() == true) {
+            {
+                contained_val() = std::move(*rhs);
+            }
+        }
         return *this;
     }
 
     template<class U>
+    // NOLINTNEXTLINE(misc-unconventional-assign-operator)
     auto operator=(U&& v) ->
         typename enable_if<is_same<typename decay<U>::type, T>::value,
                            optional&>::type
@@ -678,6 +714,7 @@ public:
 
     constexpr T const* operator->() const
     {
+        // NOLINTNEXTLINE(misc-static-assert,cert-dcl03-c)
         return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), dataptr());
     }
 
@@ -691,6 +728,7 @@ public:
 
     constexpr T const& operator*() const&
     {
+        // NOLINTNEXTLINE(misc-static-assert,cert-dcl03-c)
         return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), contained_val());
     }
 
@@ -724,8 +762,11 @@ public:
 
     OPTIONAL_MUTABLE_CONSTEXPR T&& value() &&
     {
-        if (!initialized())
-            throw bad_optional_access("bad optional access");
+        if (!initialized()) {
+            {
+                throw bad_optional_access("bad optional access");
+            }
+        }
         return std::move(contained_val());
     }
 
@@ -739,6 +780,7 @@ public:
 
     constexpr T const& operator*() const
     {
+        // NOLINTNEXTLINE(misc-static-assert)
         return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), contained_val());
     }
 
@@ -828,12 +870,13 @@ public:
     }
 
     // cppcheck-suppress noExplicitConstructor
-    constexpr optional(nullopt_t) noexcept : ref(nullptr)
+    constexpr explicit optional(nullopt_t /*unused*/) noexcept : ref(nullptr)
     {
     }
 
     // cppcheck-suppress noExplicitConstructor
-    constexpr optional(T& v) noexcept : ref(detail_::static_addressof(v))
+    constexpr explicit optional(T& v) noexcept
+        : ref(detail_::static_addressof(v))
     {
     }
 
@@ -843,7 +886,7 @@ public:
     {
     }
 
-    explicit constexpr optional(in_place_t, T& v) noexcept
+    explicit constexpr optional(in_place_t /*unused*/, T& v) noexcept
         : ref(detail_::static_addressof(v))
     {
     }
@@ -853,7 +896,7 @@ public:
     ~optional() = default;
 
     // 20.5.5.2, mutation
-    optional& operator=(nullopt_t) noexcept
+    optional& operator=(nullopt_t /*unused*/) noexcept
     {
         ref = nullptr;
         return *this;
@@ -870,6 +913,7 @@ public:
     // }
 
     template<typename U>
+    // NOLINTNEXTLINE(misc-unconventional-assign-operator)
     auto operator=(U&& rhs) noexcept -> typename enable_if<
         is_same<typename decay<U>::type, optional<T&>>::value,
         optional&>::type
@@ -899,11 +943,13 @@ public:
     // 20.5.5.3, observers
     constexpr T* operator->() const
     {
+        // NOLINTNEXTLINE(misc-static-assert,cert-dcl03-c)
         return TR2_OPTIONAL_ASSERTED_EXPRESSION(ref, ref);
     }
 
     constexpr T& operator*() const
     {
+        // NOLINTNEXTLINE(misc-static-assert,cert-dcl03-c)
         return TR2_OPTIONAL_ASSERTED_EXPRESSION(ref, *ref);
     }
 
@@ -950,7 +996,7 @@ class optional<T&&>
 template<class T>
 constexpr bool operator==(const optional<T>& x, const optional<T>& y)
 {
-    return bool(x) != bool(y) ? false : bool(x) == false ? true : *x == *y;
+    return bool(x) != bool(y) ? false : !bool(x) ? true : *x == *y;
 }
 
 template<class T>
@@ -986,73 +1032,77 @@ constexpr bool operator>=(const optional<T>& x, const optional<T>& y)
 
 // 20.5.9, Comparison with nullopt
 template<class T>
-constexpr bool operator==(const optional<T>& x, nullopt_t) noexcept
+constexpr bool operator==(const optional<T>& x, nullopt_t /*unused*/) noexcept
 {
     return (!x);
 }
 
 template<class T>
-constexpr bool operator==(nullopt_t, const optional<T>& x) noexcept
+constexpr bool operator==(nullopt_t /*unused*/, const optional<T>& x) noexcept
 {
     return (!x);
 }
 
 template<class T>
-constexpr bool operator!=(const optional<T>& x, nullopt_t) noexcept
+constexpr bool operator!=(const optional<T>& x, nullopt_t /*unused*/) noexcept
 {
     return bool(x);
 }
 
 template<class T>
-constexpr bool operator!=(nullopt_t, const optional<T>& x) noexcept
+constexpr bool operator!=(nullopt_t /*unused*/, const optional<T>& x) noexcept
 {
     return bool(x);
 }
 
 template<class T>
-constexpr bool operator<(const optional<T>&, nullopt_t) noexcept
+constexpr bool operator<(const optional<T>& /*unused*/,
+                         nullopt_t /*unused*/) noexcept
 {
     return false;
 }
 
 template<class T>
-constexpr bool operator<(nullopt_t, const optional<T>& x) noexcept
+constexpr bool operator<(nullopt_t /*unused*/, const optional<T>& x) noexcept
 {
     return bool(x);
 }
 
 template<class T>
-constexpr bool operator<=(const optional<T>& x, nullopt_t) noexcept
+constexpr bool operator<=(const optional<T>& x, nullopt_t /*unused*/) noexcept
 {
     return (!x);
 }
 
 template<class T>
-constexpr bool operator<=(nullopt_t, const optional<T>&) noexcept
+constexpr bool operator<=(nullopt_t /*unused*/,
+                          const optional<T>& /*unused*/) noexcept
 {
     return true;
 }
 
 template<class T>
-constexpr bool operator>(const optional<T>& x, nullopt_t) noexcept
+constexpr bool operator>(const optional<T>& x, nullopt_t /*unused*/) noexcept
 {
     return bool(x);
 }
 
 template<class T>
-constexpr bool operator>(nullopt_t, const optional<T>&) noexcept
+constexpr bool operator>(nullopt_t /*unused*/,
+                         const optional<T>& /*unused*/) noexcept
 {
     return false;
 }
 
 template<class T>
-constexpr bool operator>=(const optional<T>&, nullopt_t) noexcept
+constexpr bool operator>=(const optional<T>& /*unused*/,
+                          nullopt_t /*unused*/) noexcept
 {
     return true;
 }
 
 template<class T>
-constexpr bool operator>=(nullopt_t, const optional<T>& x) noexcept
+constexpr bool operator>=(nullopt_t /*unused*/, const optional<T>& x) noexcept
 {
     return (!x);
 }
@@ -1307,8 +1357,8 @@ namespace std {
 template<typename T>
 struct hash<std::experimental::optional<T>>
 {
-    typedef typename hash<T>::result_type  result_type;
-    typedef std::experimental::optional<T> argument_type;
+    using result_type   = typename hash<T>::result_type;
+    using argument_type = std::experimental::optional<T>;
 
     constexpr result_type operator()(argument_type const& arg) const
     {
@@ -1319,8 +1369,8 @@ struct hash<std::experimental::optional<T>>
 template<typename T>
 struct hash<std::experimental::optional<T&>>
 {
-    typedef typename hash<T>::result_type   result_type;
-    typedef std::experimental::optional<T&> argument_type;
+    using result_type   = typename hash<T>::result_type;
+    using argument_type = std::experimental::optional<T&>;
 
     constexpr result_type operator()(argument_type const& arg) const
     {

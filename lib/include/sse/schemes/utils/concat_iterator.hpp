@@ -26,6 +26,10 @@ public:
         }
         return *this;
     }
+
+    // It is fine to return a non-const iterator as they can point to
+    // non-temporary objects
+    // NOLINTNEXTLINE(cert-dcl21-cpp)
     concat_iterator operator++(int)
     {
         concat_iterator retval = *this;
@@ -95,6 +99,10 @@ public:
         }
         return *this;
     }
+
+    // It is fine to return a non-const iterator as they can point to
+    // non-temporary objects
+    // NOLINTNEXTLINE(cert-dcl21-cpp)
     concat_const_iterator operator++(int)
     {
         concat_const_iterator retval = *this;

@@ -304,6 +304,7 @@ struct nullopt_t
     struct init
     {
     };
+    // cppcheck-suppress noExplicitConstructor
     // NOLINTNEXTLINE(google-explicit-constructor)
     constexpr nullopt_t(init /*unused*/)
     {
@@ -869,12 +870,10 @@ public:
     {
     }
 
-    // cppcheck-suppress noExplicitConstructor
     constexpr explicit optional(nullopt_t /*unused*/) noexcept : ref(nullptr)
     {
     }
 
-    // cppcheck-suppress noExplicitConstructor
     constexpr explicit optional(T& v) noexcept
         : ref(detail_::static_addressof(v))
     {

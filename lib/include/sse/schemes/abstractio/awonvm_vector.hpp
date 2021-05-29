@@ -94,6 +94,8 @@ template<typename T, size_t ALIGNMENT>
 constexpr size_t awonvm_vector<T, ALIGNMENT>::kValueSize;
 
 template<typename T, size_t ALIGNMENT>
+// cppcheck-suppress uninitMemberVar
+// false positive
 awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
                                            bool               direct_io)
     : m_filename(path), m_use_direct_io(direct_io),

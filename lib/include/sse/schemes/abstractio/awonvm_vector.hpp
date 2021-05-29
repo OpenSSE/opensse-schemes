@@ -367,8 +367,6 @@ template<typename T, size_t ALIGNMENT>
 void awonvm_vector<T, ALIGNMENT>::async_gets(
     const std::vector<GetRequest>& requests)
 {
-    using namespace abstractio;
-
     if (!m_io_scheduler) {
         throw std::runtime_error("No IO Scheduler set");
     }
@@ -399,7 +397,7 @@ void awonvm_vector<T, ALIGNMENT>::async_gets(
         int   ret = posix_memalign(
             (&buffer), ALIGNMENT, std::max(ALIGNMENT, sizeof(T)));
 
-        if (ret != 0 || buffer == NULL) {
+        if (ret != 0 || buffer == nullptr) {
             throw std::runtime_error(
                 "Error when allocating aligned memory: errno "
                 + std::to_string(ret) + "(" + strerror(ret) + ")");

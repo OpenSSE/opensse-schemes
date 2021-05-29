@@ -135,7 +135,8 @@ public:
     using keyword_type = typename BaseDecoder::key_type;
     using value_type   = typename BaseDecoder::value_type;
 
-    DecryptDecoder(key_type key) : decoder(), decryption_key(std::move(key))
+    explicit DecryptDecoder(key_type key)
+        : decoder(), decryption_key(std::move(key))
     {
     }
     // DecryptDecoder(key_type&& key) : decoder(), mask_prf(std::move(key))
@@ -158,6 +159,7 @@ public:
 
         std::array<uint8_t, BLOCK_SIZE> mask_0;
         std::array<uint8_t, BLOCK_SIZE> mask_1;
+        // NOLINTNEXTLINE(modernize-avoid-c-arrays)
         uint8_t nonce[crypto_stream_chacha20_NONCEBYTES];
 
         memset(nonce, 0x00, sizeof(nonce));

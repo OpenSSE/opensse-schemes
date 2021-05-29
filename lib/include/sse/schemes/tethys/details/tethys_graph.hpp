@@ -3,6 +3,7 @@
 #include <sse/schemes/utils/concat_iterator.hpp>
 #include <sse/schemes/utils/thread_pool.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <sys/types.h>
 
@@ -56,7 +57,8 @@ struct EdgePtr_Templ
     constexpr explicit EdgePtr_Templ(size_t i)
         : is_reciprocal(false), index(i & index_mask){};
     constexpr EdgePtr_Templ(bool r, size_t i)
-        : is_reciprocal((r & 1) != 0), index(i & index_mask){};
+        : is_reciprocal((static_cast<int>(r) & 1) != 0),
+          index(i & index_mask){};
 
 
     bool operator==(const EdgePtr_Templ<size>& ptr) const

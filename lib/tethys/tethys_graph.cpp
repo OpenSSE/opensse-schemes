@@ -247,7 +247,7 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
     if (sink_parent_edge != kNullEdgePtr) {
         // start by computing the size of the path
         size_t        flow = SIZE_MAX;
-        const Vertex* cur  = &sink;
+        const Vertex* cur  = nullptr;
         size_t        size = 0;
 
         // treat the first vertex (the sink) a bit differently
@@ -288,7 +288,6 @@ std::vector<EdgePtr> TethysGraph::find_source_sink_path(const size_t component,
 
         // again, treat the first vertex (the sink) a bit differently
 
-        cur                = &sink;
         size_t i           = 0;
         path[size - i - 1] = sink_parent_edge;
         // const Edge& e      = edges[sink_parent_edge];
@@ -414,7 +413,7 @@ void TethysGraph::compute_residual_maxflow()
         size_t path_capacity;
         auto   path = find_source_sink_path(0, &path_capacity);
 
-        if (path.size() == 0) {
+        if (path.empty()) {
             // no path found
             break;
         }

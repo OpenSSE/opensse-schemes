@@ -2,6 +2,7 @@
 
 #include <sse/schemes/abstractio/awonvm_vector.hpp>
 #include <sse/schemes/oceanus/details/cuckoo.hpp>
+// NOLINTNEXTLINE
 #include <sse/schemes/utils/optional.hpp>
 #include <sse/schemes/utils/utils.hpp>
 

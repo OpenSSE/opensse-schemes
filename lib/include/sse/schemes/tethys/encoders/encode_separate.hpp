@@ -307,10 +307,9 @@ struct EncodeSeparateDecoder
                 }
 
                 break;
-            } else {
-                // jump to the next list
-                offset += list_length * sizeof(T);
             }
+            // jump to the next list
+            offset += list_length * sizeof(T);
         }
     }
 

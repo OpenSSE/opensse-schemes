@@ -20,6 +20,9 @@ LinuxAIOScheduler::LinuxAIOScheduler(const size_t   page_size,
 {
     // NOLINTNEXTLINE(bugprone-sizeof-expression)
     memset(&m_ioctx, 0, sizeof(m_ioctx));
+
+
+    // NOLINTNEXTLINE(bugprone-narrowing-conversions)
     int nevents = (nr_events > INT_MAX) ? INT_MAX : nr_events;
     int res     = io_setup(nevents, &m_ioctx);
 
@@ -33,7 +36,7 @@ LinuxAIOScheduler::LinuxAIOScheduler(const size_t   page_size,
 
 LinuxAIOScheduler::~LinuxAIOScheduler()
 {
-    this->wait_completions();
+    LinuxAIOScheduler::wait_completions();
 
     io_destroy(m_ioctx);
 
@@ -106,7 +109,7 @@ void LinuxAIOScheduler::wait_completions()
     }
 }
 
-int LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
+size_t LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
 {
     // cppcheck-suppress unreadVariable
     int           res            = -EAGAIN;

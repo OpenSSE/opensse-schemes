@@ -780,7 +780,7 @@ public:
 
     constexpr T const& operator*() const
     {
-        // NOLINTNEXTLINE(misc-static-assert)
+        // NOLINTNEXTLINE(misc-static-assert,cert-dcl03-c)
         return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), contained_val());
     }
 

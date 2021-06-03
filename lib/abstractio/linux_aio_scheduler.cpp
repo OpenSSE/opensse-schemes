@@ -16,7 +16,8 @@ static constexpr size_t kMaxNr = 128;
 LinuxAIOScheduler::LinuxAIOScheduler(const size_t   page_size,
                                      const unsigned nr_events)
     : m_ioctx(nullptr), m_page_size(page_size), m_stop_flag(false),
-      m_submitted_queries_count(0), m_completed_queries_count(0)
+      m_submitted_queries_count(0), m_completed_queries_count(0),
+      m_failed_queries_count(0)
 {
     // NOLINTNEXTLINE(bugprone-sizeof-expression)
     memset(&m_ioctx, 0, sizeof(m_ioctx));
@@ -40,9 +41,13 @@ LinuxAIOScheduler::~LinuxAIOScheduler()
 
     io_destroy(m_ioctx);
 
-    // std::cerr << "io_submit: " << m_submit_calls << " calls\n";
-    // std::cerr << m_submit_partial << " partial submissions\n";
-    // std::cerr << m_submit_EAGAIN << " with full queue\n";
+#ifdef LOG_AIO_SCHEDULER_STATS
+    std::cerr << "io_submit: " << m_submit_calls << " calls\n";
+    std::cerr << m_submit_partial << " partial submissions\n";
+    std::cerr << m_submit_EAGAIN << " with full queue\n";
+    std::cerr << m_completed_queries_count << " completed queries\n";
+    std::cerr << m_failed_queries_count.load() << " failed queries\n";
+#endif
 }
 
 void LinuxAIOScheduler::notify_loop()
@@ -119,17 +124,23 @@ size_t LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
 
     while (remaining_subs > 0) {
         res = io_submit(m_ioctx, remaining_subs, iocbs_head);
-        // m_submit_calls++;
+#ifdef LOG_AIO_SCHEDULER_STATS
+        m_submit_calls++;
+#endif
 
         if (res >= 0) {
             assert(static_cast<size_t>(res) <= remaining_subs);
+#ifdef LOG_AIO_SCHEDULER_STATS
             if (static_cast<size_t>(res) != remaining_subs) {
-                // m_submit_partial++;
+                m_submit_partial++;
             }
+#endif
             remaining_subs -= res;
             iocbs_head += res;
         } else if (res == -EAGAIN) {
-            // m_submit_EAGAIN++;
+#ifdef LOG_AIO_SCHEDULER_STATS
+            m_submit_EAGAIN++;
+#endif
             // wait until the submission queue has some space
             std::unique_lock<std::mutex> lock(m_cv_lock);
 
@@ -138,7 +149,7 @@ size_t LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
                 m_cv_submission.wait(lock);
             }
         } else {
-            // m_failed_queries_count.fetch_add(remaining_subs);
+            m_failed_queries_count.fetch_add(remaining_subs);
             std::cerr << "Submission error: " << res << "\n";
             if (res < 0) {
                 perror("io_submit");

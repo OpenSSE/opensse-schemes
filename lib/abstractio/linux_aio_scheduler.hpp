@@ -84,9 +84,11 @@ private:
     std::condition_variable m_cv_submission;
     bool                    m_waiting_submissions{false};
 
-    // std::atomic_size_t m_submit_calls{0};
-    // std::atomic_size_t m_submit_EAGAIN{0};
-    // std::atomic_size_t m_submit_partial{0};
+#ifdef LOG_AIO_SCHEDULER_STATS
+    std::atomic_size_t m_submit_calls{0};
+    std::atomic_size_t m_submit_EAGAIN{0};
+    std::atomic_size_t m_submit_partial{0};
+#endif
 };
 
 } // namespace abstractio

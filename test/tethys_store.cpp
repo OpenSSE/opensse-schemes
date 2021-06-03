@@ -32,7 +32,8 @@ const std::string test_dir   = "tethys_test";
 const std::string table_path = test_dir + "/tethys_table.bin";
 const std::string stash_path = test_dir + "/tethys_stash.bin";
 
-// construct key-value pairs that force an overflow
+// construct key-value pairs that force an overflow after the lists have a
+// certain size
 
 std::vector<std::pair<key_type, std::vector<size_t>>> test_key_values(
     size_t v_size)
@@ -116,7 +117,7 @@ size_t get_encoded_number_elements(
     return n_elts;
 }
 
-void build_store()
+void build_store(size_t v_size, bool& valid_v_size)
 {
     TethysStoreBuilderParam builder_params;
     builder_params.max_n_elements    = 0;
@@ -130,24 +131,33 @@ void build_store()
     sse::utility::remove_directory(test_dir);
     sse::utility::create_directory(test_dir, static_cast<mode_t>(0700));
 
-    size_t v_size  = 450;
-    auto   test_kv = test_key_values(v_size);
+    auto test_kv = test_key_values(v_size);
 
     builder_params.max_n_elements
         = get_encoded_number_elements<encoder_type>(test_kv);
 
-    {
-        TethysStoreBuilder<kPageSize, key_type, size_t, Hasher, encoder_type>
-            store_builder(builder_params);
 
-        for (const auto& kv : test_kv) {
+    TethysStoreBuilder<kPageSize, key_type, size_t, Hasher, encoder_type>
+        store_builder(builder_params);
+
+    if (v_size > store_builder.kMaxListSize) {
+        valid_v_size = false;
+    } else {
+        valid_v_size = true;
+    }
+
+    for (const auto& kv : test_kv) {
+        if (v_size > store_builder.kMaxListSize) {
+            ASSERT_THROW(store_builder.insert_list(kv.first, kv.second),
+                         std::invalid_argument);
+        } else {
             store_builder.insert_list(kv.first, kv.second);
         }
-        store_builder.build();
     }
+    store_builder.build();
 }
 
-void test_store()
+void test_store(size_t v_size)
 {
     TethysStore<kPageSize,
                 key_type,
@@ -156,8 +166,7 @@ void test_store()
                 encoders::EncodeSeparateDecoder<key_type, size_t, kPageSize>>
         store(table_path, stash_path);
 
-    size_t v_size  = 450;
-    auto   test_kv = test_key_values(v_size);
+    auto test_kv = test_key_values(v_size);
 
     for (const auto& kv : test_kv) {
         std::vector<size_t> res = store.get_list(kv.first);
@@ -167,12 +176,35 @@ void test_store()
     }
 }
 
-TEST(tethys_store, build_and_get)
+void cleanup_store()
 {
-    build_store();
-    test_store();
+    sse::utility::remove_directory(test_dir);
 }
 
+
+class TethysStoreTest : public testing::TestWithParam<size_t>
+{
+    // You can implement all the usual fixture class members here.
+    // To access the test parameter, call GetParam() from class
+    // TestWithParam<T>.
+};
+
+TEST_P(TethysStoreTest, build_and_get)
+{
+    size_t v_size = GetParam();
+    bool   valid_v_size;
+
+    build_store(v_size, valid_v_size);
+
+    if (valid_v_size) {
+        test_store(v_size);
+    }
+    cleanup_store();
+}
+
+INSTANTIATE_TEST_SUITE_P(VariableListLengthTest,
+                         TethysStoreTest,
+                         testing::Values(20, 450, 600));
 
 } // namespace test
 } // namespace tethys

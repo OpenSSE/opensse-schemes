@@ -1,4 +1,4 @@
-#include <sse/schemes/oceanus/oceanus_server_builder.hpp>
+#include <sse/schemes/oceanus/cuckoo.hpp>
 
 #include <utility>
 

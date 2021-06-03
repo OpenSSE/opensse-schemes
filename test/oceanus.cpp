@@ -1,6 +1,5 @@
 #include <sse/schemes/oceanus/cuckoo.hpp>
-#include <sse/schemes/oceanus/oceanus_server.hpp>
-#include <sse/schemes/oceanus/oceanus_server_builder.hpp>
+#include <sse/schemes/oceanus/oceanus.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
 #include <sse/crypto/utils.hpp>
@@ -20,7 +19,7 @@ constexpr double epsilon          = 0.1;
 constexpr size_t max_search_depth = 200;
 
 void build_server(const size_t                                 n_elts,
-                  std::unique_ptr<OceanusServer<kPageSize>>&   server,
+                  std::unique_ptr<Oceanus<kPageSize>>&         server,
                   std::unique_ptr<crypto::Prf<kTableKeySize>>& kdk)
 {
     // check that the hash table file do not already exist
@@ -30,7 +29,7 @@ void build_server(const size_t                                 n_elts,
     kdk.reset(new crypto::Prf<kTableKeySize>());
 
     {
-        OceanusServerBuilder<kPageSize> builder(
+        OceanusBuilder<kPageSize> builder(
             SSE_OCEANUS_TEST_FILE, n_elts, epsilon, max_search_depth);
 
         for (uint64_t i = 0; i < n_elts; i++) {
@@ -45,13 +44,12 @@ void build_server(const size_t                                 n_elts,
         // the builder gets destructed here
     }
     // now construct the real server
-    server.reset(new OceanusServer<kPageSize>(SSE_OCEANUS_TEST_FILE));
+    server.reset(new Oceanus<kPageSize>(SSE_OCEANUS_TEST_FILE));
 }
 
-void test_server_content(
-    const size_t                                       n_elts,
-    const std::unique_ptr<OceanusServer<kPageSize>>&   server,
-    const std::unique_ptr<crypto::Prf<kTableKeySize>>& kdk)
+void test_server_content(const size_t                               n_elts,
+                         const std::unique_ptr<Oceanus<kPageSize>>& server,
+                         const std::unique_ptr<crypto::Prf<kTableKeySize>>& kdk)
 {
     for (uint64_t i = 0; i < n_elts; i++) {
         std::array<uint8_t, kTableKeySize> ht_key
@@ -67,7 +65,7 @@ void test_server_content(
 
 void test_server_content_async(
     const size_t                                       n_elts,
-    std::unique_ptr<OceanusServer<kPageSize>>&         server,
+    std::unique_ptr<Oceanus<kPageSize>>&               server,
     const std::unique_ptr<crypto::Prf<kTableKeySize>>& kdk)
 {
     std::atomic<size_t> counter{0};
@@ -89,12 +87,20 @@ void test_server_content_async(
 
             server->async_get(ht_key, callback);
         }
-        std::cerr << "Reset\n";
-        server.reset(nullptr);
-        std::cerr << "Reset done\n";
+        server.reset(
+            nullptr); // we do this to avoid having a more complicated
+                      // synchronization to wait for the requests to complete
     }
     ASSERT_EQ(n_elts, counter);
 }
+
+
+void silent_cleanup_server()
+{
+    utility::remove_file(SSE_OCEANUS_TEST_FILE);
+}
+
+
 void cleanup_server()
 {
     ASSERT_TRUE(utility::is_file(SSE_OCEANUS_TEST_FILE));
@@ -105,9 +111,10 @@ void cleanup_server()
 TEST(oceanus, build_and_get)
 {
     const size_t                                n_elts = 10000;
-    std::unique_ptr<OceanusServer<kPageSize>>   server(nullptr);
+    std::unique_ptr<Oceanus<kPageSize>>         server(nullptr);
     std::unique_ptr<crypto::Prf<kTableKeySize>> kdk(nullptr);
 
+    silent_cleanup_server();
     build_server(n_elts, server, kdk);
     test_server_content(n_elts, server, kdk);
 
@@ -117,9 +124,10 @@ TEST(oceanus, build_and_get)
 TEST(oceanus, build_and_async_get)
 {
     const size_t                                n_elts = 10000;
-    std::unique_ptr<OceanusServer<kPageSize>>   server(nullptr);
+    std::unique_ptr<Oceanus<kPageSize>>         server(nullptr);
     std::unique_ptr<crypto::Prf<kTableKeySize>> kdk(nullptr);
 
+    silent_cleanup_server();
     build_server(n_elts, server, kdk);
     test_server_content_async(n_elts, server, kdk);
 

@@ -1,6 +1,5 @@
 
 #include <sse/schemes/oceanus/oceanus_server.hpp>
-#include <sse/schemes/oceanus/oceanus_server_builder.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
 #include <sse/crypto/utils.hpp>
@@ -39,7 +38,7 @@ void test_insertion(const size_t n_insertions)
 
 
     if (!sse::utility::is_file(path)) {
-        OceanusServerBuilder<kPageSize> builder(
+        OceanusBuilder<kPageSize> builder(
             path, n_elts, epsilon, max_search_depth);
 
 
@@ -62,7 +61,7 @@ void test_insertion(const size_t n_insertions)
     }
     {
         // now construct the real server
-        OceanusServer<kPageSize> server(path);
+        Oceanus<kPageSize> server(path);
 
 
         // construct a search request from the PRF

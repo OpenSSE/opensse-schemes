@@ -1,6 +1,5 @@
 #pragma once
 
-#include <sse/schemes/oceanus/oceanus_server_builder.hpp>
 #include <sse/schemes/pluto/types.hpp>
 #include <sse/schemes/tethys/details/tethys_utils.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>

@@ -2,6 +2,7 @@
 
 
 #include <sse/schemes/tethys/details/tethys_utils.hpp>
+#include <sse/schemes/tethys/encoders/encode_encrypt.hpp>
 #include <sse/schemes/tethys/tethys_store_builder.hpp>
 #include <sse/schemes/tethys/types.hpp>
 #include <sse/schemes/utils/logger.hpp>

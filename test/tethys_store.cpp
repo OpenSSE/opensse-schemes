@@ -28,7 +28,7 @@ struct Hasher
     }
 };
 
-const std::string test_dir   = "tethys_test";
+const std::string test_dir   = "tethys_store_test";
 const std::string table_path = test_dir + "/tethys_table.bin";
 const std::string stash_path = test_dir + "/tethys_stash.bin";
 
@@ -174,7 +174,7 @@ void test_store(size_t v_size)
     }
 }
 
-void cleanup_store()
+static void cleanup_store()
 {
     sse::utility::remove_directory(test_dir);
 }

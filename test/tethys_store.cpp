@@ -128,8 +128,6 @@ void build_store(size_t v_size, bool& valid_v_size)
     using encoder_type
         = encoders::EncodeSeparateEncoder<key_type, size_t, kPageSize>;
 
-    sse::utility::remove_directory(test_dir);
-    sse::utility::create_directory(test_dir, static_cast<mode_t>(0700));
 
     auto test_kv = test_key_values(v_size);
 
@@ -184,12 +182,23 @@ void cleanup_store()
 
 class TethysStoreTest : public testing::TestWithParam<size_t>
 {
-    // You can implement all the usual fixture class members here.
-    // To access the test parameter, call GetParam() from class
-    // TestWithParam<T>.
+    void SetUp() override
+    {
+        cleanup_store();
+        sse::utility::create_directory(test_dir, static_cast<mode_t>(0700));
+    }
+    void TearDown() override
+    {
+        cleanup_store();
+    }
 };
 
-TEST_P(TethysStoreTest, build_and_get)
+class TethysStoreOverflowTest : public TethysStoreTest
+{
+};
+
+
+TEST_P(TethysStoreOverflowTest, build_and_get)
 {
     size_t v_size = GetParam();
     bool   valid_v_size;
@@ -203,7 +212,7 @@ TEST_P(TethysStoreTest, build_and_get)
 }
 
 INSTANTIATE_TEST_SUITE_P(VariableListLengthTest,
-                         TethysStoreTest,
+                         TethysStoreOverflowTest,
                          testing::Values(20, 450, 600));
 
 } // namespace test

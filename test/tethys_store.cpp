@@ -213,7 +213,8 @@ TEST_P(TethysStoreOverflowTest, build_and_get)
 
 INSTANTIATE_TEST_SUITE_P(VariableListLengthTest,
                          TethysStoreOverflowTest,
-                         testing::Values(20, 450, 600));
+                         testing::Values(20, 450, 600),
+                         testing::PrintToStringParamName());
 
 } // namespace test
 } // namespace tethys

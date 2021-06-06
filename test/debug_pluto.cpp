@@ -59,8 +59,6 @@ void test_wikipedia(const std::string& db_path,
     std::array<uint8_t, kEncryptionKeySize> encryption_key;
     std::fill(encryption_key.begin(), encryption_key.end(), 0x11);
 
-    (void)wp_inverted_index;
-
     {
         auto builder = create_load_pluto_builder<Params>(
             db_path,

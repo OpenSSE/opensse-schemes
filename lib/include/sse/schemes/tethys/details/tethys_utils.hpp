@@ -9,8 +9,8 @@ namespace sse {
 namespace tethys {
 namespace details {
 
-tethys_core_key_type derive_core_key(search_token_type token,
-                                     uint64_t          block_count)
+inline tethys_core_key_type derive_core_key(search_token_type token,
+                                            uint64_t          block_count)
 {
     constexpr size_t kTmpSize = kSearchTokenSize + sizeof(block_count);
 

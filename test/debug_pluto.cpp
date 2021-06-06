@@ -1,3 +1,5 @@
+#include "pluto_test_utils.hpp"
+
 #include <sse/schemes/pluto/pluto_builder.hpp>
 #include <sse/schemes/pluto/pluto_client.hpp>
 #include <sse/schemes/pluto/pluto_server.hpp>
@@ -28,152 +30,9 @@ using namespace sse::pluto;
 using namespace sse::tethys;
 using namespace sse::oceanus;
 
-constexpr size_t kPageSize = 4096; // 4 kB
-
-using default_param_type = DefaultPlutoParams<kPageSize>;
-using rocksdb_param_type = RocksDBPlutoParams<kPageSize>;
-
-constexpr size_t kTethysMaxListLength
-    = default_param_type::kTethysMaxListLength;
-
-using pluto_builder_type         = PlutoBuilder<default_param_type>;
-using rocksdb_pluto_builder_type = PlutoBuilder<rocksdb_param_type>;
-
-std::string cuckoo_table_path(std::string path)
-{
-    return path + "/cuckoo_table.bin";
-}
-
-std::string cuckoo_value_file_path(std::string path)
-{
-    return path + "/cuckoo_table.bin.tmp";
-}
-
-
-std::string rocksdb_path(std::string path)
-{
-    return path + "/full_blocks";
-}
-
-std::string tethys_table_path(std::string path)
-{
-    return path + "/tethys_table.bin";
-}
-
-
-std::string tethys_stash_path(std::string path)
-{
-    return path + "/tethys_stash.bin";
-}
-
-template<class Params>
-typename Params::ht_builder_type::param_type make_pluto_ht_builder_params(
-    const std::string& path,
-    size_t             n_elts);
-
-template<>
-typename default_param_type::ht_builder_type::param_type
-make_pluto_ht_builder_params<default_param_type>(const std::string& path,
-                                                 size_t             n_elts)
-{
-    CuckooBuilderParam cuckoo_builder_params;
-    cuckoo_builder_params.value_file_path   = cuckoo_value_file_path(path);
-    cuckoo_builder_params.cuckoo_table_path = cuckoo_table_path(path);
-
-    cuckoo_builder_params.max_n_elements = (size_t)ceil(
-        ((double)n_elts) / ((double)default_param_type::kPlutoListLength));
-    cuckoo_builder_params.epsilon          = 0.3;
-    cuckoo_builder_params.max_search_depth = 200;
-
-    return cuckoo_builder_params;
-}
-
-template<>
-typename rocksdb_param_type::ht_builder_type::param_type
-make_pluto_ht_builder_params<rocksdb_param_type>(const std::string& path,
-                                                 size_t             n_elts)
-{
-    (void)n_elts;
-    GenericRocksDBStoreParams rocksdb_builder_params;
-    rocksdb_builder_params.path = rocksdb_path(path);
-    rocksdb_builder_params.rocksdb_options
-        = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
-
-    return rocksdb_builder_params;
-}
-
-template<class Params>
-typename Params::ht_type::param_type make_pluto_ht_params(
-    const std::string& path);
-
-
-template<>
-typename default_param_type::ht_type::param_type make_pluto_ht_params<
-    default_param_type>(const std::string& path)
-{
-    return cuckoo_table_path(path);
-}
-
-template<>
-typename rocksdb_param_type::ht_type::param_type make_pluto_ht_params<
-    rocksdb_param_type>(const std::string& path)
-{
-    GenericRocksDBStoreParams rocksdb_builder_params;
-    rocksdb_builder_params.path = rocksdb_path(path);
-    rocksdb_builder_params.rocksdb_options
-        = GenericRocksDBStoreParams::make_rocksdb_regular_table_options();
-
-    return rocksdb_builder_params;
-}
-
-template<class Params>
-PlutoBuilder<Params> create_pluto_builder(
-    const std::string&      path,
-    sse::crypto::Key<32>&&  derivation_key,
-    std::array<uint8_t, 32> encryption_key,
-    size_t                  n_elts)
-{
-    if (!sse::utility::create_directory(path, static_cast<mode_t>(0700))) {
-        throw std::runtime_error(path + ": unable to create directory");
-    }
-
-    const size_t average_n_lists = 2 * (n_elts / kTethysMaxListLength + 1);
-
-    const size_t expected_tot_n_elements
-        = n_elts
-          + default_param_type::tethys_encoder_type::kListControlValues
-                * average_n_lists;
-
-    TethysStoreBuilderParam tethys_builder_params;
-    tethys_builder_params.max_n_elements    = expected_tot_n_elements;
-    tethys_builder_params.tethys_table_path = tethys_table_path(path);
-    tethys_builder_params.tethys_stash_path = tethys_stash_path(path);
-    tethys_builder_params.epsilon           = 0.3;
-
-
-    return PlutoBuilder<Params>(
-        n_elts,
-        tethys_builder_params,
-        make_pluto_ht_builder_params<Params>(path, n_elts),
-        std::move(derivation_key),
-        encryption_key);
-}
-
-template<class Params>
-PlutoBuilder<Params> create_load_pluto_builder(
-    const std::string&      path,
-    sse::crypto::Key<32>&&  derivation_key,
-    std::array<uint8_t, 32> encryption_key,
-    size_t                  n_elts,
-    const std::string&      json_path)
-{
-    PlutoBuilder<Params> builder = create_pluto_builder<Params>(
-        path, std::move(derivation_key), std::move(encryption_key), n_elts);
-
-    builder.load_inverted_index(json_path);
-
-    return builder;
-}
+namespace sse {
+namespace pluto {
+namespace test {
 
 void print_list(const std::vector<index_type>& list)
 {
@@ -183,77 +42,10 @@ void print_list(const std::vector<index_type>& list)
     std::cerr << "\n";
 }
 
-// void test_tethys_builder(size_t n_elements)
-// {
-//     const std::string test_dir = "encrypted_tethys_test";
-
-//     constexpr size_t              kKeySize = master_prf_type::kKeySize;
-//     std::array<uint8_t, kKeySize> prf_key;
-//     std::fill(prf_key.begin(), prf_key.end(), 0x00);
-
-//     std::array<uint8_t, kKeySize> client_prf_key = prf_key;
-
-//     constexpr size_t kEncryptionKeySize
-//         = tethys_builder_type::kEncryptionKeySize;
-
-//     std::array<uint8_t, kEncryptionKeySize> encryption_key;
-//     std::fill(encryption_key.begin(), encryption_key.end(), 0x11);
-
-//     {
-//         auto tethys_builder
-//             = create_tethys_builder(test_dir,
-//                                     sse::crypto::Key<kKeySize>(prf_key.data()),
-//                                     encryption_key,
-//                                     n_elements);
-
-//         std::list<index_type> long_list;
-//         for (size_t i = 0; i < 3 * kMaxListSize + 7; i++) {
-//             long_list.push_back(i);
-//         }
-
-
-//         tethys_builder.insert_list("alpha", long_list);
-//         tethys_builder.insert_list("beta", {5, 6, 7, 8});
-
-//         tethys_builder.load_inverted_index("../inverted_index_test.json");
-
-//         tethys_builder.build();
-//     }
-//     std::cerr << "Launch client & server\n";
-//     {
-//         TethysServer<tethys_server_store_type<kPageSize>> server(
-//             table_path(test_dir));
-
-//         TethysClient<inner_decoder_type> client(
-//             counter_path(test_dir),
-//             stash_path(test_dir),
-//             sse::crypto::Key<kKeySize>(client_prf_key.data()),
-//             encryption_key);
-
-//         auto sr  = client.search_request("alpha");
-//         auto bl  = server.search(sr);
-//         auto res = client.decode_search_results(sr, bl);
-//         print_list(res);
-
-
-//         sr  = client.search_request("igualada");
-//         bl  = server.search(sr);
-//         res = client.decode_search_results(sr, bl);
-//         print_list(res);
-//     }
-// }
-
-// const std::string wp_path = "/home/rbost/Documents/WP_inv_index/"
-//                             "inverted_index_100000.json";
-// const size_t kDBSize = 1E5;
-
-const std::string wp_path = "/home/rbost/Documents/WP_inv_index/"
-                            "inverted_index_full.json";
-const size_t kDBSize = 150e6;
-
 template<class Params>
 void test_wikipedia(const std::string& db_path,
-                    const std::string& wp_inverted_index)
+                    const std::string& wp_inverted_index,
+                    const size_t       db_size)
 {
     constexpr size_t              kKeySize = master_prf_type::kKeySize;
     std::array<uint8_t, kKeySize> prf_key;
@@ -274,7 +66,7 @@ void test_wikipedia(const std::string& db_path,
             db_path,
             sse::crypto::Key<kKeySize>(prf_key.data()),
             encryption_key,
-            kDBSize,
+            db_size,
             wp_inverted_index);
 
         builder.build();
@@ -306,6 +98,13 @@ void test_wikipedia(const std::string& db_path,
     }
 }
 
+} // namespace test
+} // namespace pluto
+} // namespace sse
+
+const std::string wp_path = "/home/rbost/Documents/WP_inv_index/"
+                            "inverted_index_full.json";
+const size_t kDBSize = 150e6;
 
 int main(int /*argc*/, const char** /*argv*/)
 {
@@ -315,7 +114,8 @@ int main(int /*argc*/, const char** /*argv*/)
 
 
     // test_tethys_builder(n_elts);
-    test_wikipedia<default_param_type>("wp_pluto", wp_path);
+    sse::pluto::test::test_wikipedia<sse::pluto::test::default_param_type>(
+        "wp_pluto", wp_path, kDBSize);
 
     sse::crypto::cleanup_crypto_lib();
 

@@ -33,6 +33,9 @@ public:
     void insert(const tethys::tethys_core_key_type& key,
                 const std::array<index_type, N>&    value);
 
+    template<size_t N>
+    std::array<index_type, N> get(const tethys::tethys_core_key_type& key);
+
 private:
     std::unique_ptr<rocksdb::DB> db;
 };
@@ -60,6 +63,28 @@ void GenericRocksDBStore::insert(const tethys::tethys_core_key_type& key,
 }
 
 template<size_t N>
+std::array<index_type, N> GenericRocksDBStore::get(
+    const tethys::tethys_core_key_type& key)
+{
+    rocksdb::Slice k_s(reinterpret_cast<const char*>(key.data()),
+                       tethys::kTethysCoreKeySize);
+
+    std::string     value;
+    rocksdb::Status s = db->Get(rocksdb::ReadOptions(false, true), k_s, &value);
+
+    std::array<index_type, N> content;
+
+    if (s.ok()) {
+        ::memcpy(content.data(), value.data(), N * sizeof(index_type));
+    } else {
+        throw std::out_of_range("Key not found");
+    }
+
+    return content;
+}
+
+
+template<size_t N>
 class RocksDBStoreBuilder
 {
 public:
@@ -76,6 +101,11 @@ public:
                 const std::array<index_type, N>&    value)
     {
         store.insert(key, value);
+    }
+
+    std::array<index_type, N> get(const tethys::tethys_core_key_type& key)
+    {
+        return store.get<N>(key);
     }
 
 private:

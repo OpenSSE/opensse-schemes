@@ -109,11 +109,11 @@ class PlutoTest : public testing::Test
 };
 
 using PlutoParamTypes
-    = ::testing::Types<default_param_type /*, rocksdb_param_type*/>;
+    = ::testing::Types<default_param_type, rocksdb_param_type>;
 
 TYPED_TEST_SUITE(PlutoTest, PlutoParamTypes);
 
-TYPED_TEST(PlutoTest, DoesBlah)
+TYPED_TEST(PlutoTest, basic)
 {
     test_pluto_builder<TypeParam>(1000, "../inverted_index_test.json");
 }

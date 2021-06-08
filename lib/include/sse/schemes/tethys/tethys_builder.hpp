@@ -83,7 +83,7 @@ void GenericTethysBuilder<StoreBuilder>::insert_list(
     size_t counter       = 0;
     size_t block_counter = 0;
 
-    std::vector<size_t> block;
+    std::vector<uint64_t> block;
     block.reserve(StoreBuilder::kBucketSize);
 
     std::array<uint8_t, kSearchTokenSize> keyword_token

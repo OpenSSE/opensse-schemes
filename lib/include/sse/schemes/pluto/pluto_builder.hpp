@@ -126,7 +126,7 @@ void PlutoBuilder<Params>::insert_list(const std::string&         keyword,
     size_t counter       = 0;
     size_t block_counter = 1;
 
-    std::vector<size_t> block;
+    std::vector<uint64_t> block;
     block.reserve(Params::kPlutoListLength);
 
     std::array<uint8_t, tethys::kSearchTokenSize> keyword_token

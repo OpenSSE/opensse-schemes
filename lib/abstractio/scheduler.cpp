@@ -26,7 +26,7 @@ Scheduler* make_thread_pool_aio_scheduler()
 
 Scheduler* make_default_aio_scheduler(const size_t page_size)
 {
-#ifdef HAS_AIO
+#ifdef HAS_LIBAIO
     constexpr size_t kDefaultNEvents = 128;
     return make_linux_aio_scheduler(page_size, kDefaultNEvents);
 #else

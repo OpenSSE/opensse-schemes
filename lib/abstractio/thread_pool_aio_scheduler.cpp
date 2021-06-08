@@ -33,13 +33,20 @@ ThreadPoolAIOScheduler::~ThreadPoolAIOScheduler()
 
 void ThreadPoolAIOScheduler::wait_completions()
 {
+    std::cerr << "Wait for completions\n";
     while (true) {
         std::unique_lock<std::mutex> lock(m_cv_lock);
         m_cv_submission.wait(lock, [this] {
             return this->m_submitted_queries_count
                    >= this->m_completed_queries_count;
         });
+
+        if (this->m_submitted_queries_count
+            >= this->m_completed_queries_count) {
+            break;
+        }
     }
+    std::cerr << "Completed\n";
 }
 
 int ThreadPoolAIOScheduler::submit_pread(int                     fd,

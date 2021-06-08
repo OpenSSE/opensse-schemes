@@ -65,20 +65,6 @@ public:
         = 0;
 
 
-    // virtual std::future<ReadBuffer> async_read(int fd, size_t len, off_t
-    // offset)
-    //     = 0;
-
-    // virtual std::future<int> async_write(int    fd,
-    //                                      void*  buf,
-    //                                      size_t len,
-    //                                      off_t  offset)
-    //     = 0;
-
-    // virtual int block_pread(int fd, void* buf, size_t len, off_t offset)
-    // = 0; virtual int block_pwrite(int fd, const void* buf, size_t len,
-    // off_t offset) = 0;
-
     static size_t async_io_page_size(int fd);
 };
 

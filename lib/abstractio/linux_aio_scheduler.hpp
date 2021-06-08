@@ -38,16 +38,6 @@ public:
                       void*                   data,
                       scheduler_callback_type callback) override;
 
-    // std::future<ReadBuffer> async_read(int    fd,
-    //                                    size_t len,
-    //                                    off_t  offset) override;
-
-    // std::future<int> async_write(int    fd,
-    //                              void*  buf,
-    //                              size_t len,
-    //                              off_t  offset) override;
-
-
 private:
     void notify_loop();
 

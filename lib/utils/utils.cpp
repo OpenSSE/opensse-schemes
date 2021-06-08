@@ -255,9 +255,11 @@ size_t device_page_size(int fd)
 
 
     fstatvfs(fd, &stats);
-
-
+#if __APPLE__
+    return stats.f_frsize;
+#else
     return stats.f_bsize;
+#endif
 }
 
 size_t device_page_size(const std::string& path)

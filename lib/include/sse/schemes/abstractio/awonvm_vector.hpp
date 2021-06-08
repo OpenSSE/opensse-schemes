@@ -101,7 +101,7 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
     : m_filename(path), m_use_direct_io(direct_io),
       m_fd(utility::open_fd(path, m_use_direct_io)),
       m_device_page_size(Scheduler::async_io_page_size(m_fd)),
-      m_io_scheduler(make_linux_aio_scheduler(m_device_page_size, 128))
+      m_io_scheduler(make_default_aio_scheduler(m_device_page_size))
 {
     off_t file_size = utility::file_size(m_fd);
 
@@ -246,9 +246,9 @@ void awonvm_vector<T, ALIGNMENT>::commit() noexcept
 {
     if (!m_is_committed) {
         if (m_use_direct_io) {
-            m_io_scheduler.reset(make_linux_aio_scheduler(
-                m_device_page_size,
-                128)); // this will block until the completion of write
+            m_io_scheduler.reset(make_default_aio_scheduler(
+                m_device_page_size)); // this will block until the completion of
+                                      // write
             // queries and then create a new scheduler for future
             // async read queries
         } else {
@@ -273,9 +273,9 @@ void awonvm_vector<T, ALIGNMENT>::set_use_direct_access(bool flag)
 
 
         // recreate an async scheduler
-        m_io_scheduler.reset(make_linux_aio_scheduler(
-            m_device_page_size,
-            128)); // this will block until the completion of write
+        m_io_scheduler.reset(make_default_aio_scheduler(
+            m_device_page_size)); // this will block until the completion of
+                                  // write
 
         m_use_direct_io = flag;
         m_io_warn_flag  = false;

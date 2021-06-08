@@ -162,7 +162,7 @@ int open_fd(const std::string& filename, bool direct_io)
     int flags = (O_CREAT | O_RDWR);
 
     if (direct_io) {
-#if !defined(OS_MACOSX) && !defined(OS_OPENBSD) && !defined(OS_SOLARIS)
+#if !defined(__APPLE__)
         flags |= O_DIRECT;
 #endif
     }
@@ -176,7 +176,7 @@ int open_fd(const std::string& filename, bool direct_io)
     }
 
     if (direct_io) {
-#ifdef OS_MACOSX
+#ifdef __APPLE__
         if (fcntl(fd, F_NOCACHE, 1) == -1) {
             close(fd);
             throw std::runtime_error(

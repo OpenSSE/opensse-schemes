@@ -1,4 +1,6 @@
-find_package(Libaio REQUIRED)
+
+# find_package(Libaio REQUIRED)
+find_package(Libaio)
 
 add_library(
     schemes
@@ -9,6 +11,7 @@ add_library(
     utils/db_generator.cpp
     abstractio/scheduler.cpp
     abstractio/linux_aio_scheduler.cpp
+    abstractio/thread_pool_aio_scheduler.cpp
     sophos/sophos_common.cpp
     sophos/sophos_client.cpp
     sophos/sophos_server.cpp
@@ -57,7 +60,7 @@ target_link_libraries(
     OpenSSE::crypto
     OpenSSE::dbparser
     ${ROCKSDB_LIBRARIES}
-    spdlog::spdlog_header_only
+    spdlog::spdlog
     ${LIBAIO_LIBRARIES}
 )
 

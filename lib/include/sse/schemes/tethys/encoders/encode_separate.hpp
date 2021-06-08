@@ -204,8 +204,10 @@ struct EncodeSeparateEncoder
 
         // be sure we do not overflow the original list length by considering
         // spilled control values
-        encoded_list_size_1 = std::min(encoded_list_size_1, original_list_size);
-        encoded_list_size_2 = std::min(encoded_list_size_2, original_list_size);
+        encoded_list_size_1
+            = std::min<uint64_t>(encoded_list_size_1, original_list_size);
+        encoded_list_size_2
+            = std::min<uint64_t>(encoded_list_size_2, original_list_size);
 
 
         uint64_t v_size = v.assignement_info.list_length - kListControlValues

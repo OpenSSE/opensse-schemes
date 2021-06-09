@@ -2,6 +2,9 @@
 
 #include "utils/thread_pool.hpp"
 
+#include <sse/schemes/utils/logger.hpp>
+
+#include <cstring>
 #include <unistd.h>
 
 #include <thread>
@@ -38,11 +41,11 @@ void ThreadPoolAIOScheduler::wait_completions()
         std::unique_lock<std::mutex> lock(m_cv_lock);
         m_cv_submission.wait(lock, [this] {
             return this->m_submitted_queries_count
-                   >= this->m_completed_queries_count;
+                   <= this->m_completed_queries_count;
         });
 
         if (this->m_submitted_queries_count
-            >= this->m_completed_queries_count) {
+            <= this->m_completed_queries_count) {
             break;
         }
     }
@@ -58,6 +61,15 @@ int ThreadPoolAIOScheduler::submit_pread(int                     fd,
 {
     auto task = [this, fd, buf, len, offset, data, callback]() {
         ssize_t ret = pread(fd, buf, len, offset);
+        if (ret == -1) {
+            sse::logger::logger()->error("Unable to complete the positioned "
+                                         "read. pread returned {}. Error: {}",
+                                         ret,
+                                         strerror(errno));
+        } else if ((size_t)ret < len) {
+            sse::logger::logger()->warn(
+                "Incomplete pread: {} instead of {}", ret, len);
+        }
         callback(data, ret);
 
         this->m_completed_queries_count++;

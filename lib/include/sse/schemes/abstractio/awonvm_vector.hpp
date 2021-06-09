@@ -28,6 +28,9 @@ public:
     static constexpr size_t kTypeAlignment = ALIGNMENT;
     static constexpr size_t kValueSize     = sizeof(T);
 
+    static_assert(kTypeAlignment <= kValueSize,
+                  "Invalid alignment for the type size");
+
     using get_callback_type = std::function<void(std::unique_ptr<T>)>;
 
     struct GetRequest
@@ -177,7 +180,13 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(awonvm_vector&& vec) noexcept
 template<typename T, size_t ALIGNMENT>
 awonvm_vector<T, ALIGNMENT>::~awonvm_vector()
 {
-    commit();
+    if (!m_is_committed) {
+        commit();
+    } else {
+        if (m_io_scheduler) {
+            m_io_scheduler->wait_completions();
+        }
+    }
     close(m_fd);
 }
 
@@ -302,7 +311,7 @@ void awonvm_vector<T, ALIGNMENT>::set_use_direct_access(bool flag)
 {
     if (flag != m_use_direct_io) {
         // wait for unfinished async IOs
-        m_io_scheduler.reset(nullptr);
+        m_io_scheduler->wait_completions();
 
         // close the current file descriptor
         close(m_fd);
@@ -313,8 +322,7 @@ void awonvm_vector<T, ALIGNMENT>::set_use_direct_access(bool flag)
 
         // recreate an async scheduler
         Scheduler* new_sched = m_io_scheduler->duplicate();
-        m_io_scheduler.reset(new_sched); // this will block until the completion
-                                         // of write
+        m_io_scheduler.reset(new_sched);
 
         m_use_direct_io = flag;
         m_io_warn_flag  = false;
@@ -387,6 +395,8 @@ void awonvm_vector<T, ALIGNMENT>::async_get(size_t            index,
 
         if (res == sizeof(T)) {
             result.reset(reinterpret_cast<T*>(buf));
+        } else {
+            free(buf); // avoid memory leaks
         }
 
         get_callback(std::move(result));

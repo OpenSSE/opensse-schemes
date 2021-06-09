@@ -24,11 +24,16 @@ static ThreadPool& get_shared_io_pool()
 
 ThreadPoolAIOScheduler::~ThreadPoolAIOScheduler()
 {
+    std::cerr << "Start destroying\n";
+
     ThreadPoolAIOScheduler::wait_completions();
+    std::cerr << "Scheduler destroyed\n";
 }
 
 void ThreadPoolAIOScheduler::wait_completions()
 {
+    std::cerr << "Wait completions\n";
+
     while (true) {
         std::unique_lock<std::mutex> lock(m_cv_lock);
         m_cv_submission.wait(lock, [this] {
@@ -41,6 +46,7 @@ void ThreadPoolAIOScheduler::wait_completions()
             break;
         }
     }
+    std::cerr << "Finished Waiting for completions\n";
 }
 
 int ThreadPoolAIOScheduler::submit_pread(int                     fd,
@@ -84,6 +90,13 @@ int ThreadPoolAIOScheduler::submit_pwrite(int                     fd,
 
 
     return 1;
+}
+
+Scheduler* ThreadPoolAIOScheduler::duplicate() const
+{
+    std::cerr << "Duplicate\n";
+
+    return make_thread_pool_aio_scheduler();
 }
 
 } // namespace abstractio

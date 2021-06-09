@@ -17,16 +17,16 @@ static constexpr size_t kMaxNr = 128;
 
 LinuxAIOScheduler::LinuxAIOScheduler(const size_t   page_size,
                                      const unsigned nr_events)
-    : m_ioctx(nullptr), m_page_size(page_size), m_stop_flag(false),
-      m_submitted_queries_count(0), m_completed_queries_count(0),
-      m_failed_queries_count(0)
+    : m_ioctx(nullptr), m_page_size(page_size), m_nr_events(nr_events),
+      m_stop_flag(false), m_submitted_queries_count(0),
+      m_completed_queries_count(0), m_failed_queries_count(0)
 {
     // NOLINTNEXTLINE(bugprone-sizeof-expression)
     memset(&m_ioctx, 0, sizeof(m_ioctx));
 
 
     // NOLINTNEXTLINE(bugprone-narrowing-conversions)
-    int nevents = (nr_events > INT_MAX) ? INT_MAX : nr_events;
+    int nevents = (m_nr_events > INT_MAX) ? INT_MAX : m_nr_events;
     int res     = io_setup(nevents, &m_ioctx);
 
     if (res != 0) {
@@ -281,6 +281,11 @@ int LinuxAIOScheduler::submit_pwrite(int                     fd,
     iocb.data = req;
 
     return submit_iocbs(&iocbs, 1);
+}
+
+Scheduler* LinuxAIOScheduler::duplicate() const
+{
+    return make_linux_aio_scheduler(m_page_size, m_nr_events);
 }
 
 

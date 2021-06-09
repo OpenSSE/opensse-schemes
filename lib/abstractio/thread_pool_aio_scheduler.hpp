@@ -33,6 +33,8 @@ public:
                       void*                   data,
                       scheduler_callback_type callback) override;
 
+    Scheduler* duplicate() const override;
+
 private:
     std::atomic<uint64_t> m_submitted_queries_count{0};
     std::atomic<uint64_t> m_completed_queries_count{0};

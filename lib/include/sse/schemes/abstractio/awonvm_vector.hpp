@@ -41,6 +41,9 @@ public:
         }
     };
 
+    awonvm_vector(const std::string&           path,
+                  std::unique_ptr<Scheduler>&& scheduler,
+                  bool                         direct_io);
     explicit awonvm_vector(const std::string& path, bool direct_io = false);
     ~awonvm_vector();
 
@@ -96,6 +99,42 @@ constexpr size_t awonvm_vector<T, ALIGNMENT>::kValueSize;
 template<typename T, size_t ALIGNMENT>
 // cppcheck-suppress uninitMemberVar
 // false positive
+awonvm_vector<T, ALIGNMENT>::awonvm_vector(
+    const std::string&           path,
+    std::unique_ptr<Scheduler>&& scheduler,
+    bool                         direct_io)
+    : m_filename(path), m_use_direct_io(direct_io),
+      m_fd(utility::open_fd(path, m_use_direct_io)),
+      m_device_page_size(Scheduler::async_io_page_size(m_fd)),
+      m_io_scheduler(std::move(scheduler))
+{
+    off_t file_size = utility::file_size(m_fd);
+
+    if (m_device_page_size == 0) {
+        sse::logger::logger()->warn(
+            "Unable to read page size for file {}. Async IOs will "
+            "most likely be blocking.");
+    } else if (kValueSize % m_device_page_size != 0) {
+        sse::logger::logger()->warn("Device page size for file {} ({} "
+                                    "bytes) is not aligned with the "
+                                    "value size ({} bytes). Async IOs will "
+                                    "most likely be blocking.",
+                                    path,
+                                    m_device_page_size,
+                                    kValueSize);
+    }
+
+
+    if (file_size > 0) {
+        m_is_committed = true;
+
+        m_size.store(file_size / sizeof(T));
+    }
+}
+
+template<typename T, size_t ALIGNMENT>
+// cppcheck-suppress uninitMemberVar
+// false positive
 awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
                                            bool               direct_io)
     : m_filename(path), m_use_direct_io(direct_io),
@@ -121,7 +160,6 @@ awonvm_vector<T, ALIGNMENT>::awonvm_vector(const std::string& path,
 
 
     if (file_size > 0) {
-        std::cerr << "Already committed file\n";
         m_is_committed = true;
 
         m_size.store(file_size / sizeof(T));
@@ -245,12 +283,13 @@ template<typename T, size_t ALIGNMENT>
 void awonvm_vector<T, ALIGNMENT>::commit() noexcept
 {
     if (!m_is_committed) {
-        if (m_use_direct_io) {
-            m_io_scheduler.reset(make_default_aio_scheduler(
-                m_device_page_size)); // this will block until the completion of
-                                      // write
-            // queries and then create a new scheduler for future
-            // async read queries
+        if (m_io_scheduler) {
+            m_io_scheduler->wait_completions();
+            Scheduler* new_sched = m_io_scheduler->duplicate();
+            m_io_scheduler.reset(
+                new_sched); // this will block until the completion of write
+                            // queries and then create a new scheduler for
+                            // future async read queries
         } else {
             fsync(m_fd);
         }
@@ -273,9 +312,9 @@ void awonvm_vector<T, ALIGNMENT>::set_use_direct_access(bool flag)
 
 
         // recreate an async scheduler
-        m_io_scheduler.reset(make_default_aio_scheduler(
-            m_device_page_size)); // this will block until the completion of
-                                  // write
+        Scheduler* new_sched = m_io_scheduler->duplicate();
+        m_io_scheduler.reset(new_sched); // this will block until the completion
+                                         // of write
 
         m_use_direct_io = flag;
         m_io_warn_flag  = false;

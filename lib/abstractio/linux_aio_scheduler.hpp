@@ -38,6 +38,8 @@ public:
                       void*                   data,
                       scheduler_callback_type callback) override;
 
+    Scheduler* duplicate() const override;
+
 private:
     void notify_loop();
 
@@ -61,8 +63,9 @@ private:
         }
     };
 
-    io_context_t m_ioctx;
-    const size_t m_page_size;
+    io_context_t   m_ioctx;
+    const size_t   m_page_size;
+    const unsigned m_nr_events;
     // std::vector<LinuxAIOSchedulerState> m_state;
 
     std::thread       m_notify_thread;

@@ -65,6 +65,8 @@ public:
         = 0;
 
 
+    virtual Scheduler* duplicate() const = 0;
+
     static size_t async_io_page_size(int fd);
 };
 

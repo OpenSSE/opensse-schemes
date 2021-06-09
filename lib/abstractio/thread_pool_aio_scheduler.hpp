@@ -36,8 +36,9 @@ public:
     Scheduler* duplicate() const override;
 
 private:
-    std::atomic<uint64_t> m_submitted_queries_count{0};
-    std::atomic<uint64_t> m_completed_queries_count{0};
+    // std::atomic<uint64_t> m_submitted_queries_count{0};
+    // std::atomic<uint64_t> m_completed_queries_count{0};
+    std::atomic<uint64_t> m_running_queries{0};
 
     std::mutex              m_cv_lock;
     std::condition_variable m_cv_submission;

@@ -141,7 +141,6 @@ TEST_P(AWONVMVectorTest, async_build_and_get)
     }
 
     ASSERT_TRUE(utility::is_file(test_file));
-
     {
         awonvm_vector<test_payload, kPageSize> vec(
             test_file, get_scheduler(), direct_io);
@@ -164,7 +163,7 @@ INSTANTIATE_TEST_SUITE_P(AWONVMVectorTest,
                          AWONVMVectorTest,
                          testing::Values(ThreadPoolSchedulerCached,
                                          ThreadPoolSchedulerDirect
-                                         // #ifdef HAS_LIBAIO
+                                         //  #ifdef HAS_LIBAIO
                                          ,
                                          LinuxAIOScheduler
                                          // #endif

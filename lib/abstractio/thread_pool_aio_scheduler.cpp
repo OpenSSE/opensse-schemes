@@ -27,29 +27,16 @@ static ThreadPool& get_shared_io_pool()
 
 ThreadPoolAIOScheduler::~ThreadPoolAIOScheduler()
 {
-    std::cerr << "Start destroying\n";
-
     ThreadPoolAIOScheduler::wait_completions();
-    std::cerr << "Scheduler destroyed\n";
 }
 
 void ThreadPoolAIOScheduler::wait_completions()
 {
-    std::cerr << "Wait completions\n";
-
-    while (true) {
+    while (this->m_running_queries != 0) {
         std::unique_lock<std::mutex> lock(m_cv_lock);
-        m_cv_submission.wait(lock, [this] {
-            return this->m_submitted_queries_count
-                   <= this->m_completed_queries_count;
-        });
-
-        if (this->m_submitted_queries_count
-            <= this->m_completed_queries_count) {
-            break;
-        }
+        m_cv_submission.wait(lock,
+                             [this] { return this->m_running_queries == 0; });
     }
-    std::cerr << "Finished Waiting for completions\n";
 }
 
 int ThreadPoolAIOScheduler::submit_pread(int                     fd,
@@ -72,11 +59,14 @@ int ThreadPoolAIOScheduler::submit_pread(int                     fd,
         }
         callback(data, ret);
 
-        this->m_completed_queries_count++;
-        this->m_cv_submission.notify_one();
+        std::unique_lock<std::mutex> lock(
+            this->m_cv_lock); // we use a lock here to avoid TOCTOU bugs
+
+        this->m_running_queries--;
+        this->m_cv_submission.notify_all();
     };
 
-    m_submitted_queries_count++;
+    m_running_queries++;
     get_shared_io_pool().enqueue(task);
 
     return 1;
@@ -93,11 +83,15 @@ int ThreadPoolAIOScheduler::submit_pwrite(int                     fd,
         ssize_t ret = pwrite(fd, buf, len, offset);
         callback(data, ret);
 
-        this->m_completed_queries_count++;
-        this->m_cv_submission.notify_one();
+
+        std::unique_lock<std::mutex> lock(
+            this->m_cv_lock); // we use a lock here to avoid TOCTOU bugs
+
+        this->m_running_queries--;
+        this->m_cv_submission.notify_all();
     };
 
-    m_submitted_queries_count++;
+    m_running_queries++;
     get_shared_io_pool().enqueue(task);
 
 
@@ -106,8 +100,6 @@ int ThreadPoolAIOScheduler::submit_pwrite(int                     fd,
 
 Scheduler* ThreadPoolAIOScheduler::duplicate() const
 {
-    std::cerr << "Duplicate\n";
-
     return make_thread_pool_aio_scheduler();
 }
 

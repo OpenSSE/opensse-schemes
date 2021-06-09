@@ -44,6 +44,7 @@ public:
         }
     };
 
+    // cppcheck-suppress noExplicitConstructor
     awonvm_vector(const std::string&           path,
                   std::unique_ptr<Scheduler>&& scheduler,
                   bool                         direct_io);

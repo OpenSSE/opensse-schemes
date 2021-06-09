@@ -174,8 +174,6 @@ void CuckooBuilder<PAGE_SIZE,
     if (!details::CuckooAllocator::is_empty_placeholder(spill)) {
         std::cerr << "Spill!\n";
         spilled_data.push_back(spill);
-    } else {
-        // std::cerr << "No spill\n";
     }
 }
 

@@ -53,7 +53,7 @@ int ThreadPoolAIOScheduler::submit_pread(int                     fd,
                                          "read. pread returned {}. Error: {}",
                                          ret,
                                          strerror(errno));
-        } else if ((size_t)ret < len) {
+        } else if (static_cast<size_t>(ret) < len) {
             sse::logger::logger()->warn(
                 "Incomplete pread: {} instead of {}", ret, len);
         }

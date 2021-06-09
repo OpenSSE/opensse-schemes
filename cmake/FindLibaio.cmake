@@ -38,7 +38,9 @@ find_package_handle_standard_args(Libaio
     LIBAIO_LIBRARY)
 
 if(LIBAIO_FOUND)
-    add_definitions(-DHAS_LIBAIO)
+    # add_definitions(-DHAS_LIBAIO)
     set(LIBAIO_LIBRARIES "${LIBAIO_LIBRARY}") # Add any dependencies here
+    set(HAS_LIBAIO ON) 
+    set(HAS_LIBAIO ${HAS_LIBAIO} PARENT_SCOPE) 
 endif()
 

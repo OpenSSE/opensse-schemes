@@ -1,7 +1,8 @@
+#include "configure.hpp"
+
 #ifdef HAS_LIBAIO
 
 #include "linux_aio_scheduler.hpp"
-
 #include "utils/utils.hpp"
 
 #include <cassert>

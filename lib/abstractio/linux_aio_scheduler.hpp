@@ -1,5 +1,7 @@
 #pragma once
 
+#include "configure.hpp"
+
 #ifdef HAS_LIBAIO
 
 #include "abstractio/scheduler.hpp"

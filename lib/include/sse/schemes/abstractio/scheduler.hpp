@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sse/configure.hpp>
 
 #include <cstdint>
 

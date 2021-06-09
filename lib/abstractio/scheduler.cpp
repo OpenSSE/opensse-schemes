@@ -1,5 +1,6 @@
 #include "abstractio/linux_aio_scheduler.hpp"
 #include "abstractio/thread_pool_aio_scheduler.hpp"
+#include "configure.hpp"
 #include "utils/utils.hpp"
 
 namespace sse {

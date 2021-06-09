@@ -73,7 +73,8 @@ public:
         switch (GetParam()) {
         case LinuxAIOScheduler:
 #ifdef HAS_LIBAIO
-            return make_linux_aio_scheduler(kPageSize, 128);
+            return std::unique_ptr<Scheduler>(
+                make_linux_aio_scheduler(kPageSize, 128));
 #else
             return std::unique_ptr<Scheduler>(nullptr);
 #endif
@@ -163,10 +164,10 @@ INSTANTIATE_TEST_SUITE_P(AWONVMVectorTest,
                          AWONVMVectorTest,
                          testing::Values(ThreadPoolSchedulerCached,
                                          ThreadPoolSchedulerDirect
-                                         //  #ifdef HAS_LIBAIO
+#ifdef HAS_LIBAIO
                                          ,
                                          LinuxAIOScheduler
-                                         // #endif
+#endif
                                          ));
 
 

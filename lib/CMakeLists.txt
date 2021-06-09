@@ -45,12 +45,16 @@ target_compile_features(
     cxx_lambdas
 )
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sse/configure.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/sse/configure.hpp)
+
 target_include_directories(
     schemes
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include/sse
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/sse/schemes
     PUBLIC ${ROCKSDB_INCLUDE_DIRS}
 )

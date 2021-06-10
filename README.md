@@ -7,7 +7,36 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/06a3a66daf1444118f0d5d54cc5dc58b)](https://www.codacy.com/app/rbost/opensse-schemes?utm_source=github.com&utm_medium=referral&utm_content=OpenSSE/opensse-schemes&utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/opensse/opensse-schemes/badge)](https://www.codefactor.io/repository/github/opensse/opensse-schemes)
 
-Implementation of SSE schemes. For now, the repo includes a C++ implementation of Sophos, Diana and Janus. Sophos has been described in _[Σoφoς – Forward Secure Searchable Encryption](https://eprint.iacr.org/2016/728.pdf)_ by Bost, and Diana and Janus in _[Forward and Backward Private Searchable Encryption from Constrained Cryptographic Primitives](https://eprint.iacr.org/2017/805.pdf)_ by Bost, Minaud and Ohrimenko.
+Implementation of SSE schemes. For now, the repo includes a C++ implementation of the following schemes: 
+
+| Name           | Comments                                                                                                                                                                   | Authors                                                                     | Reference               |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------- |
+| Σoφoς (Sophos) | First forward-private SSE scheme. Optimal asymptotic performance, but slow in practice because of its use of RSA.                                                          | [Bost][webpage_bost]                                                        | _[\[1\]][sophos_link]_  |
+| Diana          | Very fast (practical) forward-private scheme, using only symetric cryptography.                                                                                            | Bost, [Minaud][webpage_minaud] and [Ohrimenko][webpage_ohrimenko]           | _[\[2\]][bmo_link]_     |
+| Janus          | First 'practical' backward-private scheme, based on puncturable encryption. In practice, very slow when the number of deletions grows.                                     | Bost, Minaud and Ohrimenko                                                  | _[\[2\]][bmo_link]_     |
+| Tethys         | Static scheme designed for flash storage. Best in class throughput (as of 2021) and small ciphertext expansion, but with building time that can become prohibitively high. | [Bossuat][webpage_bossuat], Bost, [Fouque][webpage_fouque], Minaud, Reichle | _[\[3\]][sse_ssd_link]_ |
+| Pluto          | Practical improvement over Tethys for the setup time, but at the cost of an increased ciphertext expansion.                                                                | Bossuat, Bost, Fouque, Minaud, Reichle                                      | _[\[3\]][sse_ssd_link]_ |
+
+
+### References
+| Article                                                                                                          | Authors                                                                     |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| \[1\] _[Σoφoς – Forward Secure Searchable Encryption][sophos_link]_                                              | [Bost][webpage_bost]                                                        |
+| \[2\] _[Forward and Backward Private Searchable Encryption from Constrained Cryptographic Primitives][bmo_link]_ | Bost, [Minaud][webpage_minaud] and [Ohrimenko][webpage_ohrimenko]           |
+| \[3\] _[SSE and SSD: Page-Efficient Searchable Symmetric Encryption][sse_ssd_link]_                              | [Bossuat][webpage_bossuat], Bost, [Fouque][webpage_fouque], Minaud, Reichle |
+
+
+<!-- links -->
+
+[sophos_link]: https://eprint.iacr.org/2016/728.pdf "Sophos"
+[bmo_link]: https://eprint.iacr.org/2017/805.pdf "Diana & Janus"
+[sse_ssd_link]: https://eprint.iacr.org/2021/716.pdf "Tethys & Pluto"
+
+[webpage_bossuat]: https://people.irisa.fr/Angele.Bossuat/ "A. Bossuat"
+[webpage_bost]: https://raphael.bost.fyi "R. Bost"
+[webpage_fouque]: https://www.di.ens.fr/~fouque/ "P.-A. Fouque"
+[webpage_minaud]: https://www.di.ens.fr/~bminaud "B. Minaud"
+[webpage_ohrimenko]: https://people.eng.unimelb.edu.au/oohrimenko/ "O. Ohrimenko"
 
 # Pre-requisites
 

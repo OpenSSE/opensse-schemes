@@ -40,7 +40,7 @@ Take a look at the [build instructions](https://github.com/OpenSSE/crypto-tk#bui
 ### Linux
 
 ```sh
- $ [sudo] apt-get install build-essential autoconf libtool yasm openssl cmake libaio-dev
+ [sudo] apt-get install build-essential autoconf libtool yasm openssl cmake libaio-dev
 ```
 
 The `libaio-dev` dependency is optional. However, if you are willing to use the Tethys and/or the Pluto schemes, we strongly advise you to install it, for performance's sake.
@@ -67,7 +67,7 @@ If you still haven't, you should get [Homebrew](http://brew.sh/).
 You can then directly install all the dependencies using Homebrew:
 
 ```sh
- brew install automake autoconf yasm openssl cmake grpc rocksdb
+brew install automake autoconf yasm openssl cmake grpc rocksdb
 ```
 
 ### Getting the code
@@ -132,8 +132,8 @@ The building script builds basic test programs for Sophos, Diana and Janus (resp
 The clients usage is as follows
 `sophos_client [-b client.db] [-l inverted_index.json] [-p] [-r count] [-q] [keyword1 [... keywordn]]`
 
-- `-b client.db` : use file as the client database (test.csdb by default)
-- `-l file.json` : load the reversed index file.json and add it to the database. file.json is a JSON file with the following structure :
+-   `-b client.db` : use file as the client database (test.csdb by default)
+-   `-l file.json` : load the reversed index file.json and add it to the database. file.json is a JSON file with the following structure :
 ```json
 {
 	"keyword1" : [1,2,3,4],
@@ -141,9 +141,9 @@ The clients usage is as follows
 }
 ```
 In the repo, `inverted_index.json` is an example of such file.
-- `-p` : print stats about the loaded database (number of keywords)
-- `-r count` : generate a database with count entries. Look at the aux/db_generator.\* files to see how such databases are generated
-- `keyword1 … keywordn` : search queries with keyword1 … keywordn.
+-   `-p` : print stats about the loaded database (number of keywords)
+-   `-r count` : generate a database with count entries. Look at the aux/db_generator.\* files to see how such databases are generated
+-   `keyword1 … keywordn` : search queries with keyword1 … keywordn.
 
 ### Server
 

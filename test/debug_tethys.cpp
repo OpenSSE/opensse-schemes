@@ -39,19 +39,19 @@ constexpr size_t kMaxListSize
     = kPageSize / sizeof(index_type) - value_encoder_type::kListControlValues;
 
 
-std::string counter_path(std::string path)
+std::string counter_path(const std::string& path)
 {
     return path + "/counters";
 }
 
 
-std::string table_path(std::string path)
+std::string table_path(const std::string& path)
 {
     return path + "/tethys_table.bin";
 }
 
 
-std::string stash_path(std::string path)
+std::string stash_path(const std::string& path)
 {
     return path + "/tethys_stash.bin";
 }

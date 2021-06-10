@@ -36,11 +36,11 @@ public:
         ++(*this);
         return retval;
     }
-    bool operator==(concat_iterator other) const
+    bool operator==(const concat_iterator& other) const
     {
         return internal_iterator == other.internal_iterator;
     }
-    bool operator!=(concat_iterator other) const
+    bool operator!=(const concat_iterator& other) const
     {
         return !(*this == other);
     }
@@ -109,11 +109,11 @@ public:
         ++(*this);
         return retval;
     }
-    bool operator==(concat_const_iterator other) const
+    bool operator==(const concat_const_iterator& other) const
     {
         return internal_iterator == other.internal_iterator;
     }
-    bool operator!=(concat_const_iterator other) const
+    bool operator!=(const concat_const_iterator& other) const
     {
         return !(*this == other);
     }

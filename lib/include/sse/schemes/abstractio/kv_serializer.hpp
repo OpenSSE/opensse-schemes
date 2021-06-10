@@ -12,7 +12,7 @@ template<class Key, class T, class InnerSerializer>
 class KVSerializer
 {
 public:
-    KVSerializer(std::ostream& s) : out_stream(s)
+    explicit KVSerializer(std::ostream& s) : out_stream(s)
     {
     }
 

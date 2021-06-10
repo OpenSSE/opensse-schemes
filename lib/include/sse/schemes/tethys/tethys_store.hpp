@@ -389,7 +389,7 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
         std::atomic<uint8_t>          completion_counter{0};
         ValueDecoder                  decoder;
 
-        CallBackState(const Key& k) : key(k){};
+        explicit CallBackState(const Key& k) : key(k){};
 
         ValueDecoder& get_decoder()
         {

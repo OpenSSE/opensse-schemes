@@ -18,29 +18,29 @@ using pluto_builder_type         = PlutoBuilder<default_param_type>;
 using rocksdb_pluto_builder_type = PlutoBuilder<rocksdb_param_type>;
 
 
-inline std::string cuckoo_table_path(std::string path)
+inline std::string cuckoo_table_path(const std::string& path)
 {
     return path + "/cuckoo_table.bin";
 }
 
-inline std::string cuckoo_value_file_path(std::string path)
+inline std::string cuckoo_value_file_path(const std::string& path)
 {
     return path + "/cuckoo_table.bin.tmp";
 }
 
 
-inline std::string rocksdb_path(std::string path)
+inline std::string rocksdb_path(const std::string& path)
 {
     return path + "/full_blocks";
 }
 
-inline std::string tethys_table_path(std::string path)
+inline std::string tethys_table_path(const std::string& path)
 {
     return path + "/tethys_table.bin";
 }
 
 
-inline std::string tethys_stash_path(std::string path)
+inline std::string tethys_stash_path(const std::string& path)
 {
     return path + "/tethys_stash.bin";
 }

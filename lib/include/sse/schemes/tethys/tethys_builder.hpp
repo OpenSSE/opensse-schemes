@@ -217,7 +217,7 @@ bool TethysBuilder<PAGE_SIZE, ValueEncoder, StashEncoder, TethysHasher>::
 
         auto add_list_callback
             = [this, &kw_counter, &entries_counter](
-                  const std::string kw, const std::list<unsigned> docs) {
+                  const std::string& kw, const std::list<unsigned>& docs) {
                   this->insert_list(
                       kw, std::list<index_type>(docs.begin(), docs.end()));
                   kw_counter++;

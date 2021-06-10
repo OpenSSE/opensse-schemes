@@ -189,16 +189,12 @@ bool PlutoBuilder<Params>::load_inverted_index(const std::string& path)
 
         auto add_list_callback
             = [this, &kw_counter, &entries_counter](
-                  const std::string kw, const std::list<unsigned> docs) {
+                  const std::string& kw, const std::list<unsigned>& docs) {
                   this->insert_list(
                       kw, std::list<index_type>(docs.begin(), docs.end()));
                   kw_counter++;
                   size_t size = docs.size();
 
-                  //   if (size > 512) {
-                  //   logger::logger()->info(
-                  //   "Large list. Keyword: {}, {} matches", kw, size);
-                  //   }
                   entries_counter += size;
 
                   if ((kw_counter % 10000) == 0) {

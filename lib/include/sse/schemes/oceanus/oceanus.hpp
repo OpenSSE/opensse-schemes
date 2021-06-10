@@ -173,7 +173,7 @@ public:
         = std::function<void(std::experimental::optional<content_type>)>;
 
 
-    Oceanus(const std::string& db_path);
+    explicit Oceanus(const std::string& db_path);
     ~Oceanus();
 
     data_type<PAGE_SIZE> get(const std::array<uint8_t, kTableKeySize>& ht_key);

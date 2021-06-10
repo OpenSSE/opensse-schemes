@@ -30,7 +30,7 @@ public:
     static constexpr size_t kServerBucketSize = Store::kPayloadSize;
     using keyed_bucket_pair_type = KeyedBucketPair<kServerBucketSize>;
 
-    TethysServer(const std::string& store_path);
+    explicit TethysServer(const std::string& store_path);
 
     std::vector<keyed_bucket_pair_type> search(
         const SearchRequest& search_request);

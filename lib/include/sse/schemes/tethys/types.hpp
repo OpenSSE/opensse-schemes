@@ -31,8 +31,8 @@ struct SearchRequest
 template<size_t N>
 struct BucketPair
 {
-    size_t                 index_0;
-    size_t                 index_1;
+    size_t                 index_0{~0UL};
+    size_t                 index_1{~0UL};
     std::array<uint8_t, N> payload_0;
     std::array<uint8_t, N> payload_1;
 };

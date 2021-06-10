@@ -154,11 +154,7 @@ size_t LinuxAIOScheduler::submit_iocbs(struct iocb** iocbs, size_t n_iocbs)
         } else {
             m_failed_queries_count.fetch_add(remaining_subs);
             std::cerr << "Submission error: " << res << "\n";
-            if (res < 0) {
-                perror("io_submit");
-            } else {
-                fprintf(stderr, "io_submit failed\n");
-            }
+            perror("io_submit");
             return -1;
         }
     }

@@ -76,8 +76,7 @@ private:
     details::TethysAllocator allocator;
     std::vector<TethysData>  data;
 
-    size_t n_elements;
-    bool   is_built{false};
+    bool is_built{false};
 };
 
 template<size_t PAGE_SIZE,

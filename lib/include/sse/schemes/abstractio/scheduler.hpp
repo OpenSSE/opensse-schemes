@@ -17,6 +17,30 @@ struct ReadBuffer
     size_t len{0};
 };
 
+
+/// Scheduler abstract class.
+///
+/// This class describes the interface of asynchronous IO schedulers. These are
+/// objects to which we can post IO queries, together with a callback. The
+/// scheduler will return immediately from the post call, and use the callback
+/// to notify the originating code from the completion of the query.
+///
+/// IMPORTANT INVARIANTS
+///
+/// The following invariants are not (and for some of them cannot be) verified
+/// at runtime. Not respecting them can lead to undefined behaviors (or worse,
+/// concurrency bugs).
+/// 1. Once `wait_completions()`, new queries are not expected to be posted.
+/// 2. The caller is ALWAYS responsible of destroying the memory buffers passed
+/// in the post calls.
+/// 3. The callbacks are passed the `data` pointer given by the caller at
+/// posting time, not the read or write buffer. If you want to get that buffer
+/// when called back, just use the pointer twice in the post call.
+/// 4. The other value returned by the callback is the number of read/written
+/// bytes.
+/// 5. The callbacks passed in the post calls are run on the scheduler's
+/// thread(s). Running a time-consuming operation in this callback is not
+/// recommended as it might reduce the IO latency and throughput.
 class Scheduler
 {
 public:

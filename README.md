@@ -54,8 +54,10 @@ Take a look at the [build instructions](https://github.com/OpenSSE/crypto-tk#bui
 ## Linux
 
 ```sh
- $ [sudo] apt-get install build-essential autoconf libtool yasm openssl cmake
+ $ [sudo] apt-get install build-essential autoconf libtool yasm openssl cmake libaio-dev
 ```
+
+The `libaio-dev` dependency is optional. However, if you are willing to use the Tethys and/or the Pluto schemes, we strongly advise you to install it, for performance's sake.
 
 ### Installing gRPC
 

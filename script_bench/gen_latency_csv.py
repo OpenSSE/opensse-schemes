@@ -2,7 +2,6 @@
 
 # from optparse import OptionParser
 import argparse
-import math
 import re
 import json
 import csv
@@ -11,7 +10,6 @@ import matplotlib.pyplot as plt
 
 
 def parse_file(f):
-    stats = dict()
     lines = f.readlines()
 
     # We suppose that the benchark log has a spdlog format ending with %v
@@ -27,7 +25,6 @@ def parse_file(f):
 
         json_data = json.loads(m.group(0))
 
-        name = json_data['message']
         items = json_data['items']
         time = float(json_data['time'])
         time_per_item = float(json_data['time/item'])

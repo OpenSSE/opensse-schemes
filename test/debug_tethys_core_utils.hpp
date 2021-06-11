@@ -23,13 +23,13 @@ using namespace sse::tethys;
 template<class StoreBuilder>
 void generate_random_store(
     size_t                                     n_elements,
-    const std::string                          test_dir,
+    const std::string&                         test_dir,
     typename StoreBuilder::value_encoder_type& value_encoder,
     typename StoreBuilder::stash_encoder_type& stash_encoder);
 
 
 template<class StoreBuilder>
-void generate_random_store(size_t n_elements, const std::string test_dir)
+void generate_random_store(size_t n_elements, const std::string& test_dir)
 {
     typename StoreBuilder::value_encoder_type value_encoder;
     typename StoreBuilder::stash_encoder_type stash_encoder;
@@ -41,7 +41,7 @@ void generate_random_store(size_t n_elements, const std::string test_dir)
 template<class StoreBuilder>
 void generate_random_store(
     size_t                                     n_elements,
-    const std::string                          test_dir,
+    const std::string&                         test_dir,
     typename StoreBuilder::value_encoder_type& value_encoder)
 {
     generate_random_store<StoreBuilder>(
@@ -123,7 +123,7 @@ void async_store_read_queries(const size_t                  n_queries,
 template<class StoreBuilder>
 void generate_random_store(
     size_t                                     n_elements,
-    const std::string                          test_dir,
+    const std::string&                         test_dir,
     typename StoreBuilder::value_encoder_type& value_encoder,
     typename StoreBuilder::stash_encoder_type& stash_encoder)
 {

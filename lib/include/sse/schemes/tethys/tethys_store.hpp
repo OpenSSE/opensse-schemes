@@ -5,6 +5,8 @@
 #include <sse/schemes/tethys/details/tethys_allocator.hpp>
 #include <sse/schemes/utils/utils.hpp>
 
+#include <cstdint>
+
 #include <array>
 #include <fstream>
 #include <map>
@@ -384,8 +386,8 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
         Key                           key;
         std::unique_ptr<payload_type> bucket_0;
         std::unique_ptr<payload_type> bucket_1;
-        size_t                        index_0;
-        size_t                        index_1;
+        size_t                        index_0{SIZE_MAX};
+        size_t                        index_1{SIZE_MAX};
         std::atomic<uint8_t>          completion_counter{0};
         ValueDecoder                  decoder;
 
@@ -417,8 +419,8 @@ void TethysStore<PAGE_SIZE, Key, T, TethysHasher, ValueDecoder>::async_get_list(
         Key                           key;
         std::unique_ptr<payload_type> bucket_0;
         std::unique_ptr<payload_type> bucket_1;
-        size_t                        index_0;
-        size_t                        index_1;
+        size_t                        index_0{SIZE_MAX};
+        size_t                        index_1{SIZE_MAX};
         std::atomic<uint8_t>          completion_counter{0};
         ValueDecoder*                 decoder;
 

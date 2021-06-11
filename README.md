@@ -150,8 +150,8 @@ In the repo, `inverted_index.json` is an example of such file.
 The servers usage is as follows
 `sophos_server [-b server.db] [-s]`
 
-- `-b server.db` : use file as the server database (test.ssdb by default)
-- `-s` : use synchronous searches (when searching, the server retrieves all the results before sending them to the client. By default, results are sent once retrieved). I used this option for the benchmarks without RPC.
+-   `-b server.db` : use file as the server database (test.ssdb by default)
+-   `-s` : use synchronous searches (when searching, the server retrieves all the results before sending them to the client. By default, results are sent once retrieved). I used this option for the benchmarks without RPC.
 
 ## Contributors
 

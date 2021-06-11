@@ -41,7 +41,7 @@ struct TethysStashSerializationValue
 
     TethysStashSerializationValue(const std::vector<T>* d,
                                   TethysAssignmentInfo  ai)
-        : data(d), assignement_info(ai)
+        : data(d), assignement_info(std::move(ai))
     {
     }
 };

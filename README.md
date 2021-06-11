@@ -4,7 +4,7 @@
 [![build status](https://badges.herokuapp.com/travis/OpenSSE/opensse-schemes?branch=master&label=build&env=COMPILER=gcc)](https://travis-ci.org/OpenSSE/opensse-schemes)
 [![static analysis](https://badges.herokuapp.com/travis/OpenSSE/opensse-schemes?branch=master&label=static%20analysis&env=STATIC_ANALYSIS=true)](https://travis-ci.org/OpenSSE/opensse-schemes)
 [![Coverage Status](https://coveralls.io/repos/github/OpenSSE/opensse-schemes/badge.svg?branch=master)](https://coveralls.io/github/OpenSSE/opensse-schemes?branch=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/06a3a66daf1444118f0d5d54cc5dc58b)](https://www.codacy.com/app/rbost/opensse-schemes?utm_source=github.com&utm_medium=referral&utm_content=OpenSSE/opensse-schemes&utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/cb6959a0c8db41629fdcf94424a4290d)](https://www.codacy.com/gh/OpenSSE/opensse-schemes/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=OpenSSE/opensse-schemes&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/opensse/opensse-schemes/badge)](https://www.codefactor.io/repository/github/opensse/opensse-schemes)
 
 Implementation of SSE schemes. For now, the repo includes a C++ implementation of the following schemes: 

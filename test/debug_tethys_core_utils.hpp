@@ -50,14 +50,14 @@ void generate_random_store(
 
 template<class Store, class StashDecoder>
 void store_read_queries(const size_t                  n_elements,
-                        const std::string             test_dir,
+                        const std::string&            test_dir,
                         bool                          check_results,
                         typename Store::decoder_type& value_decoder,
                         StashDecoder&                 stash_decoder);
 
 template<class Store>
 void store_read_queries(const size_t                  n_elements,
-                        const std::string             test_dir,
+                        const std::string&            test_dir,
                         bool                          check_results,
                         typename Store::decoder_type& value_decoder)
 {
@@ -66,9 +66,9 @@ void store_read_queries(const size_t                  n_elements,
 }
 
 template<class Store>
-void store_read_queries(const size_t      n_elements,
-                        const std::string test_dir,
-                        bool              check_results)
+void store_read_queries(const size_t       n_elements,
+                        const std::string& test_dir,
+                        bool               check_results)
 {
     typename Store::decoder_type value_decoder;
     store_read_queries<Store, typename Store::decoder_type>(
@@ -78,18 +78,18 @@ void store_read_queries(const size_t      n_elements,
 template<class Store, class StashDecoder>
 void async_store_read_queries(const size_t                  n_queries,
                               const size_t                  n_elements,
-                              const std::string             test_dir,
+                              const std::string&            test_dir,
                               bool                          check_results,
                               bool                          decode,
                               typename Store::decoder_type& value_decoder,
                               StashDecoder&                 stash_decoder);
 
 template<class Store>
-void async_store_read_queries(const size_t      n_queries,
-                              const size_t      n_elements,
-                              const std::string test_dir,
-                              bool              check_results,
-                              bool              decode)
+void async_store_read_queries(const size_t       n_queries,
+                              const size_t       n_elements,
+                              const std::string& test_dir,
+                              bool               check_results,
+                              bool               decode)
 {
     typename Store::decoder_type value_decoder;
     async_store_read_queries<Store, typename Store::decoder_type>(
@@ -105,7 +105,7 @@ void async_store_read_queries(const size_t      n_queries,
 template<class Store>
 void async_store_read_queries(const size_t                  n_queries,
                               const size_t                  n_elements,
-                              const std::string             test_dir,
+                              const std::string&            test_dir,
                               bool                          check_results,
                               bool                          decode,
                               typename Store::decoder_type& value_decoder)
@@ -224,7 +224,7 @@ void generate_random_store(
 
 template<class Store, class StashDecoder>
 void store_read_queries(const size_t                  n_elements,
-                        const std::string             test_dir,
+                        const std::string&            test_dir,
                         bool                          check_results,
                         typename Store::decoder_type& value_decoder,
                         StashDecoder&                 stash_decoder)
@@ -297,7 +297,7 @@ void store_read_queries(const size_t                  n_elements,
 template<class Store, class StashDecoder>
 void async_store_read_queries(const size_t                  n_queries,
                               const size_t                  n_elements,
-                              const std::string             test_dir,
+                              const std::string&            test_dir,
                               bool                          check_results,
                               bool                          decode,
                               typename Store::decoder_type& value_decoder,

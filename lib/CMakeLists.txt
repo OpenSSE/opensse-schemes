@@ -1,3 +1,7 @@
+
+# find_package(Libaio REQUIRED)
+find_package(Libaio)
+
 add_library(
     schemes
     SHARED
@@ -5,12 +9,19 @@ add_library(
     utils/rocksdb_wrapper.cpp
     utils/utils.cpp
     utils/db_generator.cpp
+    abstractio/scheduler.cpp
+    abstractio/linux_aio_scheduler.cpp
+    abstractio/thread_pool_aio_scheduler.cpp
     sophos/sophos_common.cpp
     sophos/sophos_client.cpp
     sophos/sophos_server.cpp
     diana/diana_common.cpp
     janus/janus_client.cpp
     janus/janus_server.cpp
+    oceanus/cuckoo.cpp
+    tethys/tethys_graph.cpp
+    tethys/tethys_allocator.cpp
+    pluto/rocksdb_store.cpp
 )
 # Add an alias
 add_library(OpenSSE::schemes ALIAS schemes)
@@ -34,12 +45,16 @@ target_compile_features(
     cxx_lambdas
 )
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sse/configure.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/sse/configure.hpp)
+
 target_include_directories(
     schemes
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include/sse
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/sse/schemes
     PUBLIC ${ROCKSDB_INCLUDE_DIRS}
 )
@@ -50,6 +65,7 @@ target_link_libraries(
     OpenSSE::dbparser
     ${ROCKSDB_LIBRARIES}
     spdlog::spdlog
+    ${LIBAIO_LIBRARIES}
 )
 
 set(PROTOS

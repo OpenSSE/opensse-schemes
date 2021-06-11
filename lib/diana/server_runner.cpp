@@ -143,9 +143,9 @@ grpc::Status DianaImpl::setup(__attribute__((unused))
     try {
         logger::logger()->info("Setting up ...");
         server_.reset(new DianaServer<index_type>(pairs_map_path));
-    } catch (std::exception& e) {
+    } catch (std::exception& err) {
         logger::logger()->error("Error when setting up the server's core: \n"
-                                + std::string(e.what()));
+                                + std::string(err.what()));
 
         server_.reset();
         return grpc::Status(grpc::FAILED_PRECONDITION,

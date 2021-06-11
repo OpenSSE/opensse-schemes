@@ -26,6 +26,7 @@ addons:
       - autoconf
       - libtool
       - lcov
+      - libaio-dev
 env:
   global:
     - ENABLE_COVERAGE=Off

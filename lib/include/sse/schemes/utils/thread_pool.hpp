@@ -45,6 +45,8 @@ public:
     void join();
     ~ThreadPool();
 
+    static ThreadPool& global_thread_pool();
+
 private:
     void register_thread(uint32_t id_pool);
 
@@ -60,6 +62,13 @@ private:
     std::condition_variable condition;
     bool                    stop;
 };
+
+inline ThreadPool& ThreadPool::global_thread_pool()
+{
+    static ThreadPool pool(std::thread::hardware_concurrency());
+
+    return pool;
+}
 
 // the constructor just launches some amount of workers
 inline ThreadPool::ThreadPool(uint32_t threads)
@@ -103,6 +112,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
     using return_type = typename std::result_of<F(Args...)>::type;
 
     auto task = std::make_shared<std::packaged_task<return_type()>>(
+        // NOLINTNEXTLINE(modernize-avoid-bind)
         std::bind(std::forward<F>(f), std::forward<Args>(args)...));
 
     std::future<return_type> res = task->get_future();
@@ -154,6 +164,6 @@ inline ThreadPool::~ThreadPool()
         }
     }
 
-    //    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
+    std::cout << "Maximum queue size: " << max_tasks_size_ << std::endl;
 }
 #endif

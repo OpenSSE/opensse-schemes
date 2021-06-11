@@ -54,16 +54,31 @@ bool is_directory(const std::string& path);
 bool exists(const std::string& path);
 bool create_directory(const std::string& path, mode_t mode);
 bool remove_directory(const std::string& path);
+bool remove_file(const std::string& path);
+
+int     open_fd(const std::string& filename, bool direct_io);
+ssize_t file_size(int fd);
 
 std::string hex_string(const std::string& in);
 
-template<size_t N>
-std::string hex_string(const std::array<uint8_t, N>& in)
+// template<size_t N>
+// std::string hex_string(const std::array<uint8_t, N>& in)
+// {
+//     std::ostringstream out;
+//     for (unsigned char c : in) {
+//         out << std::hex << std::setw(2) << std::setfill('0')
+//             << static_cast<uint>(c);
+//     }
+//     return out.str();
+// }
+
+template<typename T, size_t N>
+std::string hex_string(const std::array<T, N>& in)
 {
     std::ostringstream out;
     for (unsigned char c : in) {
-        out << std::hex << std::setw(2) << std::setfill('0')
-            << static_cast<uint>(c);
+        out << std::hex << std::setw(2 * sizeof(T)) << std::setfill('0')
+            << static_cast<uint64_t>(c);
     }
     return out.str();
 }
@@ -81,6 +96,25 @@ std::ostream& print_hex(std::ostream& out, const std::array<uint8_t, N>& a)
 
 std::string hex_string(const uint64_t& a);
 std::string hex_string(const uint32_t& a);
+
+template<typename T>
+constexpr auto is_aligned(T x, size_t a) noexcept ->
+    typename std::enable_if<std::is_integral<T>::value
+                                && !std::is_same<T, bool>::value,
+                            bool>::type
+{
+    return (x & (a - 1)) == 0;
+}
+
+inline bool is_aligned(const volatile void* p, size_t a)
+{
+    return is_aligned(reinterpret_cast<uintptr_t>(p), a);
+}
+
+
+size_t os_page_size();
+size_t device_page_size(int fd);
+size_t device_page_size(const std::string& path);
 
 } // namespace utility
 } // namespace sse

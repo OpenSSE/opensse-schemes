@@ -4,12 +4,21 @@ add_executable(diana_debug debug_diana.cpp)
 target_link_libraries(diana_debug OpenSSE::schemes)
 add_executable(janus_debug debug_janus.cpp)
 target_link_libraries(janus_debug OpenSSE::schemes)
+# add_executable(oceanus_debug debug_oceanus.cpp)
+# target_link_libraries(oceanus_debug OpenSSE::schemes)
+add_executable(tethys_core_debug debug_tethys_core.cpp)
+target_link_libraries(tethys_core_debug OpenSSE::schemes)
+add_executable(tethys_debug debug_tethys.cpp)
+target_link_libraries(tethys_debug OpenSSE::schemes)
+
+add_executable(pluto_debug debug_pluto.cpp)
+target_link_libraries(pluto_debug OpenSSE::schemes)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")
     include(GoogleTest)
 endif()
 
-add_executable(check test.cpp utility.cpp rocksdb.cpp sophos.cpp diana.cpp janus.cpp runners.cpp db_generator.cpp)
+add_executable(check test.cpp utility.cpp rocksdb.cpp sophos.cpp diana.cpp janus.cpp runners.cpp db_generator.cpp awonvm_vector.cpp oceanus.cpp tethys_graph.cpp tethys_store.cpp tethys.cpp pluto.cpp)
 target_link_libraries(check gtest OpenSSE::schemes OpenSSE::runners)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.10.0")

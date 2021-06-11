@@ -23,13 +23,15 @@
 
 #include <cerrno>
 #include <cstring>
+#include <fcntl.h>
 #include <fts.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <iomanip>
 #include <iostream>
-
 namespace sse {
 namespace utility {
 
@@ -149,6 +151,57 @@ bool remove_directory(const std::string& path)
     return true;
 }
 
+
+bool remove_file(const std::string& path)
+{
+    return unlink(path.c_str()) == 0;
+}
+
+int open_fd(const std::string& filename, bool direct_io)
+{
+    int flags = (O_CREAT | O_RDWR);
+
+    if (direct_io) {
+#if !defined(__APPLE__)
+        flags |= O_DIRECT;
+#endif
+    }
+
+    int fd = open(filename.c_str(), flags, 0644);
+
+    if (fd == -1) {
+        throw std::runtime_error("Error when opening file " + filename
+                                 + "; errno " + std::to_string(errno) + "("
+                                 + strerror(errno) + ")");
+    }
+
+    if (direct_io) {
+#ifdef __APPLE__
+        if (fcntl(fd, F_NOCACHE, 1) == -1) {
+            close(fd);
+            throw std::runtime_error(
+                "Error calling fcntl F_NOCACHE on file " + filename + "; errno "
+                + std::to_string(errno) + "(" + strerror(errno) + ")");
+        }
+#endif
+    }
+
+    return fd;
+}
+
+ssize_t file_size(int fd)
+{
+    struct stat s;
+    if (fstat(fd, &s) == -1) {
+        int saveErrno = errno;
+        throw std::runtime_error("Error when get size of file descriptor "
+                                 + std::to_string(fd) + "; errno "
+                                 + std::to_string(saveErrno) + "("
+                                 + strerror(saveErrno) + ")");
+    }
+    return (s.st_size);
+}
+
 std::string hex_string(const std::string& in)
 {
     std::ostringstream out;
@@ -188,6 +241,39 @@ void append_keyword_map(std::ostream&      out,
                         uint32_t           index)
 {
     out << kw << "       " << std::hex << index << "\n";
+}
+
+
+size_t os_page_size()
+{
+    return sysconf(_SC_PAGE_SIZE);
+}
+
+size_t device_page_size(int fd)
+{
+    struct statvfs stats;
+
+
+    fstatvfs(fd, &stats);
+#if __APPLE__
+    return stats.f_frsize;
+#else
+    return stats.f_bsize;
+#endif
+}
+
+size_t device_page_size(const std::string& path)
+{
+    if (!exists(path)) {
+        return 0;
+    }
+    struct statvfs stats;
+
+
+    statvfs(path.c_str(), &stats);
+
+
+    return stats.f_bsize;
 }
 
 } // namespace utility

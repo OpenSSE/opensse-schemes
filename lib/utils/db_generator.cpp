@@ -272,6 +272,7 @@ static void generation_job(
             }
 
 
+            // cppcheck-suppress knownConditionTrueFalse
             if (use_rnd_group_2 && w_d < r_threshold_2) {
                 uint16_t g = ind % n_groups_2;
                 if (group_rand_10_2[g] < size_group_2) {
@@ -294,6 +295,7 @@ static void generation_job(
                 counter_10_3++;
             }
 
+            // cppcheck-suppress knownConditionTrueFalse
             if (use_rnd_group_3 && w_d < r_threshold_3) {
                 uint16_t g = ind % n_groups_3;
                 if (group_rand_10_3[g] < size_group_3) {
@@ -315,6 +317,7 @@ static void generation_job(
                     "Random DB generation: completed keyword " + kw_10_4);
                 counter_10_4++;
             }
+            // cppcheck-suppress knownConditionTrueFalse
             if (use_rnd_group_4 && w_d < r_threshold_4) {
                 uint16_t g = ind % n_groups_4;
                 if (group_rand_10_4[g] < size_group_4) {
@@ -337,6 +340,7 @@ static void generation_job(
                 counter_10_5++;
             }
 
+            // cppcheck-suppress knownConditionTrueFalse
             if (use_rnd_group_5 && w_d < r_threshold_5) {
                 uint16_t g = ind % n_groups_5;
                 if (group_rand_10_5[g] < size_group_5) {
@@ -360,6 +364,7 @@ static void generation_job(
                 counter_10_6++;
             }
 
+            // cppcheck-suppress knownConditionTrueFalse
             if (use_rnd_group_6 && w_d < r_threshold_6) {
                 uint16_t g = ind % n_groups_6;
                 if (group_rand_10_6[g] < size_group_6) {

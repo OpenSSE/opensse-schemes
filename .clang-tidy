@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,modernize-*,-modernize-use-auto,-modernize-make-unique,-modernize-raw-string-literal,-modernize-use-trailing-return-type,bugprone-*, readability-*,-readability-avoid-const-params-in-decls,-readability-magic-numbers,-readability-convert-member-functions-to-static,misc-*,-misc-unused-parameters,performance-*,cert-*,-cert-err60-cpp,google-*,-google-runtime-references,llvm-*,-llvm-header-guard'
+Checks:          'clang-diagnostic-*,-clang-diagnostic-#warnings,-clang-diagnostic-#pragma-messages,modernize-*,-modernize-use-auto,-modernize-make-unique,-modernize-raw-string-literal,-modernize-use-trailing-return-type,bugprone-*, readability-*,-readability-avoid-const-params-in-decls,-readability-magic-numbers,-readability-convert-member-functions-to-static,misc-*,-misc-unused-parameters,performance-*,cert-*,-cert-err60-cpp,google-*,-google-runtime-references, -google-readability-todo,llvm-*,-llvm-header-guard'
 WarningsAsErrors: ''
 HeaderFilterRegex: 'sse/(runners|schemes)/.*'
 AnalyzeTemporaryDtors: false

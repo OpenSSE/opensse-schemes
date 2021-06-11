@@ -8,13 +8,13 @@
 
 Implementation of SSE schemes. For now, the repo includes a C++ implementation of the following schemes: 
 
-| Name           | Comments                                                                                                                                                                   | Authors                                                                     | Reference               |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------- |
-| Σoφoς (Sophos) | First forward-private SSE scheme. Optimal asymptotic performance, but slow in practice because of its use of RSA.                                                          | [Bost][webpage_bost]                                                        | _[\[1\]][sophos_link]_  |
-| Diana          | Very fast (practical) forward-private scheme, using only symetric cryptography.                                                                                            | Bost, [Minaud][webpage_minaud] and [Ohrimenko][webpage_ohrimenko]           | _[\[2\]][bmo_link]_     |
-| Janus          | First 'practical' backward-private scheme, based on puncturable encryption. In practice, very slow when the number of deletions grows.                                     | Bost, Minaud and Ohrimenko                                                  | _[\[2\]][bmo_link]_     |
-| Tethys         | Static scheme designed for flash storage. Best in class throughput (as of 2021) and small ciphertext expansion, but with building time that can become prohibitively high. | [Bossuat][webpage_bossuat], Bost, [Fouque][webpage_fouque], Minaud, Reichle | _[\[3\]][sse_ssd_link]_ |
-| Pluto          | Practical improvement over Tethys for the setup time, but at the cost of an increased ciphertext expansion.                                                                | Bossuat, Bost, Fouque, Minaud, Reichle                                      | _[\[3\]][sse_ssd_link]_ |
+| Name           | Comments                                                                                                                                                                   | Authors                                                                     | Reference             |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------- |
+| Σoφoς (Sophos) | First forward-private SSE scheme. Optimal asymptotic performance, but slow in practice because of its use of RSA.                                                          | [Bost][webpage_bost]                                                        | [\[1\]][sophos_link]  |
+| Diana          | Very fast (practical) forward-private scheme, using only symetric cryptography.                                                                                            | Bost, [Minaud][webpage_minaud] and [Ohrimenko][webpage_ohrimenko]           | [\[2\]][bmo_link]     |
+| Janus          | First 'practical' backward-private scheme, based on puncturable encryption. In practice, very slow when the number of deletions grows.                                     | Bost, Minaud and Ohrimenko                                                  | [\[2\]][bmo_link]     |
+| Tethys         | Static scheme designed for flash storage. Best in class throughput (as of 2021) and small ciphertext expansion, but with building time that can become prohibitively high. | [Bossuat][webpage_bossuat], Bost, [Fouque][webpage_fouque], Minaud, Reichle | [\[3\]][sse_ssd_link] |
+| Pluto          | Practical improvement over Tethys for the setup time, but at the cost of an increased ciphertext expansion.                                                                | Bossuat, Bost, Fouque, Minaud, Reichle                                      | [\[3\]][sse_ssd_link] |
 
 ## References
 | Article                                                                                                          | Authors                                                                     |
@@ -27,7 +27,7 @@ Implementation of SSE schemes. For now, the repo includes a C++ implementation o
 
 ### All
 
-OpenSSE's schemes implementation dependencies need a compiler supporting C++14 (although the core codebase doesn't). It has been successfully built and tested on Ubuntu 14 LTS using both clang 3.6 and gcc 4.9.3 and on Mac OS X.10 using clang 7.0.0
+OpenSSE's schemes implementation dependencies need a compiler supporting C++14 (although the core codebase doesn't). It has been successfully built and tested on Ubuntu 16.04 LTS using both clang 10 and gcc 5.4.0 and on Mac OS X.10 using clang 12.
 
 #### The Cryptographic Toolkit
 
@@ -39,7 +39,7 @@ Take a look at the [build instructions](https://github.com/OpenSSE/crypto-tk#bui
 ### Linux
 
 ```sh
- [sudo] apt-get install build-essential autoconf libtool yasm openssl cmake libaio-dev
+[sudo] apt-get install build-essential autoconf libtool yasm openssl cmake libaio-dev
 ```
 
 The `libaio-dev` dependency is optional. However, if you are willing to use the Tethys and/or the Pluto schemes, we strongly advise you to install it, for performance's sake.
@@ -59,7 +59,7 @@ Note that the build system currently used by this project does not support stati
 ### Mac OS X
 
 ```sh
- [sudo] xcode-select --install
+[sudo] xcode-select --install
 ```
 
 If you still haven't, you should get [Homebrew](http://brew.sh/).
@@ -106,7 +106,7 @@ For example, if you wish to use Clang, you can set the project up with the follo
 
 #### Options
 
--   `ENABLE_COVERAGE=On|Off`: Respectively enables and disable the code coverage functionalities. Disabled by default.
+-   `ENABLE_COVERAGE=On|Off`: Respectively enables and disables the code coverage functionalities. Disabled by default.
 -   `SANITIZE_ADDRESS=On|Off`: Compiles the library with [AddressSanitizer (ASan)](https://github.com/google/sanitizers/wiki/AddressSanitizer) when set to `On`. Great to check for stack/heap buffer overflows, memory leaks, ... Disabled by default.
 -   `SANITIZE_UNDEFINED=On|Off`: When set to `On`, compiles the library with [UndefinedBehaviorSanitizer (UBSan)](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html). UBSan detects undefined behavior at runtime in your code. Disabled by default. 
 -   `opensse_ENABLE_WALL=On|Off`: Toggles the `-Wall` compiler option. On by default
@@ -150,7 +150,7 @@ The servers usage is as follows
 `sophos_server [-b server.db] [-s]`
 
 -   `-b server.db` : use file as the server database (test.ssdb by default)
--   `-s` : use synchronous searches (when searching, the server retrieves all the results before sending them to the client. By default, results are sent once retrieved). I used this option for the benchmarks without RPC.
+-   `-s` : use synchronous searches (when searching, the server retrieves all the results before sending them to the client. By default, results are sent once retrieved). In the papers, this option was used for the benchmarks without RPC.
 
 ## Contributors
 

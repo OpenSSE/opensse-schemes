@@ -5,7 +5,6 @@
 [![static analysis](https://badges.herokuapp.com/travis/OpenSSE/opensse-schemes?branch=master&label=static%20analysis&env=STATIC_ANALYSIS=true)](https://travis-ci.org/OpenSSE/opensse-schemes)
 [![Coverage Status](https://coveralls.io/repos/github/OpenSSE/opensse-schemes/badge.svg?branch=master)](https://coveralls.io/github/OpenSSE/opensse-schemes?branch=master)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/cb6959a0c8db41629fdcf94424a4290d)](https://www.codacy.com/gh/OpenSSE/opensse-schemes/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=OpenSSE/opensse-schemes&amp;utm_campaign=Badge_Grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/opensse/opensse-schemes/badge)](https://www.codefactor.io/repository/github/opensse/opensse-schemes)
 
 Implementation of SSE schemes. For now, the repo includes a C++ implementation of the following schemes: 
 
